@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZOZI — Law Matrix (325 Laws)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0000;color:#c9d1d9;padding:20px}
+h1{color:#58a6ff;text-align:center;margin:5px 0}
+.subtitle{text-align:center;color:#8b949e;margin-bottom:20px;font-size:0.9em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:15px 0}
+.stat{background:#0000;border:1px solid #30363d;border-radius:6px;padding:10px;text-align:center}
+.stat .n{font-size:1.5em;font-weight:bold;color:#58a6ff}
+.stat .l{font-size:0.75em;color:#8b949e}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0;align-items:center}
+.filters input,.filters select{background:#0000;border:1px solid #30363d;color:#c9d1d9;padding:6px 10px;border-radius:6px;font-size:0.85em}
+.filters input{width:200px}
+.filters select{cursor:pointer}
+.filters label{font-size:0.8em;color:#8b949e}
+table{width:100%;border-collapse:collapse;margin:15px 0;font-size:0.78em;background:#161b22;border-radius:6px;overflow:hidden}
+th,td{padding:7px 8px;border:1px solid #30363d;text-align:left;vertical-align:top}
+th{background:#1c2128;color:#39d2c0;font-weight:600;position:sticky;top:0;z-index:1}
+tr:hover{background:rgba(88,166,255,0.05)}
+.law-num{font-weight:bold;color:#58a6ff;white-space:nowrap}
+.cat{display:inline-block;padding:2px 6px;border-radius:10px;font-size:0.72em;font-weight:600;color:#fff;white-space:nowrap}
+.rule{font-weight:600;color:#f8f8f8}
+.desc{color:#c9d1d9}
+.why{color:#8b949e;font-style:italic}
+.hidden{display:none}
+.footer{text-align:center;margin-top:20px;padding:15px;border-top:1px solid #30363d;color:#8b949e;font-size:0.8em}
+.count-info{text-align:center;color:#8b949e;font-size:0.85em;margin:5px 0}
+</style>
+</head>
+<body>
+<h1>ZOZI Platform — Law Matrix</h1>
+<p class="subtitle">325 laws governing the architecture, security, and operations of a 100K+ user e-commerce platform</p>
+
+<div class="stats">
+<div class="stat"><div class="n">325</div><div class="l">Total Laws</div></div>
+<div class="stat"><div class="n">17</div><div class="l">Sections</div></div>
+<div class="stat"><div class="n">16</div><div class="l">Domains</div></div>
+<div class="stat"><div class="n">5</div><div class="l">Modules</div></div>
+</div>
+
+<div class="filters">
+<label>Search:</label>
+<input type="text" id="search" placeholder="Search laws..." oninput="filterTable()">
+<label>Category:</label>
+<select id="catFilter" onchange="changeCat()">
+<option value="all">All Categories</option>
+<option value="API">API</option>
+<option value="Architecture">Architecture</option>
+<option value="Code Quality">Code Quality</option>
+<option value="Config">Config</option>
+<option value="Data">Data</option>
+<option value="Database">Database</option>
+<option value="Deployment">Deployment</option>
+<option value="Docs">Docs</option>
+<option value="Domain">Domain</option>
+<option value="File Placement">File Placement</option>
+<option value="Frontend">Frontend</option>
+<option value="Git">Git</option>
+<option value="Infrastructure">Infrastructure</option>
+<option value="Migration">Migration</option>
+<option value="Mobile">Mobile</option>
+<option value="Module">Module</option>
+<option value="Observability">Observability</option>
+<option value="Operations">Operations</option>
+<option value="Performance">Performance</option>
+<option value="Provider">Provider</option>
+<option value="RBAC">RBAC</option>
+<option value="Resilience">Resilience</option>
+<option value="Router">Router</option>
+<option value="Scalability">Scalability</option>
+<option value="Security">Security</option>
+<option value="Shared">Shared</option>
+<option value="Structure">Structure</option>
+<option value="Technology">Technology</option>
+<option value="Testing">Testing</option>
+<option value="Web App">Web App</option>
+<option value="Wiring">Wiring</option>
+</select>
+<span class="count-info" id="countInfo">Showing 325 of 325 laws</span>
+</div>
+
+<table id="lawTable">
+<thead>
+<tr>
+<th style="width:50px">Law #</th>
+<th style="width:100px">Category</th>
+<th style="width:180px">Rule</th>
+<th>Description</th>
+<th style="width:200px">Why</th>
+</tr>
+</thead>
+<tbody>
+<tr data-category="Architecture">
+<td class="law-num">1</td>
+<td><span class="cat" style="background:#58a6ff">Architecture</span></td>
+<td class="rule">Arrows point down</td>
+<td class="desc">Dependencies flow: modules → domains → infrastructure → kernel. Reverse imports FORBIDDEN.</td>
+<td class="why">Prevents circular dependencies and unmaintainable coupling between layers.</td>
+</tr>
+<tr data-category="Architecture">
+<td class="law-num">2</td>
+<td><span class="cat" style="background:#58a6ff">Architecture</span></td>
+<td class="rule">Thin routers</td>
+<td class="desc">Router = auth context + require_feature + ONE service call + serialization. No DB writes, no business logic.</td>
+<td class="why">Keeps API layer a thin HTTP shim over domain logic. Easy to test and maintain.</td>
+</tr>
+<tr data-category="Architecture">
+<td class="law-num">3</td>
+<td><span class="cat" style="background:#58a6ff">Architecture</span></td>
+<td class="rule">Cross-domain events/ports</td>
+<td class="desc">Cross-domain WRITES via events.py/subscribers.py. Cross-domain READS via ports.py only.</td>
+<td class="why">Keeps domains decoupled and independently deployable.</td>
+</tr>
+<tr data-category="Architecture">
+<td class="law-num">4</td>
+<td><span class="cat" style="background:#58a6ff">Architecture</span></td>
+<td class="rule">Features single-sourced</td>
+<td class="desc">Permission atoms defined once in domains/*/features.py. Aggregated by rbac/catalog.py.</td>
+<td class="why">Prevents permission drift. Frontend and backend share one permission model.</td>
+</tr>
+<tr data-category="Architecture">
+<td class="law-num">5</td>
+<td><span class="cat" style="background:#58a6ff">Architecture</span></td>
+<td class="rule">Country is orthogonal</td>
+<td class="desc">Every data access scoped by country_code via RLS. Independent of feature check.</td>
+<td class="why">Ensures multi-tenant data isolation at the database level.</td>
+</tr>
+<tr data-category="Architecture">
+<td class="law-num">6</td>
+<td><span class="cat" style="background:#58a6ff">Architecture</span></td>
+<td class="rule">Schema discipline</td>
+<td class="desc">Every table in a domain Postgres schema. Alembic is the only schema source.</td>
+<td class="why">Naming consistency and single source of truth for schema changes.</td>
+</tr>
+<tr data-category="Architecture">
+<td class="law-num">7</td>
+<td><span class="cat" style="background:#58a6ff">Architecture</span></td>
+<td class="rule">Allowlist only shrinks</td>
+<td class="desc">DOMAIN_ALLOWLIST.yaml tracks temporary cross-domain imports. May only shrink.</td>
+<td class="why">Ensures migration toward clean domain boundaries makes forward progress.</td>
+</tr>
+<tr data-category="Structure">
+<td class="law-num">8</td>
+<td><span class="cat" style="background:#3fb950">Structure</span></td>
+<td class="rule">Router structure</td>
+<td class="desc">modules/{m}/routers/{d}.py — one file per domain per module (15 per module).</td>
+<td class="why">Makes endpoints discoverable by actor+domain combination.</td>
+</tr>
+<tr data-category="Structure">
+<td class="law-num">9</td>
+<td><span class="cat" style="background:#3fb950">Structure</span></td>
+<td class="rule">Media in providers</td>
+<td class="desc">domains/media must not exist. All media code in providers/media, providers/image.</td>
+<td class="why">Media is an external concern, not a business domain.</td>
+</tr>
+<tr data-category="Structure">
+<td class="law-num">10</td>
+<td><span class="cat" style="background:#3fb950">Structure</span></td>
+<td class="rule">Kernel is pure</td>
+<td class="desc">kernel/ contains ONLY pure business primitives. No imports from domains/modules/rbac.</td>
+<td class="why">Ensures business primitives are consistent and reusable across all domains.</td>
+</tr>
+<tr data-category="Structure">
+<td class="law-num">11</td>
+<td><span class="cat" style="background:#3fb950">Structure</span></td>
+<td class="rule">Providers wrap SDKs</td>
+<td class="desc">A provider wraps exactly one external SDK. No business logic, no domain imports.</td>
+<td class="why">External dependencies are isolated and swappable.</td>
+</tr>
+<tr data-category="Structure">
+<td class="law-num">12</td>
+<td><span class="cat" style="background:#3fb950">Structure</span></td>
+<td class="rule">16 domains</td>
+<td class="desc">Fixed set: accounts, analytics, audit, catalog, comms, country, customers, finance, governance, hr, logistics, orders, promotions, security, suppliers.</td>
+<td class="why">Prevents domain sprawl and ensures clear ownership boundaries.</td>
+</tr>
+<tr data-category="Structure">
+<td class="law-num">13</td>
+<td><span class="cat" style="background:#3fb950">Structure</span></td>
+<td class="rule">5 modules</td>
+<td class="desc">Fixed set: admin, customer, employee, logistics, supplier.</td>
+<td class="why">Ensures the actor model stays coherent and manageable.</td>
+</tr>
+<tr data-category="File Placement">
+<td class="law-num">14</td>
+<td><span class="cat" style="background:#d29922">File Placement</span></td>
+<td class="rule">Business logic → domains/</td>
+<td class="desc">All business logic in domain services/services/. No logic in routers or modules.</td>
+<td class="why">Business logic is colocated with the data it operates on (DDD).</td>
+</tr>
+<tr data-category="File Placement">
+<td class="law-num">15</td>
+<td><span class="cat" style="background:#d29922">File Placement</span></td>
+<td class="rule">API endpoints → modules/routers/</td>
+<td class="desc">Every HTTP endpoint in a module router file named after the domain.</td>
+<td class="why">Endpoints grouped by business capability, not CRUD operation.</td>
+</tr>
+<tr data-category="File Placement">
+<td class="law-num">16</td>
+<td><span class="cat" style="background:#d29922">File Placement</span></td>
+<td class="rule">SDK wrappers → providers/</td>
+<td class="desc">Every third-party integration under providers/{category}/.</td>
+<td class="why">Trivial to find every external dependency and swap implementations.</td>
+</tr>
+<tr data-category="File Placement">
+<td class="law-num">17</td>
+<td><span class="cat" style="background:#d29922">File Placement</span></td>
+<td class="rule">Cross-domain → events/ports only</td>
+<td class="desc">events.py (writes) and ports.py (reads) are the ONLY sanctioned cross-domain channels.</td>
+<td class="why">Creates a clear, auditable boundary contract between domains.</td>
+</tr>
+<tr data-category="File Placement">
+<td class="law-num">18</td>
+<td><span class="cat" style="background:#d29922">File Placement</span></td>
+<td class="rule">Root forbidden folders</td>
+<td class="desc">utils/, routers/, controllers/, services/, models/, db/ FORBIDDEN at backend/ root.</td>
+<td class="why">Prevents the 'god directory' anti-pattern.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">19</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">No float for money</td>
+<td class="desc">Monetary values MUST use Decimal or Numeric. Float FORBIDDEN for money.</td>
+<td class="why">Floating-point arithmetic introduces rounding errors causing financial discrepancies.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">20</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">country_code = String(2)</td>
+<td class="desc">Always String(2) following ISO 3166-1 alpha-2.</td>
+<td class="why">Consistency across all 16 domains simplifies joins, indexes, and RLS filtering.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">21</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">Timestamps = server_default</td>
+<td class="desc">created_at/updated_at use server_default=func.now() (DB-side), not Python-side.</td>
+<td class="why">Timestamps survive clock skew and are consistent in the database.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">22</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">FK have ondelete</td>
+<td class="desc">Every ForeignKey MUST declare explicit ondelete behavior.</td>
+<td class="why">Prevents unpredictable behavior across PostgreSQL versions.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">23</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">Audit columns</td>
+<td class="desc">Every model MUST include created_at, updated_at, country_code, is_deleted.</td>
+<td class="why">Required for RLS, debugging, compliance, and data recovery.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">24</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">No forbidden schemas</td>
+<td class="desc">core, platform, identity are FORBIDDEN as Postgres schema names.</td>
+<td class="why">Prevents monolithic shared-schema architecture.</td>
+</tr>
+<tr data-category="Migration">
+<td class="law-num">25</td>
+<td><span class="cat" style="background:#8b949e">Migration</span></td>
+<td class="rule">Shift files first</td>
+<td class="desc">All files to correct domains before reorganization. Never replace working code with stubs.</td>
+<td class="why">Ensures agents have complete file context for each domain.</td>
+</tr>
+<tr data-category="Migration">
+<td class="law-num">26</td>
+<td><span class="cat" style="background:#8b949e">Migration</span></td>
+<td class="rule">Backward-compat shims</td>
+<td class="desc">Temporary re-exports in infrastructure/utils/ for relocated files.</td>
+<td class="why">Enables gradual migration without breaking existing imports.</td>
+</tr>
+<tr data-category="Migration">
+<td class="law-num">27</td>
+<td><span class="cat" style="background:#8b949e">Migration</span></td>
+<td class="rule">Delete temp scripts</td>
+<td class="desc">Root-level fix_*.py, debug_*.py should be removed after use.</td>
+<td class="why">Keeps root clean and architecture clear.</td>
+</tr>
+<tr data-category="Migration">
+<td class="law-num">28</td>
+<td><span class="cat" style="background:#8b949e">Migration</span></td>
+<td class="rule">_auto_stubs ≠ architecture</td>
+<td class="desc">_auto_stubs.py are migration scaffolding, not architecture components.</td>
+<td class="why">Distinguishes temporary scaffolding from permanent architecture.</td>
+</tr>
+<tr data-category="Migration">
+<td class="law-num">29</td>
+<td><span class="cat" style="background:#8b949e">Migration</span></td>
+<td class="rule">registry.py ≠ architecture</td>
+<td class="desc">Service Registry and auto_wire.py were removed from architecture.</td>
+<td class="why">Prevents confusion about what is permanent architecture.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">30</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Graceful degradation</td>
+<td class="desc">Domains handle missing SDKs via HAS_<SDK> flags. Never crash.</td>
+<td class="why">System runs in development without all production dependencies.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">31</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">No domain imports</td>
+<td class="desc">Providers MUST NOT import from domains, modules, rbac, jobs, middleware.</td>
+<td class="why">Data flows through parameters only. Ensures providers remain pure wrappers.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">32</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">No hardcoded secrets</td>
+<td class="desc">JWT keys, API keys, passwords from env vars or secrets manager only.</td>
+<td class="why">Attackers can clone repo. Committed secrets = token forgery.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">33</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Token type verification</td>
+<td class="desc">All JWT decoders MUST verify the type claim (access vs refresh).</td>
+<td class="why">Prevents refresh tokens from being used as access tokens.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">34</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Parameterized SQL</td>
+<td class="desc">Use SQLAlchemy text() with bound parameters or ORM. No f-string interpolation.</td>
+<td class="why">Prevents SQL injection attacks.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">35</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">CSRF active</td>
+<td class="desc">CSRF middleware MUST be active in all environments.</td>
+<td class="why">Prevents CSRF attacks in misconfigured deployments.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">36</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Security headers</td>
+<td class="desc">CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy in production.</td>
+<td class="why">Prevents XSS, clickjacking, and other browser-based attacks.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">37</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Rate limit fails closed</td>
+<td class="desc">Redis unreachable = deny requests (not allow all).</td>
+<td class="why">Prevents brute-force and DoS when Redis is down.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">38</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Password handling</td>
+<td class="desc">Passwords >72 bytes rejected with error, never truncated.</td>
+<td class="why">bcrypt's 72-byte limit. Silent truncation creates security holes.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">39</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">No duplicate auth</td>
+<td class="desc">Auth logic in exactly one canonical location.</td>
+<td class="why">Duplicate implementations with divergent behavior create security holes.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">40</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">CORS origin validation</td>
+<td class="desc">Origin header validated against allowlist before reflection.</td>
+<td class="why">Prevents arbitrary websites from making authenticated requests.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">41</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">WebSocket auth</td>
+<td class="desc">WebSocket connections MUST verify JWT type claim equals access.</td>
+<td class="why">Prevents stolen refresh tokens from opening WebSocket connections.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">42</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Input validation</td>
+<td class="desc">All public endpoints use Pydantic schemas. No raw dicts in router signatures.</td>
+<td class="why">Prevents malformed data from reaching domain services.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">43</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Security event logging</td>
+<td class="desc">Auth failures, 403s, rate-limit triggers logged at WARNING+.</td>
+<td class="why">Silent security events prevent incident detection.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">44</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Dependency scanning</td>
+<td class="desc">All deps scanned for CVEs in CI. High/critical block deployment.</td>
+<td class="why">Prevents supply-chain attacks via compromised dependencies.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">45</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">No N+1 queries</td>
+<td class="desc">All relationships declare lazy=selectin or joined. Default lazy=select FORBIDDEN.</td>
+<td class="why">N+1 queries bring the database to its knees at 100K+ users.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">46</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">No SELECT *</td>
+<td class="desc">Application queries MUST select explicit columns.</td>
+<td class="why">Wastes memory/I/O. Prevents covering indexes. Breaks on column reorder.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">47</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Connection pool sizing</td>
+<td class="desc">pool_size ≥ 10, max_overflow ≥ 20. Environment-configurable.</td>
+<td class="why">Connection exhaustion causes cascading failures under load.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">48</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Read replica separation</td>
+<td class="desc">Replica connections use independent pool settings. Read-heavy uses get_read_db().</td>
+<td class="why">Without replicas, every read competes with writes for connections.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">49</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Linear migration history</td>
+<td class="desc">Alembic history MUST remain linear. Resolve divergent heads immediately.</td>
+<td class="why">Divergent heads break alembic upgrade head and cause deployment failures.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">50</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Explicit transactions</td>
+<td class="desc">All writes use explicit transaction management. Autocommit FORBIDDEN.</td>
+<td class="why">Ensures multi-step operations can roll back on failure.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">51</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Single table ownership</td>
+<td class="desc">Each table defined in exactly one domain. Duplicate __tablename__ FORBIDDEN.</td>
+<td class="why">Duplicate tables cause MetaData conflicts and runtime crashes.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">52</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">FK constraints</td>
+<td class="desc">All FK columns have explicit ForeignKey with ondelete.</td>
+<td class="why">Prevents orphan rows and ensures referential integrity.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">53</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Index FK columns</td>
+<td class="desc">All FK columns have explicit index. PostgreSQL does NOT auto-index FKs.</td>
+<td class="why">Without indexes, JOINs degrade to sequential scans.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">54</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Soft delete</td>
+<td class="desc">All user-facing tables use is_deleted (boolean, default false).</td>
+<td class="why">Enables data recovery, audit trails, and safe cascading.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">55</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Schema-per-domain</td>
+<td class="desc">Every model declares __table_args__ = {schema: <domain>}.</td>
+<td class="why">Tables without schema land in public, breaking multi-tenant isolation.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">56</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">No forbidden schemas</td>
+<td class="desc">core, platform, identity FORBIDDEN as schema names.</td>
+<td class="why">Prevents accidental coupling through shared schema namespace.</td>
+</tr>
+<tr data-category="Database">
+<td class="law-num">57</td>
+<td><span class="cat" style="background:#db6d28">Database</span></td>
+<td class="rule">Migration safety</td>
+<td class="desc">Destructive migrations include backward-compatible strategy (expand-contract).</td>
+<td class="why">Enables zero-downtime rollback.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">58</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">No print() in production</td>
+<td class="desc">print() FORBIDDEN in production code. Use structlog logger.</td>
+<td class="why">print() bypasses log formatting and cannot be filtered by level.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">59</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">No silent exceptions</td>
+<td class="desc">All except blocks MUST log at minimum DEBUG level.</td>
+<td class="why">Silent exception swallowing makes debugging impossible.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">60</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">No blocking in async</td>
+<td class="desc">Async functions MUST NOT call blocking I/O. Use asyncio.sleep, httpx.</td>
+<td class="why">Blocking calls freeze the event loop, preventing other requests.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">61</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">Bounded caches</td>
+<td class="desc">All in-memory caches have max size and/or TTL. Unbounded dict FORBIDDEN.</td>
+<td class="why">Unbounded caches cause OOM at scale.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">62</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">TODO/FIXME hygiene</td>
+<td class="desc">TODO/FIXME must include ticket reference and expiration date.</td>
+<td class="why">Ensures technical debt is tracked and doesn't accumulate invisibly.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">63</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">Type hints required</td>
+<td class="desc">All public function signatures MUST have type hints.</td>
+<td class="why">Enables static analysis, IDE autocompletion, inline documentation.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">64</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">Function length ≤50</td>
+<td class="desc">Functions SHOULD NOT exceed 50 lines (excl. docstrings/blanks).</td>
+<td class="why">Long functions are hard to test, debug, and reason about.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">65</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">Indentation ≤4 levels</td>
+<td class="desc">Maximum 4 levels of indentation per function.</td>
+<td class="why">Deeper nesting signals complex control flow needing refactoring.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">66</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">No magic numbers</td>
+<td class="desc">Numeric constants MUST be named constants or config values.</td>
+<td class="why">Named constants make business rules self-documenting and easy to change.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">67</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">DRY principle</td>
+<td class="desc">Duplicate code blocks (>5 lines) MUST be extracted into shared functions.</td>
+<td class="why">Copy-paste creates maintenance nightmares.</td>
+</tr>
+<tr data-category="Code Quality">
+<td class="law-num">68</td>
+<td><span class="cat" style="background:#39d2c0">Code Quality</span></td>
+<td class="rule">Consistent errors</td>
+<td class="desc">All service functions use consistent error pattern (exceptions or Result).</td>
+<td class="why">Mixed patterns make error handling unpredictable for callers.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">69</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Domain smoke tests</td>
+<td class="desc">Every domain MUST have at least one smoke test.</td>
+<td class="why">Catches circular imports, missing deps, broken __init__.py, syntax errors.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">70</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Architecture law tests</td>
+<td class="desc">Every statically checkable law MUST have a corresponding test.</td>
+<td class="why">Ensures laws are actually enforced, not just documented.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">71</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">No broken tests in CI</td>
+<td class="desc">Collection-time failures MUST block CI. Fix within 24h.</td>
+<td class="why">Broken tests hide real failures.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">72</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Cross-domain integration</td>
+<td class="desc">Cross-domain flows MUST have integration tests.</td>
+<td class="why">Unit tests verify single services; integration tests verify wiring.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">73</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Performance regression</td>
+<td class="desc">Critical paths MUST have perf regression tests. Fail on >20% latency.</td>
+<td class="why">Prevents slow queries or missing indexes from shipping to production.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">74</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Test isolation</td>
+<td class="desc">All tests use transaction-rolled-back sessions. No data leaks.</td>
+<td class="why">Each test is independent and order-independent.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">75</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Graceful degradation</td>
+<td class="desc">External failures MUST degrade gracefully AND log WARNING.</td>
+<td class="why">Silent fallbacks hide degradation from ops.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">76</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Session lifecycle</td>
+<td class="desc">Sessions managed via FastAPI dependency injection only.</td>
+<td class="why">Ensures sessions are properly closed even on exceptions.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">77</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Async resource safety</td>
+<td class="desc">Async resources use asyncio.Lock for init and disposal.</td>
+<td class="why">Prevents race conditions that create multiple engines.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">78</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Middleware ordering</td>
+<td class="desc">Pipeline order FIXED: Foundation → Auth → Rate → Webhook → Geo → Security → Observe → Compliance.</td>
+<td class="why">Reordering changes security posture.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">79</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Global exception handler</td>
+<td class="desc">Catches all uncaught exceptions. Returns structured response. No stack traces in prod.</td>
+<td class="why">Prevents stack trace leakage and ensures consistent error format.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">80</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Graceful shutdown</td>
+<td class="desc">Shutdown disposes DB engine, Redis, workers via lifespan.py.</td>
+<td class="why">Prevents connection leaks on restart.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">81</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Health checks</td>
+<td class="desc">/health, /health/deps, /health/ready verify all critical dependencies.</td>
+<td class="why">Load balancers use these for routing decisions.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">82</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">No default credentials</td>
+<td class="desc">Config fallbacks MUST NOT contain real credentials. Empty/null default.</td>
+<td class="why">Prevents accidental use of dev credentials in production.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">83</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Environment validation</td>
+<td class="desc">Required env vars validated at startup. Missing = immediate failure.</td>
+<td class="why">Prevents silent fallbacks to development defaults in production.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">84</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Typed feature flags</td>
+<td class="desc">Flags use pydantic-settings. Raw os.getenv() FORBIDDEN.</td>
+<td class="why">String 'false' is truthy in Python. Typed coercion prevents bugs.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">85</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Secret rotation</td>
+<td class="desc">Secrets rotatable without deployment via env var updates.</td>
+<td class="why">Enables response to credential leaks without full redeployment.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">86</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Env-specific configs</td>
+<td class="desc">Prod, staging, dev have separate config profiles. No inheritance.</td>
+<td class="why">Prevents prod from inheriting dev defaults like debug=True.</td>
+</tr>
+<tr data-category="Router">
+<td class="law-num">87</td>
+<td><span class="cat" style="background:#bc8cff">Router</span></td>
+<td class="rule">Auth on protected endpoints</td>
+<td class="desc">All non-public endpoints MUST use get_current_user or equivalent.</td>
+<td class="why">Prevents accidental exposure of sensitive endpoints.</td>
+</tr>
+<tr data-category="Router">
+<td class="law-num">88</td>
+<td><span class="cat" style="background:#bc8cff">Router</span></td>
+<td class="rule">Feature gate on protected</td>
+<td class="desc">All non-public endpoints MUST use require_feature() or require_module().</td>
+<td class="why">Ensures every protected endpoint has explicit authorization.</td>
+</tr>
+<tr data-category="Router">
+<td class="law-num">89</td>
+<td><span class="cat" style="background:#bc8cff">Router</span></td>
+<td class="rule">Response serialization</td>
+<td class="desc">Routers return serialized responses (Pydantic/dicts), never raw ORM models.</td>
+<td class="why">Prevents accidental exposure of internal model fields.</td>
+</tr>
+<tr data-category="Router">
+<td class="law-num">90</td>
+<td><span class="cat" style="background:#bc8cff">Router</span></td>
+<td class="rule">No business logic</td>
+<td class="desc">Routers contain ONLY: auth, gate, parsing, ONE service call, serialization.</td>
+<td class="why">Keeps API layer a thin HTTP shim.</td>
+</tr>
+<tr data-category="Router">
+<td class="law-num">91</td>
+<td><span class="cat" style="background:#bc8cff">Router</span></td>
+<td class="rule">Documentation</td>
+<td class="desc">All endpoints MUST have OpenAPI-compatible docstrings.</td>
+<td class="why">The OpenAPI spec is the API contract.</td>
+</tr>
+<tr data-category="Observability">
+<td class="law-num">92</td>
+<td><span class="cat" style="background:#3fb950">Observability</span></td>
+<td class="rule">Structured logging</td>
+<td class="desc">All logs use structlog with context (user_id, request_id, domain, action).</td>
+<td class="why">Enables log aggregation, filtering by field, cross-service correlation.</td>
+</tr>
+<tr data-category="Observability">
+<td class="law-num">93</td>
+<td><span class="cat" style="background:#3fb950">Observability</span></td>
+<td class="rule">Request tracing</td>
+<td class="desc">All requests carry request_id propagated through service calls.</td>
+<td class="why">Enables end-to-end request tracing for debugging.</td>
+</tr>
+<tr data-category="Observability">
+<td class="law-num">94</td>
+<td><span class="cat" style="background:#3fb950">Observability</span></td>
+<td class="rule">Metrics emission</td>
+<td class="desc">Critical paths emit Prometheus metrics (latency, error rate, throughput).</td>
+<td class="why">Unmonitored critical paths hide degradation.</td>
+</tr>
+<tr data-category="Observability">
+<td class="law-num">95</td>
+<td><span class="cat" style="background:#3fb950">Observability</span></td>
+<td class="rule">Error tracking</td>
+<td class="desc">Unhandled exceptions reported to Sentry with fallback to logger.</td>
+<td class="why">Prevents silent exception swallowing in production.</td>
+</tr>
+<tr data-category="Observability">
+<td class="law-num">96</td>
+<td><span class="cat" style="background:#3fb950">Observability</span></td>
+<td class="rule">Audit trail</td>
+<td class="desc">State-changing operations write to domains/audit/.</td>
+<td class="why">WORM audit log enables compliance investigations.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">97</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Import direction</td>
+<td class="desc">Imports MUST follow modules → domains → infrastructure → kernel.</td>
+<td class="why">Prevents reverse dependencies.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">98</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">No circular imports</td>
+<td class="desc">Circular chains between any two packages FORBIDDEN.</td>
+<td class="why">Circular imports cause ImportError at module load time.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">99</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">No layer crossing</td>
+<td class="desc">Modules don't import infrastructure directly. Domains don't import modules.</td>
+<td class="why">Prevents tight coupling across layers.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">100</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Provider isolation</td>
+<td class="desc">Providers don't import from domains/modules/rbac/jobs/middleware.</td>
+<td class="why">Ensures providers remain pure wrappers.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">101</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Kernel isolation</td>
+<td class="desc">kernel/ doesn't import from domains/modules/rbac/providers/jobs/middleware.</td>
+<td class="why">Kernel is the universal foundation layer.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">102</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Infrastructure isolation</td>
+<td class="desc">infrastructure/ doesn't import from domains/modules/rbac/providers.</td>
+<td class="why">Provides platform primitives to all layers.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">103</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Job wiring</td>
+<td class="desc">Jobs import from domains/ + infrastructure/ only.</td>
+<td class="why">Jobs are decoupled from HTTP layer.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">104</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Middleware wiring</td>
+<td class="desc">Middleware imports from infrastructure/ + rbac/ only.</td>
+<td class="why">Middleware operates at HTTP layer, needs only platform primitives.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">105</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Shared package wiring</td>
+<td class="desc">@zozi/shared doesn't import from web_app or mobile_app.</td>
+<td class="why">Shared is consumed BY apps, never imports FROM them.</td>
+</tr>
+<tr data-category="Wiring">
+<td class="law-num">106</td>
+<td><span class="cat" style="background:#db6d28">Wiring</span></td>
+<td class="rule">Frontend-backend wiring</td>
+<td class="desc">Frontend communicates via API proxy only. No direct backend imports.</td>
+<td class="why">Ensures frontend and backend are decoupled deployables.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">107</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">PostgreSQL in prod</td>
+<td class="desc">Production uses PostgreSQL 15. SQLite for dev/test only.</td>
+<td class="why">PostgreSQL provides RLS, proper concurrency, JSONB, full-text search.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">108</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">SQLite in dev</td>
+<td class="desc">SQLite for zero-config startup. File in .gitignore.</td>
+<td class="why">Enables fast local development without DB server.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">109</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Redis usage</td>
+<td class="desc">Sessions, catalog cache, rate limiting, blacklist, pub/sub, Celery.</td>
+<td class="why">Redis is an ephemeral cache, not a primary data store.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">110</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Redis failure handling</td>
+<td class="desc">Sessions→DB fallback, caching pass-through, rate limit fails closed.</td>
+<td class="why">System degrades gracefully when Redis is unreachable.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">111</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Next.js App Router</td>
+<td class="desc">Web uses Next.js App Router, not Pages Router.</td>
+<td class="why">Different routing and rendering models.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">112</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">React Server Components</td>
+<td class="desc">Data-fetching = Server Components. Client = interactivity/hooks.</td>
+<td class="why">RSC reduces JS bundle and enables server-side data access.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">113</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Expo Router</td>
+<td class="desc">Mobile uses Expo Router with file-based routing.</td>
+<td class="why">Native navigation with deep linking.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">114</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">WebSocket for realtime</td>
+<td class="desc">WebSocket only for real-time (notifications, chat, tracking).</td>
+<td class="why">All other communication uses REST.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">115</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Celery for jobs</td>
+<td class="desc">CPU-bound and async jobs use Celery with Redis broker.</td>
+<td class="why">Request handlers never block on CPU-bound work.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">116</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Email via SMTP</td>
+<td class="desc">Transactional email via providers/comms/email.py. Async sending.</td>
+<td class="why">Prevents SMTP latency from blocking request handlers.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">117</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">SMS via Twilio</td>
+<td class="desc">SMS and WhatsApp via Twilio. Async sending.</td>
+<td class="why">Prevents SMS latency from blocking request handlers.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">118</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Payment gateways</td>
+<td class="desc">Stripe, Tap, PayPal, PayTabs, Thawani. Each implements BasePaymentGateway.</td>
+<td class="why">Multi-PSP enables per-country payment methods.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">119</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">AI/ML backends</td>
+<td class="desc">Ollama, OpenAI, HuggingFace via providers/ai/. CPU via async_workers.</td>
+<td class="why">Isolates AI dependencies and prevents event loop blocking.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">120</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">S3 storage</td>
+<td class="desc">S3 (prod) or local (dev). Media blobs never in PostgreSQL.</td>
+<td class="why">Presigned URLs for direct upload/download. DB stays small.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">121</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Image processing</td>
+<td class="desc">Pillow, rembg, OpenCV. Heavy processing via async_workers.</td>
+<td class="why">Prevents image processing from blocking the event loop.</td>
+</tr>
+<tr data-category="Technology">
+<td class="law-num">122</td>
+<td><span class="cat" style="background:#39d2c0">Technology</span></td>
+<td class="rule">Leaflet maps</td>
+<td class="desc">Leaflet + react-leaflet. Geocoding via providers/geography/.</td>
+<td class="why">Map tiles from CDN, not bundled.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">123</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Single SDK per provider</td>
+<td class="desc">Each provider wraps exactly one external SDK or service.</td>
+<td class="why">Makes providers independently testable and swappable.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">124</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">HAS_ flags</td>
+<td class="desc">Every provider exposes HAS_<SDK> boolean flags.</td>
+<td class="why">Enables graceful degradation when SDK is absent.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">125</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Degrade gracefully</td>
+<td class="desc">When HAS_<SDK> = False, return defaults. Never crash.</td>
+<td class="why">System runs without all production dependencies.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">126</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">No business logic</td>
+<td class="desc">Providers contain ONLY SDK wrapping: auth, formatting, parsing, error mapping.</td>
+<td class="why">Business rules belong in domain services, not providers.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">127</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Config in providers/</td>
+<td class="desc">API keys, endpoints, timeouts in providers/config.py.</td>
+<td class="why">Enables per-environment config without code changes.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">128</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Async workers for CPU</td>
+<td class="desc">CPU-bound provider work via providers/async_workers.</td>
+<td class="why">Prevents blocking the event loop.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">129</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Health checks</td>
+<td class="desc">All providers expose health_check() via BaseProvider.</td>
+<td class="why">Enables /health/deps to verify external dependency health.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">130</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Error mapping</td>
+<td class="desc">SDK errors mapped to domain exceptions. Raw SDK errors don't leak.</td>
+<td class="why">Decouples API from specific SDK error types.</td>
+</tr>
+<tr data-category="Provider">
+<td class="law-num">131</td>
+<td><span class="cat" style="background:#bc8cff">Provider</span></td>
+<td class="rule">Mock in tests</td>
+<td class="desc">Provider tests mock the external SDK. No real API calls.</td>
+<td class="why">Tests are fast, reliable, and don't depend on external services.</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">132</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">Module structure</td>
+<td class="desc">modules/{name}/ with auth/, routers/, serializers/.</td>
+<td class="why">Each module is a complete actor context.</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">133</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">Per-module auth</td>
+<td class="desc">Each module has its own auth dependency in auth/dependencies.py.</td>
+<td class="why">Different actors may need different auth strategies.</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">134</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">Router file naming</td>
+<td class="desc">modules/{module}/routers/{domain}.py — one file per domain.</td>
+<td class="why">Makes endpoints discoverable by actor+domain.</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">135</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">Router registration</td>
+<td class="desc">All router files listed in routers/__init__.py.</td>
+<td class="why">Unregistered routers are invisible to FastAPI (dead code).</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">136</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">Public vs protected</td>
+<td class="desc">public_routers (no auth) vs routers (auth required).</td>
+<td class="why">Enables unauthenticated access to specific endpoints.</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">137</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">Serializers location</td>
+<td class="desc">Response serializers in modules/{module}/serializers/.</td>
+<td class="why">Different actors may serialize the same model differently.</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">138</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">5 modules fixed</td>
+<td class="desc">admin, customer, employee, logistics, supplier. New requires review.</td>
+<td class="why">Prevents module sprawl.</td>
+</tr>
+<tr data-category="Module">
+<td class="law-num">139</td>
+<td><span class="cat" style="background:#58a6ff">Module</span></td>
+<td class="rule">Route prefixes</td>
+<td class="desc">/admin/*, /customer/*, /employee/*, /logistics-partner/*, /supplier/*.</td>
+<td class="why">Prevents route collisions between modules.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">140</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">7 subpackages</td>
+<td class="desc">database/, redis/, storage/, messaging/, observability/, security/, utils/.</td>
+<td class="why">Each subpackage has a single responsibility.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">141</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Database infra</td>
+<td class="desc">Base, get_db/get_read_db, sessions, RLS, transactions, seeds.</td>
+<td class="why">Single place for DB engine and session management.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">142</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Redis infra</td>
+<td class="desc">Client singleton, cache abstraction, blacklist, pub/sub.</td>
+<td class="why">Prevents connection proliferation.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">143</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Storage infra</td>
+<td class="desc">Abstraction interface + backup utilities.</td>
+<td class="why">Backends in providers/storage/.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">144</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Messaging infra</td>
+<td class="desc">WS manager, realtime, email wrappers, event bus.</td>
+<td class="why">Currently in-process; future: Redis pub/sub.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">145</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Observability infra</td>
+<td class="desc">OTEL, Prometheus, structlog, Sentry, circuit breaker.</td>
+<td class="why">Wires observability into the app at startup.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">146</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Security infra</td>
+<td class="desc">JWT, bcrypt, KMS encryption, rate limiting, CSRF, country access.</td>
+<td class="why">Canonical location for auth-related code.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">147</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Utils infra</td>
+<td class="desc">Pure technical helpers: pagination, datetime, config, caching, HTTP.</td>
+<td class="why">Business primitives belong in kernel/, not here.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">148</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Canonical Base</td>
+<td class="desc">infrastructure.database.base.Base is THE base. Others FORBIDDEN.</td>
+<td class="why">Multiple bases cause MetaData conflicts and migration failures.</td>
+</tr>
+<tr data-category="Infrastructure">
+<td class="law-num">149</td>
+<td><span class="cat" style="background:#58a6ff">Infrastructure</span></td>
+<td class="rule">Session lifecycle</td>
+<td class="desc">Sessions via FastAPI Depends(get_db) only.</td>
+<td class="why">Ensures sessions are closed even on exceptions.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">150</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Domain structure</td>
+<td class="desc">services/, models/, schemas/, events.py, subscribers.py, ports.py, features.py, read_models/, policies/.</td>
+<td class="why">Standardized structure across all 16 domains.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">151</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Service patterns</td>
+<td class="desc">Services take primitives, own DB access and transactions.</td>
+<td class="why">Services are the entry point for business logic.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">152</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Model patterns</td>
+<td class="desc">__tablename__ + __table_args__ = {schema: <domain>}. Canonical Base.</td>
+<td class="why">Every model knows its schema and inherits from one base.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">153</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Schema patterns</td>
+<td class="desc">Pydantic models for validation. Used by routers (in) and serializers (out).</td>
+<td class="why">Schemas are NOT ORM models — different purposes.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">154</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Event patterns</td>
+<td class="desc">Named {domain}.{entity}.{action}. Minimal data (IDs, not objects).</td>
+<td class="why">Minimizes coupling between event publisher and subscribers.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">155</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Port patterns</td>
+<td class="desc">Sanctioned cross-domain READ path. Take db + primitives, return results.</td>
+<td class="why">Ports are the ONLY importable thing from another domain.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">156</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Subscriber patterns</td>
+<td class="desc">Handle events from other domains. Resolve context, call services.</td>
+<td class="why">Subscribers MUST NOT import from other domains directly.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">157</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Feature patterns</td>
+<td class="desc">FEATURES = {key: description}. Consistent format across domains.</td>
+<td class="why">Enables rbac/catalog.py to aggregate all features.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">158</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Read model patterns</td>
+<td class="desc">CQRS-lite projections for this domain's dashboards.</td>
+<td class="why">Cross-domain dashboards live in governance/read_models/.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">159</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">Policy patterns</td>
+<td class="desc">Authorization policies. Enforced by require_feature() and service checks.</td>
+<td class="why">Policies are business rules about access, distinct from auth.</td>
+</tr>
+<tr data-category="Domain">
+<td class="law-num">160</td>
+<td><span class="cat" style="background:#3fb950">Domain</span></td>
+<td class="rule">16 domains fixed</td>
+<td class="desc">New domains require architecture review.</td>
+<td class="why">Prevents domain sprawl.</td>
+</tr>
+<tr data-category="RBAC">
+<td class="law-num">161</td>
+<td><span class="cat" style="background:#d29922">RBAC</span></td>
+<td class="rule">Catalog single source</td>
+<td class="desc">Aggregates all features.py via package scan.</td>
+<td class="why">CI fails on any require_feature() literal not in catalog.</td>
+</tr>
+<tr data-category="RBAC">
+<td class="law-num">162</td>
+<td><span class="cat" style="background:#d29922">RBAC</span></td>
+<td class="rule">Role definitions</td>
+<td class="desc">(module, role) → feature sets. Static code, not DB-driven.</td>
+<td class="why">Enables code review of permission grants.</td>
+</tr>
+<tr data-category="RBAC">
+<td class="law-num">163</td>
+<td><span class="cat" style="background:#d29922">RBAC</span></td>
+<td class="rule">Resolution</td>
+<td class="desc">actor × role × country → effective set. Redis-cached.</td>
+<td class="why">Fast permission checks on every request.</td>
+</tr>
+<tr data-category="RBAC">
+<td class="law-num">164</td>
+<td><span class="cat" style="background:#d29922">RBAC</span></td>
+<td class="rule">Dependencies</td>
+<td class="desc">require_feature(...) and require_module(...) FastAPI dependencies.</td>
+<td class="why">The gates used by every module router.</td>
+</tr>
+<tr data-category="RBAC">
+<td class="law-num">165</td>
+<td><span class="cat" style="background:#d29922">RBAC</span></td>
+<td class="rule">Service</td>
+<td class="desc">Grant/revoke, delegation, maker-checker. All changes audited.</td>
+<td class="why">Runtime permission management with full audit trail.</td>
+</tr>
+<tr data-category="RBAC">
+<td class="law-num">166</td>
+<td><span class="cat" style="background:#d29922">RBAC</span></td>
+<td class="rule">Permission models</td>
+<td class="desc">Categories, permissions, assignments, overrides, audit log.</td>
+<td class="why">Stored in security Postgres schema.</td>
+</tr>
+<tr data-category="RBAC">
+<td class="law-num">167</td>
+<td><span class="cat" style="background:#d29922">RBAC</span></td>
+<td class="rule">Frontend permissions</td>
+<td class="desc">permissions.ts GENERATED from GET /rbac/catalog.</td>
+<td class="why">UI gating and backend gating share one source.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">168</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">Monorepo</td>
+<td class="desc">web_app/ (Next.js), mobile_app/ (Expo), shared/ (cross-platform).</td>
+<td class="why">Code sharing while keeping platform-specific code separate.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">169</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">Next.js version</td>
+<td class="desc">16.3.1+ with App Router.</td>
+<td class="why">Specific CSS processing requirements.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">170</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">TypeScript strict</td>
+<td class="desc">strict: true. any requires justification.</td>
+<td class="why">Catches null/undefined errors and missing properties at compile time.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">171</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">State management</td>
+<td class="desc">Zustand (global), React (local), Query/SWR (server).</td>
+<td class="why">Clear separation of state concerns.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">172</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">Data fetching</td>
+<td class="desc">Server Components fetch directly. Client Components use API client.</td>
+<td class="why">Frontend knows backend only through the API.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">173</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">API proxy</td>
+<td class="desc">Next.js rewrites /api/*, /admin/*, etc. to NEXT_PUBLIC_API_URL.</td>
+<td class="why">All API traffic through Next.js server routes. No CORS.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">174</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">Styling</td>
+<td class="desc">Tailwind CSS + CVA + tailwind-merge + clsx.</td>
+<td class="why">Consistent, type-safe styling with design tokens.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">175</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">Forms</td>
+<td class="desc">React Hook Form + Zod.</td>
+<td class="why">Server validation authoritative; client for UX.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">176</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">Error handling</td>
+<td class="desc">API errors → toasts/boundaries. Unhandled → console (dev) / Sentry (prod).</td>
+<td class="why">Users never see raw error objects.</td>
+</tr>
+<tr data-category="Frontend">
+<td class="law-num">177</td>
+<td><span class="cat" style="background:#58a6ff">Frontend</span></td>
+<td class="rule">Route groups</td>
+<td class="desc">Organized by actor: (customer), auth/, admin/*, supplier/*, etc.</td>
+<td class="why">Each group has its own layout.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">178</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Route structure</td>
+<td class="desc">page.tsx, layout.tsx, loading.tsx, error.tsx per route.</td>
+<td class="why">Next.js App Router convention.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">179</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Component structure</td>
+<td class="desc">ui/ (design system), admin/, auth/, chat/, comms/, country/, etc.</td>
+<td class="why">Organized by area for discoverability.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">180</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Hook patterns</td>
+<td class="desc">useXxx prefix. No JSX in hooks.</td>
+<td class="why">Hooks encapsulate logic; components render UI.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">181</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Lib patterns</td>
+<td class="desc">api/ (client, auth, country, errors), rbac.ts.</td>
+<td class="why">Pure functions and utilities.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">182</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Service patterns</td>
+<td class="desc">localizationService, crossBorderService, addressFormatService.</td>
+<td class="why">Client-side services are NOT backend domain services.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">183</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Theme/styling</td>
+<td class="desc">Design tokens, Tailwind config, global CSS.</td>
+<td class="why">Consistent theme across the app.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">184</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Types</td>
+<td class="desc">From @zozi/shared + local definitions.</td>
+<td class="why">Shared types prevent drift between frontend and backend.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">185</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Utils</td>
+<td class="desc">Pure utility functions.</td>
+<td class="why">Business logic belongs in services or hooks.</td>
+</tr>
+<tr data-category="Web App">
+<td class="law-num">186</td>
+<td><span class="cat" style="background:#3fb950">Web App</span></td>
+<td class="rule">Build</td>
+<td class="desc">next build passes with no errors.</td>
+<td class="why">Build failures block deployment.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">187</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">Expo SDK 51+</td>
+<td class="desc">Expo Router with file-based routing.</td>
+<td class="why">Native navigation with deep linking.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">188</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">Route groups</td>
+<td class="desc">(auth), (tabs), admin/, supplier/, logistics/, employee/.</td>
+<td class="why">Each group has its own layout and navigation.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">189</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">Components</td>
+<td class="desc">components/ui/ design system. Shared from @zozi/shared.</td>
+<td class="why">Consistent design system across platforms.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">190</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">Lib patterns</td>
+<td class="desc">api, stores, authPrompt, countryContext, geo, payment, secureStorage.</td>
+<td class="why">Same patterns as web where possible.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">191</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">Platform-specific</td>
+<td class="desc">.native.ts (RN) / .ts (web) suffixes.</td>
+<td class="why">Enables sharing logic while customizing per-platform.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">192</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">State</td>
+<td class="desc">Zustand (same stores as web).</td>
+<td class="why">Consistent state management across platforms.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">193</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">Storage</td>
+<td class="desc">expo-secure-storage for secrets. AsyncStorage for non-sensitive.</td>
+<td class="why">Never store secrets in plain AsyncStorage.</td>
+</tr>
+<tr data-category="Mobile">
+<td class="law-num">194</td>
+<td><span class="cat" style="background:#bc8cff">Mobile</span></td>
+<td class="rule">Build</td>
+<td class="desc">EAS Build. Expo Go for dev. App stores for production.</td>
+<td class="why">Automated build and submission pipeline.</td>
+</tr>
+<tr data-category="Shared">
+<td class="law-num">195</td>
+<td><span class="cat" style="background:#d29922">Shared</span></td>
+<td class="rule">Structure</td>
+<td class="desc">api-core, money, i18n, domain helpers, statusColors, requestCache, etc.</td>
+<td class="why">Cross-platform TypeScript consumed by both apps.</td>
+</tr>
+<tr data-category="Shared">
+<td class="law-num">196</td>
+<td><span class="cat" style="background:#d29922">Shared</span></td>
+<td class="rule">No app imports</td>
+<td class="desc">MUST NOT import from web_app/ or mobile_app/.</td>
+<td class="why">Prevents circular dependency.</td>
+</tr>
+<tr data-category="Shared">
+<td class="law-num">197</td>
+<td><span class="cat" style="background:#d29922">Shared</span></td>
+<td class="rule">Permissions generated</td>
+<td class="desc">permissions.ts GENERATED from backend /rbac/catalog.</td>
+<td class="why">UI and backend gating share one source.</td>
+</tr>
+<tr data-category="Shared">
+<td class="law-num">198</td>
+<td><span class="cat" style="background:#d29922">Shared</span></td>
+<td class="rule">Cross-platform types</td>
+<td class="desc">Platform-agnostic. .native.ts for platform adaptations.</td>
+<td class="why">Type safety across web and mobile.</td>
+</tr>
+<tr data-category="Shared">
+<td class="law-num">199</td>
+<td><span class="cat" style="background:#d29922">Shared</span></td>
+<td class="rule">API core</td>
+<td class="desc">apiFetch base client with auth, errors, retry.</td>
+<td class="why">Consistent API client across platforms.</td>
+</tr>
+<tr data-category="Shared">
+<td class="law-num">200</td>
+<td><span class="cat" style="background:#d29922">Shared</span></td>
+<td class="rule">Money formatting</td>
+<td class="desc">Intl.NumberFormat with locale support.</td>
+<td class="why">Consistent monetary display across platforms.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">201</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Env hierarchy</td>
+<td class="desc">.env.example → .env → backend/.env → frontend/.env.local.</td>
+<td class="why">Each environment has its own file.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">202</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Required vars</td>
+<td class="desc">SECRET_KEY, DATABASE_URL, REDIS_URL MUST be set in prod.</td>
+<td class="why">Missing vars cause immediate startup failure.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">203</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Typed flags</td>
+<td class="desc">pydantic-settings. No raw os.getenv().</td>
+<td class="why">String 'false' is truthy. Typed coercion prevents bugs.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">204</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">Secrets manager</td>
+<td class="desc">AWS Secrets Manager / HashiCorp Vault in production.</td>
+<td class="why">.env files are for development only.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">205</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">APP_ENV detection</td>
+<td class="desc">development, test, staging, production.</td>
+<td class="why">Behavior changes based on environment.</td>
+</tr>
+<tr data-category="Config">
+<td class="law-num">206</td>
+<td><span class="cat" style="background:#d29922">Config</span></td>
+<td class="rule">CORS allowlist</td>
+<td class="desc">Comma-separated list. No wildcard in production.</td>
+<td class="why">Prevents arbitrary websites from making authenticated requests.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">207</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">pytest framework</td>
+<td class="desc">pytest + pytest-asyncio. Files in tests/domains/ and tests/architecture/.</td>
+<td class="why">Standard Python testing stack.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">208</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Fixtures</td>
+<td class="desc">db_session, client/admin_client/supplier_client/customer_client, JWT tokens.</td>
+<td class="why">Pre-authenticated test clients speed up test writing.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">209</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Demo users</td>
+<td class="desc">admin@zozi.com, supplier@zozi.com, customer@zozi.com.</td>
+<td class="why">Consistent test users across environments.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">210</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Test environment</td>
+<td class="desc">APP_ENV=test. CSRF/rate disabled. SQLite.</td>
+<td class="why">Optimized for speed, not production fidelity.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">211</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Frontend tests</td>
+<td class="desc">Jest + RTL. E2E: Playwright.</td>
+<td class="why">Standard React testing stack.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">212</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Architecture tests</td>
+<td class="desc">test_import_laws.py (Laws 1,4,W1,W2), test_feature_catalog.py (Law 4).</td>
+<td class="why">Ensures laws are actually enforced.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">213</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Coverage</td>
+<td class="desc">Per-domain smoke tests. Per-law tests. CI-enforced.</td>
+<td class="why">Minimum viable test coverage.</td>
+</tr>
+<tr data-category="Testing">
+<td class="law-num">214</td>
+<td><span class="cat" style="background:#8b949e">Testing</span></td>
+<td class="rule">Isolation</td>
+<td class="desc">Transaction-rolled-back. No leaks. Independent.</td>
+<td class="why">Tests don't affect each other.</td>
+</tr>
+<tr data-category="Deployment">
+<td class="law-num">215</td>
+<td><span class="cat" style="background:#8b949e">Deployment</span></td>
+<td class="rule">Docker Compose</td>
+<td class="desc">db, redis, backend, frontend, Celery workers, beat.</td>
+<td class="why">Local development mirrors production architecture.</td>
+</tr>
+<tr data-category="Deployment">
+<td class="law-num">216</td>
+<td><span class="cat" style="background:#8b949e">Deployment</span></td>
+<td class="rule">Production targets</td>
+<td class="desc">Backend: Railway. Frontend: Vercel. Mobile: EAS Build.</td>
+<td class="why">Each platform has its own deployment pipeline.</td>
+</tr>
+<tr data-category="Deployment">
+<td class="law-num">217</td>
+<td><span class="cat" style="background:#8b949e">Deployment</span></td>
+<td class="rule">Migration on deploy</td>
+<td class="desc">alembic upgrade head automatic before serving traffic.</td>
+<td class="why">Schema is always up-to-date before traffic arrives.</td>
+</tr>
+<tr data-category="Deployment">
+<td class="law-num">218</td>
+<td><span class="cat" style="background:#8b949e">Deployment</span></td>
+<td class="rule">Health checks</td>
+<td class="desc">/health, /health/deps, /health/ready return 200.</td>
+<td class="why">Load balancers use these for routing.</td>
+</tr>
+<tr data-category="Deployment">
+<td class="law-num">219</td>
+<td><span class="cat" style="background:#8b949e">Deployment</span></td>
+<td class="rule">Rollback</td>
+<td class="desc">MUST support rollback. Migrations backward-compatible.</td>
+<td class="why">Zero-downtime rollback on failure.</td>
+</tr>
+<tr data-category="Deployment">
+<td class="law-num">220</td>
+<td><span class="cat" style="background:#8b949e">Deployment</span></td>
+<td class="rule">Env promotion</td>
+<td class="desc">development → staging → production.</td>
+<td class="why">Each environment has its own config and database.</td>
+</tr>
+<tr data-category="Performance">
+<td class="law-num">221</td>
+<td><span class="cat" style="background:#db6d28">Performance</span></td>
+<td class="rule">Caching strategy</td>
+<td class="desc">Redis with TTL. Event-driven invalidation.</td>
+<td class="why">Stale cache preferable to cache stampede.</td>
+</tr>
+<tr data-category="Performance">
+<td class="law-num">222</td>
+<td><span class="cat" style="background:#db6d28">Performance</span></td>
+<td class="rule">Keyset pagination</td>
+<td class="desc">cursor_paginate_asc. OFFSET FORBIDDEN on hot lists.</td>
+<td class="why">OFFSET degrades to O(n) on large tables.</td>
+</tr>
+<tr data-category="Performance">
+<td class="law-num">223</td>
+<td><span class="cat" style="background:#db6d28">Performance</span></td>
+<td class="rule">Connection pooling</td>
+<td class="desc">pool_size ≥ 10, max_overflow ≥ 20. PgBouncer.</td>
+<td class="why">Connection exhaustion causes cascading failures.</td>
+</tr>
+<tr data-category="Performance">
+<td class="law-num">224</td>
+<td><span class="cat" style="background:#db6d28">Performance</span></td>
+<td class="rule">Query optimization</td>
+<td class="desc">Indexes on queried columns. No N+1. No SELECT *.</td>
+<td class="why">Slow queries are logged and reviewed.</td>
+</tr>
+<tr data-category="Performance">
+<td class="law-num">225</td>
+<td><span class="cat" style="background:#db6d28">Performance</span></td>
+<td class="rule">CDN</td>
+<td class="desc">Static assets, images via CDN. Presigned URLs.</td>
+<td class="why">Reduces origin bandwidth by 40-60%.</td>
+</tr>
+<tr data-category="Performance">
+<td class="law-num">226</td>
+<td><span class="cat" style="background:#db6d28">Performance</span></td>
+<td class="rule">Async processing</td>
+<td class="desc">CPU-bound work to Celery. Request handlers never block.</td>
+<td class="why">Event loop stays responsive under load.</td>
+</tr>
+<tr data-category="Data">
+<td class="law-num">227</td>
+<td><span class="cat" style="background:#39d2c0">Data</span></td>
+<td class="rule">RLS enforcement</td>
+<td class="desc">set_rls_context() sets country_code. All queries filtered.</td>
+<td class="why">Data isolation at the database level.</td>
+</tr>
+<tr data-category="Data">
+<td class="law-num">228</td>
+<td><span class="cat" style="background:#39d2c0">Data</span></td>
+<td class="rule">Soft delete</td>
+<td class="desc">is_deleted (boolean, default false). Queries filter by default.</td>
+<td class="why">Enables data recovery and audit trails.</td>
+</tr>
+<tr data-category="Data">
+<td class="law-num">229</td>
+<td><span class="cat" style="background:#39d2c0">Data</span></td>
+<td class="rule">Audit columns</td>
+<td class="desc">created_at/updated_at via TimestampMixin. DB-side defaults.</td>
+<td class="why">Required for debugging and compliance.</td>
+</tr>
+<tr data-category="Data">
+<td class="law-num">230</td>
+<td><span class="cat" style="background:#39d2c0">Data</span></td>
+<td class="rule">Audit trail</td>
+<td class="desc">WORM log. Actor, action, entity, timestamp, before/after.</td>
+<td class="why">Forensic integrity for compliance investigations.</td>
+</tr>
+<tr data-category="Data">
+<td class="law-num">231</td>
+<td><span class="cat" style="background:#39d2c0">Data</span></td>
+<td class="rule">Data residency</td>
+<td class="desc">MAY shard by country_code.</td>
+<td class="why">Enables compliance with country-specific data laws.</td>
+</tr>
+<tr data-category="Data">
+<td class="law-num">232</td>
+<td><span class="cat" style="background:#39d2c0">Data</span></td>
+<td class="rule">Backup & recovery</td>
+<td class="desc">Daily backups. Tested for recovery. PITR. 30-day retention.</td>
+<td class="why">Disaster recovery capability.</td>
+</tr>
+<tr data-category="API">
+<td class="law-num">233</td>
+<td><span class="cat" style="background:#58a6ff">API</span></td>
+<td class="rule">REST conventions</td>
+<td class="desc">GET (list/detail), POST (create), PUT (update), DELETE.</td>
+<td class="why">Standard REST mapping.</td>
+</tr>
+<tr data-category="API">
+<td class="law-num">234</td>
+<td><span class="cat" style="background:#58a6ff">API</span></td>
+<td class="rule">Versioning</td>
+<td class="desc">URL prefix /api/v1/. Breaking = new version. Old deprecated.</td>
+<td class="why">Enables API evolution without breaking clients.</td>
+</tr>
+<tr data-category="API">
+<td class="law-num">235</td>
+<td><span class="cat" style="background:#58a6ff">API</span></td>
+<td class="rule">JSON format</td>
+<td class="desc">Request/response JSON. Pydantic validation. Serializer output.</td>
+<td class="why">Consistent, validated, serialized.</td>
+</tr>
+<tr data-category="API">
+<td class="law-num">236</td>
+<td><span class="cat" style="background:#58a6ff">API</span></td>
+<td class="rule">RFC 7807 errors</td>
+<td class="desc">Problem Details. No stack traces in production.</td>
+<td class="why">Standard error format enables client-side handling.</td>
+</tr>
+<tr data-category="API">
+<td class="law-num">237</td>
+<td><span class="cat" style="background:#58a6ff">API</span></td>
+<td class="rule">Pagination format</td>
+<td class="desc">items + next_cursor + has_more. No count on hot lists.</td>
+<td class="why">Count is expensive on large tables.</td>
+</tr>
+<tr data-category="API">
+<td class="law-num">238</td>
+<td><span class="cat" style="background:#58a6ff">API</span></td>
+<td class="rule">Filtering/sorting</td>
+<td class="desc">filter[field]=value, sort=-created_at. Complex: POST body.</td>
+<td class="why">Flexible querying without endpoint proliferation.</td>
+</tr>
+<tr data-category="API">
+<td class="law-num">239</td>
+<td><span class="cat" style="background:#58a6ff">API</span></td>
+<td class="rule">Idempotency</td>
+<td class="desc">Idempotency-Key header. 24h expiry.</td>
+<td class="why">Duplicate requests don't cause duplicate operations.</td>
+</tr>
+<tr data-category="Git">
+<td class="law-num">240</td>
+<td><span class="cat" style="background:#8b949e">Git</span></td>
+<td class="rule">Branching</td>
+<td class="desc">main, feature/*, fix/*, release/*, hotfix/*.</td>
+<td class="why">Git Flow convention.</td>
+</tr>
+<tr data-category="Git">
+<td class="law-num">241</td>
+<td><span class="cat" style="background:#8b949e">Git</span></td>
+<td class="rule">Conventional Commits</td>
+<td class="desc">type(scope): description. feat, fix, refactor, docs, test, chore, perf, security.</td>
+<td class="why">Automated changelog generation.</td>
+</tr>
+<tr data-category="Git">
+<td class="law-num">242</td>
+<td><span class="cat" style="background:#8b949e">Git</span></td>
+<td class="rule">PR process</td>
+<td class="desc">All via PR. CI + review. No direct main pushes.</td>
+<td class="why">Code review catches issues before merge.</td>
+</tr>
+<tr data-category="Git">
+<td class="law-num">243</td>
+<td><span class="cat" style="background:#8b949e">Git</span></td>
+<td class="rule">Hooks</td>
+<td class="desc">Pre-commit: ruff. Pre-push: architecture tests.</td>
+<td class="why">Automated quality gates.</td>
+</tr>
+<tr data-category="Git">
+<td class="law-num">244</td>
+<td><span class="cat" style="background:#8b949e">Git</span></td>
+<td class="rule">Worktrees</td>
+<td class="desc">Agent Manager uses worktrees. Cleaned up after merge.</td>
+<td class="why">Parallel work without branch switching.</td>
+</tr>
+<tr data-category="Docs">
+<td class="law-num">245</td>
+<td><span class="cat" style="background:#d29922">Docs</span></td>
+<td class="rule">Architecture docs</td>
+<td class="desc">ARCHITECTURE_DIAGRAM.md is authoritative. Lock-step with code.</td>
+<td class="why">Single source of truth for architecture.</td>
+</tr>
+<tr data-category="Docs">
+<td class="law-num">246</td>
+<td><span class="cat" style="background:#d29922">Docs</span></td>
+<td class="rule">Agent docs</td>
+<td class="desc">AGENTS.md quick reference. Not the full architecture.</td>
+<td class="why">Agent onboarding without overwhelming detail.</td>
+</tr>
+<tr data-category="Docs">
+<td class="law-num">247</td>
+<td><span class="cat" style="background:#d29922">Docs</span></td>
+<td class="rule">API docs</td>
+<td class="desc">FastAPI auto-generates at /docs and /redoc.</td>
+<td class="why">Always up-to-date with code.</td>
+</tr>
+<tr data-category="Docs">
+<td class="law-num">248</td>
+<td><span class="cat" style="background:#d29922">Docs</span></td>
+<td class="rule">Runbooks</td>
+<td class="desc">docs/runbooks/. Deployment, rollback, incident response.</td>
+<td class="why">Tested in staging quarterly.</td>
+</tr>
+<tr data-category="Docs">
+<td class="law-num">249</td>
+<td><span class="cat" style="background:#d29922">Docs</span></td>
+<td class="rule">Code comments</td>
+<td class="desc">Docstrings + WHY comments. Outdated removed.</td>
+<td class="why">Comments explain why, not what.</td>
+</tr>
+<tr data-category="Docs">
+<td class="law-num">250</td>
+<td><span class="cat" style="background:#d29922">Docs</span></td>
+<td class="rule">Changelog</td>
+<td class="desc">CHANGELOG.md. Per-release: features, breaking changes, fixes.</td>
+<td class="why">User-facing, plain language.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">251</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Horizontal scaling</td>
+<td class="desc">N stateless replicas. Sessions in Redis.</td>
+<td class="why">Add replicas to handle more traffic.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">252</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Auto-scaling</td>
+<td class="desc">CPU > 70% scale up. Min 2, max 20.</td>
+<td class="why">Handles traffic spikes without manual intervention.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">253</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Partitioning</td>
+<td class="desc">Range partition by created_at (monthly).</td>
+<td class="why">Query time constant as data grows.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">254</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">CQRS</td>
+<td class="desc">Commands write. Events update read models.</td>
+<td class="why">Prevents write contention from slowing reads.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">255</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Write-behind cache</td>
+<td class="desc">Buffer in Redis, flush async.</td>
+<td class="why">10-100x reduction in DB write pressure.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">256</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Tenant quotas</td>
+<td class="desc">Per-country limits. 429 on exceed.</td>
+<td class="why">Prevents one tenant from monopolizing resources.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">257</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Full-text search</td>
+<td class="desc">Elasticsearch/OpenSearch for catalog.</td>
+<td class="why">Sub-100ms search across millions of products.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">258</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Image pipeline</td>
+<td class="desc">Async resize, WebP, metadata strip.</td>
+<td class="why">60-80% bandwidth reduction.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">259</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">API caching</td>
+<td class="desc">ETag, Last-Modified, Cache-Control. CDN.</td>
+<td class="why">40-60% origin load reduction.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">260</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">PgBouncer</td>
+<td class="desc">Transaction pooling. max_client_conn=10000.</td>
+<td class="why">Multiplexes thousands of client connections.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">261</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Read replicas</td>
+<td class="desc">Auto-route reads. Fallback if lag > 1s.</td>
+<td class="why">Offloads primary. Automatic failover.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">262</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Archiving</td>
+<td class="desc">Old data to S3 Glacier.</td>
+<td class="why">Keeps operational tables small and fast.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">263</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Write buffering</td>
+<td class="desc">Celery queue for bursty writes.</td>
+<td class="why">Prevents DB overload during spikes.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">264</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Static assets</td>
+<td class="desc">Minify, compress, hash, CDN.</td>
+<td class="why">Reduces bandwidth and improves cache hit rate.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">265</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">DB monitoring</td>
+<td class="desc">Alerts on connections, lag, deadlocks, slow queries.</td>
+<td class="why">Early warning of capacity issues.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">266</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Synthetic monitoring</td>
+<td class="desc">Every 60s from multiple regions.</td>
+<td class="why">Detects issues before users report them.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">267</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Endpoint limits</td>
+<td class="desc">Max body (10MB), query (100 items), time (30s).</td>
+<td class="why">Prevents resource exhaustion.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">268</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Load shedding</td>
+<td class="desc">Shed non-critical first.</td>
+<td class="why">Critical paths always served under load.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">269</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Cost optimization</td>
+<td class="desc">Right-size, spot instances, coalescing.</td>
+<td class="why">Efficient resource usage at scale.</td>
+</tr>
+<tr data-category="Scalability">
+<td class="law-num">270</td>
+<td><span class="cat" style="background:#3fb950">Scalability</span></td>
+<td class="rule">Chaos engineering</td>
+<td class="desc">Regular failure experiments.</td>
+<td class="why">Validates resilience assumptions.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">271</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">AI-agent security</td>
+<td class="desc">Prompt injection prevention.</td>
+<td class="why">AI endpoints are new attack surface.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">272</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Data exfiltration</td>
+<td class="desc">Per-user export limits.</td>
+<td class="why">Prevents AI agents from bulk-extracting data.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">273</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Model poisoning</td>
+<td class="desc">ML input validation before training.</td>
+<td class="why">Prevents adversarial training data.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">274</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Adversarial detection</td>
+<td class="desc">Signature + anomaly detection.</td>
+<td class="why">Catches known and novel attack patterns.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">275</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Encryption at rest</td>
+<td class="desc">AES-256. KMS. TDE.</td>
+<td class="why">Protects data if storage is compromised.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">276</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Encryption in transit</td>
+<td class="desc">TLS 1.3. Certificate pinning.</td>
+<td class="why">Protects data from interception.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">277</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Key rotation</td>
+<td class="desc">Every 90 days. Zero-downtime.</td>
+<td class="why">Limits exposure window of compromised keys.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">278</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">WORM audit</td>
+<td class="desc">Write Once Read Many. Tamper-proof.</td>
+<td class="why">Forensic integrity for compliance.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">279</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Session binding</td>
+<td class="desc">Device fingerprint. Concurrent limits.</td>
+<td class="why">Prevents session hijacking and abuse.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">280</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Brute force DB level</td>
+<td class="desc">5 fails = lock. 10 = admin.</td>
+<td class="why">Database-level enforcement beyond app.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">281</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Bot detection</td>
+<td class="desc">Score + block/CAPTCHA.</td>
+<td class="why">Prevents automated abuse.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">282</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">PII masking</td>
+<td class="desc">In logs, errors, non-admin responses.</td>
+<td class="why">Prevents PII leakage to unauthorized viewers.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">283</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">MFA</td>
+<td class="desc">TOTP for admin/employee.</td>
+<td class="why">Second factor prevents credential abuse.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">284</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Zero-trust</td>
+<td class="desc">mTLS service-to-service.</td>
+<td class="why">No implicit trust based on network location.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">285</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">CSP</td>
+<td class="desc">Strict + nonces.</td>
+<td class="why">Prevents XSS via injected scripts.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">286</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">SRI</td>
+<td class="desc">Integrity hashes.</td>
+<td class="why">Prevents CDN compromise from injecting code.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">287</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">All headers</td>
+<td class="desc">Permissions-Policy, COOP, CORP.</td>
+<td class="why">Defense in depth against browser attacks.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">288</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Disclosure process</td>
+<td class="desc">SECURITY.md. 24h SLA for critical.</td>
+<td class="why">Enables responsible vulnerability reporting.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">289</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Pen testing</td>
+<td class="desc">Annual third-party. OWASP + logic.</td>
+<td class="why">Independent security validation.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">290</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Dep pinning</td>
+<td class="desc">Exact + hashes.</td>
+<td class="why">Prevents supply chain attacks via dep substitution.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">291</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">SBOM</td>
+<td class="desc">For every release.</td>
+<td class="why">Know what's in the software.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">292</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">License compliance</td>
+<td class="desc">CI-enforced.</td>
+<td class="why">Prevents legal issues from incompatible licenses.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">293</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Incident automation</td>
+<td class="desc">Auto-isolate, revoke, capture.</td>
+<td class="why">Fast response limits blast radius.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">294</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Training</td>
+<td class="desc">Annual. OWASP + social engineering.</td>
+<td class="why">Developers are the first line of defense.</td>
+</tr>
+<tr data-category="Security">
+<td class="law-num">295</td>
+<td><span class="cat" style="background:#f85149">Security</span></td>
+<td class="rule">Supply chain</td>
+<td class="desc">Image scanning + signing.</td>
+<td class="why">Prevents compromised containers.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">296</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Circuit breaker</td>
+<td class="desc">All external calls wrapped.</td>
+<td class="why">Prevents cascade failures.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">297</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Retry + backoff</td>
+<td class="desc">1-2-4-8s. Jitter. Max 5.</td>
+<td class="why">Handles transient failures without thundering herd.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">298</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Dead letter queue</td>
+<td class="desc">Failed events to DLQ. Replayable.</td>
+<td class="why">No event silently dropped.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">299</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Feature health</td>
+<td class="desc">Per-feature in /health/deps.</td>
+<td class="why">Granular health visibility.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">300</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Per-feature fallback</td>
+<td class="desc">Each feature defines degradation.</td>
+<td class="why">Users always see a usable UI.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">301</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Error budget</td>
+<td class="desc">Exhaustion = freeze.</td>
+<td class="why">Balances velocity and reliability.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">302</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">On-call</td>
+<td class="desc">PagerDuty/Opsgenie. 5min SLA.</td>
+<td class="why">Fast human response to critical issues.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">303</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Runbooks</td>
+<td class="desc">Per-alert. Tested quarterly.</td>
+<td class="why">Reduces MTTR for known issues.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">304</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">DR</td>
+<td class="desc">RPO=5min, RTO=1hr. Multi-region.</td>
+<td class="why">Survives regional failures.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">305</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">DB failover</td>
+<td class="desc">30s promotion.</td>
+<td class="why">Minimal data loss on primary failure.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">306</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Multi-region</td>
+<td class="desc">≥2 regions. Cross-region replication.</td>
+<td class="why">Survives regional failures.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">307</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Backup verify</td>
+<td class="desc">Daily restore test.</td>
+<td class="why">A backup that can't be restored is worthless.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">308</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Drift detection</td>
+<td class="desc">IaC daily checks.</td>
+<td class="why">Prevents configuration surprises.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">309</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Dep monitoring</td>
+<td class="desc">External status pages. Auto-fallback.</td>
+<td class="why">Fast response to external degradation.</td>
+</tr>
+<tr data-category="Resilience">
+<td class="law-num">310</td>
+<td><span class="cat" style="background:#f85149">Resilience</span></td>
+<td class="rule">Post-incident reviews</td>
+<td class="desc">Blameless. Action items tracked.</td>
+<td class="why">Prevents repeat incidents.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">311</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Feature flags</td>
+<td class="desc">Gradual rollout. Instant rollback.</td>
+<td class="why">Decouples deployment from release.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">312</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">A/B testing</td>
+<td class="desc">Hash-based. Sticky.</td>
+<td class="why">Data-driven feature decisions.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">313</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Compliance</td>
+<td class="desc">GDPR. PCI-DSS via Stripe Elements.</td>
+<td class="why">Automated compliance reduces legal risk.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">314</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">IaC</td>
+<td class="desc">Terraform/Pulumi. Manual FORBIDDEN.</td>
+<td class="why">Reproducible, auditable infrastructure.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">315</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Log aggregation</td>
+<td class="desc">ELK/Loki. 30d hot, 1y cold.</td>
+<td class="why">Centralized visibility.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">316</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Dashboards</td>
+<td class="desc">Grafana. p50/p95/p99.</td>
+<td class="why">Real-time system health visibility.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">317</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Alerting tiers</td>
+<td class="desc">P1/P2/P3.</td>
+<td class="why">Right urgency for right issues.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">318</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Capacity planning</td>
+<td class="desc">Monthly. 3-month projection.</td>
+<td class="why">Prevents surprises.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">319</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Release mgmt</td>
+<td class="desc">Canary → full. Rollback < 5min.</td>
+<td class="why">Safe, fast deployments.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">320</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">DevX</td>
+<td class="desc">< 10min setup. Hot reload.</td>
+<td class="why">Fast onboarding and iteration.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">321</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Doc freshness</td>
+<td class="desc">Quarterly reviews.</td>
+<td class="why">Outdated docs are worse than no docs.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">322</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Cost allocation</td>
+<td class="desc">By domain/team via tagging.</td>
+<td class="why">Visibility into cost drivers.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">323</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Human access</td>
+<td class="desc">Least-privilege. 24h offboarding.</td>
+<td class="why">Limits blast radius of compromised accounts.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">324</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Change mgmt</td>
+<td class="desc">All via PR + CI.</td>
+<td class="why">Auditable, reviewable changes.</td>
+</tr>
+<tr data-category="Operations">
+<td class="law-num">325</td>
+<td><span class="cat" style="background:#bc8cff">Operations</span></td>
+<td class="rule">Sustainability</td>
+<td class="desc">Right-size. Carbon tracking.</td>
+<td class="why">Environmental responsibility.</td>
+</tr>
+</tbody>
+</table>
+
+<div class="footer">
+<p>ZOZI Platform — Architecture Law Matrix | Generated: 2026-08-27</p>
+<p>Full law text: ARCHITECTURE_DIAGRAM.md (§12 for Laws 1-250, §14-17 for Laws 251-325)</p>
+</div>
+
+<script>
+function filterTable() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const cat = document.getElementById('catFilter').value;
+    const rows = document.querySelectorAll('#lawTable tbody tr');
+    let count = 0;
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowCat = row.dataset.category;
+        const matchSearch = text.includes(search);
+        const matchCat = cat === 'all' || rowCat === cat;
+        if (matchSearch && matchCat) { row.classList.remove('hidden'); count++; }
+        else { row.classList.add('hidden'); }
+    });
+    document.getElementById('countInfo').textContent = `Showing ${count} of ${rows.length} laws`;
+}
+function changeCat() { filterTable(); }
+</script>
+</body>
+</html>

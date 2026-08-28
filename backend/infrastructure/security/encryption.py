@@ -19,7 +19,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 _ENCRYPTED_PREFIX = "enc::"
-_KDF_SALT = b"zozi-field-encryption-salt-v1"
+_KDF_SALT = os.environ["FIELD_ENCRYPTION_SALT"].encode()
 _KDF_ITERATIONS = 600_000
 
 

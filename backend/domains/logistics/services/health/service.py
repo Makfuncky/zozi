@@ -158,7 +158,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 
 from infrastructure.database.database import get_db
-from rbac import get_current_user
+from infrastructure.utils.dependencies import get_current_user
 
 # get_logistics_health_engine is defined in this file (line ~370)
 
@@ -186,7 +186,7 @@ from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.services.auth.auth_service import get_current_user
+from domains.accounts.ports import get_current_user
 
 from infrastructure.database.database import get_db
 

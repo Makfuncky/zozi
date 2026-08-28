@@ -12,7 +12,7 @@ from infrastructure.database.database import get_db, Base
 from infrastructure.database.schemas import User as UserSchema, Product as ProductSchema, Order as OrderSchema, CouponSchema, ListPage, AuditLogSchema, AuditLogPage, CreateStaffAccount, UpdateStaffAccount, BulkUpdateStaffBody
 # TODO: Module not yet created
 # from domains.governance.services.settings.admin_controller import get_current_admin
-from domains.accounts.services.auth.auth_service import get_current_user
+from domains.accounts.ports import get_current_user, get_hierarchy_permissions, get_staff_permission_catalog, update_role_permissions
 from infrastructure.utils.dependencies import require_admin
 # TODO: Module not yet created
 # from domains.governance.services.settings.admin_controller import require_admin_2fa_enabled
@@ -62,8 +62,7 @@ from domains.governance.ports import delete_user_admin
 # from domains.governance.services.suppliers.suppliers_service import get_supplier_comparison
 # TODO: Module not yet created
 # from domains.governance.services.analytics.analytics_service import get_customer_insights
-from domains.governance.services.settings.misc_service import get_audit_log_page
-from domains.governance.services.settings.misc_service import get_available_audit_actions
+from domains.governance.ports import get_audit_log_page, get_available_audit_actions
 # TODO: Module not yet created
 # from domains.governance.services.suppliers.suppliers_service import get_pending_suppliers
 # TODO: Module not yet created
@@ -90,8 +89,6 @@ from domains.governance.ports import delete_coupon
 # from domains.comms.services.ticket.tickets_write_service import update_ticket_status
 from domains.finance.ports import list_pending_payouts
 from domains.governance.ports import verify_payout
-from domains.accounts.services.permissions.permission_service import get_hierarchy_permissions
-from domains.accounts.services.permissions.permission_service import update_role_permissions
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # from domains.governance.services.analytics.analytics_service import get_analytics_timeseries
@@ -121,7 +118,6 @@ from domains.accounts.services.permissions.permission_service import update_role
 # from domains.governance.services.users.users_service_accounts import bulk_toggle_users_active
 # TODO: Module not yet created
 # from domains.governance.services.users.users_service_accounts import list_staff_accounts
-from domains.accounts.services.permissions.permission_service import get_staff_permission_catalog
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # from domains.governance.services.users.users_service_accounts import update_staff_account

@@ -58,8 +58,8 @@ def _get_employee_org_unit_id(user: User, db=Depends(get_db)) -> Optional[int]:
 def ess_get_profile(
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.profile.read")),
 ):
-    require_feature("hr.profile.read")
     emp_id = _get_employee_id(current_user, db)
     try:
         return get_employee_profile(db, emp_id)
@@ -75,8 +75,8 @@ def ess_update_profile(
     emergency_contact_phone: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.profile.update")),
 ):
-    require_feature("hr.profile.update")
     emp_id = _get_employee_id(current_user, db)
     try:
         return update_employee_profile(
@@ -96,8 +96,8 @@ def ess_update_profile(
 def ess_leave_balance(
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.leave.read")),
 ):
-    require_feature("hr.leave.read")
     emp_id = _get_employee_id(current_user, db)
     return get_leave_balance(db, emp_id)
 
@@ -110,8 +110,8 @@ def ess_request_leave(
     reason: str,
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.leave.create")),
 ):
-    require_feature("hr.leave.create")
     emp_id = _get_employee_id(current_user, db)
     return create_leave_request(db, emp_id, leave_type, start_date, end_date, reason)
 
@@ -122,8 +122,8 @@ def ess_leave_history(
     page_size: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.leave.read")),
 ):
-    require_feature("hr.leave.read")
     emp_id = _get_employee_id(current_user, db)
     items = get_leave_history(db, emp_id)
     return _paginate(items, page, page_size)
@@ -138,8 +138,8 @@ def ess_payslips(
     page_size: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.payslip.read")),
 ):
-    require_feature("hr.payslip.read")
     emp_id = _get_employee_id(current_user, db)
     items = get_payslips(db, emp_id)
     return _paginate(items, page, page_size)
@@ -154,8 +154,8 @@ def ess_attendance(
     page_size: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.attendance.read")),
 ):
-    require_feature("hr.attendance.read")
     emp_id = _get_employee_id(current_user, db)
     items = get_attendance(db, emp_id)
     return _paginate(items, page, page_size)
@@ -170,8 +170,8 @@ def ess_okrs(
     page_size: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.okr.read")),
 ):
-    require_feature("hr.okr.read")
     emp_id = _get_employee_id(current_user, db)
     items = get_okrs(db, emp_id)
     return _paginate(items, page, page_size)
@@ -184,8 +184,8 @@ def ess_okrs(
 def ess_org_chart(
     current_user: User = Depends(get_current_user),
     db=Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.org.read")),
 ):
-    require_feature("hr.org.read")
     emp_id = _get_employee_id(current_user, db)
     org_unit_id = _get_employee_org_unit_id(current_user, db)
     return get_org_chart(db, org_unit_id, emp_id)

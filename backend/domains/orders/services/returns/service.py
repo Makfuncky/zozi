@@ -8,6 +8,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any, List, Optional, cast
 
 from fastapi import HTTPException
@@ -17,17 +18,16 @@ from providers.payments.stripe import refund_payment_intent
 from providers.payments.tap import refund_tap_charge
 from sqlalchemy.orm import joinedload
 
-from domains.governance.models.user import User
-from domains.catalog.models.products import Product
-from domains.comms.models.communication import Notification
-from domains.logistics.models.logistics import Shipment
+from domains.governance.ports import User
+from domains.catalog.ports import Product
+from domains.comms.ports import Notification
+from domains.logistics.ports import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.orders.models.orders import ReturnRequest
 from infrastructure.database.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
-from domains.finance.services.payments.payments import _order_holds_inventory
-from domains.finance.services.payments.payments import apply_order_status_change
+from domains.audit.ports import AuditAction, audit_log
+from domains.finance.ports import _order_holds_inventory, apply_order_status_change, log_refund_bank_transaction
 from infrastructure.utils.config import settings
 from infrastructure.database.database import SessionLocal
 import structlog
@@ -138,7 +138,7 @@ def _return_request_item_summaries(req: ReturnRequest, db: Session) -> list[dict
                 "product_id": item.product_id,
                 "product_name": cast(str | None, getattr(product, "name", None)) or f"Product #{item.product_id}",
                 "quantity": int(item.quantity or 0),
-                "price": float(item.price or 0),
+                "price": Decimal(str(item.price or 0)),
                 "return_window_days": _normalized_return_window_days(
                     cast(Any, getattr(product, "return_window_days", None))
                     if product is not None
@@ -147,36 +147,6 @@ def _return_request_item_summaries(req: ReturnRequest, db: Session) -> list[dict
             }
         )
     return summaries
-
-
-def _attach_return_request_context(req: ReturnRequest, db: Session) -> ReturnRequest:
-    order = cast(Optional[Order], getattr(req, "order", None))
-    if order is None:
-        order = (
-            db.query(Order)
-            .options(selectinload(Order.items).selectinload(OrderItem.product))
-            .filter(Order.id == req.order_id)
-            .first()
-        )
-        if order is not None:
-            setattr(req, "order", order)
-
-    item_summaries = _return_request_item_summaries(req, db)
-    delivered_at = _order_delivery_reference(order, db) if order is not None else None
-    return_window_days = (
-        item_summaries[0]["return_window_days"]
-        if req.order_item_id is not None and item_summaries
-        else _order_return_window_days(order, db)
-        if order is not None
-        else 10
-    )
-    return_deadline = delivered_at + timedelta(days=return_window_days) if delivered_at is not None else None
-
-    setattr(req, "items", item_summaries)
-    setattr(req, "return_window_days", return_window_days)
-    setattr(req, "delivered_at", delivered_at)
-    setattr(req, "return_deadline", return_deadline)
-    return req
 
 
 def _default_supplier_review_entry(timestamp: datetime | None = None) -> dict[str, Any]:
@@ -243,7 +213,7 @@ def _supplier_owned_items(order: Order, supplier_id: int, order_item_id: int | N
                 "product_id": item.product_id,
                 "product_name": product.name,
                 "quantity": int(item.quantity or 0),
-                "price": float(item.price or 0),
+                "price": Decimal(str(item.price or 0)),
             }
         )
     return owned_items
@@ -360,7 +330,7 @@ def create_return_request(current_user: dict, payload: ReturnRequestCreate, db: 
         db=db,
     )
     try:
-        from domains.comms.services.transactional_email_service import enqueue_return_created_email
+        from domains.comms.ports import enqueue_return_created_email, enqueue_return_status_email
         enqueue_return_created_email(cast(int, return_request.id))
     except Exception:
         logger.exception("Failed to enqueue return-created email for return %s", return_request.id)
@@ -428,7 +398,6 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                     try:
                         apply_order_status_change(order, "refunded", db)
                         try:
-                            from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
                             log_refund_bank_transaction(
                                 order,
                                 db,
@@ -457,7 +426,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                 if tap_key:
                     try:
                         import asyncio
-                        _tap_refund_amount = float(cast(Any, getattr(order, "total_amount")) or 0)
+                        _tap_refund_amount = Decimal(str(cast(Any, getattr(order, "total_amount")) or 0))
 
                         async def _do_tap_refund() -> dict:
                             return await refund_tap_charge(payment_id, _tap_refund_amount, tap_key)
@@ -471,7 +440,6 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                         if tap_data.get("status") in ("REFUNDED", "CAPTURED"):
                             apply_order_status_change(order, "refunded", db)
                             try:
-                                from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
                                 log_refund_bank_transaction(
                                     order,
                                     db,
@@ -520,7 +488,6 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
         db=db,
     )
     try:
-        from domains.comms.services.transactional_email_service import enqueue_return_status_email
         enqueue_return_status_email(cast(int, req.id))
     except Exception:
         logger.exception("Failed to enqueue return-status email for return %s", req.id)

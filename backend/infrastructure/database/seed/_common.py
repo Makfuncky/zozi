@@ -323,7 +323,7 @@ def _ensure_demo_pickup_ready_shipment(
     logistics_partner,
     service_area,
 ) -> None:
-    from domains.logistics.services.partners.service import quote_shipping_for_destination
+    from domains.logistics.ports import quote_shipping_for_destination
     Product = get_model("Product")
     Shipment = get_model("Shipment")
     Order = get_model("Order")

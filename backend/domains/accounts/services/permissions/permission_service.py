@@ -440,30 +440,29 @@ from sqlalchemy.orm import Session
 
 
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 # TODO: CountryStaffAssignment not found in country.ports
 # from domains.country.ports import CountryStaffAssignment
 from domains.hr.ports import Employee
-from rbac.dependencies import _ROLE_FEATURES
-
-DEFAULT_ROLE_PERMISSION_MAP: dict = {role: set(features) for role, features in _ROLE_FEATURES.items()}
 
 
+def _get_role_features() -> dict:
+    """Lazily resolve the role→features map (rbac is above domains in the stack)."""
+    from rbac.dependencies import _ROLE_FEATURES
+    return _ROLE_FEATURES
 
 
 class RBACService:
 
     """Service for role-based access control and delegation workflows."""
 
-
-
-    DEFAULT_ROLES = {
-
-        role: {"permissions": sorted(permissions)}
-
-        for role, permissions in DEFAULT_ROLE_PERMISSION_MAP.items()
-
-    }
+    @property
+    def DEFAULT_ROLES(self) -> dict:
+        role_features = _get_role_features()
+        return {
+            role: {"permissions": sorted(features)}
+            for role, features in role_features.items()
+        }
 
     
 

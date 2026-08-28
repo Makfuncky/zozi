@@ -125,9 +125,6 @@ class EnhancedSecurityHeadersMiddleware(BaseHTTPMiddleware):
             ).hexdigest()[:32]
         response.headers["X-Zoi-Request-ID"] = request_id
 
-        user_agent = request.headers.get("user-agent", "unknown")
-        response.headers["X-User-Agent"] = user_agent[:100]
-
         security_zone = self._classify_security_zone(request)
         response.headers["X-Zoi-Security-Zone"] = security_zone
 

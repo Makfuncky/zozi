@@ -111,7 +111,7 @@ class KMSService:
     def generate_data_hash(self, data: str, salt: str = None) -> str:
         """Generate deterministic hash for data (for search/indexing)."""
         if salt is None:
-            salt = os.environ.get("HASH_SALT", "default_salt")
+            salt = os.environ["HASH_SALT"]
         return hashlib.sha256(f"{salt}{data}".encode()).hexdigest()
     
     def mask_sensitive(self, value: str, show_last: int = 4) -> str:

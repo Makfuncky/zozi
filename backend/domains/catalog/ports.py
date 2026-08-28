@@ -24,7 +24,7 @@ from infrastructure.utils.pagination import (
 )
 
 from domains.catalog.models.products import Category, Product, ProductFilterMetadata, ProductFilterOption, ProductVariant, ProductVideo, Review, VideoAnalytics, Wishlist, WishlistItem
-from domains.catalog.models.promotions import BOGOPromotion, Banner
+from domains.promotions.models.promotions import BOGOPromotion, Banner
 
 
 # --- Keyset (cursor) pagination helpers (diagram §6: NEVER OFFSET on hot lists) ---
@@ -227,3 +227,29 @@ def list_b_o_g_o_promotions_page(db: Session, cursor: Optional[str] = None, page
 # NOTE: All write/override imports have been removed. Cross-domain consumers
 # that need write access must import the owning service directly (outside ports).
 # Only pure read helpers remain in this module per Law 3.
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "create_category": ("domains.catalog.services.categories.category_service", "create_category"),
+    "delete_category": ("domains.catalog.services.categories.category_service", "delete_category"),
+    "reorder_categories": ("domains.catalog.services.categories.category_service", "reorder_categories"),
+    "update_category": ("domains.catalog.services.categories.category_service", "update_category"),
+    "create_coupon": ("domains.catalog.services.promotions.promotions_service", "create_coupon"),
+    "create_verification": ("domains.catalog.services.products.product_verification_service", "create_verification"),
+    "resolve_product_variant": ("domains.catalog.services.products.products_service", "resolve_product_variant"),
+    "get_supplier_profile": ("domains.catalog.services.products.products_service", "get_supplier_profile"),
+    "_bump_product_cache_version": ("domains.catalog.services.products.products_service", "_bump_product_cache_version"),
+}
+import importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

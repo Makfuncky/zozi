@@ -108,6 +108,18 @@ FEATURES: dict[str, dict] = {
         "actions": ["read", "create", "update", "delete"],
         "description": "Configure row-level security policies and tenant isolation rules.",
     },
+    "country.config.read": {
+        "label": "Read Country Configuration",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "Read country configuration settings and metadata.",
+    },
+    "country.config.write": {
+        "label": "Write Country Configuration",
+        "risk": "high",
+        "actions": ["read", "write", "update"],
+        "description": "Modify country configuration settings and metadata.",
+    },
 }
 
 

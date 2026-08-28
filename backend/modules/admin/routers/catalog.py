@@ -51,8 +51,8 @@ def list_products(
     include_deleted: bool = False,
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.list")),
 ):
-    require_feature("catalog.list")
     return list_all_products(country_code, page, size, moderation_status, include_deleted, _, db)
 
 
@@ -63,8 +63,8 @@ def list_pending_products_route(
     page_size: int = Query(50),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.list")),
 ):
-    require_feature("catalog.list")
     return list_all_products(country_code, page, page_size, "pending", False, _, db)
 
 
@@ -74,8 +74,8 @@ def approve_product_route(
     product_id: int = Path(...),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return approve_product(country_code, product_id, _, db)
 
 
@@ -86,8 +86,8 @@ def reject_product_route(
     reason: str | None = None,
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return reject_product(country_code, product_id, reason, _, db)
 
 
@@ -99,8 +99,8 @@ def update_product_badge_route(
     value: bool = Body(...),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return update_product_badge(country_code, product_id, field, value, _, db)
 
 
@@ -110,8 +110,8 @@ def bulk_archive_products_route(
     payload: BulkActionRequest = Body(...),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return bulk_archive_products(country_code, payload, _, db)
 
 
@@ -121,8 +121,8 @@ def bulk_restore_products_route(
     payload: BulkActionRequest = Body(...),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return bulk_restore_products(country_code, payload, _, db)
 
 
@@ -132,8 +132,8 @@ def bulk_moderate_products_route(
     payload: dict = Body(...),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return bulk_moderate_products(country_code, payload, _, db)
 
 
@@ -143,8 +143,8 @@ def bulk_change_category_route(
     payload: BulkCategoryChangeRequest = Body(...),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     return bulk_change_category(country_code, payload, _, db)
 
 
@@ -155,8 +155,8 @@ def archive_product_route(
     payload: ArchiveRequest | None = Body(None),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return archive_product(country_code, product_id, payload, _, db)
 
 
@@ -166,8 +166,8 @@ def restore_product_route_wrapper(
     product_id: int = Path(...),
     _=Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return restore_product_route(country_code, product_id, _, db)
 
 
@@ -177,8 +177,8 @@ def delete_product_permanent_route(
     product_id: int = Path(...),
     _=Depends(require_super_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.delete")),
 ):
-    require_feature("catalog.delete")
     return delete_product_permanent(country_code, product_id, _, db)
 
 
@@ -193,8 +193,8 @@ def list_categories_route(
     page_size: int = Query(20, ge=1, le=100),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.list")),
 ):
-    require_feature("catalog.list")
     return list_categories_paginated(
         db,
         country_code=country_code,
@@ -214,8 +214,8 @@ def create_category_route(
     description: str | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     payload = build_category_payload(
         name=name,
         slug=slug,
@@ -238,8 +238,8 @@ def update_category_route(
     description: str | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     updates = build_category_updates(
         name=name,
         slug=slug,
@@ -257,8 +257,8 @@ def archive_category_route(
     payload: ArchiveRequest | None = Body(None),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     return archive_category_service(
         category_id,
         current_user,
@@ -273,8 +273,8 @@ def restore_category_route(
     category_id: int = Path(...),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     return restore_category_service(category_id, current_user, db)
 
 
@@ -284,8 +284,8 @@ def reorder_categories_route(
     order: dict | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     return reorder_categories(db, order or {})
 
 
@@ -295,8 +295,8 @@ def bulk_archive_categories_route(
     payload: BulkActionRequest = Body(...),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     return bulk_archive_categories_service(payload.ids, current_user, db, reason=payload.reason)
 
 
@@ -306,8 +306,8 @@ def bulk_restore_categories_route(
     payload: BulkActionRequest = Body(...),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     return bulk_restore_categories_service(payload.ids, current_user, db)
 
 
@@ -317,8 +317,8 @@ def delete_category_route(
     category_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.category.manage")),
 ):
-    require_feature("catalog.category.manage")
     return delete_category_by_id(db, country_code, category_id)
 
 

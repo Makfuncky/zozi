@@ -13,8 +13,7 @@ logger = structlog.get_logger(__name__)
 
 def get_cities_dropdown(country_code: str, q: Optional[str], limit: int) -> List[dict]:
     from infrastructure.database.database import get_db_context
-    from domains.country.models.countries import CountryConfig
-    from domains.country.models.country_enhancements import CountryCity
+    from domains.country.ports import CountryConfig, CountryCity
 
     cc = country_code.upper()
     with get_db_context() as db:
@@ -48,7 +47,7 @@ def get_cities_dropdown(country_code: str, q: Optional[str], limit: int) -> List
 
 def get_countries_dropdown(limit: int = 20, cursor: Optional[str] = None) -> dict:
     from infrastructure.database.database import get_db_context
-    from domains.country.models.countries import CountryConfig
+    from domains.country.ports import CountryConfig
     from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 
     with get_db_context() as db:

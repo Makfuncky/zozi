@@ -9,7 +9,7 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
 class CouponUsage(Base):
-    __tablename__ = "coupon_usage"
+    __tablename__ = "coupon_usages"
     __table_args__ = ({"schema": "promotions"},)
     id = Column(Integer, primary_key=True, index=True)
     coupon_id = Column(Integer, nullable=False)
@@ -18,6 +18,5 @@ class CouponUsage(Base):
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    is_deleted = Column(Boolean, default=False)
-
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])

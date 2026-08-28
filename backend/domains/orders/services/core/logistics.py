@@ -216,9 +216,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
+from domains.audit.ports import AuditAction, audit_log
 from domains.governance.models.core import CityDistanceMatrix
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierProfile
 from domains.finance.models.finance import TransactionLedger
@@ -237,23 +237,10 @@ from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderLogisticsAllocation
 from domains.finance.models.payments import LogisticsPartnerPayout
-from domains.finance.services.treasury.cash_management_service import apply_shipment_vehicle_selection
-from domains.finance.services.treasury.cash_management_service import create_cod_remittance_receipt
-from domains.finance.services.treasury.cash_management_service import deserialize_pricing_breakdown_json
-from domains.finance.services.treasury.cash_management_service import effective_allocation_delivery_amounts
-from domains.finance.services.treasury.cash_management_service import list_cod_remittance_receipts
-from domains.finance.services.treasury.cash_management_service import serialize_cod_remittance_receipt
+from domains.finance.ports import apply_shipment_vehicle_selection, create_cod_remittance_receipt, create_invoice_from_order, create_settlements_on_delivery, deserialize_pricing_breakdown_json, effective_allocation_delivery_amounts, list_cod_remittance_receipts, serialize_cod_remittance_receipt
 # TODO: Module not yet created
 # from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
-from domains.logistics.services.partners.service import normalize_city_name
-from domains.logistics.services.partners.service import normalize_country_code
-from domains.logistics.services.partners.service import partner_can_service_order
-from domains.logistics.services.partners.service import partner_is_profile_approved
-from domains.logistics.services.partners.service import quote_shipping_for_destination
-from domains.logistics.services.partners.service import serialize_category_pricing_rule
-from domains.logistics.services.partners.service import serialize_pricing_profile
-from domains.logistics.services.partners.service import serialize_service_area
-from domains.logistics.services.partners.service import serialize_vehicle_rule
+from domains.logistics.ports import normalize_city_name, normalize_country_code, partner_can_service_order, partner_is_profile_approved, quote_shipping_for_destination, serialize_category_pricing_rule, serialize_pricing_profile, serialize_service_area, serialize_vehicle_rule
 from domains.orders.services.tracking.service import (
     canonical_scan_code,
     derive_order_financials,
@@ -3438,7 +3425,6 @@ def update_shipment_status_partner(
         setattr(order, "status", new_order_status)
         if new_order_status == "delivered":
             try:
-                from domains.finance.services.treasury.cash_management_service import create_settlements_on_delivery
 
                 create_settlements_on_delivery(order, db)
             except Exception:
@@ -3450,7 +3436,7 @@ def update_shipment_status_partner(
     db.refresh(event)
     _publish_shipment_update(shipment, event)
     try:
-        from domains.comms.services.transactional_email_service import enqueue_shipment_status_email
+from domains.comms.ports import enqueue_shipment_status_email
 
         enqueue_shipment_status_email(cast(int, shipment.id), event_type=cast(str, event.event_type))
     except Exception:
@@ -4076,7 +4062,6 @@ from typing import Any, Optional, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierProfile
@@ -4748,7 +4733,6 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
     # Auto-create invoice for this shipment if one doesn't exist yet (non-blocking)
     try:
         from domains.finance.models.finance import Invoice
-        from domains.finance.services.ledger.invoice_service import create_invoice_from_order
         has_invoice = db.query(Invoice).filter(
             Invoice.order_id == order_id,
             Invoice.supplier_id == supplier_id,

@@ -9,13 +9,14 @@ __all__ = ['FiscalPeriod', 'TransactionLedger', 'SupplierSettlement', 'JournalEn
 
 class FiscalPeriod(Base):
     __tablename__ = 'fiscal_periods'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (UniqueConstraint('country_code', 'period_year', 'period_month', name='uq_fiscal_period'), Index('ix_fiscal_period_country', 'country_code'), Index('ix_fiscal_periods_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -27,19 +28,20 @@ class FiscalPeriod(Base):
     status = Column(String(20), default='open')
     is_locked = Column(Boolean, default=False)
     closed_at = Column(DateTime, nullable=True)
-    closed_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    closed_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    closed_by_user = relationship('User', foreign_keys=[closed_by])
+    closed_by_user = relationship('User', foreign_keys=[closed_by_id])
 
 class TransactionLedger(Base):
     __tablename__ = 'transaction_ledgers'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (CheckConstraint('amount >= 0', name='chk_transaction_ledger_amount_non_negative'), CheckConstraint("currency IN ('USD', 'EUR', 'GBP', 'AED', 'OMR', 'KWD', 'BHD', 'QAR', 'SAR', 'JOD')", name='chk_transaction_ledger_currency_valid'), Index('ix_transaction_ledger_country', 'country_code'), Index('ix_transaction_ledgers_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -76,9 +78,10 @@ class TransactionLedger(Base):
 
 class SupplierSettlement(Base):
     __tablename__ = 'supplier_settlements'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
-    created_by = Column(Integer, nullable=True, index=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (CheckConstraint('gross_amount >= 0', name='chk_supplier_settlement_gross_non_negative'), CheckConstraint('commission_amount >= 0', name='chk_supplier_settlement_commission_non_negative'), CheckConstraint('net_amount >= 0', name='chk_supplier_settlement_net_non_negative'), Index('ix_supplier_settlements_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -103,10 +106,11 @@ class SupplierSettlement(Base):
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    deleted_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
 
 class JournalEntry(Base):
     __tablename__ = 'journal_entries'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -120,14 +124,14 @@ class JournalEntry(Base):
     country_code = Column(String(2), nullable=True)
     currency = Column(String(3), default='OMR')
     is_reconciled = Column(Boolean, default=False)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     reference_type = Column(String(50), nullable=True)
     reference_id = Column(Integer, nullable=True)
     period_id = Column(Integer, ForeignKey('finance.fiscal_periods.id', ondelete='RESTRICT'), nullable=True, index=True)
     reversal_of_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    deleted_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     lines = relationship('JournalEntryLine', back_populates='entry', cascade='all, delete-orphan')
     period = relationship('FiscalPeriod', foreign_keys=[period_id])
@@ -135,13 +139,14 @@ class JournalEntry(Base):
 
 class JournalEntryLine(Base):
     __tablename__ = 'journal_entry_lines'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_jel_entry', 'entry_id'), Index('ix_jel_account', 'account_id'), CheckConstraint('amount >= 0', name='chk_jel_amount_non_negative'), CheckConstraint("side IN ('debit', 'credit')", name='chk_jel_side_valid'), Index('ix_journal_entry_lines_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -160,13 +165,14 @@ class JournalEntryLine(Base):
 
 class Account(Base):
     __tablename__ = 'accounts'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_accounts_code', 'code'), Index('ix_accounts_group', 'group_id'), CheckConstraint("normal_side IN ('debit', 'credit')", name='chk_account_normal_side_valid'), Index('ix_accounts_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -184,13 +190,14 @@ class Account(Base):
 
 class AccountGroup(Base):
     __tablename__ = 'account_groups'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_account_groups_code', 'code'), Index('ix_account_groups_order', 'display_order'), Index('ix_account_groups_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -206,13 +213,14 @@ class AccountGroup(Base):
 
 class AccountBalance(Base):
     __tablename__ = 'account_balances'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_account_balance_account', 'account_id'), Index('ix_account_balance_user', 'user_id'), UniqueConstraint('account_id', 'currency', name='uq_account_balance_account_currency'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -230,10 +238,11 @@ class AccountBalance(Base):
 
 class ARLedgerEntry(Base):
     __tablename__ = 'ar_ledger_entries'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_ar_ledger_user', 'customer_id'), Index('ix_ar_ledger_status', 'status'), Index('ix_ar_ledger_entries_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -250,7 +259,7 @@ class ARLedgerEntry(Base):
     due_date = Column(DateTime, nullable=True)
     settled_at = Column(DateTime, nullable=True)
     description = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
@@ -260,10 +269,11 @@ class ARLedgerEntry(Base):
 
 class APLedger(Base):
     __tablename__ = 'ap_ledger_entries'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_ap_ledger_supplier', 'supplier_id'), Index('ix_ap_ledger_status', 'status'), Index('ix_ap_ledger_entries_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -281,7 +291,7 @@ class APLedger(Base):
     due_date = Column(DateTime, nullable=True)
     paid_at = Column(DateTime, nullable=True)
     description = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
@@ -292,12 +302,13 @@ class APLedger(Base):
 
 class FinancialReport(Base):
     __tablename__ = 'financial_reports'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_financial_reports_data', 'data'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -314,7 +325,7 @@ class Invoice(Base):
     __tablename__ = 'invoices'
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
-    created_by = Column(Integer, nullable=True, index=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_invoices_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -342,19 +353,20 @@ class Invoice(Base):
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    deleted_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     supplier = relationship('User', foreign_keys=[supplier_id], backref='invoices')
     items = relationship('InvoiceItem', back_populates='invoice', cascade='all, delete-orphan')
 
 class InvoiceItem(Base):
     __tablename__ = 'invoice_items'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_invoice_items_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -371,11 +383,12 @@ class InvoiceItem(Base):
     invoice = relationship('Invoice', back_populates='items')
 
 class RefundLedger(Base):
-    __tablename__ = 'refund_ledger'
+    __tablename__ = 'refund_ledgers'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    created_by = Column(Integer, nullable=True, index=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_refund_ledger_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -393,7 +406,7 @@ class RefundLedger(Base):
     commission_reversal = Column(Numeric(12, 2), nullable=True)
     vat_adjustment = Column(Numeric(12, 2), nullable=True)
     vat_reversal = Column(Numeric(12, 2), nullable=True)
-    performed_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    performed_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     processed_at = Column(DateTime, nullable=True)
     currency = Column(String(3), default='OMR')
     status = Column(String(30), default='pending')
@@ -401,17 +414,18 @@ class RefundLedger(Base):
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    deleted_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
 
 class BankTransaction(Base):
     __tablename__ = 'bank_transactions'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_bank_transactions_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -428,7 +442,7 @@ class BankTransaction(Base):
     linked_payout_id = Column(Integer, nullable=True)
     linked_refund_id = Column(Integer, nullable=True)
     reconciled = Column(Boolean, default=False)
-    reconciled_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    reconciled_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     reconciled_at = Column(DateTime, nullable=True)
     transaction_date = Column(DateTime, nullable=True)
     status = Column(String(30), default='pending')
@@ -439,13 +453,14 @@ class BankTransaction(Base):
 
 class VATRemittance(Base):
     __tablename__ = 'vat_remittances'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_vat_remittances_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -458,7 +473,7 @@ class VATRemittance(Base):
     amount_remitted = Column(Numeric(12, 2), nullable=True)
     currency = Column(String(3), default='OMR')
     bank_transaction_id = Column(Integer, nullable=True)
-    remitted_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    remitted_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     remitted_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String(30), default='pending')
@@ -467,11 +482,12 @@ class VATRemittance(Base):
 
 class CashAccount(Base):
     __tablename__ = 'cash_accounts'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_cash_accounts_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -481,20 +497,21 @@ class CashAccount(Base):
     balance = Column(Numeric(12, 2), default=0)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
 
 class CashTransaction(Base):
     __tablename__ = 'cash_transactions'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_cash_transactions_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -505,18 +522,19 @@ class CashTransaction(Base):
     description = Column(Text, nullable=True)
     reference = Column(String(100), nullable=True)
     category = Column(String(50), nullable=True)
-    performed_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    performed_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
 
 class TreasuryAccount(Base):
     __tablename__ = 'treasury_accounts'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_treasury_accounts_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -535,14 +553,15 @@ class TreasuryAccount(Base):
 
 class TreasuryTransaction(Base):
     __tablename__ = 'treasury_transactions'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = ({'schema': 'finance'},)
     id = Column(Integer, primary_key=True, index=True)
@@ -559,13 +578,14 @@ class TreasuryTransaction(Base):
 
 class CashFlowForecast(Base):
     __tablename__ = 'cash_flow_forecasts'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_cash_flow_forecasts_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -580,13 +600,14 @@ class CashFlowForecast(Base):
 
 class CashPositionSnapshot(Base):
     __tablename__ = 'cash_position_snapshots'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_cash_position_snapshots_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -599,13 +620,14 @@ class CashPositionSnapshot(Base):
 
 class GatewaySettlementSchedule(Base):
     __tablename__ = 'gateway_settlement_schedules'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_gateway_settlement_schedules_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -620,14 +642,15 @@ class GatewaySettlementSchedule(Base):
 class PendingJournalEntry(Base):
     """Maker-Checker: pending journal entries awaiting second approval."""
     __tablename__ = 'pending_journal_entries'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_pending_je_status', 'status'), Index('ix_pending_je_maker', 'created_by'), Index('ix_pending_je_country', 'country_code'), Index('ix_pending_journal_entries_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
+    __table_args__ = (Index('ix_pending_je_status', 'status'), Index('ix_pending_je_maker', 'created_by_id'), Index('ix_pending_je_country', 'country_code'), Index('ix_pending_journal_entries_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
     lines_json = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
@@ -636,24 +659,25 @@ class PendingJournalEntry(Base):
     entry_date = Column(DateTime, nullable=False)
     amount_threshold_triggered = Column(Boolean, default=False)
     status = Column(String(20), default='pending_approval')
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=False, index=True)
-    approved_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    rejected_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=False, index=True)
+    approved_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    rejected_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     rejection_reason = Column(Text, nullable=True)
     approved_at = Column(DateTime, nullable=True)
     journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    creator = relationship('User', foreign_keys=[created_by])
-    approver = relationship('User', foreign_keys=[approved_by])
+    creator = relationship('User', foreign_keys=[created_by_id])
+    approver = relationship('User', foreign_keys=[approved_by_id])
 
 class PayoutBatch(Base):
     """Payout batch for supplier/logistics payouts with state machine."""
     __tablename__ = 'payout_batches'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_payout_batches_country_created', 'country_code', 'created_at'), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
@@ -662,27 +686,28 @@ class PayoutBatch(Base):
     total_amount = Column(Numeric(16, 4), default=0)
     item_count = Column(Integer, default=0)
     status = Column(String(20), default='draft')
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=False, index=True)
-    approved_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=False, index=True)
+    approved_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     dispatched_at = Column(DateTime, nullable=True)
     settled_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    creator = relationship('User', foreign_keys=[created_by])
-    approver = relationship('User', foreign_keys=[approved_by])
+    creator = relationship('User', foreign_keys=[created_by_id])
+    approver = relationship('User', foreign_keys=[approved_by_id])
     items = relationship('PayoutBatchItem', back_populates='batch', cascade='all, delete-orphan')
 
 class PayoutBatchItem(Base):
     __tablename__ = 'payout_batch_items'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = ({'schema': 'finance'},)
     id = Column(Integer, primary_key=True, index=True)
@@ -699,11 +724,12 @@ class PayoutBatchItem(Base):
 class BankMappingRule(Base):
     """Configurable mapping: bank-statement description pattern -> GL account + side."""
     __tablename__ = 'bank_mapping_rules'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_bank_mapping_country', 'country_code'), Index('ix_bank_mapping_priority', 'priority'), Index('ix_bank_mapping_rules_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -716,20 +742,21 @@ class BankMappingRule(Base):
     category = Column(String(40), nullable=True)
     priority = Column(Integer, default=100)
     is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class BankStatementImport(Base):
     """Header record for one uploaded bank statement file."""
     __tablename__ = 'bank_statement_imports'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_bsi_country', 'country_code'), Index('ix_bank_statement_imports_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -742,20 +769,21 @@ class BankStatementImport(Base):
     matched_lines = Column(Integer, default=0)
     unmatched_lines = Column(Integer, default=0)
     status = Column(String(20), default='imported')
-    imported_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    imported_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 class BankStatementLine(Base):
     """A single line from an imported bank statement awaiting mapping/reconciliation."""
     __tablename__ = 'bank_statement_lines'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_bsl_import', 'import_id'), Index('ix_bsl_status', 'status'), Index('ix_bsl_country', 'country_code'), Index('ix_bank_statement_lines_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -776,11 +804,12 @@ class BankStatementLine(Base):
 class FixedAsset(Base):
     """Fixed asset register with straight-line depreciation schedule."""
     __tablename__ = 'fixed_assets'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_fa_country', 'country_code'), Index('ix_fixed_assets_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -798,19 +827,20 @@ class FixedAsset(Base):
     accumulated_depr_account_code = Column(String(20), default='1190')
     status = Column(String(20), default='active')
     country_code = Column(String(2), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class Accrual(Base):
     """Accrued expense / revenue recognized before cash movement."""
     __tablename__ = 'accruals'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_accrual_country', 'country_code'), Index('ix_accrual_status', 'status'), Index('ix_accruals_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -825,18 +855,19 @@ class Accrual(Base):
     journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     reversal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 class ScannedExpense(Base):
     """Bill scanned via OCR that becomes an expense + GL posting after approval."""
     __tablename__ = 'scanned_expenses'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_se_country', 'country_code'), Index('ix_se_status', 'status'), Index('ix_scanned_expenses_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -855,7 +886,7 @@ class ScannedExpense(Base):
     ocr_confidence = Column(Numeric(5, 2), nullable=True)
     status = Column(String(20), default='scanned')
     posted_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
-    reviewed_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    reviewed_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -864,12 +895,13 @@ class ScannedExpense(Base):
 class AutomationRule(Base):
     """Configurable finance automation rule (e.g. auto-post accruals, classify expenses)."""
     __tablename__ = 'automation_rules'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (
         Index('ix_automation_rules_country_created', 'country_code', 'created_at'),
@@ -892,11 +924,12 @@ class AutomationRule(Base):
 class AutomationLog(Base):
     """Execution log for an AutomationRule run."""
     __tablename__ = 'automation_logs'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     __table_args__ = (
         Index('ix_automation_logs_rule', 'rule_id'),
         Index('ix_automation_logs_country_created', 'country_code', 'created_at'),
@@ -910,7 +943,7 @@ class AutomationLog(Base):
     country_code = Column(String(2), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    created_by = Column(Integer, nullable=True, index=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     rule = relationship('AutomationRule', back_populates='logs')
 
@@ -918,12 +951,13 @@ class AutomationLog(Base):
 class Vendor(Base):
     """Vendor master (entity we receive bills from / owe money to)."""
     __tablename__ = 'vendors'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_vendors_country', 'country_code'), Index('ix_vendors_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -940,12 +974,13 @@ class Vendor(Base):
 class Customer(Base):
     """Customer master for B2B / trade receivables (distinct from platform User)."""
     __tablename__ = 'customers'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_customers_country', 'country_code'), Index('ix_customers_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -963,12 +998,13 @@ class Customer(Base):
 class CostCenter(Base):
     """Cost center / department used to tag journal lines for reporting."""
     __tablename__ = 'cost_centers'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_cost_centers_country', 'country_code'), Index('ix_cost_centers_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -982,11 +1018,12 @@ class CostCenter(Base):
 class APBill(Base):
     """Accounts-Payable bill received from a vendor (dr expense/asset, cr AP)."""
     __tablename__ = 'ap_bills'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_ap_bills_vendor', 'vendor_id'), Index('ix_ap_bills_status', 'status'), Index('ix_ap_bills_due', 'due_date'), Index('ix_ap_bills_country', 'country_code'), Index('ix_ap_bills_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1002,7 +1039,7 @@ class APBill(Base):
     linked_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     paid_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     vendor = relationship('Vendor', foreign_keys=[vendor_id])
@@ -1010,11 +1047,12 @@ class APBill(Base):
 class ARInvoice(Base):
     """Accounts-Receivable invoice issued to a customer (dr AR, cr Revenue)."""
     __tablename__ = 'ar_invoices'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_ar_invoices_customer', 'customer_id'), Index('ix_ar_invoices_status', 'status'), Index('ix_ar_invoices_due', 'due_date'), Index('ix_ar_invoices_country', 'country_code'), Index('ix_ar_invoices_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1030,7 +1068,7 @@ class ARInvoice(Base):
     linked_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     paid_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     customer = relationship('Customer', foreign_keys=[customer_id])
@@ -1038,12 +1076,13 @@ class ARInvoice(Base):
 class BankAccount(Base):
     """Company bank-account registry mapped to a GL cash account."""
     __tablename__ = 'bank_accounts'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_bank_accounts_country', 'country_code'), Index('ix_bank_accounts_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1062,11 +1101,12 @@ class BankAccount(Base):
 class Budget(Base):
     """Period budget per GL account for variance reporting."""
     __tablename__ = 'budgets'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (UniqueConstraint('account_code', 'fiscal_period_id', 'country_code', name='uq_budget_account_period'), Index('ix_budgets_country', 'country_code'), Index('ix_budgets_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1076,7 +1116,7 @@ class Budget(Base):
     currency = Column(String(3), default='OMR')
     country_code = Column(String(2), nullable=True, index=True)
     notes = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     period = relationship('FiscalPeriod', foreign_keys=[fiscal_period_id])
@@ -1084,14 +1124,15 @@ class Budget(Base):
 class BankReconciliation(Base):
     """Human-reviewed match between a bank statement line and a GL journal entry."""
     __tablename__ = 'bank_reconciliations'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (UniqueConstraint('statement_line_id', name='uq_bank_recon_line'), Index('ix_bank_recon_status', 'status'), Index('ix_bank_recon_country', 'country_code'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1100,7 +1141,7 @@ class BankReconciliation(Base):
     matched_amount = Column(Numeric(14, 2), nullable=True)
     status = Column(String(20), default='matched')
     note = Column(Text, nullable=True)
-    matched_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    matched_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     matched_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
     statement_line = relationship('BankStatementLine', foreign_keys=[statement_line_id])
@@ -1108,11 +1149,12 @@ class BankReconciliation(Base):
 class RecurringTemplate(Base):
     """Template that generates a journal entry on trigger (e.g. monthly rent)."""
     __tablename__ = 'recurring_templates'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_recurring_country', 'country_code'), Index('ix_recurring_templates_lines_gin', 'lines'), Index('ix_recurring_templates_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1124,20 +1166,21 @@ class RecurringTemplate(Base):
     currency = Column(String(3), default='OMR')
     country_code = Column(String(2), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class FinanceAuditLog(Base):
     """Scoped audit trail of finance actions (posts, reversals, approvals, automations)."""
     __tablename__ = 'finance_audit_logs'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_finance_audit_action', 'action'), Index('ix_finance_audit_actor', 'actor_id'), Index('ix_finance_audit_at', 'created_at'), Index('ix_finance_audit_logs_detail_gin', 'detail'), Index('ix_finance_audit_logs_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1153,13 +1196,14 @@ class FinanceAuditLog(Base):
 class FinanceAutomationLog(Base):
     """Audit trail for automation runs (OCR, reconciliation, depreciation, mapping)."""
     __tablename__ = 'finance_automation_logs'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
+    deleted_by_id = Column(Integer, nullable=True)
+    created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_fal_kind', 'kind'), Index('ix_fal_country', 'country_code'), Index('ix_finance_automation_logs_detail_gin', 'detail'), Index('ix_finance_automation_logs_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
@@ -1167,7 +1211,7 @@ class FinanceAutomationLog(Base):
     records_processed = Column(Integer, default=0)
     records_changed = Column(Integer, default=0)
     detail = Column(JSON, nullable=True)
-    run_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    run_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 

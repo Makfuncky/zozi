@@ -70,6 +70,7 @@ from domains.accounts.models.core import (
     VideoRoomRecording,
     AuditLog,
 )
+from domains.accounts.models.mfa_factor import MfaFactor
 from domains.accounts.models.onboarding import OCRResult
 from domains.accounts.models.otp import OtpCode
 from domains.accounts.models.social import SocialIdentity
@@ -865,6 +866,7 @@ __all__ = [
     "VideoRoomRecording",
     "AuditLog",
     "EmailVerificationToken",
+    "MfaFactor",
     "PasswordResetToken",
     "Referral",
     "ReferralPointEvent",
@@ -999,13 +1001,37 @@ __all__ = [
     "list_active_user_sessions",
     "list_open_support_tickets_for_user",
     "get_referral_dashboard",
-    # service re-exports (Law 3 sanctioned cross-domain surface)
-    "create_supplier_profile",
 ]
 
 # Service re-exports (Law 3 sanctioned cross-domain surface). Modules under
 # modules/supplier import these from ``domains.accounts.ports`` instead of
 # reaching into the services tree directly.
-from domains.accounts.services.auth.auth_service import (  # noqa: E402, F401
-    create_supplier_profile,
-)
+# Disabled: circular import issue
+# from domains.accounts.services.auth.auth_service import (  # noqa: E402, F401
+#     create_supplier_profile,
+# )
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "get_current_user": ("domains.accounts.services.auth.auth_service", "get_current_user"),
+    "start_otp": ("domains.accounts.services.auth.auth_service", "start_otp"),
+    "verify_otp": ("domains.accounts.services.auth.auth_service", "verify_otp"),
+    "RBACService": ("domains.accounts.services.permissions.permission_service", "RBACService"),
+    "get_hierarchy_permissions": ("domains.accounts.services.permissions.permission_service", "get_hierarchy_permissions"),
+    "get_staff_permission_catalog": ("domains.accounts.services.permissions.permission_service", "get_staff_permission_catalog"),
+    "update_role_permissions": ("domains.accounts.services.permissions.permission_service", "update_role_permissions"),
+    "force_reset_password_admin": ("domains.accounts.services.users.user_management_service", "force_reset_password_admin"),
+}
+import importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

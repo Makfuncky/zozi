@@ -318,29 +318,33 @@ PENDING_PAYROLL_APPROVALS: dict = {}
 
 
 @router.get("/admin/{code}/offices")
-def list_offices(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def list_offices(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_offices(code, db)
 
 
 @router.post("/admin/{code}/offices")
-def create_office(code: str, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+def create_office(code: str, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).create_office(code, body or {}, db)
 
 
 @router.put("/admin/{code}/offices/{office_id}")
-def update_office(code: str, office_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.update")
+def update_office(code: str, office_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).update_office(office_id, body or {}, db)
 
 
 @router.delete("/admin/{code}/offices/{office_id}")
-def delete_office(code: str, office_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.delete")
+def delete_office(code: str, office_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.delete"))
+):
     enforce_country_access(code, db=db)
     get_hr_employee_service(db).delete_office(office_id, db)
     return {"message": "Office deleted"}
@@ -357,38 +361,42 @@ def list_employees(
     status: Optional[str] = Query(None, alias="employment_status"),
     q: Optional[str] = Query(None), limit: int = Query(100, ge=1, le=500),
     current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.delete")),
+    _feature_gate: None = Depends(require_feature("hr.update")),
+    _perm_gate: None = Depends(require_feature("hr.create")),
+    _gate: None = Depends(require_feature("hr.read")),
 ):
-    require_feature("hr.read")
-    require_feature("hr.create")
-    require_feature("hr.update")
-    require_feature("hr.delete")
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_employees(code, db, department=department, status=status, query=q, limit=limit)
 
 
 @router.post("/admin/{code}/employees")
-def create_employee(code: str, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+def create_employee(code: str, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).create_employee(code, body or {}, current_user, db)
 
 
 @router.get("/employees/{employee_id}")
-def get_employee(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def get_employee(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_hr_employee_service(db).get_employee(employee_id, db)
 
 
 @router.patch("/admin/{code}/employees/{employee_id}")
-def update_employee(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.update")
+def update_employee(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).update_employee(employee_id, body or {}, current_user, db)
 
 
 @router.delete("/admin/{code}/employees/{employee_id}")
-def delete_employee(code: str, employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.delete")
+def delete_employee(code: str, employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.delete"))
+):
     enforce_country_access(code, db=db)
     get_hr_employee_service(db).delete_employee(employee_id, current_user, db)
     return {"message": "Employee deleted"}
@@ -400,22 +408,25 @@ def delete_employee(code: str, employee_id: int, current_user: dict = Depends(ge
 
 
 @router.get("/admin/{code}/employees/{employee_id}/documents")
-def list_employee_documents(code: str, employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def list_employee_documents(code: str, employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_employee_documents(employee_id, db)
 
 
 @router.post("/admin/{code}/employees/{employee_id}/documents")
-def create_employee_document(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+def create_employee_document(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).create_employee_document(employee_id, body or {}, db)
 
 
 @router.patch("/admin/{code}/employees/documents/{doc_id}")
-def update_employee_document_status(code: str, doc_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.update")
+def update_employee_document_status(code: str, doc_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).update_employee_document_status(doc_id, body or {}, db)
 
@@ -430,8 +441,8 @@ def list_employee_addresses(
     employee_id: int = Path(...),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read")),
 ):
-    require_feature("hr.read")
     return get_hr_employee_service(db).list_employee_addresses(employee_id)
 
 
@@ -440,8 +451,8 @@ def list_employee_dependents(
     employee_id: int = Path(...),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read")),
 ):
-    require_feature("hr.read")
     return get_hr_employee_service(db).list_employee_dependents(employee_id)
 
 
@@ -456,30 +467,33 @@ def list_attendance(
     from_date: Optional[str] = Query(None), to_date: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=365), db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.delete")),
+    _feature_gate: None = Depends(require_feature("hr.update")),
+    _perm_gate: None = Depends(require_feature("hr.read")),
+    _gate: None = Depends(require_feature("hr.create")),
 ):
-    require_feature("hr.create")
-    require_feature("hr.read")
-    require_feature("hr.update")
-    require_feature("hr.delete")
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_attendance(employee_id, db, from_date=from_date, to_date=to_date, limit=limit)
 
 
 @router.post("/admin/{code}/employees/{employee_id}/check-in")
-def check_in(code: str, employee_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def check_in(code: str, employee_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).check_in_employee(employee_id, body or {}, db)
 
 
 @router.post("/admin/{code}/employees/{employee_id}/check-out")
-def check_out(code: str, employee_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def check_out(code: str, employee_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).check_out_employee(employee_id, body or {}, db)
 
 
 @router.post("/admin/{code}/employees/{employee_id}/geo-check-in")
-def geo_check_in(code: str, employee_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def geo_check_in(code: str, employee_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).check_in_with_geo(employee_id, body or {}, db)
 
 
@@ -489,22 +503,25 @@ def geo_check_in(code: str, employee_id: int, body: dict = None, db: Session = D
 
 
 @router.get("/admin/{code}/employees/{employee_id}/relations")
-def list_relations(code: str, employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def list_relations(code: str, employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_employee_relations(employee_id, db)
 
 
 @router.post("/admin/{code}/employees/{employee_id}/relations")
-def create_relation(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+def create_relation(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).create_employee_relation(employee_id, body or {}, db)
 
 
 @router.delete("/admin/{code}/employees/relations/{relation_id}")
-def delete_relation(code: str, relation_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.delete")
+def delete_relation(code: str, relation_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.delete"))
+):
     enforce_country_access(code, db=db)
     get_hr_employee_service(db).remove_employee_relation(relation_id, db)
     return {"message": "Relation removed"}
@@ -521,23 +538,25 @@ def list_work_logs(
     from_date: Optional[str] = Query(None), to_date: Optional[str] = Query(None),
     status: Optional[str] = Query(None), limit: int = Query(50, ge=1, le=365),
     db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read")),
+    _feature_gate: None = Depends(require_feature("hr.create")),
 ):
-    require_feature("hr.create")
-    require_feature("hr.read")
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_work_logs(employee_id, db, from_date=from_date, to_date=to_date, status=status, limit=limit)
 
 
 @router.post("/admin/{code}/employees/{employee_id}/work-logs")
-def create_work_log(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+def create_work_log(code: str, employee_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).create_work_log(employee_id, body or {}, db)
 
 
 @router.patch("/admin/{code}/employees/work-logs/{log_id}/approve")
-def approve_work_log(code: str, log_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.update")
+def approve_work_log(code: str, log_id: int, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).approve_work_log(log_id, body or {}, current_user, db)
 
@@ -548,20 +567,23 @@ def approve_work_log(code: str, log_id: int, body: dict = None, current_user: di
 
 
 @router.post("/employees/{employee_id}/qr-token")
-def generate_qr_token(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def generate_qr_token(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).generate_qr_login_token(employee_id, db)
 
 
 @router.post("/employees/qr-login")
-def qr_login(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def qr_login(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).validate_qr_login(body.get("qr_token", ""), db)
 
 
 @router.post("/geo/validate")
-def validate_geo(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def validate_geo(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).validate_geo_location(
         body.get("latitude", 0), body.get("longitude", 0), body.get("office_id", 0), db
     )
@@ -573,15 +595,17 @@ def validate_geo(body: dict, db: Session = Depends(get_db), current_user: dict =
 
 
 @router.get("/admin/{code}/employee-roles")
-def list_employee_roles(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def list_employee_roles(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_employee_roles(code, db)
 
 
 @router.post("/admin/{code}/employee-roles")
-def create_employee_role(code: str, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+def create_employee_role(code: str, body: dict = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).create_employee_role(code, body or {}, db)
 
@@ -593,23 +617,26 @@ def create_employee_role(code: str, body: dict = None, current_user: dict = Depe
 
 @router.get("/admin/{code}/employees/leave-requests")
 def list_leave_requests(code: str, page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=100),
-                        db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+                        db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_leave_requests(db, code, page=page, limit=limit)
 
 
 @router.post("/admin/{code}/employees/leave-requests")
-def create_leave_request(code: str, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def create_leave_request(code: str, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     data = body or {}
     return get_hr_employee_service(db).create_leave_request(data.get("employee_id", 0), data, current_user, db)
 
 
 @router.patch("/admin/{code}/employees/leave-requests/{leave_id}")
-def update_leave_request_status(code: str, leave_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.update")
+def update_leave_request_status(code: str, leave_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     enforce_country_access(code, db=db)
     status = (body or {}).get("status", "").lower()
     return get_hr_employee_service(db).update_leave_request_status(db, leave_id, status, current_user)
@@ -622,15 +649,17 @@ def update_leave_request_status(code: str, leave_id: int, body: dict = None, db:
 
 @router.get("/admin/{code}/employees/shifts")
 def list_shifts(code: str, page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=100),
-                db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+                db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     enforce_country_access(code, db=db)
     return get_hr_employee_service(db).list_shifts(db, code, page=page, limit=limit)
 
 
 @router.post("/admin/{code}/employees/shifts")
-def create_shift_roster(code: str, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def create_shift_roster(code: str, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     enforce_country_access(code, db=db)
     data = body or {}
     return get_hr_employee_service(db).create_shift_roster(data.get("employee_id", 0), data, current_user, db)
@@ -642,8 +671,9 @@ def create_shift_roster(code: str, body: dict = None, db: Session = Depends(get_
 
 
 @router.post("/employees/{employee_id}/kill-switch")
-def kill_switch_employee(employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+def kill_switch_employee(employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).kill_switch(employee_id, current_user, db)
 
 
@@ -656,8 +686,8 @@ def kill_switch_employee(employee_id: int, current_user: dict = Depends(get_curr
 def list_employees_public(db: Session = Depends(get_db)):
     try:
         return get_hr_employee_service(db).list_employees_public()
-    except Exception as e:
-        return {"error": str(e)}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -666,8 +696,9 @@ def list_employees_public(db: Session = Depends(get_db)):
 
 
 @router.get("/profile")
-def ess_get_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def ess_get_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     emp_id = current_user.get("id")
     return get_employee_profile(db, emp_id)
 
@@ -677,16 +708,17 @@ def ess_update_profile(
     phone: Optional[str] = None, address: Optional[str] = None,
     emergency_contact_name: Optional[str] = None, emergency_contact_phone: Optional[str] = None,
     current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read")),
+    _feature_gate: None = Depends(require_feature("hr.update")),
+    _perm_gate: None = Depends(require_feature("hr.create")),
 ):
-    require_feature("hr.create")
-    require_feature("hr.update")
-    require_feature("hr.read")
     return update_employee_profile(db, current_user.get("id"), phone, address, emergency_contact_name, emergency_contact_phone)
 
 
 @router.get("/leave/balance")
-def ess_leave_balance(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def ess_leave_balance(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_leave_balance(db, current_user.get("id"))
 
 
@@ -694,39 +726,44 @@ def ess_leave_balance(current_user: dict = Depends(get_current_user), db: Sessio
 def ess_request_leave(
     leave_type: str, start_date: str, end_date: str, reason: str,
     current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create")),
+    _feature_gate: None = Depends(require_feature("hr.read")),
 ):
-    require_feature("hr.read")
-    require_feature("hr.create")
     return svc_create_leave_request(db, current_user.get("id"), leave_type, start_date, end_date, reason)
 
 
 @router.get("/leave/history")
-def ess_leave_history(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def ess_leave_history(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_leave_history(db, current_user.get("id"))
 
 
 @router.get("/payslips")
-def ess_payslips(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def ess_payslips(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_payslips(db, current_user.get("id"))
 
 
 @router.get("/attendance")
-def ess_attendance(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def ess_attendance(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return svc_get_attendance(db, current_user.get("id"))
 
 
 @router.get("/okrs")
-def ess_okrs(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def ess_okrs(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_okrs(db, current_user.get("id"))
 
 
 @router.get("/org-chart")
-def ess_org_chart(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+def ess_org_chart(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return svc_get_org_chart(db, None, current_user.get("id"))
 
 
@@ -736,84 +773,97 @@ def ess_org_chart(current_user: dict = Depends(get_current_user), db: Session = 
 
 
 @router.get("/org-units")
-def list_org_units(country_code: Optional[str] = Query(None), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def list_org_units(country_code: Optional[str] = Query(None), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_hr_employee_service(db).list_org_units(db, country_code=country_code)
 
 
 @router.post("/org-units", status_code=201)
-def create_org_unit(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def create_org_unit(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return get_hr_employee_service(db).create_org_unit(db, payload)
 
 
 @router.put("/org-units/{unit_id}")
-def update_org_unit(unit_id: int, payload: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.update")
+def update_org_unit(unit_id: int, payload: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     return get_hr_employee_service(db).update_org_unit(db, unit_id, payload or {})
 
 
 @router.get("/org-chart/{org_unit_id}")
-def org_chart_detail(org_unit_id: Optional[int] = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def org_chart_detail(org_unit_id: Optional[int] = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_hierarchy_org_chart(db, org_unit_id)
 
 
 @router.get("/org-units/{unit_id}/subtree")
-def org_unit_subtree(unit_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def org_unit_subtree(unit_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return {"subtree": get_org_unit_subtree(db, unit_id)}
 
 
 @router.get("/org-units/{unit_id}/path")
-def org_unit_ancestor_path(unit_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def org_unit_ancestor_path(unit_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return {"path": get_org_unit_path(db, unit_id)}
 
 
 @router.get("/org-units/{unit_id}/employees")
-def employees_in_subtree(unit_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def employees_in_subtree(unit_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return {"employees": get_employees_in_subtree(db, unit_id)}
 
 
 @router.post("/org-units/rebuild-paths")
-def rebuild_org_unit_paths(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def rebuild_org_unit_paths(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     updated = rebuild_paths(db)
     return {"message": f"Rebuilt paths for {updated} org units"}
 
 
 @router.get("/employee/{user_id}/chain")
-def employee_chain(user_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def employee_chain(user_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return {"chain": get_user_chain(db, user_id)}
 
 
 @router.get("/employee/{user_id}/subordinates")
-def employee_subordinates(user_id: int, direct_only: bool = Query(False), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def employee_subordinates(user_id: int, direct_only: bool = Query(False), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     if direct_only:
         return {"subordinates": get_team_members(db, user_id)}
     return {"subordinates": get_all_subordinates(db, user_id)}
 
 
 @router.get("/employee/{user_id}/can-manage/{target_user_id}")
-def check_can_manage(user_id: int, target_user_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def check_can_manage(user_id: int, target_user_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return {"can_manage": can_manage(db, user_id, target_user_id)}
 
 
 @router.post("/reassign-manager")
-def reassign_employee_manager(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def reassign_employee_manager(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     result = reassign_manager(db, payload.get("employee_user_id", 0), payload.get("new_manager_user_id", 0))
     return result
 
 
 @router.post("/backfill-authority-levels")
-def refresh_authority_levels(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def refresh_authority_levels(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     updated = backfill_authority_levels(db)
     return {"message": f"Updated {updated} employee authority levels"}
 
@@ -824,41 +874,47 @@ def refresh_authority_levels(db: Session = Depends(get_db), current_user: dict =
 
 
 @router.post("/matrix/assign")
-def assign_matrix(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def assign_matrix(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     result = assign_matrix_manager(db, employee_id=payload.get("employee_id", 0), matrix_manager_id=payload.get("matrix_manager_id", 0), relation_type=payload.get("relation_type", "matrix_manager"), notes=payload.get("notes"))
     return result
 
 
 @router.delete("/matrix/{relation_id}")
-def remove_matrix(relation_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.delete")
+def remove_matrix(relation_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.delete"))
+):
     result = remove_matrix_manager(db, relation_id)
     return result
 
 
 @router.get("/employee/{employee_id}/matrix-managers")
-def matrix_managers(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def matrix_managers(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return {"matrix_managers": get_matrix_managers(db, employee_id)}
 
 
 @router.get("/employee/{manager_id}/matrix-subordinates")
-def matrix_subordinates(manager_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def matrix_subordinates(manager_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return {"matrix_subordinates": get_matrix_subordinates(db, manager_id)}
 
 
 @router.get("/detect-circular")
-def detect_circular(employee_id: int = Query(...), proposed_manager_id: int = Query(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def detect_circular(employee_id: int = Query(...), proposed_manager_id: int = Query(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     is_circular = detect_circular_reporting(db, employee_id, proposed_manager_id)
     return {"is_circular": is_circular, "message": "Circular reporting detected" if is_circular else "No circular relationship"}
 
 
 @router.post("/approval-chain")
-def approval_chain(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def approval_chain(payload: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return {"approvers": get_approval_chain(db, employee_id=payload.get("employee_id", 0), resource_type=payload.get("resource_type", "leave"), min_authority_level=payload.get("min_authority_level"))}
 
 
@@ -868,14 +924,16 @@ def approval_chain(payload: dict, db: Session = Depends(get_db), current_user: d
 
 
 @router.get("/country-scope/{user_id}")
-def user_country_scope(user_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def user_country_scope(user_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_hr_employee_service(db).get_user_country_scope(db, user_id)
 
 
 @router.post("/country-scope/switch")
-def switch_country_scope(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def switch_country_scope(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     user_id = int(current_user.get("id", 0))
     normalized = country_code.upper()
     role = str(current_user.get("role", "")).lower()
@@ -883,8 +941,9 @@ def switch_country_scope(country_code: str = Query(..., min_length=2, max_length
 
 
 @router.get("/localization/{country_code}")
-def country_localization(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def country_localization(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     normalized = country_code.upper()
     return get_hr_employee_service(db).get_country_localization(db, normalized)
 
@@ -899,8 +958,8 @@ def required_authority_for_resource(
     resource_type: str = Path(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read")),
 ):
-    require_feature("hr.read")
     thresholds = {
         "leave": 1,
         "expense_500": 2,
@@ -923,32 +982,37 @@ def required_authority_for_resource(
 
 
 @router.post("/modules")
-def create_module(module_data: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def create_module(module_data: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return create_training_module(module_data, db)
 
 
 @router.post("/{employee_id}/assign")
-def lms_assign_training(employee_id: int, module_id: str = Query(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def lms_assign_training(employee_id: int, module_id: str = Query(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return _assign_training_svc(employee_id, module_id, db)
 
 
 @router.post("/{employee_id}/complete")
-def complete_training(employee_id: int, module_id: str = Query(...), quiz_score: float = Query(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def complete_training(employee_id: int, module_id: str = Query(...), quiz_score: float = Query(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return verify_training_completion(employee_id, module_id, quiz_score, db)
 
 
 @router.get("/{employee_id}/lock/{permission}")
-def check_lock(employee_id: int, permission: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def check_lock(employee_id: int, permission: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return check_permission_lock(employee_id, permission, db)
 
 
 @router.get("/{employee_id}/progress")
-def training_progress(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def training_progress(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_training_progress(employee_id, db)
 
 
@@ -963,46 +1027,53 @@ def training_progress(employee_id: int, db: Session = Depends(get_db), current_u
 
 
 @router.post("/payroll/calculate/{employee_id}")
-def calculate_employee_payroll(employee_id: int, month: int = Query(..., ge=1, le=12), year: int = Query(..., ge=2020), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def calculate_employee_payroll(employee_id: int, month: int = Query(..., ge=1, le=12), year: int = Query(..., ge=2020), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return calculate_employee_payroll(employee_id, month, year, db, current_user)
 
 
 @router.post("/payroll/batch")
-def process_payroll_batch(country_code: str = Query(..., min_length=2, max_length=10), month: int = Query(..., ge=1, le=12), year: int = Query(..., ge=2020), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def process_payroll_batch(country_code: str = Query(..., min_length=2, max_length=10), month: int = Query(..., ge=1, le=12), year: int = Query(..., ge=2020), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return svc_process_payroll_batch(country_code, month, year, db, current_user)
 
 
 @router.post("/payroll/approve")
-def approve_payroll_batch(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def approve_payroll_batch(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     from domains.hr.services.payroll.payroll_service import PayrollApproveBody
     approve_body = PayrollApproveBody(**body)
     return svc_approve_payroll_batch(approve_body, db, current_user)
 
 
 @router.get("/payroll/payslips/{employee_id}")
-def get_employee_payslips(employee_id: int, page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=100), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def get_employee_payslips(employee_id: int, page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=100), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_employee_payslips(employee_id, db, current_user)
 
 
 @router.get("/payroll/bank-accounts/{employee_id}")
-def employee_bank_accounts_route(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def employee_bank_accounts_route(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return employee_bank_accounts(employee_id, db, current_user)
 
 
 @router.post("/payroll/bank-accounts/{account_id}/verify")
-def verify_bank_account_route(account_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def verify_bank_account_route(account_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return verify_bank_account(account_id, db, current_user)
 
 
 @router.get("/payroll/status/{country_code}")
-def payroll_status_route(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def payroll_status_route(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return svc_payroll_status(country_code, db)
 
 
@@ -1012,17 +1083,19 @@ def payroll_status_route(country_code: str = Query(..., min_length=2, max_length
 
 
 @router.post("/hr/okr", summary="Create an OKR objective")
-def create_objective_endpoint(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def create_objective_endpoint(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     try:
         return svc_create_objective(db=db, **body)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.get("/hr/okr/{objective_id}", summary="Get objective tree with children")
-def get_objective_tree_endpoint(objective_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def get_objective_tree_endpoint(objective_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     result = get_objective_tree(db, objective_id)
     if not result:
         raise HTTPException(status_code=404, detail="Objective not found")
@@ -1030,49 +1103,56 @@ def get_objective_tree_endpoint(objective_id: int, db: Session = Depends(get_db)
 
 
 @router.patch("/hr/okr/{objective_id}/progress", summary="Update objective progress")
-def update_objective_progress_endpoint(objective_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.update")
+def update_objective_progress_endpoint(objective_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     return svc_update_objective_progress(db, objective_id, **(body or {}))
 
 
 @router.post("/hr/kpi", summary="Create a KPI metric under an objective")
-def create_kpi_endpoint(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def create_kpi_endpoint(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     return create_kpi_metric(db=db, **body)
 
 
 @router.put("/hr/kpi/{kpi_id}/value", summary="Record a KPI value")
-def record_kpi_value_endpoint(kpi_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.update")
+def record_kpi_value_endpoint(kpi_id: int, body: dict = None, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     if body is None:
         raise HTTPException(status_code=422, detail="Request body required")
     return record_kpi_value(db, kpi_id, **body)
 
 
 @router.get("/hr/kpi/employee/{employee_id}", summary="Get KPI dashboard for an employee")
-def get_kpi_dashboard_endpoint(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def get_kpi_dashboard_endpoint(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_kpi_dashboard(db, employee_id)
 
 
 @router.post("/hr/reviews", summary="Submit a 360 performance review")
-def submit_review_endpoint(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.create")
+def submit_review_endpoint(body: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     try:
         return submit_performance_review(db=db, **body)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.get("/hr/reviews/{employee_id}", summary="Get reviews for an employee")
-def get_employee_reviews_endpoint(employee_id: int, review_cycle: Optional[str] = Query(None), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def get_employee_reviews_endpoint(employee_id: int, review_cycle: Optional[str] = Query(None), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_employee_reviews(db, employee_id, review_cycle=review_cycle)
 
 
 @router.get("/hr/health/{employee_id}", summary="Compute performance health for an employee")
-def compute_health_endpoint(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.update")
+def compute_health_endpoint(employee_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.update"))
+):
     result = compute_performance_health(db, employee_id)
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
@@ -1084,8 +1164,8 @@ def coi_check_endpoint(
     employee_id: int = Path(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read")),
 ):
-    require_feature("hr.read")
     try:
         from domains.hr.models.employee_models import EmployeeRelation
     except Exception as exc:
@@ -1096,8 +1176,9 @@ def coi_check_endpoint(
 
 
 @router.get("/hr/health-board", summary="Get performance health board for a manager's team")
-def health_board_endpoint(manager_employee_id: int = Query(...), department: Optional[str] = Query(None), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    require_feature("hr.read")
+def health_board_endpoint(manager_employee_id: int = Query(...), department: Optional[str] = Query(None), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     return get_performance_health_board(db, manager_employee_id, department=department)
 
 
@@ -1107,29 +1188,33 @@ def health_board_endpoint(manager_employee_id: int = Query(...), department: Opt
 
 
 @router.get("/bench-strength", response_model=dict)
-async def get_bench_strength_report(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+async def get_bench_strength_report(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     service = get_succession_matrix(db)
     return service.get_bench_strength_report()
 
 
 @router.get("/successors/{role_name}", response_model=list)
-async def get_successors(role_name: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+async def get_successors(role_name: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     service = get_succession_matrix(db)
     return service.identify_successors(role_name)
 
 
 @router.post("/alumni", response_model=dict)
-async def grant_alumni_status(employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.create")
+async def grant_alumni_status(employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.create"))
+):
     service = get_alumni_network(db)
     return service.grant_alumni_status(employee_id)
 
 
 @router.get("/alumni/{employee_id}/eligibility", response_model=dict)
-async def check_alumni_eligibility(employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("hr.read")
+async def check_alumni_eligibility(employee_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.read"))
+):
     service = get_alumni_network(db)
     return service.check_alumni_eligibility(employee_id)
 

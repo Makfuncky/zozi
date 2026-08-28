@@ -11,17 +11,17 @@ from domains.governance.services.settings.misc_service import (
 from infrastructure.security.dependencies import (
     require_admin,
 )
-from domains.orders.ports import get_promotion_config, list_promotion_tiers, preview_order_tier_discount
-from domains.orders.ports import create_promotion_tier, delete_promotion_tier, update_promotion_config, update_promotion_tier
-from domains.orders.ports import get_all_flash_sales
-from domains.orders.ports import create_flash_sale, delete_flash_sale, update_flash_sale
+# from domains.orders.ports import get_promotion_config, list_promotion_tiers, preview_order_tier_discount  # unused
+# from domains.orders.ports import create_promotion_tier, delete_promotion_tier, update_promotion_config, update_promotion_tier  # unused
+# from domains.orders.ports import get_all_flash_sales  # unused
+# from domains.orders.ports import create_flash_sale, delete_flash_sale, update_flash_sale  # unused
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import AuditLogPage, BulkUpdateStaffBody, CouponSchema, CreateStaffAccount, ListPage, UpdateStaffAccount
 from infrastructure.database.schemas import Order as OrderSchema
 from infrastructure.database.schemas import Product as ProductSchema
 from infrastructure.utils.constants import MAX_BULK_ITEMS
 from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
-from infrastructure.security.auth import require_permission
+# from infrastructure.security.auth import require_permission  # module not available
 from domains.governance.exceptions import ValidationError
 
 

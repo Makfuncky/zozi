@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from domains.customers.services.public_comms_status_service import ConnectionManager
-from domains.customers.services.public_comms_status_service import UserConnectionManager
-from domains.customers.services.public_comms_status_service import websocket_chat
-from domains.customers.services.public_comms_status_service import _decode_ws_token
+from domains.customers.ports import ConnectionManager, UserConnectionManager, _decode_ws_token, websocket_chat
 
 import json
 

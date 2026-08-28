@@ -1,17 +1,23 @@
-"""Tests for model integrity and database constraints."""
+﻿"""Tests for model integrity and database constraints."""
 from __future__ import annotations
 
 import uuid
 import pytest
 from decimal import Decimal
 
-from infrastructure.database.models import (
-    User, Category, Product, ProductVariant, Order, OrderItem,
-    Payment, Coupon, Banner, Review, WishlistItem, CartItem,
-    Address, Notification, CountryConfig, LogisticsPartner,
-    SupplierProfile, Invoice, Account, TreasuryTransaction,
-)
+
 from infrastructure.database.base import Base
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Category, Product, ProductVariant, Review, WishlistItem
+from domains.orders.models.order_entities import Order, OrderItem
+from domains.finance.models.payments import Payment
+from domains.promotions.models.promotions import Coupon, Banner
+from domains.customers.models.customer_schema_models import CartItem, Address
+from domains.comms.models.communication import Notification
+from domains.country.models.countries import CountryConfig
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.suppliers.models.suppliers import SupplierProfile
+from domains.finance.models.general_ledger import Invoice, Account, TreasuryTransaction
 
 
 @pytest.mark.integration
@@ -140,7 +146,7 @@ def test_product_slug_unique(db_session):
 @pytest.mark.integration
 def test_product_variant_unique_constraint(db_session):
     from sqlalchemy.exc import IntegrityError
-    from infrastructure.database.models import Product, ProductVariant
+    from domains.catalog.models.products import Product, ProductVariant
     product = Product(name="Var Product", slug="var-prod", price=10.0)
     db_session.add(product)
     db_session.flush()
@@ -165,7 +171,9 @@ def test_user_email_unique(db_session):
 
 @pytest.mark.integration
 def test_order_items_relationship(db_session):
-    from infrastructure.database.models import User, Product, Order, OrderItem
+    from domains.accounts.models.user import User
+    from domains.catalog.models.products import Product
+    from domains.orders.models.order_entities import Order, OrderItem
     user = User(email=f"rel_{uuid.uuid4().hex[:8]}@zozi.test", username=f"rel_{uuid.uuid4().hex[:8]}", hashed_password="x", role="customer")
     product = Product(name="Rel Product", slug="rel-prod", price=10.0)
     db_session.add_all([user, product])

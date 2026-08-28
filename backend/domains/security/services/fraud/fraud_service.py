@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import UserLoginHistory
+from domains.accounts.models.user import UserLoginHistory
 from domains.security.models.fraud import FraudEvent
 from domains.security.models.fraud import FraudBlacklist
 from domains.security.models.fraud import FraudRule

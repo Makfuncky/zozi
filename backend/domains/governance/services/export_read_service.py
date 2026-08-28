@@ -11,10 +11,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from domains.governance.models.core import AuditLog
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.orders.models.orders import Order
-from domains.catalog.models.promotions import Coupon
+from domains.promotions.models.promotions import Coupon
 
 MAX_EXPORT_ROWS: int = 5000
 DEFAULT_PAGE_SIZE: int = 50

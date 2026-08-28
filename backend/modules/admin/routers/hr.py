@@ -74,8 +74,8 @@ def get_leave_balance_route(
     employee_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.leave.read")),
 ):
-    require_feature("hr.leave.read")
     return get_leave_balance(employee_id=employee_id, current_user=_, db=db)
 
 
@@ -85,8 +85,8 @@ def submit_expense_route(
     request: ExpenseSubmitRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     return submit_expense(employee_id=employee_id, expense_data=request.model_dump(), current_user=_, db=db)
 
 
@@ -97,8 +97,8 @@ def assign_asset_route(
     asset_tag: str | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     return assign_asset(employee_id=employee_id, asset_type=asset_type, asset_tag=asset_tag, current_user=_, db=db)
 
 
@@ -108,8 +108,8 @@ def check_work_hours(
     date: str = Query(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.attendance.read")),
 ):
-    require_feature("hr.attendance.read")
     from domains.hr.services.compliance import get_compliance_engine
     engine = get_compliance_engine(db)
     from datetime import datetime
@@ -123,8 +123,8 @@ def get_report(
     month: str = Query(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.attendance.read")),
 ):
-    require_feature("hr.attendance.read")
     engine = get_compliance_engine(db)
     dt = datetime.fromisoformat(month + "-01")
     return engine.get_compliance_report(employee_id, dt)
@@ -136,8 +136,8 @@ def calculate_overtime(
     week_start: str = Query(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.attendance.manage")),
 ):
-    require_feature("hr.attendance.manage")
     engine = get_compliance_engine(db)
     dt = datetime.fromisoformat(week_start + "-01")
     return {"overtime_hours": str(engine.calculate_overtime(employee_id, dt))}
@@ -149,8 +149,8 @@ def register_address_route(
     address_data: AddressRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     return register_address(employee_id=employee_id, address_data=address_data.model_dump(), db=db)
 
 
@@ -160,8 +160,8 @@ def register_dependent_route(
     dependent_data: DependentRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     return register_dependent(employee_id=employee_id, dependent_data=dependent_data.model_dump(), db=db)
 
 
@@ -170,8 +170,8 @@ def check_coi_conflict_route(
     employee_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.read")),
 ):
-    require_feature("hr.employee.read")
     return check_coi_conflict(employee_id=employee_id, db=db)
 
 
@@ -181,8 +181,8 @@ def create_coi_report_route(
     report_data: COIReportRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     return create_coi_report(employee_id=employee_id, report_data=report_data.model_dump(), db=db)
 
 
@@ -191,8 +191,8 @@ def validate_gcc_compliance_route(
     employee_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.read")),
 ):
-    require_feature("hr.employee.read")
     return validate_gcc_compliance(employee_id=employee_id, db=db)
 
 
@@ -201,8 +201,8 @@ def get_employee_graph_route(
     employee_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.read")),
 ):
-    require_feature("hr.employee.read")
     return get_employee_graph(employee_id=employee_id, db=db)
 
 
@@ -212,8 +212,8 @@ def get_disciplinary_cases_route(
     cursor: str | None = Query(None, description="Cursor for keyset pagination"),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.read")),
 ):
-    require_feature("hr.employee.read")
     return list_disciplinary_cases(db, limit, cursor)
 
 
@@ -223,8 +223,8 @@ def create_disciplinary_case_route(
     case_data: DisciplinaryCaseRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     return create_disciplinary_case(employee_id=employee_id, case_data=case_data.model_dump(), db=db)
 
 
@@ -234,8 +234,8 @@ def get_offboarding_cases_route(
     cursor: str | None = Query(None, description="Cursor for keyset pagination"),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.read")),
 ):
-    require_feature("hr.employee.read")
     return list_offboarding_cases(db, limit, cursor)
 
 
@@ -245,6 +245,6 @@ def create_offboarding_case_route(
     case_data: OffboardingCaseRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     return create_offboarding_case(employee_id=employee_id, case_data=case_data.model_dump(), db=db)

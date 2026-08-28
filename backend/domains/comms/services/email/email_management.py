@@ -585,23 +585,20 @@ def get_unified_inbox_service(db: Session = None) -> UnifiedInboxService:
 
 def create_campaign(db: Session, payload: dict, country_code: str) -> dict:
     """Sanctioned cross-domain write: create an email campaign."""
-    from domains.orders.services.core.admin_extra import create_campaign as _svc
+    from domains.orders.ports import create_campaign, delete_campaign, list_all_campaigns, list_campaigns
     return _svc(country_code, payload, db)
 
 
 def delete_campaign(db: Session, campaign_id: int, country_code: str) -> dict:
     """Sanctioned cross-domain write: delete an email campaign."""
-    from domains.orders.services.core.admin_extra import delete_campaign as _svc
     return _svc(country_code, campaign_id, db)
 
 
 def list_campaigns(db: Session, country_code: str, page: int, page_size: int) -> dict:
     """Sanctioned cross-domain read: list email campaigns by country."""
-    from domains.orders.services.core.admin_extra import list_campaigns as _svc
     return _svc(country_code, page, page_size, db)
 
 
 def list_all_campaigns(db: Session) -> list:
     """Sanctioned cross-domain read: list all email campaigns."""
-    from domains.orders.services.core.admin_extra import list_all_campaigns as _svc
     return _svc(db)

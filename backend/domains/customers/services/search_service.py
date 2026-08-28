@@ -11,8 +11,8 @@ from fastapi.responses import Response
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product, Wishlist
-from domains.orders.models.orders import Order, OrderItem
+from domains.catalog.ports import Product, Wishlist
+from domains.orders.ports import Order, OrderItem
 from infrastructure.database.schemas import _normalize_image_path
 from infrastructure.utils.cache import cache_or_compute
 from providers.ai.search import AdvancedSearchEngine

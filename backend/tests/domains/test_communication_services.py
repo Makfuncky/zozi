@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from infrastructure.database.models import User
+from domains.accounts.models.user import User
 from domains.hr.models.employee_models import Employee
 from domains.comms.models.communication import ChatAttachment, EmailFolder, InternalEmail
 from domains.hr.services.employee_communication_service import (

@@ -10,8 +10,11 @@ on it.
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 import sys
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     # Standalone execution: the backend root must be on sys.path so the
@@ -43,7 +46,7 @@ def _reset_sqlite_database() -> bool:
 def _create_tables() -> None:
     from infrastructure.database.base import Base as ModelsBase
     ModelsBase.metadata.create_all(bind=engine)
-    print("Database tables created successfully.")
+    logger.info("Database tables created successfully.")
 
 
 def main() -> None:

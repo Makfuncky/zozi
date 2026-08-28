@@ -4,6 +4,7 @@ Cross-Border Customer Detection & Localization Service.
 Handles IP detection, geo-detection, currency/tax swapping, and localization.
 """
 from typing import Optional, Dict, Any
+from decimal import Decimal
 import logging
 import json
 
@@ -112,7 +113,7 @@ class CurrencyTaxService:
             if config:
                 return {
                     "tax_type": config.tax_type or "VAT",
-                    "tax_rate": float(config.tax_rate) if config.tax_rate else 0.0,
+                    "tax_rate": Decimal(str(config.tax_rate)) if config.tax_rate else Decimal("0"),
                     "tax_name": config.tax_name or "VAT",
                     "tax_inclusive": config.tax_inclusive or False,
                     "tax_exempt_categories": json.loads(config.tax_exempt_categories_json) if config.tax_exempt_categories_json else [],
@@ -129,7 +130,7 @@ class CurrencyTaxService:
                 return {
                     "currency": config.currency or "USD",
                     "currency_symbol": config.currency_symbol or "$",
-                    "exchange_rate_to_usd": float(config.exchange_rate_to_usd) if config.exchange_rate_to_usd else 1.0,
+                    "exchange_rate_to_usd": Decimal(str(config.exchange_rate_to_usd)) if config.exchange_rate_to_usd else Decimal("1"),
                 }
         return {"currency": "USD", "currency_symbol": "$", "exchange_rate_to_usd": 1.0}
 

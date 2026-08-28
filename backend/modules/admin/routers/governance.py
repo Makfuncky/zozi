@@ -36,8 +36,8 @@ router = APIRouter(tags=["admin", "governance"])
 def get_checkout_config(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.system.health")),
 ):
-    require_feature("governance.system.health")
     return {
         "vat_rate": settings.checkout_vat_rate,
         "shipping_flat_rate": settings.checkout_shipping_flat_rate,
@@ -52,8 +52,8 @@ def get_checkout_config(
 def heartbeat_route(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.system.health")),
 ):
-    require_feature("governance.system.health")
     return get_command_center_heartbeat(db=db)
 
 
@@ -61,8 +61,8 @@ def heartbeat_route(
 def system_metrics_route(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.system.health")),
 ):
-    require_feature("governance.system.health")
     return get_system_metrics(db=db)
 
 
@@ -70,8 +70,8 @@ def system_metrics_route(
 def treasury_metrics_route(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.treasury.read")),
 ):
-    require_feature("governance.treasury.read")
     return get_treasury_metrics(db=db)
 
 
@@ -79,8 +79,8 @@ def treasury_metrics_route(
 def dashboard_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return get_dashboard(current_user=current_user, db=db)
 
 
@@ -89,8 +89,8 @@ def fraud_alerts_route(
     limit: int = Query(50),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.fraud.read")),
 ):
-    require_feature("governance.fraud.read")
     return get_fraud_alerts(limit=limit, db=db)
 
 
@@ -100,8 +100,8 @@ def news_route(
     category: str | None = None,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return get_executive_news(limit=limit, category=category, db=db)
 
 
@@ -111,8 +111,8 @@ def headlines_route(
     category: str | None = None,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return get_command_center_headlines(limit=limit, category=category, db=db)
 
 
@@ -121,8 +121,8 @@ def create_news_route(
     payload: dict | None = None,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return create_executive_news(payload=payload, db=db)
 
 
@@ -131,8 +131,8 @@ def delete_news_route(
     news_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return delete_executive_news(news_id=news_id, db=db)
 
 
@@ -141,8 +141,8 @@ def alerts_route(
     severity: str | None = None,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.security.incident.read")),
 ):
-    require_feature("governance.security.incident.read")
     return get_alerts(severity=severity, db=db)
 
 
@@ -151,8 +151,8 @@ def resolve_alert_route(
     alert_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.security.incident.manage")),
 ):
-    require_feature("governance.security.incident.manage")
     return resolve_alert(alert_id=alert_id, db=db)
 
 
@@ -160,8 +160,8 @@ def resolve_alert_route(
 def dashboard_stats_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return get_dashboard_stats(current_user=current_user, db=db)
 
 
@@ -169,8 +169,8 @@ def dashboard_stats_route(
 def realtime_metrics_route(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.system.health")),
 ):
-    require_feature("governance.system.health")
     return get_realtime_metrics(db=db)
 
 
@@ -179,8 +179,8 @@ def comprehensive_dashboard_route(
     current_user: dict = Depends(require_admin),
     country_code: str | None = None,
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return get_comprehensive_dashboard(current_user=current_user, db=db, country_code=country_code)
 
 
@@ -188,6 +188,6 @@ def comprehensive_dashboard_route(
 def command_center_root_route(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("governance.analytics.read")),
 ):
-    require_feature("governance.analytics.read")
     return get_command_center(db=db)

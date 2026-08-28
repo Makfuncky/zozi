@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import SupplierBankAccount

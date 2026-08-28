@@ -12,12 +12,11 @@ from domains.catalog.services.products.products_service import (  # noqa: F401
     soft_delete_product,
 )
 from domains.catalog.services.products.bulk_ops_write_service import (  # noqa: F401
-    bulk_create_products,
-    bulk_update_products,
-    bulk_delete_products,
+    bulk_archive_entities,
+    bulk_restore_entities,
 )
 from domains.catalog.services.products.country_dropdown_service import (  # noqa: F401
-    get_country_dropdown_data,
+    get_cities_dropdown,
 )
 from domains.catalog.services.products.admin_products_service import (  # noqa: F401
     approve_product_route,
@@ -54,10 +53,10 @@ from domains.catalog.services.categories.category_service import (  # noqa: F401
 )
 from domains.catalog.services.categories.category_admin_read_service import list_categories_paginated  # noqa: F401
 from domains.catalog.services.categories.category_admin_write_service import (  # noqa: F401
-    admin_create_category,
-    admin_update_category,
-    admin_delete_category,
-    admin_reorder_categories,
+    create_category,
+    update_category,
+    delete_category,
+    reorder_categories,
 )
 
 __all__: list[str] = []

@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.governance.models.core import SupportTicket
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import Category
 from domains.catalog.models.products import Review
@@ -20,8 +20,8 @@ from domains.logistics.models.logistics import LogisticsPartner
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import ReturnRequest
-from domains.catalog.models.promotions import Coupon
-from domains.catalog.models.promotions import Banner
+from domains.promotions.models.promotions import Coupon
+from domains.promotions.models.promotions import Banner
 from domains.finance.models.payments import Payout
 
 

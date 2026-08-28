@@ -285,7 +285,7 @@ from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-import domains.orders.services.logistics_partner_controller as ctrl
+import domains.logistics.services.partners.logistics_partner_service as ctrl
 
 from infrastructure.database.database import get_db
 

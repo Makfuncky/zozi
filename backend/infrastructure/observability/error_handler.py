@@ -24,6 +24,7 @@ import structlog
 
 from infrastructure.security.ip_utils import get_request_ip
 from infrastructure.observability.logging_config import get_request_id, get_user_id, get_country_code
+from infrastructure.utils.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -104,6 +105,7 @@ class ErrorHandler:
     def capture_exception(self, exc: Exception, request: Optional[Request] = None, category: str = ErrorCategory.INTERNAL, **kwargs):
         """Capture and log an exception with full context."""
         if not self.sentry_initialized:
+            logger.error("Sentry not initialized, exception: %s", exc)
             return
 
         try:
@@ -216,7 +218,7 @@ def _build_problem_response(
 def _get_cors_headers(request: Request) -> Dict[str, str]:
     headers = {}
     origin = request.headers.get("origin")
-    if origin:
+    if origin and origin in settings.cors_origins_list:
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
     return headers

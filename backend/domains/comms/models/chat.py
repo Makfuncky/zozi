@@ -18,6 +18,7 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 class EntityChatThread(Base):
     __tablename__ = "entity_chat_threads"
+    __table_args__ = {"schema": "comms"}
     id = Column(Integer, primary_key=True, index=True)
     entity_type = Column(String, nullable=False)
     entity_id = Column(Integer, nullable=False)
@@ -39,7 +40,7 @@ class VideoRoom(Base):
     room_uuid = Column(String(32), unique=True, nullable=True)
     name = Column(String(200), nullable=False)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
-    created_by = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     is_boardroom = Column(Boolean, default=False)
     status = Column(String(20), default="waiting")
     max_participants = Column(Integer, default=100)
@@ -52,7 +53,7 @@ class VideoRoom(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     participants = relationship("VideoRoomParticipant", back_populates="room", cascade="all, delete-orphan")
     recordings = relationship("VideoRoomRecording", back_populates="room", cascade="all, delete-orphan")
-    creator = relationship("User", foreign_keys=[created_by])
+    creator = relationship("User", foreign_keys=[created_by_id])
 
 
 class VideoRoomParticipant(Base):
@@ -71,17 +72,18 @@ class VideoRoomParticipant(Base):
 
 class DirectChatRoom(Base):
     __tablename__ = "direct_chat_rooms"
+    __table_args__ = {"schema": "comms"}
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(String(64), unique=True, nullable=False, index=True)
-    participant_one = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
-    participant_two = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    participant_one_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    participant_two_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
     is_masked = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("DirectChatMessage", back_populates="room", cascade="all, delete-orphan")
-    __table_args__ = (UniqueConstraint("participant_one", "participant_two", name="uq_direct_chat_pair"), {"schema": "comms"})
+    __table_args__ = (UniqueConstraint("participant_one_id", "participant_two_id", name="uq_direct_chat_pair"), {"schema": "comms"})
 
 
 class GroupChatMember(Base):
@@ -134,14 +136,14 @@ class VideoRoomRecording(Base):
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("comms.video_rooms.id", ondelete='CASCADE'), nullable=False)
-    started_by = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    started_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     recording_url = Column(String(500), nullable=True)
     duration_seconds = Column(Integer, default=0)
     status = Column(String(20), default="recording")
     started_at = Column(DateTime, default=_utcnow)
     ended_at = Column(DateTime, nullable=True)
     room = relationship("VideoRoom", back_populates="recordings")
-    starter = relationship("User", foreign_keys=[started_by])
+    starter = relationship("User", foreign_keys=[started_by_id])
 
 
 class DirectChatMessage(Base):
@@ -167,7 +169,7 @@ class GroupChatRoom(Base):
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
     is_encrypted = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     members = relationship("GroupChatMember", back_populates="room", cascade="all, delete-orphan")

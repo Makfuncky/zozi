@@ -67,6 +67,12 @@ FEATURES: dict[str, dict] = {
         "actions": ["read"],
         "description": "Export order data and reports for analytics.",
     },
+    "orders.update": {
+        "label": "Update Orders",
+        "risk": "medium",
+        "actions": ["read", "update"],
+        "description": "Update order fields, status, and metadata.",
+    },
 }
 
 

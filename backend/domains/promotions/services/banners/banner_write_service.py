@@ -36,7 +36,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.promotions import Banner
+from domains.promotions.models.promotions import Banner
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -19,8 +19,9 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.country.models.countries import CountryConfig
-from domains.country.models.country_enhancements import CountryCategoryTaxRate
+from domains.country.models.countries import CountryConfig, CountryGatewayCredentials, PayoutRuleCategory, PayoutRuleProduct
+from domains.country.models.country_control import PaymentOrchestratorSync, SupplierOnboardingSync
+from domains.country.models.country_enhancements import CountryCategoryTaxRate, CountryCity
 from domains.country.utils.country_rls import get_country_or_404
 
 
@@ -88,6 +89,17 @@ def country_config_query(db: Session) -> object:
     return db.query(CountryConfig)
 
 
+def country_city_query(db: Session) -> object:
+    """Return a base ``CountryCity`` query for sanctioned cross-domain delegation."""
+    return db.query(CountryCity)
+
+
+def country_communication_query(db: Session) -> object:
+    """Return a base ``CountryCommunication`` query for sanctioned cross-domain delegation."""
+    from domains.country.models.countries import CountryCommunication
+    return db.query(CountryCommunication)
+
+
 def normalize_country_code(code: str) -> str:
     """Normalize a country code to uppercase 3-letter format."""
     if not code:
@@ -112,3 +124,78 @@ def format_currency(amount: float, currency_code: str = "USD", locale: str = "en
     """Sanctioned cross-domain read: format currency for locale."""
     from domains.country.services.localization.localization_service import format_currency as _svc
     return _svc(amount, currency_code, locale)
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "add_country_city": ("domains.country.services.core.country_config_admin_service", "add_country_city"),
+    "archive_country": ("domains.country.services.core.country_config_admin_service", "archive_country"),
+    "bulk_archive_countries": ("domains.country.services.core.country_config_admin_service", "bulk_archive_countries"),
+    "bulk_restore_countries": ("domains.country.services.core.country_config_admin_service", "bulk_restore_countries"),
+    "create_country_commission_rate": ("domains.country.services.core.country_config_admin_service", "create_country_commission_rate"),
+    "create_feature_flag": ("domains.country.services.core.country_config_admin_service", "create_feature_flag"),
+    "delete_country_city": ("domains.country.services.core.country_config_admin_service", "delete_country_city"),
+    "delete_country_commission_rate": ("domains.country.services.core.country_config_admin_service", "delete_country_commission_rate"),
+    "delete_feature_flag": ("domains.country.services.core.country_config_admin_service", "delete_feature_flag"),
+    "hard_delete_country": ("domains.country.services.core.country_config_admin_service", "hard_delete_country"),
+    "list_country_commission_rates": ("domains.country.services.core.country_config_admin_service", "list_country_commission_rates"),
+    "patch_country_city": ("domains.country.services.core.country_config_admin_service", "patch_country_city"),
+    "restore_country": ("domains.country.services.core.country_config_admin_service", "restore_country"),
+    "toggle_country_active": ("domains.country.services.core.country_config_admin_service", "toggle_country_active"),
+    "update_feature_flag": ("domains.country.services.core.country_config_admin_service", "update_feature_flag"),
+    "CountryDetectionService": ("domains.country.services.geo.country_detection", "CountryDetectionService"),
+    "is_rtl_language": ("domains.country.services.localization.localization_service", "is_rtl_language"),
+    "GATEWAY_REGISTRY": ("domains.country.services.research.country_auto_populate", "GATEWAY_REGISTRY"),
+    "is_product_restricted_for_country": ("domains.country.services.restriction.country_restriction_service", "is_product_restricted_for_country"),
+    "add_city": ("domains.country.services.staff.country_admin_write_service", "add_city"),
+    "assign_staff": ("domains.country.services.staff.country_admin_write_service", "assign_staff"),
+    "delete_city": ("domains.country.services.staff.country_admin_write_service", "delete_city"),
+    "list_cities": ("domains.country.services.staff.country_admin_write_service", "list_cities"),
+    "list_communications": ("domains.country.services.staff.country_admin_write_service", "list_communications"),
+    "list_staff": ("domains.country.services.staff.country_admin_write_service", "list_staff"),
+    "list_tax_rates": ("domains.country.services.staff.country_admin_write_service", "list_tax_rates"),
+    "mark_communication_read": ("domains.country.services.staff.country_admin_write_service", "mark_communication_read"),
+    "remove_staff": ("domains.country.services.staff.country_admin_write_service", "remove_staff"),
+    "send_country_communication": ("domains.country.services.staff.country_admin_write_service", "send_country_communication"),
+    "set_tax_rate": ("domains.country.services.staff.country_admin_write_service", "set_tax_rate"),
+    "update_city": ("domains.country.services.staff.country_admin_write_service", "update_city"),
+    "CountryGatewayCredentials": ("domains.country.models.countries", "CountryGatewayCredentials"),
+    "PayoutRuleCategory": ("domains.country.models.countries", "PayoutRuleCategory"),
+    "PayoutRuleProduct": ("domains.country.models.countries", "PayoutRuleProduct"),
+    "PaymentOrchestratorSync": ("domains.country.models.country_control", "PaymentOrchestratorSync"),
+}
+import importlib
+
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# --- Query delegation (Law 3 sanctioned cross-domain query surface) ---
+
+def country_gateway_credentials_query(db: Session) -> object:
+    """Return a base ``CountryGatewayCredentials`` query for sanctioned cross-domain delegation."""
+    return db.query(CountryGatewayCredentials)
+
+
+def payout_rule_category_query(db: Session) -> object:
+    """Return a base ``PayoutRuleCategory`` query for sanctioned cross-domain delegation."""
+    return db.query(PayoutRuleCategory)
+
+
+def payout_rule_product_query(db: Session) -> object:
+    """Return a base ``PayoutRuleProduct`` query for sanctioned cross-domain delegation."""
+    return db.query(PayoutRuleProduct)
+
+
+def payment_orchestrator_sync_query(db: Session) -> object:
+    """Return a base ``PaymentOrchestratorSync`` query for sanctioned cross-domain delegation."""
+    return db.query(PaymentOrchestratorSync)
+

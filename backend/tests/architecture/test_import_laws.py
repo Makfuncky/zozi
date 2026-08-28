@@ -16,11 +16,11 @@ migration at a time. The sanctioned ``rbac/catalog.py`` feature-aggregation
 import is excluded (Law 4 requires it).
 
 Regenerate the baseline after an intentional move:
-    python tests/_gen_import_laws_baseline.py
+    python scripts/_gen_import_laws_baseline.py
 """
 from __future__ import annotations
 
-from ._gen_import_laws_baseline import load_baseline, scan_all
+from scripts._gen_import_laws_baseline import load_baseline, scan_all
 
 
 class TestLaw1ArrowsPointDown:
@@ -31,7 +31,7 @@ class TestLaw1ArrowsPointDown:
             "New static upward import(s) violate Law 1 (arrows point down only: "
             "modules -> domains -> infrastructure; domains never import modules). "
             "Migrate the dependency downward, then regenerate the baseline with "
-            "tests/_gen_import_laws_baseline.py. New offenders:\n  "
+            "scripts/_gen_import_laws_baseline.py. New offenders:\n  "
             + "\n  ".join(new_offenders)
         )
 
@@ -46,7 +46,7 @@ class TestLaw1ArrowsPointDown:
         # scanner's reach by checking it can find candidate files in the
         # lower layers (without requiring the baseline to be non-empty).
         import os
-        from ._gen_import_laws_baseline import BACKEND
+        from scripts._gen_import_laws_baseline import BACKEND
         candidates = []
         for sub in ("infrastructure", "providers", "rbac", "kernel"):
             root = os.path.join(BACKEND, sub)

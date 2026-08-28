@@ -107,16 +107,16 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
                 parts = cached.split(",")
                 if len(parts) == 2:
                     return (float(parts[0]), float(parts[1]))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis cache get failed: %s", exc)
 
         coords = lookup_coordinates(ip)
         if coords is None:
             return None
         try:
             redis.setex(coord_key, 86400, f"{coords[0]},{coords[1]}")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis coord cache set failed: %s", exc)
         return coords
 
     def _get_previous_location(self, redis, user_id: int) -> Optional[tuple[float, float, float]]:
@@ -127,30 +127,30 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
                 parts = data.split(",")
                 if len(parts) == 4:
                     return (float(parts[0]), float(parts[1]), float(parts[2]))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis previous location get failed: %s", exc)
         return None
 
     def _update_location(self, redis, user_id: int, lat: float, lon: float, ip: str) -> None:
         key = f"{self.REDIS_PREFIX}{user_id}"
         try:
             redis.setex(key, self.REDIS_TTL, f"{lat},{lon},{time.time()},{ip}")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis location update failed: %s", exc)
 
     def _lock_session(self, redis, user_id: int, ip: str, distance: float, speed: float) -> None:
         lock_key = f"lock:impossible_travel:{user_id}"
         try:
             redis.setex(lock_key, 1800, f"{ip},{distance},{speed}")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis session lock set failed: %s", exc)
         try:
             logger.warning(
                 "Impossible travel detected: user_id=%s ip=%s distance=%.0fkm speed=%.0fkm/h",
                 user_id, ip, distance, speed,
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Logger warning failed: %s", exc)
 
     @staticmethod
     def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

@@ -470,6 +470,15 @@ def _country_filter(country_code: Optional[str]) -> tuple[str, Dict[str, Any]]:
     return "", {}
 
 
+def _apply_country_where(sql: str, country_where: str) -> str:
+    """Safely inject a pre-validated WHERE fragment into a SQL string.
+
+    The fragment comes from ``_country_filter`` which only returns
+    hardcoded strings — never user input.
+    """
+    return sql.replace("{country_where}", country_where)
+
+
 def get_hr_dashboard(
     db: Session,
     *,
@@ -488,7 +497,7 @@ def get_hr_dashboard(
     # ── Onboarding Pipeline Stats ──
     try:
         pipeline_counts = db.execute(
-            text("""
+            text(_apply_country_where("""
                 SELECT
                     SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as active,
                     SUM(CASE WHEN status = 'in_progress' AND due_date < :now THEN 1 ELSE 0 END) as overdue,
@@ -496,12 +505,12 @@ def get_hr_dashboard(
                     SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
                 FROM onboarding_pipelines
                 WHERE 1=1 {country_where}
-            """.format(country_where=country_where)),
+            """, country_where)),
             {**base_params},
         ).mappings().first()
 
         overdue_items = db.execute(
-            text("""
+            text(_apply_country_where("""
                 SELECT p.id, p.employee_id, p.current_step, p.total_steps,
                        p.completed_steps, p.due_date,
                        e.employee_code, e.department, e.position
@@ -510,7 +519,7 @@ def get_hr_dashboard(
                 WHERE p.status = 'in_progress' AND p.due_date < :now {country_where}
                 ORDER BY p.due_date ASC
                 LIMIT 20
-            """.format(country_where=country_where)),
+            """, country_where)),
             {**base_params},
         ).mappings().all()
 
@@ -525,7 +534,7 @@ def get_hr_dashboard(
     # ── Performance Health Board ──
     try:
         health_data = db.execute(
-            text("""
+            text(_apply_country_where("""
                 SELECT
                     SUM(CASE WHEN performance_score >= 4.0 THEN 1 ELSE 0 END) as green,
                     SUM(CASE WHEN performance_score >= 2.5 AND performance_score < 4.0 THEN 1 ELSE 0 END) as amber,
@@ -534,31 +543,31 @@ def get_hr_dashboard(
                     ROUND(AVG(performance_score), 2) as avg_score
                 FROM hr.employees
                 WHERE employment_status = 'active' {country_where}
-            """.format(country_where=country_where)),
+            """, country_where)),
             {**base_params},
         ).mappings().first()
 
         top_performers = db.execute(
-            text("""
+            text(_apply_country_where("""
                 SELECT e.id, e.employee_code, e.department, e.position, e.performance_score
                 FROM hr.employees e
                 WHERE e.employment_status = 'active'
                   AND e.performance_score IS NOT NULL {country_where}
                 ORDER BY e.performance_score DESC
                 LIMIT 10
-            """.format(country_where=country_where)),
+            """, country_where)),
             {**base_params},
         ).mappings().all()
 
         bottom_performers = db.execute(
-            text("""
+            text(_apply_country_where("""
                 SELECT e.id, e.employee_code, e.department, e.position, e.performance_score
                 FROM hr.employees e
                 WHERE e.employment_status = 'active'
                   AND e.performance_score IS NOT NULL {country_where}
                 ORDER BY e.performance_score ASC
                 LIMIT 5
-            """.format(country_where=country_where)),
+            """, country_where)),
             {**base_params},
         ).mappings().all()
 
@@ -577,7 +586,7 @@ def get_hr_dashboard(
         params = {**base_params, "since": since_date}
 
         activity = db.execute(
-            text("""
+            text(_apply_country_where("""
                 SELECT al.id, al.actor_employee_id, al.action, al.entity_type,
                        al.entity_id, al.target_employee_id, al.metadata_json, al.created_at,
                        ae.employee_code as actor_code,
@@ -588,7 +597,7 @@ def get_hr_dashboard(
                 WHERE al.created_at >= :since {country_where}
                 ORDER BY al.created_at DESC
                 LIMIT 50
-            """.format(country_where=country_where)),
+            """, country_where)),
             params,
         ).mappings().all()
 
@@ -621,7 +630,7 @@ def get_hr_dashboard(
     # ── Employee Counts ──
     try:
         emp_counts = db.execute(
-            text("""
+            text(_apply_country_where("""
                 SELECT
                     COUNT(*) as total,
                     SUM(CASE WHEN employment_status = 'active' THEN 1 ELSE 0 END) as active,
@@ -629,7 +638,7 @@ def get_hr_dashboard(
                     SUM(CASE WHEN employment_status = 'terminated' THEN 1 ELSE 0 END) as terminated
                 FROM hr.employees
                 WHERE 1=1 {country_where}
-            """.format(country_where=country_where)),
+            """, country_where)),
             {**base_params},
         ).mappings().first()
         result["employees"] = dict(emp_counts) if emp_counts else {"total": 0, "active": 0, "terminating": 0, "terminated": 0}

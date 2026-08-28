@@ -24,7 +24,7 @@ __all__ = ["CityDistanceMatrix"]
 
 
 class CityDistanceMatrix(Base):
-    __tablename__ = "city_distance_matrix"
+    __tablename__ = "city_distance_matrices"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     origin_country_code = Column(String(2), nullable=False)
@@ -33,6 +33,9 @@ class CityDistanceMatrix(Base):
     destination_city_name = Column(String, nullable=False)
     distance_km = Column(Numeric(10, 2), nullable=True)
     notes = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)

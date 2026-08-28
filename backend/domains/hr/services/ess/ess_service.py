@@ -12,11 +12,11 @@ from sqlalchemy import text
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.services.auth.auth_service import get_current_user
+from domains.accounts.ports import get_current_user
 
 from infrastructure.database.database import get_db
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 from domains.hr.models.employee_models import Employee
 from domains.hr.services.employee_activity_logger import log_activity

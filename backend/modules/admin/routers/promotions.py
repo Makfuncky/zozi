@@ -32,8 +32,8 @@ def list_banners(
     position: str = None,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.banners.read")),
 ):
-    require_feature("promotions.banners.read")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -47,8 +47,8 @@ def list_all_banners(
     country_code: str = Path(..., description="ISO country code"),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.banners.read")),
 ):
-    require_feature("promotions.banners.read")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -63,8 +63,8 @@ def create_banner(
     payload: BannerCreate = Body(...),
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.banners.write")),
 ):
-    require_feature("promotions.banners.write")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -80,8 +80,8 @@ def update_banner(
     payload: BannerUpdate = Body(...),
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.banners.write")),
 ):
-    require_feature("promotions.banners.write")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -96,8 +96,8 @@ def delete_banner(
     banner_id: int = Path(...),
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.banners.write")),
 ):
-    require_feature("promotions.banners.write")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -107,6 +107,7 @@ def delete_banner(
 
 
 @router.get("/admin_promotions_routes/health")
-def health(_: dict = Depends(require_admin)):
-    require_feature("promotions.banners.read")
+def health(_: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("promotions.banners.read"))
+):
     return {"status": "ok", "router": "admin_promotions_routes", "prefix": "/api/v1/promotions"}

@@ -20,17 +20,17 @@ from sqlalchemy import func
 from domains.finance.models.erp import LandedCostAllocation
 from domains.finance.models.erp import CustomsEntry
 from domains.finance.models.erp import ImportCostTemplate
-from domains.finance.models.erp import Warehouse
+from domains.logistics.models.erp import Warehouse
 from domains.finance.models.finance import Vendor
 from domains.finance.models.finance import Account
 from domains.finance.models.finance import AccountGroup
 from domains.finance.models.finance import AccountBalance
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
-from domains.finance.models.erp import ImportShipment
-from domains.finance.models.erp import ImportShipmentLine
-from domains.finance.models.erp import PurchaseOrder
-from domains.finance.models.erp import PurchaseOrderLine
+from domains.logistics.models.erp import ImportShipment
+from domains.logistics.models.erp import ImportShipmentLine
+from domains.logistics.models.erp import PurchaseOrder
+from domains.logistics.models.erp import PurchaseOrderLine
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 # Removed circular self-import
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -914,7 +914,7 @@ def post_badge_fee_journal(db: Session, user_id: int, badge_fee_amount: Decimal,
     Dr.  Accounts Receivable (Customer)
     Cr.  Badge Fee Revenue (GCC)
     """
-    from domains.governance.models.user import User
+    from domains.accounts.models.user import User
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise ValueError(f"User {user_id} not found")
@@ -2509,7 +2509,7 @@ def get_country_payout_settings(country_code: str, db: Session) -> dict[str, Any
 
     Returns default values if the country or its settings are not configured.
     """
-    from domains.logistics.services.partners.service import normalize_country_code
+from domains.logistics.ports import normalize_country_code
 
     code = normalize_country_code(country_code)
     if not code:
@@ -2576,7 +2576,7 @@ def _get_finance_ports():
 # Lazy import: controller_post_ar_payment
 # Lazy import: controller_post_ap_payable
 # Lazy import: controller_post_ap_payment
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
+from domains.audit.ports import AuditAction, audit_log
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
@@ -3011,7 +3011,6 @@ from domains.finance.models.commission import CommissionLedgerEntry
 from domains.finance.models.commission import ProductCommissionOverride
 from domains.governance.models.admin import CommissionBadgeTier
 from domains.governance.models.admin import CommissionGlobalConfig
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
 
 
 def _get_commission_engine():
@@ -5126,7 +5125,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 from infrastructure.database.schemas import CommissionCategoryRateCreate, CommissionCategoryRateOut, CommissionBadgeTierCreate, CommissionBadgeTierOut
 
@@ -5636,7 +5635,6 @@ def create_commission_ledger_entry(
 import json as _json
 
 from domains.country.models.countries import CountryConfig
-from domains.logistics.services.partners.service import normalize_country_code as _normalize_country
 
 
 def resolve_country_commission_tiers(
@@ -7276,7 +7274,6 @@ from domains.finance.models.finance import InvoiceItem
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731
@@ -7355,7 +7352,7 @@ def list_invoices(
         q = q.filter(Invoice.order_id == order_id)
 
     total = q.count()
-    items = q.order_by(desc(Invoice.created_at)).offset(page_size).limit(page_size).all()
+    items = q.order_by(desc(Invoice.created_at)).offset((page - 1) * page_size).limit(page_size).all()
 
     return {
         "total": total,
@@ -7484,7 +7481,7 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
     )
     # Email the invoice to the customer — enqueued async, failure is non-blocking
     try:
-        from domains.comms.services.transactional_email_service import enqueue_invoice_email
+from domains.comms.ports import enqueue_invoice_email
         enqueue_invoice_email(cast(int, inv.id))
     except Exception:
         logger.warning("Failed to enqueue invoice email for invoice %s", inv.id)
@@ -7539,7 +7536,6 @@ def update_invoice_status(invoice_id: int, data: dict, current_user: dict, db: S
     # Email delivery confirmation to customer — enqueued async, failure is non-blocking
     if new_status == "delivered":
         try:
-            from domains.comms.services.transactional_email_service import enqueue_invoice_email
             enqueue_invoice_email(cast(int, inv.id))
         except Exception:
             logger.warning("Failed to enqueue delivery confirmation email for invoice %s", inv.id)
@@ -7757,7 +7753,6 @@ from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 
 from kernel.money import round_money
 
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
 
 
 

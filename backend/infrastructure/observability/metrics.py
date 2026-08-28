@@ -1,23 +1,36 @@
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Histogram, Gauge, REGISTRY
 
-db_query_duration_seconds = Histogram(
+def _safe_metric(cls, name, *args, **kwargs):
+    """Create a metric, reusing an existing one if already registered (idempotent)."""
+    try:
+        return cls(name, *args, **kwargs)
+    except ValueError:
+        # Metric already registered in a prior import (e.g. test reload).
+        # Retrieve the existing collector from the default registry.
+        return REGISTRY._names_to_collectors[name]
+
+db_query_duration_seconds = _safe_metric(
+    Histogram,
     'db_query_duration_seconds',
     'Database query duration in seconds',
     ['query_type']
 )
 
-db_connections = Gauge(
+db_connections = _safe_metric(
+    Gauge,
     'db_connections',
     'Number of database connections'
 )
 
-http_requests_total = Counter(
+http_requests_total = _safe_metric(
+    Counter,
     'http_requests_total',
     'Total HTTP requests',
     ['method', 'endpoint', 'status']
 )
 
-http_request_duration_seconds = Histogram(
+http_request_duration_seconds = _safe_metric(
+    Histogram,
     'http_request_duration_seconds',
     'HTTP request duration in seconds',
     ['method', 'endpoint']

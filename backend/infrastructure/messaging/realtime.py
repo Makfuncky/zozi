@@ -128,12 +128,12 @@ class _RedisRealtimeBridge:
             finally:
                 try:
                     pubsub.close()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("pubsub close failed: %s", exc)
                 try:
                     client.close()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("Redis client close failed: %s", exc)
 
             if not self._stop_event.is_set():
                 self._stop_event.wait(1)

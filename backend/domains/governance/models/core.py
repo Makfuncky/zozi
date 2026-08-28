@@ -43,12 +43,16 @@ __all__ = [
 # ──────────────────────────────────────────────
 
 class UserBrowsingHistory(Base):
-    __tablename__ = "user_browsing_history"
+    __tablename__ = "user_browsing_histories"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='CASCADE'), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False, index=True)
     viewed_at = Column(DateTime, server_default=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
 
 class SystemHealthEvent(Base):
@@ -59,8 +63,10 @@ class SystemHealthEvent(Base):
     metric_value = Column(Numeric(12, 4), nullable=False)
     severity = Column(String(20), default="info")
     message = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     __table_args__ = (Index("ix_health_events_metric_time", "metric_name", "created_at"), {"schema": "governance"})
 
 
@@ -72,9 +78,10 @@ class UserSession(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
-    last_activity = Column(DateTime, server_default=func.now(), nullable=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    last_activity = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     __table_args__ = (
         Index("ix_user_sessions_user_active", "user_id", "is_active"),

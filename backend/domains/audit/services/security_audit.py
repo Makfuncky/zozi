@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Any
 
-from domains.governance.models.core import AuditLog
+from domains.audit.ports import AuditLog
 
 logger = logging.getLogger(__name__)
 

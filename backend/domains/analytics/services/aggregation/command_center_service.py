@@ -5,6 +5,7 @@ import json
 import logging
 import structlog
 from datetime import datetime, timezone, timedelta, date
+from decimal import Decimal
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy import text
@@ -347,9 +348,9 @@ class CommandCenterService:
             WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')
         """)).fetchone()
         return {
-            "revenue": float(result[0] or 0),
-            "commission": float(result[1] or 0),
-            "gmv": float(result[2] or 0),
+            "revenue": Decimal(str(result[0] or 0)),
+            "commission": Decimal(str(result[1] or 0)),
+            "gmv": Decimal(str(result[2] or 0)),
         }
     
     def _get_trend_stats(self, twenty_four_hours_ago: datetime) -> dict:
@@ -365,7 +366,7 @@ class CommandCenterService:
         """)).fetchall()
         
         return {
-            "top_categories": [{"name": r[0], "orders": r[1], "revenue": float(r[2])} for r in category_result],
+            "top_categories": [{"name": r[0], "orders": r[1], "revenue": Decimal(str(r[2]))} for r in category_result],
         }
     
     def _get_search_stats(self) -> dict:
@@ -390,13 +391,13 @@ class CommandCenterService:
         result = self.db.execute(text("""
             SELECT COALESCE(SUM(amount), 0) FROM payout_batch_items WHERE status = 'pending'
         """)).fetchone()
-        return float(result[0] or 0)
-    
+        return Decimal(str(result[0] or 0))
+
     def _calculate_vat_liability(self) -> float:
         result = self.db.execute(text("""
             SELECT COALESCE(SUM(vat_amount), 0) FROM orders WHERE payment_status != 'paid' OR payment_status IS NULL
         """)).fetchone()
-        return float(result[0] or 0)
+        return Decimal(str(result[0] or 0))
     
     def get_news_articles(self, category: Optional[str] = None, limit: int = 50) -> List[NewsArticle]:
         query = self.db.query(NewsArticle).filter(NewsArticle.is_published == True)
@@ -437,9 +438,9 @@ class CommandCenterService:
             JOIN accounts a ON ab.account_id = a.id
         """)).fetchone()
         return {
-            "available_cash": float(result[0] or 0),
-            "locked_cash": float(result[1] or 0),
-            "total": float(result[2] or 0),
+            "available_cash": Decimal(str(result[0] or 0)),
+            "locked_cash": Decimal(str(result[1] or 0)),
+            "total": Decimal(str(result[2] or 0)),
         }
     
     def get_treasury_metrics(self) -> dict:
@@ -470,15 +471,15 @@ class CommandCenterService:
         """)).fetchone()
         
         metrics = {
-            "supplier_payables": float(result[0] or 0),
-            "logistics_payables": float(result[1] or 0),
-            "refund_reserve": float(result[2] or 0),
-            "vat_liability": float(result[3] or 0),
-            "available_cash": float(result[4] or 0),
-            "locked_cash": float(result[5] or 0),
+            "supplier_payables": str(Decimal(str(result[0] or 0))),
+            "logistics_payables": str(Decimal(str(result[1] or 0))),
+            "refund_reserve": str(Decimal(str(result[2] or 0))),
+            "vat_liability": str(Decimal(str(result[3] or 0))),
+            "available_cash": str(Decimal(str(result[4] or 0))),
+            "locked_cash": str(Decimal(str(result[5] or 0))),
             "updated_at": now.isoformat()
         }
-        
+
         redis.setex("command_center:treasury_metrics", 300, json.dumps(metrics))
         return metrics
     

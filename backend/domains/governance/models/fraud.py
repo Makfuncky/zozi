@@ -17,12 +17,12 @@ from domains.security.models.fraud import (
     LogisticsFraudIndicator,
     ManualReviewQueue,
     MeetingActionItem,
-    MeetingRecording,
     MeetingTranscript,
     ReturnAbusePattern,
     SupplierFraudIndicator,
     VelocityCounter,
 )
+from domains.comms.models.fraud import MeetingRecording
 
 __all__ = [
     "CreditCardBin",

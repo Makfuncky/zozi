@@ -176,7 +176,7 @@ def flush_only(db: Session, obj: _M | None = None) -> None:
 # ── Misc Write Service (from misc_write_service.py) ───
 
 from domains.governance.ports import RolePermissionSetting, SupplierDispute
-from domains.catalog.models.promotions import Banner
+from domains.promotions.models.promotions import Banner
 from infrastructure.database.seed import _ensure_demo_user, _seed_password
 # TODO: Module not yet created
 # from domains.finance.services.cash_write_service import create_cash_account, create_cash_transaction

@@ -45,6 +45,7 @@ class Payment(Base):
         Index("ix_payments_provider_status", "provider", "status"),
         {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete='CASCADE'), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     payment_method = Column(String(50), nullable=False)
@@ -62,6 +63,7 @@ class PaymentReconciliationRun(Base):
     __tablename__ = "payment_reconciliation_runs"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     run_date = Column(DateTime, nullable=False)
     total_amount = Column(Numeric(15, 2), nullable=True)
     reconciled_count = Column(Integer, default=0)
@@ -82,6 +84,7 @@ class PaymentGatewayConnection(Base):
     __tablename__ = "payment_gateway_connections"
     __table_args__ = _get_table_args() + ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     provider_code = Column(String(100), nullable=False)
     gateway_name = Column(String(100), nullable=False)
     country_code = Column(String(2), nullable=False)
@@ -116,7 +119,7 @@ class PaymentGatewayConnection(Base):
     test_status = Column(String(20), nullable=False, default="untested")
     test_message = Column(String(500), nullable=True)
     last_tested_at = Column(DateTime, nullable=True)
-    updated_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     adapter_supported = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -126,6 +129,7 @@ class Payout(Base):
     __tablename__ = "payouts"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     batch_number = Column(String(50), nullable=True)
     order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete='SET NULL'), nullable=True)
     supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete='RESTRICT'), nullable=False)
@@ -152,6 +156,7 @@ class LogisticsPartnerPayout(Base):
     __tablename__ = "logistics_partner_payouts"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete='CASCADE'), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), default="USD")

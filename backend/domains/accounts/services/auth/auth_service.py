@@ -43,8 +43,8 @@ from infrastructure.utils.auth import (
     blacklist_token,
 )
 from infrastructure.database.database import SessionLocal
-from domains.governance.models.user import User
-from domains.governance.models.user import UserDevice
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserDevice
 from domains.accounts.ports import get_user_by_id
 from domains.hr.ports import Employee, EmployeeBiometric, DynamicQRSession, GeoFenceLog, EmployeeAttendance
 from infrastructure.utils.config import settings
@@ -98,8 +98,8 @@ def _check_login_rate_limit(identifier: str, request: Optional[Request] = None) 
     6-layer middleware pipeline. Key shape:
         rate_limit:login:{ip_address}:{user_id_or_email}
 
-    Raises HTTPException(429) when the limit is exceeded. On Redis failure
-    we fail-open (do not block legitimate logins) but log the event.
+    Raises HTTPException(429) when the limit is exceeded or when Redis is
+    unavailable (fail-closed to prevent brute-force attacks).
     """
     ip_address = "unknown"
     if request is not None and getattr(request, "client", None) is not None:
@@ -110,7 +110,10 @@ def _check_login_rate_limit(identifier: str, request: Optional[Request] = None) 
     key = f"rate_limit:login:{ip_address}:{identifier}"
     r = _get_redis()
     if r is None:
-        return
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limiting temporarily unavailable. Please try again later.",
+        )
 
     try:
         pipe = r.pipeline()
@@ -130,7 +133,11 @@ def _check_login_rate_limit(identifier: str, request: Optional[Request] = None) 
     except HTTPException:
         raise
     except Exception as exc:
-        logger.warning("Login rate limit check failed (fail-open): %s", exc)
+        logger.warning("Login rate limit check failed (fail-closed): %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limiting temporarily unavailable. Please try again later.",
+        )
 
 
 def _record_registration_consents(persisted_user: User, registration_payload, db: Session) -> None:
@@ -1402,8 +1409,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import User
-from domains.governance.models.user import UserLoginHistory
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserLoginHistory
 from infrastructure.utils.auth import verify_password
 from infrastructure.utils.ip_utils import get_request_ip
 
@@ -1501,15 +1508,15 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import UserBrowsingHistory
-from domains.governance.models.user import User
-from domains.governance.models.user import UserDevice
-from domains.governance.models.user import UserLoginHistory
-from domains.governance.models.user import PasswordResetToken
-from domains.governance.models.user import EmailVerificationToken
-from domains.governance.models.user import ReferralPointEvent
-from domains.comms.models.suppliers import SupplierProfile
-from domains.logistics.models.logistics import LogisticsPartner
+from domains.accounts.models.core import UserBrowsingHistory
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserDevice
+from domains.accounts.models.user import UserLoginHistory
+from domains.accounts.models.user import PasswordResetToken
+from domains.accounts.models.user import EmailVerificationToken
+from domains.accounts.models.user import ReferralPointEvent
+from domains.comms.ports import SupplierProfile
+from domains.logistics.ports import LogisticsPartner
 from infrastructure.database.schemas import (
     UserCreate,
     User as UserSchema,
@@ -1554,7 +1561,7 @@ from infrastructure.utils.email_service import (
     send_password_reset_email,
     send_verification_email,
 )
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.audit.ports import AuditAction, audit_log
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -1710,6 +1717,12 @@ def _sanitize_staff_permissions(permissions):
     return normalized
 
 
+def _get_role_features() -> dict[str, list[str]]:
+    """Lazily resolve the role→features map (rbac is above domains in the stack)."""
+    from rbac.dependencies import _ROLE_FEATURES
+    return _ROLE_FEATURES
+
+
 def _user_effective_permissions(user: User) -> list[str]:
     role = _user_role(user)
     if role not in STAFF_ROLES:
@@ -1717,8 +1730,7 @@ def _user_effective_permissions(user: User) -> list[str]:
     assigned_permissions = _sanitize_staff_permissions(getattr(user, "staff_permissions", None))
     if assigned_permissions:
         return assigned_permissions
-    from rbac.dependencies import _ROLE_FEATURES
-    return sorted(_ROLE_FEATURES.get(role, []))
+    return sorted(_get_role_features().get(role, []))
 
 
 def _user_staff_payload(user: User) -> dict[str, Any]:
@@ -3532,7 +3544,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from domains.accounts.models.social import SocialIdentity
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 # TODO: Module not yet created
 # from domains.governance.services.auth_service import issue_auth_response
 from infrastructure.utils.auth import get_password_hash
@@ -3869,14 +3881,14 @@ from typing import Any, Callable, Optional
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import SessionLocal
-from domains.governance.models.user import EmailVerificationToken
-from domains.governance.models.user import PasswordResetToken
-from domains.governance.models.user import ReferralPointEvent
-from domains.governance.models.user import User
-from domains.governance.models.user import UserDevice
-from domains.governance.models.user import UserLoginHistory
-from domains.comms.models.suppliers import SupplierProfile
-from domains.logistics.models.logistics import LogisticsPartner
+from domains.accounts.models.user import EmailVerificationToken
+from domains.accounts.models.user import PasswordResetToken
+from domains.accounts.models.user import ReferralPointEvent
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserDevice
+from domains.accounts.models.user import UserLoginHistory
+from domains.comms.ports import SupplierProfile
+from domains.logistics.ports import LogisticsPartner
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)

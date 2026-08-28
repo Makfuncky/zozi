@@ -7,16 +7,13 @@ from __future__ import annotations
 
 from fastapi import Body, Depends, Request, status
 
-from domains.accounts.services.auth.auth_service import get_current_user
+from domains.accounts.ports import get_current_user
 
 from infrastructure.database.database import get_db
 
 from infrastructure.utils.dependencies import require_admin
 
-from domains.orders.services.coupons_write_service import create_coupon_from_payload
-from domains.orders.services.coupons_write_service import delete_coupon_by_id
-from domains.orders.services.coupons_write_service import list_coupons_paginated
-from domains.orders.services.coupons_write_service import validate_coupon
+from domains.orders.ports import create_coupon_from_payload, delete_coupon_by_id, list_coupons_paginated, validate_coupon
 
 def validate_coupon(request: Request, payload: dict | None, _: dict, db: object):
     payload = {**dict(request.query_params), **(payload or {})}

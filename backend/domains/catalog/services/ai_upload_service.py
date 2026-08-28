@@ -79,7 +79,7 @@ def _enrich_one(
     job: AIUploadJob,
     image_url: str,
 ) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
-    from providers.ai.ai_variant_config import ai_service
+    from providers.ai.ai_service import ai_service
 
     img_bytes = _preprocess_for_ai(img_bytes)
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"

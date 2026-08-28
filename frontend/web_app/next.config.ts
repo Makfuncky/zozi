@@ -33,6 +33,22 @@ const nextConfig: NextConfig = {
 
     return config;
   },
+  turbopack: {
+    resolveAlias: {
+      '@': path.resolve(__dirname, './src'),
+      '@shared': path.resolve(__dirname, '../shared/src'),
+      'react-native$': 'react-native-web',
+      'react-native-web': path.resolve(__dirname, "node_modules/react-native-web"),
+    },
+    resolveExtensions: [
+      '.web.tsx',
+      '.web.ts',
+      '.web.js',
+      '.tsx',
+      '.ts',
+      '.js',
+    ],
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'via.placeholder.com' },

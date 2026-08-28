@@ -90,20 +90,23 @@ def _require_admin(current_user: dict = Depends(get_current_user)) -> dict:
 
 
 @router.get("/")
-def list_payments(page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=500), status: Optional[str] = Query(None), db: Session = Depends(get_db), _: dict = Depends(_require_admin)):
-    require_feature("finance.ledger.read")
+def list_payments(page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=500), status: Optional[str] = Query(None), db: Session = Depends(get_db), _: dict = Depends(_require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read"))
+):
     return svc_list_payments(db, page=page, page_size=page_size, status=status)
 
 
 @router.get("/methods")
-def payment_methods(request: Request, _: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("finance.ledger.read")
+def payment_methods(request: Request, _: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read"))
+):
     return get_payment_methods_status(db, country_code=_resolve_request_country(request))
 
 
 @router.get("/config/runtime")
-def payment_runtime_config(_: dict = Depends(_require_admin), db: Session = Depends(get_db)):
-    require_feature("finance.ledger.read")
+def payment_runtime_config(_: dict = Depends(_require_admin), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read"))
+):
     return get_payment_provider_runtime_config(db)
 
 
@@ -112,14 +115,15 @@ def update_runtime_config(
     payload: PaymentProviderRuntimeConfigRequest,
     current_user: dict = Depends(_require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return update_payment_provider_runtime_config(payload, current_user, db)
 
 
 @router.get("/config/gateways")
-def list_gateway_connections(_: dict = Depends(_require_admin), db: Session = Depends(get_db)):
-    require_feature("finance.ledger.read")
+def list_gateway_connections(_: dict = Depends(_require_admin), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read"))
+):
     return list_payment_gateway_connections(db)
 
 
@@ -129,15 +133,16 @@ def save_gateway_connection(
     payload: PaymentGatewayConnectionRequest,
     current_user: dict = Depends(_require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     normalized = payload.model_copy(update={"provider_code": provider_code})
     return upsert_payment_gateway_connection(provider_code, normalized, current_user, db)
 
 
 @router.post("/config/gateways/{provider_code}/test")
-def test_gateway_connection(provider_code: str, _: dict = Depends(_require_admin), db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+def test_gateway_connection(provider_code: str, _: dict = Depends(_require_admin), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     return test_payment_gateway_connection(provider_code, db)
 
 
@@ -146,8 +151,8 @@ def finance_quote(
     payload: PaymentFinanceQuoteRequest,
     _: dict = Depends(_require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     return build_payment_finance_quote(payload, db)
 
 
@@ -156,8 +161,8 @@ def create_payment_intent_route(
     payload: PaymentIntentRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return create_payment_intent(payload, current_user, db)
 
 
@@ -166,8 +171,8 @@ def create_stripe_checkout_session_route(
     payload: StripeCheckoutSessionRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return create_stripe_checkout_session(payload, current_user, db)
 
 
@@ -176,8 +181,8 @@ def confirm_card_payment_route(
     payload: ConfirmCardPaymentRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return confirm_card_payment(payload, current_user, db)
 
 
@@ -186,8 +191,8 @@ async def create_tap_charge_route(
     payload: TapChargeRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await create_tap_charge(payload, current_user, db)
 
 
@@ -196,8 +201,8 @@ async def confirm_tap_payment_route(
     payload: ConfirmTapPaymentRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await confirm_tap_payment(payload, current_user, db)
 
 
@@ -206,8 +211,8 @@ async def create_paytabs_charge_route(
     payload: PayTabsChargeRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await create_paytabs_charge(payload, current_user, db)
 
 
@@ -216,8 +221,8 @@ async def confirm_paytabs_payment_route(
     payload: ConfirmPayTabsPaymentRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await confirm_paytabs_payment(payload, current_user, db)
 
 
@@ -226,8 +231,8 @@ async def create_paypal_order_route(
     payload: PayPalOrderRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await create_paypal_order(payload, current_user, db)
 
 
@@ -236,8 +241,8 @@ async def capture_paypal_order_route(
     payload: PayPalCaptureRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await capture_paypal_order(payload, current_user, db)
 
 
@@ -246,8 +251,8 @@ async def create_thawani_session_route(
     payload: ThawaniCheckoutRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await create_thawani_session(payload, current_user, db)
 
 
@@ -256,8 +261,8 @@ async def confirm_thawani_payment_route(
     payload: ConfirmThawaniPaymentRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return await confirm_thawani_payment(payload, current_user, db)
 
 
@@ -266,8 +271,8 @@ def gateway_wizard(
     payload: GatewayWizardRequest,
     current_user: dict = Depends(_require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return gateway_wizard_step(payload, current_user, db)
 
 
@@ -278,8 +283,8 @@ async def create_generic_gateway_payment_route(
     payload: GenericGatewayCreateRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return create_generic_gateway_payment(payload, current_user, db)
 
 
@@ -288,55 +293,62 @@ async def confirm_generic_gateway_payment_route(
     payload: ConfirmGenericGatewayRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return confirm_generic_gateway_payment(payload, current_user, db)
 
 
 @router.post("/webhook")
-async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+async def stripe_webhook(request: Request, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     return await handle_stripe_webhook(request, db)
 
 
 @router.post("/tap/webhook")
-async def tap_webhook(request: Request, db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+async def tap_webhook(request: Request, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     return await handle_tap_webhook(request, db)
 
 
 @router.post("/paytabs/callback")
-async def paytabs_callback(request: Request, db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+async def paytabs_callback(request: Request, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     return await handle_paytabs_callback(request, db)
 
 
 @router.post("/paypal/webhook")
-async def paypal_webhook(request: Request, db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+async def paypal_webhook(request: Request, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     return await handle_paypal_webhook(request, db)
 
 
 @router.post("/thawani/webhook")
-async def thawani_webhook(request: Request, db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+async def thawani_webhook(request: Request, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     return await handle_thawani_webhook(request, db)
 
 
 # Generic gateway callbacks are keyed by provider_code so each plug-and-play
 # gateway gets its own webhook endpoint: /payments/generic/{code}/callback
 @router.post("/generic/{provider_code}/callback")
-async def generic_gateway_callback(provider_code: str, request: Request, db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+async def generic_gateway_callback(provider_code: str, request: Request, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     return await handle_generic_gateway_callback(request, provider_code, db)
 
 
 # === From referrals.py ===
 
 @router.get("/config")
-def referral_config(db: Session = Depends(get_db)):
+def referral_config(db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read"))
+):
     """Public, read-only referral feature configuration."""
-    require_feature("finance.ledger.read")
     config = get_referral_config(db)
     return {
         "enabled": bool(config.get("enabled", False)),
@@ -348,8 +360,9 @@ def referral_config(db: Session = Depends(get_db)):
 
 
 @router.get("/my-code")
-def get_referral_code(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("finance.ledger.read")
+def get_referral_code(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read"))
+):
     dashboard = get_referral_dashboard(current_user, db)
     return {
         "referral_code": dashboard.referral_code,

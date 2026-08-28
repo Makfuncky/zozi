@@ -31,8 +31,8 @@ async def create_pipeline(
     pipeline_type: str = "kyc",
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.onboarding.write")),
 ):
-    require_feature("suppliers.onboarding.write")
     from domains.suppliers.services.onboarding.supplier_onboarding_service import create_pipeline as _create_pipeline
     return _create_pipeline(int(current_user["sub"]), pipeline_type, db)
 
@@ -44,8 +44,8 @@ async def upload_document(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.onboarding.write")),
 ):
-    require_feature("suppliers.onboarding.write")
     from domains.suppliers.services.onboarding.supplier_onboarding_service import upload_document as _upload_document
     content = await file.read()
     return _upload_document(pipeline_id, document_type, content, db)
@@ -56,8 +56,8 @@ async def create_kyc_verification(
     documents: list[dict] = Body(...),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.onboarding.write")),
 ):
-    require_feature("suppliers.onboarding.write")
     from domains.suppliers.services.onboarding.supplier_onboarding_service import create_kyc_verification as _create_kyc
     return _create_kyc(int(current_user["sub"]), documents, db)
 
@@ -66,8 +66,8 @@ async def create_kyc_verification(
 async def get_onboarding_status(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.onboarding.read")),
 ):
-    require_feature("suppliers.onboarding.read")
     from domains.suppliers.services.onboarding.supplier_onboarding_service import get_onboarding_status as _get_status
     return _get_status(int(current_user["sub"]), db)
 
@@ -78,8 +78,8 @@ async def complete_step(
     step_name: str,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.onboarding.write")),
 ):
-    require_feature("suppliers.onboarding.write")
     from domains.suppliers.services.onboarding.supplier_onboarding_service import complete_step as _complete_step
     return _complete_step(pipeline_id, step_name, db)
 
@@ -91,8 +91,8 @@ def list_all_documents(
     status_filter: Optional[str] = Query(None),
     _: Any = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.documents.read")),
 ):
-    require_feature("suppliers.documents.read")
     return list_all_supplier_documents(db, status_filter)
 
 
@@ -103,8 +103,8 @@ def review_document(
     note: Optional[str] = Body(None),
     admin_user: Any = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.documents.write")),
 ):
-    require_feature("suppliers.documents.write")
     return review_supplier_document(db, document_id, new_status, note, admin_user.id)
 
 
@@ -116,8 +116,8 @@ def get_supplier_health_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
     country_code: Optional[str] = Query(None),
+    _rf_gate: None = Depends(require_feature("suppliers.health.read")),
 ):
-    require_feature("suppliers.health.read")
     return get_supplier_health(supplier_id=supplier_id, country_code=country_code, current_user=current_user, db=db)
 
 
@@ -126,8 +126,8 @@ def list_supplier_health_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
     country_code: Optional[str] = Query(None),
+    _rf_gate: None = Depends(require_feature("suppliers.health.read")),
 ):
-    require_feature("suppliers.health.read")
     return list_supplier_health(country_code=country_code, current_user=current_user, db=db)
 
 
@@ -137,8 +137,8 @@ def list_supplier_health_route(
 def list_supplier_orders_route(
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.list")),
 ):
-    require_feature("orders.list")
     supplier = get_supplier_profile_by_user_id(db, current_user.id)
     return list_supplier_orders(db, supplier.id)
 
@@ -149,8 +149,8 @@ def list_supplier_orders_route(
 def get_supplier_profile_route(
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.read")),
 ):
-    require_feature("suppliers.profile.read")
     return get_supplier_profile(db, current_user.id)
 
 
@@ -159,8 +159,8 @@ def create_supplier_profile_route(
     payload: SupplierProfileCreate,
     current_user: Any = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write")),
 ):
-    require_feature("suppliers.profile.write")
     from domains.accounts.ports import create_supplier_profile
     return create_supplier_profile(current_user, payload, db)
 
@@ -170,8 +170,8 @@ def update_supplier_profile_route(
     payload: SupplierProfileUpdate,
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write")),
 ):
-    require_feature("suppliers.profile.write")
     profile = update_supplier_profile(payload.dict(), current_user, db)
     if profile is None:
         raise HTTPException(404, "Profile not found")

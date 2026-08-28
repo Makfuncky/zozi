@@ -31,7 +31,7 @@ from domains.finance.models.payments import Payout as PayoutModel
 def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple admin dashboard stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
     total_revenue = db.query(sqlfunc.sum(Payment.amount)).filter(Payment.status == 'completed').scalar() or 0
@@ -42,7 +42,7 @@ def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=De
 def admin_stats_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple aggregate stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
     return {'total_users': db.query(sqlfunc.count(UserModel.id)).scalar() or 0, 'total_customers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'customer').scalar() or 0, 'total_suppliers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'supplier').scalar() or 0, 'total_orders': db.query(sqlfunc.count(OrderModel.id)).scalar() or 0, 'total_products': db.query(sqlfunc.count(ProductModel.id)).filter(ProductModel.is_deleted == False).scalar() or 0, 'pending_payouts': db.query(PayoutModel).filter(PayoutModel.status == 'pending').count()}
@@ -68,7 +68,7 @@ def admin_commission_fallback(db: Session=Depends(get_db), current_admin: dict=D
 
 def admin_employees_fallback(page: int=Query(1, ge=1), page_size: int=Query(100, ge=1, le=500), db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """List all employees (no country code required)."""
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     skip = (page - 1) * page_size
     items = db.query(Employee).join(UserModel, Employee.user_id == UserModel.id).order_by(UserModel.full_name.asc().nullslast(), Employee.id).offset(skip).limit(page_size).all()
     total = db.query(Employee).count()

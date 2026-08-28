@@ -105,7 +105,7 @@ class UserSession(Base):
 
 
 class UserLoginHistory(Base):
-    __tablename__ = "user_login_history"
+    __tablename__ = "user_login_histories"
     __table_args__ = (
         Index("ix_accounts_user_login_history_user_id", "user_id"),
         Index("ix_accounts_user_login_history_created", "created_at"),

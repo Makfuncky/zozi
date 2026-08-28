@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from domains.governance.models.core import SupportTicket
 from domains.governance.models.core import AuditLog
-from domains.governance.models.user import User
+from domains.governance.models.admin import ProcessedWebhookEvent
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import Category
 from domains.catalog.models.products import Review
@@ -22,10 +23,10 @@ from domains.logistics.models.logistics import LogisticsPartner
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import ReturnRequest
-from domains.catalog.models.promotions import Coupon
-from domains.catalog.models.promotions import Banner
+from domains.promotions.models.promotions import Coupon
+from domains.promotions.models.promotions import Banner
 from domains.finance.models.payments import Payout
-from domains.audit.services.audit_service import audit_log, AuditAction
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.constants import DEFAULT_COUNTRY
 
 
@@ -240,6 +241,54 @@ def get_available_audit_actions(db: Session) -> list:
     from sqlalchemy import func
     result = db.query(AuditLog.action).distinct().all()
     return [row[0] for row in result]
+
+
+# ── Cross-domain write ports (sanctioned) ───────────────────────────────────
+
+def create_processed_webhook_event(db: Session, event_id: str, processor: str) -> ProcessedWebhookEvent:
+    """Persist a processed webhook event record (sanctioned cross-domain write)."""
+    record = ProcessedWebhookEvent(event_id=event_id, processor=processor)
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+def create_address(
+    db: Session,
+    *,
+    user_id: int,
+    full_name: str,
+    address_line1: str,
+    city: str,
+    state: Optional[str] = None,
+    postal_code: Optional[str] = None,
+    country: str = "US",
+    is_default: bool = False,
+    label: Optional[str] = None,
+    phone: Optional[str] = None,
+):
+    """Persist a new customer address (sanctioned cross-domain write)."""
+    from domains.governance.models.core import Address
+
+    country_code = (country or "US").upper()
+    address = Address(
+        user_id=user_id,
+        full_name=full_name,
+        address_line1=address_line1,
+        city=city,
+        state=state,
+        postal_code=postal_code,
+        country=country,
+        country_code=country_code,
+        is_default=bool(is_default),
+        label=label,
+        phone=phone,
+    )
+    db.add(address)
+    db.commit()
+    db.refresh(address)
+    return address
 
 
 # â”€â”€ Supplier Verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

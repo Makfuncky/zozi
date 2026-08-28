@@ -13,6 +13,7 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "comms_router": ("modules.employee.routers.comms", "router"),
     "country_router": ("modules.employee.routers.country", "router"),
     "finance_router": ("modules.employee.routers.finance", "router"),
+    "expense_router": ("modules.employee.routers.finance", "expense_router"),
     "hr_router": ("modules.employee.routers.hr", "router"),
     "orders_router": ("modules.employee.routers.orders", "router"),
     "security_router": ("modules.employee.routers.security", "router"),

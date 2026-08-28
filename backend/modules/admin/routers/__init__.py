@@ -14,6 +14,7 @@ _module_names = [
     "catalog",
     "comms",
     "country",
+    "country_versioning",
     "customers",
     "finance",
     "governance",

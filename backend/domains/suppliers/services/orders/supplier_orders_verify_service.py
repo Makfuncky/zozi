@@ -13,10 +13,9 @@ from fastapi import Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.governance.models.user import User
-from domains.comms.models.suppliers import SupplierProfile
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
+from domains.governance.ports import User
+from domains.comms.ports import SupplierProfile
+from domains.orders.ports import Order, OrderItem
 from infrastructure.utils.dependencies import require_supplier
 from infrastructure.utils.storage import storage as _storage
 # TODO: Module not yet created

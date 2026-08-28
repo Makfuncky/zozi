@@ -3,20 +3,18 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.comms.models.marketing import FlashSale
 from domains.governance.models.admin import PromotionEngineConfig
 from domains.governance.models.admin import PromotionOrderTier
-from domains.catalog.models.promotions import Banner
-from domains.catalog.models.promotions import Coupon
+from domains.promotions.models.promotions import Banner
+from domains.promotions.models.promotions import Coupon
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import enforce_country_access
-from domains.governance.services.settings.misc_service import archive_entity
-from domains.governance.services.settings.misc_service import restore_entity
+from domains.governance.ports import archive_entity, hard_delete_entity, restore_entity
 from domains.catalog.ports import bulk_archive_entities
 from domains.catalog.ports import bulk_restore_entities
-from domains.governance.services.settings.misc_service import hard_delete_entity
 
 def _banner_to_dict(b: Banner) -> dict:
     return {'id': b.id, 'title': b.title, 'subtitle': b.subtitle, 'image_url': b.image_url, 'link': b.link, 'cta_label': getattr(b, 'cta_label', None), 'cta_url': getattr(b, 'cta_url', b.link), 'banner_type': b.banner_type, 'position': getattr(b, 'position', b.banner_type), 'is_active': b.is_active, 'is_deleted': b.is_deleted, 'sort_order': b.sort_order, 'bg_color': b.bg_color, 'text_color': b.text_color, 'subtitle_color': b.subtitle_color, 'btn_bg_color': b.btn_bg_color, 'btn_text_color': b.btn_text_color, 'badge_text': b.badge_text, 'badge_color': b.badge_color, 'effect': getattr(b, 'effect', None), 'layout_json': getattr(b, 'layout_json', None), 'video_url': getattr(b, 'video_url', None), 'country_code': b.country_code, 'starts_at': getattr(b, 'starts_at', None), 'ends_at': getattr(b, 'ends_at', None), 'created_at': b.created_at.isoformat() if b.created_at else None, 'updated_at': getattr(b, 'updated_at', b.created_at)}

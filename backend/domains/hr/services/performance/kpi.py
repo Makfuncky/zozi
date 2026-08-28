@@ -6,7 +6,7 @@ import logging
 from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, bindparam
 
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 from domains.hr.services.performance.okr import update_objective_progress
@@ -98,16 +98,14 @@ def get_kpi_dashboard(db: Session, employee_id: int) -> Dict[str, Any]:
     kpis_by_obj = {}
 
     if objective_ids:
-        placeholders = ", ".join(f":oid{i}" for i in range(len(objective_ids)))
-        params = {f"oid{i}": oid for i, oid in enumerate(objective_ids)}
         kpi_rows = db.execute(
-            text(f"""
+            text("""
                 SELECT objective_id, id, metric_name, target_value, current_value, metric_type as unit, weight_pct as weight, last_recorded_at
                 FROM kpi_metrics
-                WHERE objective_id IN ({placeholders})
+                WHERE objective_id IN (:objective_ids)
                 ORDER BY weight_pct DESC
-            """),
-            params,
+            """).bindparams(bindparam("objective_ids", expanding=True, type_=int)),
+            {"objective_ids": objective_ids},
         ).mappings().all()
 
         for k in kpi_rows:

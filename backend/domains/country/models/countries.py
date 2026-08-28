@@ -10,6 +10,7 @@ __all__ = ['CountryConfig', 'CountryCommunication', 'CountryGatewayCredentials',
 
 class CountryConfig(Base):
     __tablename__ = 'country_configs'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -124,6 +125,7 @@ class CountryConfig(Base):
 
 class CountryCommunication(Base):
     __tablename__ = 'country_communications'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -153,6 +155,7 @@ class CountryCommunication(Base):
 
 class CountryGatewayCredentials(Base):
     __tablename__ = 'country_gateway_credentials'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -168,11 +171,13 @@ class CountryGatewayCredentials(Base):
     environment = Column(String(20), default='test')
     credentials = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     country = relationship('CountryConfig', back_populates='gateway_credentials')
 
 class PayoutRule(Base):
     __tablename__ = 'payout_rules'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -194,6 +199,7 @@ class PayoutRule(Base):
 
 class TaxRule(Base):
     __tablename__ = 'tax_rules'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -213,6 +219,7 @@ class TaxRule(Base):
 
 class ShippingRule(Base):
     __tablename__ = 'shipping_rules'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -233,6 +240,7 @@ class ShippingRule(Base):
 
 class Message(Base):
     __tablename__ = 'messages'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -261,6 +269,7 @@ class Message(Base):
 
 class PayoutRuleCategory(Base):
     __tablename__ = 'payout_rule_categories'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -282,6 +291,7 @@ class PayoutRuleCategory(Base):
 
 class PayoutRuleProduct(Base):
     __tablename__ = 'payout_rule_products'
+    __table_args__ = {"schema": "country"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

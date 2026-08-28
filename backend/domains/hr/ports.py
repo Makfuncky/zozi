@@ -326,6 +326,30 @@ def list_onboarding_steps_page(
     return _keyset_page(OnboardingStep, db, cursor, page_size)
 
 
+# --- Model class references (for column access in cross-domain filters) ---
+# These return the model class itself so cross-domain services can reference
+# columns (e.g., ``employee_model().id == X``) without importing the model.
+
+def employee_model() -> type:
+    """Return the ``Employee`` model class (for column reference only)."""
+    return Employee
+
+
+def office_model() -> type:
+    """Return the ``Office`` model class (for column reference only)."""
+    return Office
+
+
+def geo_fence_log_model() -> type:
+    """Return the ``GeoFenceLog`` model class (for column reference only)."""
+    return GeoFenceLog
+
+
+def dynamic_qr_session_model() -> type:
+    """Return the ``DynamicQRSession`` model class (for column reference only)."""
+    return DynamicQRSession
+
+
 def get_alumni_network_by_id(db: Session, id_: int) -> Optional[AlumniNetwork]:
     """Return AlumniNetwork by primary key (or None)."""
     return db.get(AlumniNetwork, id_)
@@ -568,3 +592,32 @@ def PayrollEngine(db: Session = None, *args, **kwargs):
     """Sanctioned cross-domain factory: get PayrollEngine instance."""
     from domains.hr.services.payroll.payroll_engine import PayrollEngine as _Cls
     return _Cls(db, *args, **kwargs)
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "log_comm_event": ("domains.hr.services.employee_communication_service", "log_comm_event"),
+    "get_all_subordinates": ("domains.hr.services.hierarchy.hierarchy_service", "get_all_subordinates"),
+    "get_authority_level": ("domains.hr.services.hierarchy.hierarchy_service", "get_authority_level"),
+    "get_user_chain": ("domains.hr.services.hierarchy.hierarchy_service", "get_user_chain"),
+    "backfill_authority_levels": ("domains.hr.services.hierarchy.hierarchy_service", "backfill_authority_levels"),
+    "can_manage": ("domains.hr.services.hierarchy.hierarchy_service", "can_manage"),
+    "get_home_org_unit": ("domains.hr.services.hierarchy.hierarchy_service", "get_home_org_unit"),
+    "get_org_chart": ("domains.hr.services.hierarchy.hierarchy_service", "get_org_chart"),
+    "get_team_members": ("domains.hr.services.hierarchy.hierarchy_service", "get_team_members"),
+    "is_in_chain": ("domains.hr.services.hierarchy.hierarchy_service", "is_in_chain"),
+    "reassign_manager": ("domains.hr.services.hierarchy.hierarchy_service", "reassign_manager"),
+    "PayrollEngine": ("domains.hr.services.payroll.payroll_engine", "PayrollEngine"),
+}
+import importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

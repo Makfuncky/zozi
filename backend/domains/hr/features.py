@@ -156,6 +156,31 @@ FEATURES: dict[str, dict] = {
         "actions": ["read", "create", "update"],
         "description": "Manage training modules, assign courses, and track certifications.",
     },
+    # ── Top-level CRUD atoms ─────────────────────────────────────────────────
+    "hr.read": {
+        "label": "Read HR",
+        "risk": "medium",
+        "actions": ["read"],
+        "description": "Read HR domain data and resources.",
+    },
+    "hr.create": {
+        "label": "Create HR",
+        "risk": "high",
+        "actions": ["read", "create"],
+        "description": "Create HR domain resources and records.",
+    },
+    "hr.update": {
+        "label": "Update HR",
+        "risk": "high",
+        "actions": ["read", "update"],
+        "description": "Update HR domain resources and records.",
+    },
+    "hr.delete": {
+        "label": "Delete HR",
+        "risk": "high",
+        "actions": ["read", "delete"],
+        "description": "Delete HR domain resources and records.",
+    },
 }
 
 

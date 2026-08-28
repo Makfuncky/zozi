@@ -71,6 +71,16 @@ from domains.suppliers.services.orders.supplier_orders_service import (  # noqa:
     upload_parcel_proof,
     verify_parcel_proof,
 )
+from domains.suppliers.services.profile.supplier_bank_account_service import (  # noqa: E402, F401
+    upsert_supplier_bank_account,
+)
+from domains.suppliers.services.bank_account_service import (  # noqa: E402, F401
+    deactivate_supplier_bank_account,
+)
+from domains.suppliers.services.profile.supplier_bank_account_service import (  # noqa: E402, F401
+    get_supplier_bank_account,
+    upsert_supplier_bank_account_from_router,
+)
 
 
 __all__ = [
@@ -95,4 +105,10 @@ __all__ = [
     "replace_reference_image",
     "upload_parcel_proof",
     "verify_parcel_proof",
+    "deactivate_supplier_bank_account",
+    "get_supplier_bank_account",
+    "upsert_supplier_bank_account_from_router",
 ]
+
+
+

@@ -27,8 +27,8 @@ def get_logistics_health(
     country_code: str = None,
     current_user: dict = Depends(rbac_get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     from domains.logistics.services.health.service import get_logistics_health_engine
     engine = get_logistics_health_engine(db)
     return engine.calculate_health_score(partner_id, country_code)
@@ -41,8 +41,8 @@ def list_logistics_health(
     country_code: str = None,
     current_user: dict = Depends(rbac_get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     from domains.logistics.services.health.service import list_logistics_health_paginated
     return list_logistics_health_paginated(db, country_code=country_code, page=page, limit=limit)
 
@@ -56,8 +56,8 @@ def list_logistics_partner_locations(
     is_active: Optional[bool] = Query(None),
     db: Session = Depends(get_db),
     current_user=Depends(rbac_get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     from domains.logistics.services.geo.logistics_locations_service import list_logistics_partner_locations as _svc_list
     return _svc_list(country_code, partner_id, is_active, db, current_user)
 
@@ -68,8 +68,8 @@ def create_logistics_partner_location(
     payload: dict = None,
     db: Session = Depends(get_db),
     current_user=Depends(rbac_get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     from domains.logistics.services.geo.logistics_locations_service import create_logistics_partner_location as _svc_create
     return _svc_create(country_code, payload, db, current_user)
 
@@ -85,8 +85,8 @@ import domains.orders.services.logistics_controller as ctrl
 async def get_logistics_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return await ctrl.get_logistics_summary(current_user, db)
 
 
@@ -96,8 +96,8 @@ async def get_logistics_summary(
 async def get_carriers(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return await ctrl.get_carriers(current_user, db)
 
 
@@ -106,8 +106,8 @@ async def create_carrier(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     return await ctrl.create_carrier(data, current_user, db)
 
 
@@ -116,8 +116,8 @@ async def delete_carrier(
     carrier_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     return await ctrl.delete_carrier(carrier_id, current_user, db)
 
 
@@ -127,8 +127,8 @@ async def delete_carrier(
 async def get_shipping_zones(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return await ctrl.get_shipping_zones(current_user, db)
 
 
@@ -137,8 +137,8 @@ async def upsert_shipping_zone(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     return await ctrl.upsert_shipping_zone(data, current_user, db)
 
 
@@ -148,8 +148,8 @@ async def update_shipping_zone(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     data["id"] = zone_id
     return await ctrl.upsert_shipping_zone(data, current_user, db)
 
@@ -159,8 +159,8 @@ async def delete_shipping_zone(
     zone_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     return await ctrl.delete_shipping_zone(zone_id, current_user, db)
 
 
@@ -172,8 +172,8 @@ async def get_orders_to_fulfil(
     offset: int = 0,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.fulfillment.manage")),
 ):
-    require_feature("logistics.fulfillment.manage")
     return await ctrl.get_orders_to_fulfil(current_user, db, limit=limit, offset=offset)
 
 
@@ -184,8 +184,8 @@ async def create_shipment(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     return await ctrl.create_shipment(data, current_user, db)
 
 
@@ -194,8 +194,8 @@ async def scan_lookup_shipment(
     code: str,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     """Look up a shipment by tracking number or scan code. Admin only."""
     from domains.logistics.services.shipping.shipments_service import scan_lookup_shipment_by_code
     return scan_lookup_shipment_by_code(code, db, current_user)
@@ -207,8 +207,8 @@ async def admin_update_shipment_status(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Admin endpoint to update a shipment status directly (bypasses supplier check)."""
     from domains.logistics.services.shipping.shipments_service import admin_update_shipment_status_service
     return admin_update_shipment_status_service(shipment_id, data, db, current_user)
@@ -218,8 +218,8 @@ async def admin_update_shipment_status(
 async def get_active_shipments(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return await ctrl.get_active_shipments(current_user, db)
 
 
@@ -229,8 +229,8 @@ async def get_shipment_history(
     per_page: int = 30,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return await ctrl.get_shipment_history(current_user, db, page=page, per_page=per_page)
 
 
@@ -239,8 +239,8 @@ async def get_shipment_events(
     shipment_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return await ctrl.get_shipment_events(shipment_id, current_user, db)
 
 
@@ -250,8 +250,8 @@ async def scan_shipment_event(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     return await ctrl.scan_shipment_event(shipment_id, data, current_user, db)
 
 
@@ -261,8 +261,8 @@ async def update_shipment_status(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     return await ctrl.update_shipment_status(shipment_id, data, current_user, db)
 
 
@@ -270,8 +270,8 @@ async def update_shipment_status(
 async def get_distribution_channels(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return await ctrl.get_distribution_channels(current_user, db)
 
 
@@ -283,8 +283,8 @@ async def update_shipment_event_gps(
     data: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Attach GPS coordinates to a shipment event (supplier or admin).
 
     Body: ``{"latitude": float, "longitude": float}``
@@ -299,7 +299,7 @@ async def update_shipment_event_gps(
 
 # === Logistics Orders (from logistics_orders_list.py) ===
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 
 @router.get("")
@@ -347,8 +347,8 @@ class CancelPickupRequest(BaseModel):
 def list_available_orders(
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.fulfillment.manage")),
 ):
-    require_feature("logistics.fulfillment.manage")
     """List all orders in 'prepared' status available for pickup."""
     return get_available_orders_for_logistics(db)
 
@@ -357,8 +357,8 @@ def list_available_orders(
 def list_my_pickups(
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.fulfillment.manage")),
 ):
-    require_feature("logistics.fulfillment.manage")
     """List shipments assigned to this logistics partner."""
     from domains.logistics.services.geo.logistics_locations_service import list_my_pickups as _svc_pickups
     return _svc_pickups(db, current_user)
@@ -369,8 +369,8 @@ def confirm_pickup(
     order_id: int,
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.fulfillment.manage")),
 ):
-    require_feature("logistics.fulfillment.manage")
     """Confirm pickup — marks order as 'picking_up' and removes from other logistics lists."""
     result = logistics_confirm_pickup(db, order_id, current_user.id)
     if not result["success"]:
@@ -384,8 +384,8 @@ def scan_and_receive(
     body: ScanReceiveRequest,
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Scan QR code and receive package from supplier. Status → shipped/picked_from_supplier."""
     result = logistics_scan_and_receive(db, order_id, current_user.id, body.scan_code, body.location)
     if not result["success"]:
@@ -399,8 +399,8 @@ def update_transit(
     body: UpdateTransitRequest,
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.fulfillment.manage")),
 ):
-    require_feature("logistics.fulfillment.manage")
     """Update transit sub-status. Valid types:
     logistics_received, distribution_checkpoint, out_for_delivery,
     shipment_delayed, shipment_failed, shipment_rescheduled,
@@ -418,8 +418,8 @@ def deliver_order(
     body: DeliverRequest,
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.fulfillment.manage")),
 ):
-    require_feature("logistics.fulfillment.manage")
     """Deliver order to customer with optional e-signature."""
     result = logistics_deliver_order(db, order_id, current_user.id,
                                       body.signature_name, body.signature_data_url, body.notes)
@@ -434,8 +434,8 @@ def cancel_pickup(
     body: CancelPickupRequest = CancelPickupRequest(),
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.fulfillment.manage")),
 ):
-    require_feature("logistics.fulfillment.manage")
     """Cancel pickup before shipped status. Order returns to 'prepared'."""
     result = logistics_cancel_pickup(db, order_id, current_user.id, body.reason)
     if not result["success"]:
@@ -448,8 +448,8 @@ def get_label(
     order_id: int,
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     """Get packing label data for printing (includes QR code, customer info, lat/lng)."""
     label = get_order_shipment_label(order_id, db)
     if not label:
@@ -469,8 +469,8 @@ def list_public_logistics_partners(
     country: Optional[str] = Query(None, min_length=2, max_length=10),
     limit: int = Query(12, ge=1, le=50),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     resolved_country = (
         country
         or request.headers.get("X-Country-Code")
@@ -483,8 +483,8 @@ def list_public_logistics_partners(
 def get_public_logistics_partner(
     partner_id: int,
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return partner_ctrl.get_public_partner(partner_id, db)
 
 
@@ -492,8 +492,8 @@ def get_public_logistics_partner(
 def get_partner_profile(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.get_my_partner_profile(current_user, db)
 
 
@@ -502,8 +502,8 @@ def update_partner_profile(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.update_my_partner_profile(data, current_user, db)
 
 
@@ -511,8 +511,8 @@ def update_partner_profile(
 def accept_partner_profile_terms(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.accept_partner_terms(current_user, db)
 
 
@@ -520,8 +520,8 @@ def accept_partner_profile_terms(
 def submit_partner_profile_review(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.submit_partner_profile_for_review(current_user, db)
 
 
@@ -531,8 +531,8 @@ def get_partner_service_areas(
     approval_status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.list_my_partner_service_areas(
         current_user,
         db,
@@ -548,8 +548,8 @@ def get_partner_pricing_profiles(
     service_area_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.list_my_partner_pricing_profiles(
         current_user,
         db,
@@ -566,8 +566,8 @@ def get_partner_category_rules(
     service_area_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.list_my_partner_category_rules(
         current_user,
         db,
@@ -584,8 +584,8 @@ def get_partner_vehicle_rules(
     service_area_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.list_my_partner_vehicle_rules(
         current_user,
         db,
@@ -602,8 +602,8 @@ def get_partner_pricing_insights(
     limit: int = Query(12, ge=1, le=50),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.get_partner_pricing_insights(
         current_user,
         db,
@@ -618,8 +618,8 @@ def create_partner_pricing_profile(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.upsert_my_partner_pricing_profile(None, data, current_user, db)
 
 
@@ -629,8 +629,8 @@ def update_partner_pricing_profile(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.upsert_my_partner_pricing_profile(profile_id, data, current_user, db)
 
 
@@ -639,8 +639,8 @@ def delete_partner_pricing_profile(
     profile_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.delete_my_partner_pricing_profile(profile_id, current_user, db)
 
 
@@ -649,8 +649,8 @@ def create_partner_category_rule(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.upsert_my_partner_category_rule(None, data, current_user, db)
 
 
@@ -660,8 +660,8 @@ def update_partner_category_rule(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.upsert_my_partner_category_rule(rule_id, data, current_user, db)
 
 
@@ -670,8 +670,8 @@ def delete_partner_category_rule(
     rule_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.delete_my_partner_category_rule(rule_id, current_user, db)
 
 
@@ -680,8 +680,8 @@ def create_partner_vehicle_rule(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.upsert_my_partner_vehicle_rule(None, data, current_user, db)
 
 
@@ -691,8 +691,8 @@ def update_partner_vehicle_rule(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.upsert_my_partner_vehicle_rule(rule_id, data, current_user, db)
 
 
@@ -701,8 +701,8 @@ def delete_partner_vehicle_rule(
     rule_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.delete_my_partner_vehicle_rule(rule_id, current_user, db)
 
 
@@ -711,8 +711,8 @@ def create_partner_service_area(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.upsert_my_partner_service_area(None, data, current_user, db)
 
 
@@ -722,8 +722,8 @@ def update_partner_service_area(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.upsert_my_partner_service_area(area_id, data, current_user, db)
 
 
@@ -732,8 +732,8 @@ def delete_partner_service_area(
     area_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.delete_my_partner_service_area(area_id, current_user, db)
 
 
@@ -743,8 +743,8 @@ def review_logistics_partner_profile(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.review_partner_profile(partner_id, data, current_user, db)
 
 
@@ -754,8 +754,8 @@ def review_logistics_partner_service_area(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.review_partner_service_area(area_id, data, current_user, db)
 
 
@@ -765,8 +765,8 @@ def review_logistics_partner_pricing_profile(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.review_partner_pricing_profile(profile_id, data, current_user, db)
 
 
@@ -776,8 +776,8 @@ def review_logistics_partner_category_rule(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.review_partner_category_rule(rule_id, data, current_user, db)
 
 
@@ -787,8 +787,8 @@ def review_logistics_partner_vehicle_rule(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.sla.manage")),
 ):
-    require_feature("logistics.sla.manage")
     return partner_ctrl.review_partner_vehicle_rule(rule_id, data, current_user, db)
 
 
@@ -797,8 +797,8 @@ def get_logistics_shipping_quote(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return partner_ctrl.shipping_quote_for_customer(data, db)
 
 
@@ -808,8 +808,8 @@ def get_logistics_shipping_quote(
 def list_partners(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """Admin: list all logistics partners."""
     return partner_ctrl.list_partners(current_user, db)
 
@@ -819,8 +819,8 @@ def create_partner(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """Admin: onboard a new logistics partner."""
     return partner_ctrl.create_partner(data, current_user, db)
 
@@ -836,8 +836,8 @@ def bulk_manage_logistics_partners(
     body: BulkPartnerAdminActionRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Admin bulk actions for logistics partner review and portal lifecycle."""
     return partner_ctrl.bulk_manage_partners(body.partner_ids, body.action, body.note, current_user, db)
 
@@ -848,8 +848,8 @@ def update_partner(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Admin: update partner details or status."""
     return partner_ctrl.update_partner(partner_id, data, current_user, db)
 
@@ -859,8 +859,8 @@ def delete_partner(
     partner_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Admin-only: remove a logistics partner."""
     return partner_ctrl.delete_partner(partner_id, current_user, db)
 
@@ -871,8 +871,8 @@ def delete_partner(
 def partner_dashboard(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     """Dashboard stats for logistics partner or admin."""
     return partner_ctrl.get_partner_dashboard(current_user, db)
 
@@ -882,8 +882,8 @@ def partner_analytics(
     period: str = Query("30d", description="Analytics lookback window: 7d, 30d, or 90d"),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return partner_ctrl.get_partner_analytics(current_user, db, period=period)
 
 
@@ -891,8 +891,8 @@ def partner_analytics(
 def partner_payouts(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.get_partner_payouts(current_user, db)
 
 
@@ -901,8 +901,8 @@ def request_payout(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.request_partner_payout(data, current_user, db)
 
 
@@ -910,8 +910,8 @@ def request_payout(
 def pending_payouts(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.list_pending_partner_payouts(current_user, db)
 
 
@@ -921,8 +921,8 @@ def verify_payout(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.verify_partner_payout(payout_id, data, current_user, db)
 
 
@@ -933,8 +933,8 @@ def list_partner_shipments(
     page_size: int = Query(30, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     """List shipments assigned to (or visible by) this logistics partner."""
     return partner_ctrl.get_partner_shipments(current_user, db, status=status, page=page, page_size=page_size)
 
@@ -945,8 +945,8 @@ def create_shipment_confirmation_request(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Partner creates a pending pickup or delivery confirmation request."""
     return partner_ctrl.create_shipment_confirmation_request_partner(shipment_id, data, current_user, db)
 
@@ -962,8 +962,8 @@ def bulk_update_shipments_status(
     body: BulkShipmentStatusRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Bulk-update shipment status for multiple shipments (up to 100).
     Partners can only update their own assigned shipments.
     Note: 'delivered' requires signature — use the single-shipment endpoint instead.
@@ -979,8 +979,8 @@ def bulk_update_shipments_status(
 def get_partner_bank_account(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """Get the logistics partner's saved payout bank account."""
     return partner_ctrl.get_partner_bank_account(current_user, db)
 
@@ -990,8 +990,8 @@ def upsert_partner_bank_account(
     body: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """Submit or update the logistics partner's payout bank account. Triggers admin verification."""
     return partner_ctrl.upsert_partner_bank_account(body, current_user, db)
 
@@ -1002,8 +1002,8 @@ def list_my_cod_remittance_receipts(
     settlement_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return partner_ctrl.list_partner_cod_remittance_receipts(current_user, db, status=status, settlement_id=settlement_id)
 
 
@@ -1016,8 +1016,8 @@ async def upload_my_cod_remittance_receipt(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return await partner_ctrl.upload_partner_cod_remittance_receipt(
         settlement_id,
         amount,
@@ -1035,8 +1035,8 @@ async def upload_my_cod_remittance_receipt(
 def list_lp_documents(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """List all KYC/compliance documents submitted by the authenticated logistics partner."""
     return partner_ctrl.list_partner_documents(current_user, db)
 
@@ -1049,8 +1049,8 @@ async def upload_lp_document(
     expires_at: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """Upload a KYC/compliance document (multipart/form-data)."""
     return await partner_ctrl.upload_partner_document(file, document_type, document_name, expires_at, current_user, db)
 
@@ -1060,8 +1060,8 @@ def delete_lp_document(
     doc_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """Delete a pending or rejected document."""
     return partner_ctrl.delete_partner_document(doc_id, current_user, db)
 
@@ -1072,8 +1072,8 @@ def admin_review_lp_document(
     body: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     """Admin reviews a logistics partner document — approve/reject."""
     return partner_ctrl.admin_review_lp_document(doc_id, body, current_user, db)
 
@@ -1089,8 +1089,8 @@ def list_city_distances(
     page_size: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     """Admin: list city distance matrix entries with optional filtering."""
     return partner_ctrl.list_city_distances(current_user, db, origin_country_code=origin_country_code, destination_country_code=destination_country_code, q=q, page=page, page_size=page_size)
 
@@ -1100,8 +1100,8 @@ def create_city_distance(
     body: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Admin: create a new city distance matrix entry."""
     return partner_ctrl.create_city_distance(body, current_user, db)
 
@@ -1112,8 +1112,8 @@ def update_city_distance(
     body: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Admin: update distance_km (and optional notes) for an existing entry."""
     return partner_ctrl.update_city_distance(matrix_id, body, current_user, db)
 
@@ -1123,8 +1123,8 @@ def delete_city_distance(
     matrix_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.manage")),
 ):
-    require_feature("logistics.shipping.manage")
     """Admin: delete a city distance matrix entry."""
     return partner_ctrl.delete_city_distance(matrix_id, current_user, db)
 
@@ -1132,7 +1132,6 @@ def delete_city_distance(
 # === Parcel Tracking (from parcel_tracking.py) ===
 
 @router.get("/parcel_tracking/health")
-def parcel_tracking_health():
-    require_feature("logistics.shipping.tracking")
+def parcel_tracking_health(    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking"))):
     """Liveness probe for this router."""
     return {"status": "ok", "router": "parcel_tracking", "prefix": "/api/v1/parcel-tracking"}

@@ -37,8 +37,16 @@ def _keyset_page(model, db: Session, cursor: Optional[str] = None,
     return cursor_paginate_asc(db.query(model), cursor=cursor, page_size=page_size)
 
 from domains.governance.models.admin import APIKey, AdminActivityLog, AdminAnalyticsSnapshot, AdminChangeAuditLog, BadgeBillingRecord, BadgeTier, BadgeTransaction, ChatbotQueryEvent, CommissionBadgeTier, CommissionGlobalConfig, CouponUsage, EmailProviderConfig, EmployeeExpense, FinanceBankAccount, LogisticsCODRemittanceReceipt, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsSettlement, NormalizedWebhookEvent, PaymentProviderConfig, ProcessedWebhookEvent, ProductVerification, PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier, PushNotificationToken, RetentionJobRun, RolePermissionSetting, ShipmentConfirmation, ShippingCarrier, ShippingZone, SupplierBankAccount, SupplierCountryCommission, SupplierDispute, SystemAlert, SystemSetting, TicketReply
-from domains.security.models.fraud import CreditCardBin, DLPViolation, DeviceFingerprint, FraudAlert, FraudBlacklist, FraudCase, FraudCaseAssignment, FraudEvent, FraudRule, FraudScoringLog, IPAccountLinkage, IPReputation, LogisticsFraudIndicator, ManualReviewQueue, MeetingActionItem, MeetingRecording, MeetingTranscript, ReturnAbusePattern, SupplierFraudIndicator, VelocityCounter
-from domains.governance.models.incident import IncidentActionItem, IncidentThread, IncidentWarRoom, WarRoomTemplate
+from domains.accounts.models.user import (
+    EmailVerificationToken,
+    PasswordResetToken,
+    RevokedToken,
+    User,
+)
+from domains.customers.models.customer_schema_models import ReferralPointEvent
+from domains.security.models.fraud import CreditCardBin, DLPViolation, DeviceFingerprint, FraudAlert, FraudBlacklist, FraudCase, FraudCaseAssignment, FraudEvent, FraudRule, FraudScoringLog, IPAccountLinkage, IPReputation, LogisticsFraudIndicator, ManualReviewQueue, MeetingActionItem, MeetingTranscript, ReturnAbusePattern, SupplierFraudIndicator, VelocityCounter
+from domains.comms.models.fraud import MeetingRecording
+from domains.comms.models.incident import IncidentActionItem, IncidentThread, IncidentWarRoom, WarRoomTemplate
 
 
 def get_admin_analytics_snapshot_by_id(db: Session, id_: int) -> Optional[AdminAnalyticsSnapshot]:
@@ -791,7 +799,9 @@ from domains.governance.models.admin import CouponUsage, LogisticsCODRemittanceR
 # directly from their owning service modules.
 _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     # Model re-exports (canonical homes in other domains)
-    "User": ("domains.governance.models.user", "User"),
+    "User": ("domains.accounts.models.user", "User"),
+    "UserDevice": ("domains.accounts.models.user", "UserDevice"),
+    "UserLoginHistory": ("domains.accounts.models.user", "UserLoginHistory"),
     "SystemHealthEvent": ("domains.governance.models.core", "SystemHealthEvent"),
     "AuditLog": ("domains.audit.models.audit_schema_models", "AuditLog"),
     "SupportTicket": ("domains.comms.models.communication_schema_models", "SupportTicket"),
@@ -808,6 +818,30 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "VideoRoom": ("domains.comms.models.chat", "VideoRoom"),
     "VideoRoomParticipant": ("domains.comms.models.chat", "VideoRoomParticipant"),
     "VideoRoomRecording": ("domains.comms.models.chat", "VideoRoomRecording"),
+    # Service function exports (Law 3 sanctioned cross-domain surface)
+    "bulk_archive_entities": ("domains.governance.services.admin.bulk_ops_service", "bulk_archive_entities"),
+    "bulk_restore_entities": ("domains.governance.services.admin.bulk_ops_service", "bulk_restore_entities"),
+    "DataResidencyService": ("domains.governance.services.audit.audit_trail_service", "DataResidencyService"),
+    "download_export_job_result": ("domains.governance.services.operations", "download_export_job_result"),
+    "export_audit_logs_csv": ("domains.governance.services.operations", "export_audit_logs_csv"),
+    "export_coupons_csv": ("domains.governance.services.operations", "export_coupons_csv"),
+    "export_orders_csv": ("domains.governance.services.operations", "export_orders_csv"),
+    "export_products_csv": ("domains.governance.services.operations", "export_products_csv"),
+    "export_transfer_csv": ("domains.governance.services.operations", "export_transfer_csv"),
+    "export_users_csv": ("domains.governance.services.operations", "export_users_csv"),
+    "queue_export_job": ("domains.governance.services.operations", "queue_export_job"),
+    "update_flight_risk_score": ("domains.governance.services.risk.risk_write_service", "update_flight_risk_score"),
+    "get_current_admin": ("domains.governance.services.settings.admin_service", "get_current_admin"),
+    "get_ticket_detail": ("domains.governance.services.settings.admin_service", "get_ticket_detail"),
+    "require_admin_2fa_enabled": ("domains.governance.services.settings.admin_service", "require_admin_2fa_enabled"),
+    "require_admin_2fa_verified": ("domains.governance.services.settings.admin_service", "require_admin_2fa_verified"),
+    "archive_entity": ("domains.governance.services.settings.misc_service", "archive_entity"),
+    "restore_entity": ("domains.governance.services.settings.misc_service", "restore_entity"),
+    "hard_delete_entity": ("domains.governance.services.settings.misc_service", "hard_delete_entity"),
+    "create_processed_webhook_event": ("domains.governance.services.settings.misc_service", "create_processed_webhook_event"),
+    "create_address": ("domains.governance.services.settings.misc_service", "create_address"),
+    "get_audit_log_page": ("domains.governance.services.settings.misc_service", "get_audit_log_page"),
+    "get_available_audit_actions": ("domains.governance.services.settings.misc_service", "get_available_audit_actions"),
 }
 
 import importlib
@@ -843,6 +877,40 @@ def logistics_settlement_query(db: Session) -> object:
 def processed_webhook_event_query(db: Session) -> object:
     """Return a base ``ProcessedWebhookEvent`` query for sanctioned cross-domain delegation."""
     return db.query(ProcessedWebhookEvent)
+
+
+def supplier_bank_account_query(db: Session) -> object:
+    """Return a base ``SupplierBankAccount`` query for sanctioned cross-domain delegation."""
+    return db.query(SupplierBankAccount)
+
+
+def user_device_query(db: Session) -> object:
+    """Return a base ``UserDevice`` query for sanctioned cross-domain delegation."""
+    from domains.accounts.models.user import UserDevice
+    return db.query(UserDevice)
+
+
+def user_login_history_query(db: Session) -> object:
+    """Return a base ``UserLoginHistory`` query for sanctioned cross-domain delegation."""
+    from domains.accounts.models.user import UserLoginHistory
+    return db.query(UserLoginHistory)
+
+
+def supplier_bank_account_model() -> type:
+    """Return the ``SupplierBankAccount`` model class (for column reference only)."""
+    return SupplierBankAccount
+
+
+def user_device_model() -> type:
+    """Return the ``UserDevice`` model class (for column reference only)."""
+    from domains.accounts.models.user import UserDevice
+    return UserDevice
+
+
+def user_login_history_model() -> type:
+    """Return the ``UserLoginHistory`` model class (for column reference only)."""
+    from domains.accounts.models.user import UserLoginHistory
+    return UserLoginHistory
 
 
 def get_approval_chain(db: Session, employee_id: int, resource_type: str, min_authority_level: int | None = None) -> list:

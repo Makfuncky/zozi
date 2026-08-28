@@ -13,7 +13,7 @@ from fastapi import Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from domains.accounts.services.auth.auth_service import get_current_user
+from domains.accounts.ports import get_current_user
 from infrastructure.database.database import get_db
 from domains.hr.models.employee_models import EmployeeDocument
 from domains.hr.models.employee_models import PayrollRecord

@@ -30,15 +30,16 @@ def list_all_campaigns_route(
     db: Session = Depends(get_db),
     limit: int = Query(50, ge=1, le=100),
     cursor: str | None = Query(None, description="Cursor for keyset pagination"),
+    _rf_gate: None = Depends(require_feature("comms.campaign.read")),
 ):
-    require_feature("comms.campaign.read")
     service = EmailManagementService(db)
     return service.list_all_campaigns(limit=limit)
 
 
 @router.get("/metrics")
-def admin_email_metrics_route(_: dict = Depends(require_admin), db: Session = Depends(get_db)):
-    require_feature("comms.campaign.read")
+def admin_email_metrics_route(_: dict = Depends(require_admin), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("comms.campaign.read"))
+):
     service = EmailManagementService(db)
     return service.get_email_metrics()
 
@@ -50,8 +51,8 @@ def list_campaigns_route(
     db: Session = Depends(get_db),
     limit: int = Query(50, ge=1, le=100),
     cursor: str | None = Query(None, description="Cursor for keyset pagination"),
+    _rf_gate: None = Depends(require_feature("comms.campaign.read")),
 ):
-    require_feature("comms.campaign.read")
     service = EmailManagementService(db)
     return service.get_campaigns_by_country(country_code, limit=limit)
 
@@ -62,8 +63,8 @@ def create_campaign_route(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("comms.campaign.create")),
 ):
-    require_feature("comms.campaign.create")
     service = EmailManagementService(db)
     return service.create_campaign(payload, country_code)
 
@@ -74,8 +75,8 @@ def delete_campaign_route(
     campaign_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("comms.campaign.create")),
 ):
-    require_feature("comms.campaign.create")
     service = EmailManagementService(db)
     campaign = service.find_campaign_for_deletion(campaign_id, country_code)
     service.delete_campaign(campaign)
@@ -95,8 +96,8 @@ def get_communication_audit_trail_route(
     offset: int = Query(0, ge=0),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("comms.audit.read")),
 ):
-    require_feature("comms.audit.read")
     service = get_communication_audit_service(db)
     if service is None:
         return {"items": [], "total": 0, "limit": limit, "offset": offset}
@@ -117,8 +118,8 @@ def export_communication_audit_for_ediscovery_route(
     date_to: Optional[datetime] = Query(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("audit.logs.export")),
 ):
-    require_feature("audit.logs.export")
     service = get_communication_audit_service(db)
     if service is None:
         return {"exported": 0, "format": "json"}

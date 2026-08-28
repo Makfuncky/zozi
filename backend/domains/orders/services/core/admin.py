@@ -12,13 +12,7 @@ from fastapi import Depends, Path, Query
 
 from sqlalchemy.orm import Session
 
-from domains.governance.services.settings.misc_service import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    hard_delete_entity,
-    restore_entity,
-)
+from domains.governance.ports import archive_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, restore_entity
 from domains.orders.services.orders_service import update_order_status
 
 from infrastructure.database.database import get_db
@@ -30,7 +24,7 @@ from infrastructure.database.schemas import (
     OrderStatusUpdate,
 )
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.orders.models.orders import Order
 
 from domains.country.utils.country_rls import get_country_or_404

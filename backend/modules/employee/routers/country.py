@@ -30,9 +30,9 @@ async def create_travel_request(
     end_date: str,
     purpose: str,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     service = get_travel_service(db)
     return service.create_travel_request(
         employee_id=employee_id,
@@ -51,9 +51,9 @@ async def validate_expense(
     description: str,
     receipt_image_hash: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     service = get_travel_service(db)
     return service.validate_expense(
         employee_id=employee_id,
@@ -68,9 +68,9 @@ async def validate_expense(
 async def approve_travel_request(
     request_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.employee.manage")),
 ):
-    require_feature("hr.employee.manage")
     service = get_travel_service(db)
     return service.approve_travel_request(request_id, int(current_user["sub"]))
 

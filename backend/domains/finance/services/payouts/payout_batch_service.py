@@ -112,7 +112,7 @@ def generate_supplier_payout_batches(
         
         # Send approval email to supplier
         try:
-            from domains.comms.services.transactional_email_service import enqueue_supplier_approval_email
+            from domains.comms.ports import NotificationChannel, NotificationEngine, NotificationPriority, enqueue_supplier_approval_email, notify_logistics_partners_of_payout, notify_suppliers_of_payout
             enqueue_supplier_approval_email(
                 supplier_id, batch.id, batch.batch_number, float(total_amount)
             )
@@ -338,7 +338,7 @@ class PayoutEngine:
         self.db = db
 
     def _lazy_country_models(self):
-        from domains.country.models.countries import CountryConfig, PayoutRuleCategory, PayoutRuleProduct
+        from domains.country.ports import CountryConfig, PayoutRuleCategory, PayoutRuleProduct
         return CountryConfig, PayoutRuleCategory, PayoutRuleProduct
 
     def get_payout_rate(
@@ -490,7 +490,7 @@ class PaymentEngine:
         self.db = db
 
     def _lazy_country_models(self):
-        from domains.country.models.countries import CountryConfig, CountryGatewayCredentials
+        from domains.country.ports import CountryConfig, CountryGatewayCredentials
         return CountryConfig, CountryGatewayCredentials
 
     def __init__(self, db: Session):
@@ -672,8 +672,8 @@ from decimal import Decimal
 from datetime import datetime
 
 from infrastructure.database.database import get_db_context
-from domains.country.models.countries import CountryConfig
-from domains.country.models.country_control import PaymentOrchestratorSync
+from domains.country.ports import CountryConfig
+from domains.country.ports import PaymentOrchestratorSync
 
 logger = logging.getLogger(__name__)
 
@@ -840,7 +840,7 @@ from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.finance import PayoutBatchItem
 from domains.finance.models.finance import SupplierSettlement
-from domains.governance.models.admin import LogisticsSettlement
+from domains.governance.ports import LogisticsSettlement
 from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.models.payments import Payout
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -925,7 +925,7 @@ def run_auto_payout_sweep(
         # ── 2. Verify supplier bank accounts exist ───────────────────────────
         supplier_ids_in_scope = {cast(int, s.supplier_id) for s in settlements}
         try:
-            from domains.governance.models.admin import SupplierBankAccount
+            from domains.governance.ports import SupplierBankAccount
 
             bank_accounts = (
                 db.query(SupplierBankAccount.supplier_id)
@@ -1073,7 +1073,6 @@ def run_auto_payout_sweep(
         # ── 7. Send payout notifications ────────────────────────────────────
         notifications: list[dict[str, Any]] = []
         try:
-            from domains.comms.services.payout_notification_service import notify_suppliers_of_payout
 
             summary = {
                 "payout_ids": [
@@ -1203,7 +1202,7 @@ def run_auto_logistics_payout_sweep(
         # ── 2. Verify logistics partner bank accounts exist ─────────────────
         partner_ids_in_scope = {cast(int, s.partner_id) for s in settlements}
         try:
-            from domains.governance.models.admin import LogisticsPartnerBankAccount
+            from domains.governance.ports import LogisticsPartnerBankAccount
 
             bank_accounts = (
                 db.query(LogisticsPartnerBankAccount.partner_id)
@@ -1347,7 +1346,6 @@ def run_auto_logistics_payout_sweep(
         # ── 8. Send payout notifications ────────────────────────────────────
         logistics_notifications: list[dict[str, Any]] = []
         try:
-            from domains.comms.services.payout_notification_service import notify_logistics_partners_of_payout
 
             summary = {
                 "payout_ids": [
@@ -1715,7 +1713,7 @@ from domains.accounts.models.user import User
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.payments import Payout
 
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
+from domains.audit.ports import AuditAction, audit_log
 
 # TODO: Module not yet created
 # from domains.finance.services.auto_payout_scheduler import get_background_job_status as _get_bg_status
@@ -2083,7 +2081,7 @@ def notify_suppliers_of_payout(
     users_by_id: dict[int, Any] = {}
     prefetch_error: Exception | None = None
     try:
-        from domains.governance.models.user import User
+        from domains.governance.ports import User
 
         unique_supplier_ids = list(dict.fromkeys(
             cast(int, entry.get("supplier_id")) for entry in payout_ids
@@ -2197,8 +2195,8 @@ def notify_logistics_partners_of_payout(
     users_by_id: dict[Any, Any] = {}
     prefetch_error: Exception | None = None
     try:
-        from domains.logistics.models.logistics import LogisticsPartner
-        from domains.governance.models.user import User
+        from domains.logistics.ports import LogisticsPartner
+        from domains.governance.ports import User
 
         unique_partner_ids = list(dict.fromkeys(
             cast(int, entry.get("partner_id")) for entry in payout_ids
@@ -2312,9 +2310,6 @@ def _send_in_app_notification_separate_session(
     """
     try:
         from infrastructure.database.database import SessionLocal
-        from domains.comms.services.shared.notification.notification_engine import NotificationEngine
-        from domains.comms.services.shared.notification.notification_engine import NotificationChannel
-        from domains.comms.services.shared.notification.notification_engine import NotificationPriority
 
         notif_db = SessionLocal()
         try:
@@ -2447,7 +2442,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.finance.models.payments import Payout
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
@@ -2541,7 +2535,7 @@ controller no longer reaches into the ORM directly.
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.comms.models.suppliers import SupplierProfile
+from domains.comms.ports import SupplierProfile
 from domains.finance.models.payments import Payout
 import structlog
 
@@ -2574,12 +2568,11 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from domains.comms.models.communication import Notification
+from domains.comms.ports import Notification
 from domains.finance.models.finance import TransactionLedger
 from domains.finance.models.finance import SupplierSettlement
-from domains.governance.models.admin import LogisticsSettlement
+from domains.governance.ports import LogisticsSettlement
 from domains.finance.models.payments import Payout
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
 
 
 def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0) -> list:
@@ -2795,7 +2788,7 @@ def _get_User():
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.finance import PayoutBatchItem
-from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.ports import LogisticsPartner
 from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.models.payments import Payout
 
@@ -3019,9 +3012,8 @@ from typing import Any, cast
 from sqlalchemy.orm import Session, joinedload
 
 from domains.finance.models.finance import PayoutBatch, PayoutBatchItem
-from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.ports import LogisticsPartner
 from domains.finance.models.payments import LogisticsPartnerPayout, Payout
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from infrastructure.utils.datetime_utils import utcnow
 
 
@@ -3220,11 +3212,10 @@ from typing import Any, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from domains.comms.models.suppliers import SupplierProfile
+from domains.comms.ports import SupplierProfile
 from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.models.payments import Payout
-from domains.audit.services.logs.audit_service import audit_log
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
@@ -3545,7 +3536,6 @@ from typing import Optional, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from domains.finance.models.payments import Payout
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
 # TODO: Module not yet created
 # from domains.comms.services.utility.write_helpers import commit_and_refresh
 # TODO: Module not yet created
@@ -3653,7 +3643,6 @@ from sqlalchemy.orm import Session
 
 # TODO: Module not yet created
 # from domains.finance.services.ledger.finance_transfer_service import execute_transfer_batch
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from infrastructure.database.database import SessionLocal
 import structlog
 logger = structlog.get_logger(__name__)
@@ -3755,7 +3744,7 @@ from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import FinanceAuditLog
-from domains.orders.models.orders import Order
+from domains.orders.ports import Order
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 from domains.finance.services.finance_service import general_ledger_service as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -4003,11 +3992,11 @@ from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 from infrastructure.database.database import get_db
-from domains.governance.models.user import User
+from domains.governance.ports import User
 from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.finance import PayoutBatchItem
 from domains.finance.models.finance import SupplierSettlement
-from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.ports import LogisticsPartner
 from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.models.payments import Payout
 from infrastructure.utils.dependencies import require_admin
@@ -4119,7 +4108,7 @@ from fastapi import Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.governance.models.user import User
+from domains.governance.ports import User
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.payments import Payout
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
@@ -4127,7 +4116,6 @@ from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from infrastructure.utils.datetime_utils import utcnow
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from domains.finance.ports import get_background_job_status
 from domains.finance.ports import start_auto_payout_background_job
 from domains.finance.ports import stop_auto_payout_background_job

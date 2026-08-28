@@ -47,6 +47,11 @@ from domains.comms.models.communication_schema_models import (
 from domains.comms.models.news import NewsArticle
 from domains.comms.models.communication import Announcement, ChatAttachment, ChatReadReceipt, CommunicationAuditTrail, EmailFolder, EmployeeCommunicationThread, ExternalContactMasking, FAQ, HelpCategory, InternalChannel, InternalChannelMember, InternalEmail, InternalMessage, MaskedMessage, Notification, ProxyCallLog, ProxyChannel, ProxyMessage, ProxySession, TicketMessage
 from domains.comms.models.marketing import CampaignRecipient, EmailCampaign, EmailCampaignLog, EmailDeliveryEvent, EmailRuntimeConfig, EmailSuppression, EmailTemplate, FlashSale, FlashSaleItem, NewsletterSubscriber, PointsTransaction, UserPoints
+from domains.comms.models.chat import (
+    DirectChatRoom, DirectChatMessage, EntityChatThread, EntityChatMessage,
+    EscalationSLALog, GroupChatMember, GroupChatRoom, GroupChatMessage,
+    VideoRoom, VideoRoomParticipant,
+)
 from domains.comms.models.suppliers import SupplierBadge, SupplierBadgeBillingHistory, SupplierBadgeCatalog, SupplierDocument, SupplierNotificationPreference, SupplierProfile
 from domains.comms.models.communication_schema_models import SupportTicketReply  # A3: sanctioned ports surface for accounts hub
 
@@ -375,6 +380,31 @@ def list_campaign_recipients_page(db: Session, cursor: Optional[str] = None, pag
     """Keyset-cursor page of CampaignRecipient rows (scale-ready)."""
     return _keyset_page(CampaignRecipient, db, cursor, page_size)
 
+
+def campaign_recipient_query(db: Session) -> object:
+    """Return a base ``CampaignRecipient`` query for sanctioned cross-domain delegation."""
+    return db.query(CampaignRecipient)
+
+
+def direct_chat_message_query(db: Session) -> object:
+    """Return a base ``DirectChatMessage`` query for sanctioned cross-domain delegation."""
+    return db.query(DirectChatMessage)
+
+
+def group_chat_message_query(db: Session) -> object:
+    """Return a base ``GroupChatMessage`` query for sanctioned cross-domain delegation."""
+    return db.query(GroupChatMessage)
+
+
+def entity_chat_message_query(db: Session) -> object:
+    """Return a base ``EntityChatMessage`` query for sanctioned cross-domain delegation."""
+    return db.query(EntityChatMessage)
+
+
+def video_room_query(db: Session) -> object:
+    """Return a base ``VideoRoom`` query for sanctioned cross-domain delegation."""
+    return db.query(VideoRoom)
+
 def get_email_delivery_event_by_id(db: Session, id_: int) -> Optional[EmailDeliveryEvent]:
     """Return EmailDeliveryEvent by primary key (or None)."""
     return db.get(EmailDeliveryEvent, id_)
@@ -626,6 +656,22 @@ _LAZY_COMMS_EXPORTS: dict[str, tuple[str, str]] = {
     "create_support_ticket": ("domains.comms.services.comms_service", "create_support_ticket"),
     "get_support_ticket": ("domains.comms.services.comms_service", "get_support_ticket"),
     "reply_to_support_ticket": ("domains.comms.services.comms_service", "reply_to_support_ticket"),
+    "enqueue_refund_processed_email": ("domains.comms.services.email.transactional_email_service", "enqueue_refund_processed_email"),
+    "auto_process_image": ("domains.comms.services.free_image_tools", "auto_process_image"),
+    "save_product_media": ("domains.comms.services.media_service", "save_product_media"),
+    "save_supplier_media": ("domains.comms.services.media_service", "save_supplier_media"),
+    "notify_logistics_partners_of_payout": ("domains.comms.services.payout_notification_service", "notify_logistics_partners_of_payout"),
+    "notify_suppliers_of_payout": ("domains.comms.services.payout_notification_service", "notify_suppliers_of_payout"),
+    "NotificationEngine": ("domains.comms.services.shared.notification.notification_engine", "NotificationEngine"),
+    "create_notification": ("domains.comms.services.tickets.tickets_service", "create_notification"),
+    "enqueue_invoice_email": ("domains.comms.services.transactional_email_service", "enqueue_invoice_email"),
+    "enqueue_payment_confirmed_email": ("domains.comms.services.transactional_email_service", "enqueue_payment_confirmed_email"),
+    "enqueue_payment_failed_email": ("domains.comms.services.transactional_email_service", "enqueue_payment_failed_email"),
+    "enqueue_supplier_approval_email": ("domains.comms.services.transactional_email_service", "enqueue_supplier_approval_email"),
+    "enqueue_shipment_status_email": ("domains.comms.services.transactional_email_service", "enqueue_shipment_status_email"),
+    "enqueue_order_status_email": ("domains.comms.services.transactional_email_service", "enqueue_order_status_email"),
+    "enqueue_return_created_email": ("domains.comms.services.transactional_email_service", "enqueue_return_created_email"),
+    "enqueue_return_status_email": ("domains.comms.services.transactional_email_service", "enqueue_return_status_email"),
 }
 
 
@@ -641,3 +687,6 @@ def __getattr__(name: str):  # type: ignore[no-redef]
         globals()[name] = value
         return value
     return _orig_comms_getattr(name)
+
+
+

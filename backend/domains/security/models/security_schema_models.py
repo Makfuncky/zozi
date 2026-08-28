@@ -21,6 +21,8 @@ class AlertEscalationRule(Base):
     threshold_value = Column(Numeric(15, 2), nullable=True)
     current_tier = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -35,6 +37,10 @@ class DocumentVerification(Base):
     status = Column(String, default="pending")
     verified_at = Column(DateTime, nullable=True)
     verifier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     pipeline = relationship("OnboardingPipeline", back_populates="documents")
     verifier = relationship("User")
 
@@ -51,6 +57,10 @@ class KYCVerification(Base):
     submitted_at = Column(DateTime, default=_utcnow)
     reviewed_at = Column(DateTime, nullable=True)
     reviewer_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     user = relationship("User", foreign_keys=[user_id])
     reviewer = relationship("User", foreign_keys=[reviewer_id])
 

@@ -10,8 +10,8 @@ from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from domains.catalog.models.products import Product, Review
-from domains.orders.models.orders import Order, OrderItem
+from domains.catalog.ports import Product, Review
+from domains.orders.ports import Order, OrderItem
 from providers.ai.sentiment import analyze_review
 import structlog
 

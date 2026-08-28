@@ -30,15 +30,17 @@ class CurrencyFormatBody(BaseModel):
 # ── Translation ─────────────────────────────────────────────────────────────────
 
 @router.post("/translate")
-def chat_translate(body: TranslateBody):
+def chat_translate(body: TranslateBody,
+    _rf_gate: None = Depends(require_feature("comms.notification.read"))
+):
     """Translate chat message text between languages."""
-    require_feature("comms.notification.read")
     return translate_text(body.text, body.source_lang, body.target_lang)
 
 
 @router.post("/format-currency")
-def chat_format_currency(body: CurrencyFormatBody):
+def chat_format_currency(body: CurrencyFormatBody,
+    _rf_gate: None = Depends(require_feature("comms.notification.read"))
+):
     """Format a currency amount for the given locale."""
-    require_feature("comms.notification.read")
     return format_currency(body.amount, body.currency_code, body.locale)
 

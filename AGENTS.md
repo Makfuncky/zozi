@@ -30,7 +30,7 @@ modules/{who}/  →  domains/{what}/  →  infrastructure/  ←  providers/
 | **Domain** (what) | `domains/{16 domains}/` | Services, models, schemas, policies, events |
 | **Feature** (may) | `rbac/` + `domains/*/features.py` | Permission atoms, gated by `require_feature()` |
 
-### The Seven Laws (enforced by CI + `tests/architecture/test_import_laws.py`)
+### The Laws (325 total, enforced by CI + `tests/architecture/test_import_laws.py`)
 
 1. **Arrows point down only** — `modules → domains → infrastructure`. Domains never import modules. `infrastructure`/`kernel` import nothing above them.
 2. **Module routers stay thin** — auth context + `require_feature(...)` + one service call. No DB writes, no business rules.

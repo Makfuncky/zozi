@@ -10,6 +10,7 @@ __all__ = ["CommissionAgreement", "ProductCommissionOverride", "CommissionLedger
 
 class CommissionAgreement(Base):
     __tablename__ = "commission_agreements"
+    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -33,6 +34,7 @@ class CommissionAgreement(Base):
 
 class ProductCommissionOverride(Base):
     __tablename__ = "product_commission_overrides"
+    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -53,6 +55,7 @@ class ProductCommissionOverride(Base):
 
 class CommissionLedgerEntry(Base):
     __tablename__ = "commission_ledger_entries"
+    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -83,7 +86,7 @@ class CommissionLedgerEntry(Base):
     is_adjusted = Column(Boolean, default=False)
     currency = Column(String(3), default="OMR")
     amount = Column(Numeric(12, 2), nullable=True)
-    adjusted_by = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True, index=True)
+    adjusted_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True, index=True)
     status = Column(String(30), default="pending")
     credited_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -93,6 +96,7 @@ class CommissionLedgerEntry(Base):
 
 class CommissionCategoryRate(Base):
     __tablename__ = 'commission_category_rates'
+    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)

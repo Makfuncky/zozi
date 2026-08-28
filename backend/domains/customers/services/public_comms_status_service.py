@@ -6,13 +6,13 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
-from infrastructure.security.auth import JWTError, jwt
+from infrastructure.utils.auth import JWTError, jwt
 from infrastructure.database.database import get_db, get_db_session
-from domains.accounts.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
-from domains.accounts.models.core import SupportTicket
-from domains.accounts.models.user import User
-from domains.comms.models.communication import Notification
-from domains.governance.models.admin import TicketReply
+from domains.accounts.ports import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
+from domains.accounts.ports import SupportTicket
+from domains.accounts.ports import User
+from domains.comms.ports import Notification
+from domains.governance.ports import TicketReply
 from infrastructure.utils.config import settings
 logger = logging.getLogger(__name__)
 
@@ -171,8 +171,8 @@ def _mark_messages_read(db: Session, room_id: str, user_id: int):
 def _decode_ws_token(token: str) -> Optional[dict]:
     """Decode JWT token for WebSocket authentication."""
     try:
-        from infrastructure.utils.auth import SECRET_KEY, ALGORITHM
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        from infrastructure.utils.auth import decode_token
+        return decode_token(token, expected_type="access")
     except Exception:
         return None
 

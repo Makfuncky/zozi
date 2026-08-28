@@ -9,7 +9,7 @@ __all__ = [
     "FraudEvent", "FraudBlacklist", "FraudRule", "ManualReviewQueue", "IPReputation", "DeviceFingerprint", 
     "CreditCardBin", "ReturnAbusePattern", "SupplierFraudIndicator", "LogisticsFraudIndicator", "FraudAlert", 
     "IPAccountLinkage", "VelocityCounter", "FraudScoringLog", "FraudCase", "FraudCaseAssignment",
-    "DLPViolation", "MeetingTranscript", "MeetingActionItem", "MeetingRecording"
+    "DLPViolation", "MeetingTranscript", "MeetingActionItem"
 ]
 
 
@@ -34,17 +34,18 @@ class FraudEvent(Base):
     details = Column(JSON, nullable=True)
     is_flagged = Column(Boolean, default=False)
     status_code = Column(String(20), default="logged")
-    reviewed_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    reviewed_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
     
     user = relationship("User", foreign_keys=[user_id], backref="fraud_events")
-    reviewer = relationship("User", foreign_keys=[reviewed_by], backref="fraud_reviewed_events")
+    reviewer = relationship("User", foreign_keys=[reviewed_by_id], backref="fraud_reviewed_events")
 
 
 class FraudBlacklist(Base):
-    __tablename__ = "fraud_blacklist"
+    __tablename__ = "fraud_blacklists"
     __table_args__ = (
         UniqueConstraint("identifier_type", "identifier_value", name="uq_blacklist_identifier"),
         CheckConstraint("status_code IN ('active', 'inactive', 'expired')", name="chk_fraud_blacklist_status_valid"),
@@ -58,6 +59,7 @@ class FraudBlacklist(Base):
     is_active = Column(Boolean, default=True)
     status_code = Column(String(50), default="active")
     created_at = Column(DateTime, default=_utcnow)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=True)
 
 
@@ -75,11 +77,13 @@ class FraudRule(Base):
     is_active = Column(Boolean, default=True)
     is_global = Column(Boolean, default=True)
     country_code = Column(String(2), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
 
 class ManualReviewQueue(Base):
-    __tablename__ = "manual_review_queue"
+    __tablename__ = "manual_review_queues"
     __table_args__ = (
         Index("ix_manual_review_status", "status_code"),
         Index("ix_manual_review_priority", "priority"),
@@ -93,11 +97,12 @@ class ManualReviewQueue(Base):
     triggered_rules = Column(Text, nullable=True)
     reason = Column(String(255), nullable=False)
     priority = Column(String(50), default="medium")
-    assigned_to = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     admin_notes = Column(Text, nullable=True)
     status_code = Column(String(50), default="queued")
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
 
 class IPReputation(Base):
@@ -117,6 +122,7 @@ class IPReputation(Base):
     last_seen_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
 
 
 class DeviceFingerprint(Base):
@@ -135,6 +141,7 @@ class DeviceFingerprint(Base):
     account_count = Column(Integer, default=0)
     first_seen_at = Column(DateTime, default=_utcnow)
     last_seen_at = Column(DateTime, default=_utcnow)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     
     user = relationship("User", backref="device_fingerprints")
 
@@ -148,7 +155,9 @@ class CreditCardBin(Base):
     bank = Column(String(100), nullable=True)
     country = Column(String(10), nullable=True)
     is_blacklisted = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
 
 class ReturnAbusePattern(Base):
@@ -161,6 +170,7 @@ class ReturnAbusePattern(Base):
     first_occurrence = Column(DateTime, default=_utcnow)
     last_occurrence = Column(DateTime, default=_utcnow)
     is_blocked = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     
     user = relationship("User", backref="return_abuse_patterns")
 
@@ -173,6 +183,7 @@ class SupplierFraudIndicator(Base):
     indicator_type = Column(String(50), nullable=False)
     value = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
 
@@ -185,6 +196,7 @@ class LogisticsFraudIndicator(Base):
     indicator_type = Column(String(50), nullable=False)
     value = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
 
@@ -202,6 +214,7 @@ class FraudAlert(Base):
     details = Column(Text, nullable=True)
     is_resolved = Column(Boolean, default=False)
     resolved_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
 
@@ -217,6 +230,7 @@ class IPAccountLinkage(Base):
     interaction_count = Column(Integer, default=1)
     is_suspicious = Column(Boolean, default=False)
     last_seen = Column(DateTime, default=_utcnow)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     
     user = relationship("User", backref="ip_account_linkages")
 
@@ -232,7 +246,9 @@ class VelocityCounter(Base):
     window_end = Column(DateTime, nullable=False)
     entity_type = Column(String(50), nullable=True)
     entity_id = Column(Integer, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
 
 class FraudScoringLog(Base):
@@ -252,6 +268,7 @@ class FraudScoringLog(Base):
     triggered_rules = Column(JSON, nullable=True)
     metadata_json = Column(JSON, nullable=True)
     action_taken = Column(String(50), default="logged")
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
     
@@ -275,16 +292,17 @@ class FraudCase(Base):
     status_code = Column(String(20), default="open")
     entity_type = Column(String(50), nullable=True)
     entity_id = Column(Integer, nullable=True)
-    assigned_to = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
-    created_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     resolved_at = Column(DateTime, nullable=True)
     resolution_notes = Column(Text, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
     
-    assignee = relationship("User", foreign_keys=[assigned_to])
-    creator = relationship("User", foreign_keys=[created_by])
+    assignee = relationship("User", foreign_keys=[assigned_to_id])
+    creator = relationship("User", foreign_keys=[created_by_id])
 
 
 class FraudCaseAssignment(Base):
@@ -294,14 +312,16 @@ class FraudCaseAssignment(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey("security.fraud_cases.id", ondelete='CASCADE'), nullable=False)
-    assigned_to = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    assigned_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
+    assigned_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     role_at_assignment = Column(String(50), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
     
     case = relationship("FraudCase")
-    assignee = relationship("User", foreign_keys=[assigned_to])
-    assigner = relationship("User", foreign_keys=[assigned_by])
+    assignee = relationship("User", foreign_keys=[assigned_to_id])
+    assigner = relationship("User", foreign_keys=[assigned_by_id])
 
 
 class DLPViolation(Base):
@@ -320,12 +340,14 @@ class DLPViolation(Base):
     detected_content = Column(Text, nullable=True)
     action_taken = Column(String(50), default="blocked")
     status_code = Column(String(20), default="pending")
-    reviewed_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    reviewed_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
     
     sender = relationship("User", foreign_keys=[sender_id])
-    reviewer = relationship("User", foreign_keys=[reviewed_by])
+    reviewer = relationship("User", foreign_keys=[reviewed_by_id])
 
 
 class MeetingTranscript(Base):
@@ -340,7 +362,9 @@ class MeetingTranscript(Base):
     summary = Column(Text, nullable=True)
     word_count = Column(Integer, default=0)
     duration_seconds = Column(Integer, default=0)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
 
 class MeetingActionItem(Base):
@@ -358,30 +382,12 @@ class MeetingActionItem(Base):
     action = Column(String(255), nullable=False)
     metadata_json = Column(JSON, nullable=True)
     status_code = Column(String(20), default="pending")
-    assigned_to = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     due_date = Column(DateTime, nullable=True)
     
     meeting = relationship("MeetingTranscript", backref="items")
     assignee = relationship("User")
 
-
-class MeetingRecording(Base):
-    __tablename__ = "meeting_recordings"
-    
-    __table_args__ = (
-        CheckConstraint("status_code IN ('recording', 'completed', 'failed', 'processing')", name="chk_meeting_recordings_status_valid"),
-        {"schema": "communication"},)
-    
-    id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(String(64), nullable=False)
-    started_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    recording_url = Column(String(500), nullable=True)
-    duration_seconds = Column(Integer, default=0)
-    status_code = Column(String(20), default="recording")
-    started_at = Column(DateTime, default=_utcnow)
-    ended_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    
-    starter = relationship("User")
-
+

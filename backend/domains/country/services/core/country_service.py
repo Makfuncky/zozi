@@ -200,17 +200,17 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
         "language": country.language or "en",
         "timezone": country.timezone,
         "tax_type": country.tax_type,
-        "tax_rate": float(country.tax_rate) if country.tax_rate is not None else 0.0,
+        "tax_rate": Decimal(str(country.tax_rate)) if country.tax_rate is not None else Decimal("0"),
         "tax_name": country.tax_name,
         "tax_inclusive": bool(country.tax_inclusive),
         "tax_exempt_categories": _from_json(country.tax_exempt_categories_json, default=[]),
         "tax_reduced_rates": _from_json(country.tax_reduced_rates_json, default={}),
         "logistics_model": country.logistics_model,
         "default_vehicle_type": country.default_vehicle_type,
-        "base_rate": float(country.base_rate) if country.base_rate is not None else None,
-        "per_km_rate": float(country.per_km_rate) if country.per_km_rate is not None else None,
-        "minimum_charge": float(country.minimum_charge) if country.minimum_charge is not None else None,
-        "weight_surcharge_rate": float(country.weight_surcharge_rate) if country.weight_surcharge_rate is not None else None,
+        "base_rate": Decimal(str(country.base_rate)) if country.base_rate is not None else None,
+        "per_km_rate": Decimal(str(country.per_km_rate)) if country.per_km_rate is not None else None,
+        "minimum_charge": Decimal(str(country.minimum_charge)) if country.minimum_charge is not None else None,
+        "weight_surcharge_rate": Decimal(str(country.weight_surcharge_rate)) if country.weight_surcharge_rate is not None else None,
         "weight_surcharge_threshold_kg": float(country.weight_surcharge_threshold_kg) if country.weight_surcharge_threshold_kg is not None else None,
         "payment_methods": _from_json(country.payment_methods_json, default=[]),
         "payment_gateways": _from_json(country.payment_gateways_json, default=[]),
@@ -237,20 +237,20 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
         "alpha3": country.alpha3,
         "flag_url": country.flag_url,
         "currency_name": country.currency_name,
-        "exchange_rate_to_usd": float(country.exchange_rate_to_usd) if country.exchange_rate_to_usd is not None else None,
+        "exchange_rate_to_usd": Decimal(str(country.exchange_rate_to_usd)) if country.exchange_rate_to_usd is not None else None,
         # ── Phase 1: COD / settlement ──────────────────────────────────────
         "cod_enabled": bool(country.cod_enabled) if country.cod_enabled is not None else True,
-        "cod_max_amount": float(country.cod_max_amount) if country.cod_max_amount is not None else None,
+        "cod_max_amount": Decimal(str(country.cod_max_amount)) if country.cod_max_amount is not None else None,
         "cod_verification_required": bool(country.cod_verification_required) if country.cod_verification_required is not None else False,
         "cod_remittance_days": country.cod_remittance_days,
         "settlement_hold_days": country.settlement_hold_days,
-        "minimum_payout_amount": float(country.minimum_payout_amount) if country.minimum_payout_amount is not None else None,
+        "minimum_payout_amount": Decimal(str(country.minimum_payout_amount)) if country.minimum_payout_amount is not None else None,
         "payout_currency": country.payout_currency,
         # ── Phase 1: Supplier ──────────────────────────────────────────────
         "supplier_kyc_tier": country.supplier_kyc_tier,
-        "supplier_onboarding_fee": float(country.supplier_onboarding_fee) if country.supplier_onboarding_fee is not None else None,
-        "supplier_monthly_fee": float(country.supplier_monthly_fee) if country.supplier_monthly_fee is not None else None,
-        "supplier_rating_threshold": float(country.supplier_rating_threshold) if country.supplier_rating_threshold is not None else None,
+        "supplier_onboarding_fee": Decimal(str(country.supplier_onboarding_fee)) if country.supplier_onboarding_fee is not None else None,
+        "supplier_monthly_fee": Decimal(str(country.supplier_monthly_fee)) if country.supplier_monthly_fee is not None else None,
+        "supplier_rating_threshold": Decimal(str(country.supplier_rating_threshold)) if country.supplier_rating_threshold is not None else None,
         # ── Phase 1: Legal / consumer ──────────────────────────────────────
         "legal_entity_required": bool(country.legal_entity_required) if country.legal_entity_required is not None else False,
         "consumer_protection_days": country.consumer_protection_days,
@@ -258,7 +258,7 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
         # ── Phase 1: Logistics ─────────────────────────────────────────────
         "max_package_weight_kg": float(country.max_package_weight_kg) if country.max_package_weight_kg is not None else None,
         "max_package_dimensions_cm": country.max_package_dimensions_cm,
-        "signature_required_threshold": float(country.signature_required_threshold) if country.signature_required_threshold is not None else None,
+        "signature_required_threshold": Decimal(str(country.signature_required_threshold)) if country.signature_required_threshold is not None else None,
         # ── Phase 1: Locale ────────────────────────────────────────────────
         "measurement_system": country.measurement_system or "metric",
         "working_days": _from_json(country.working_days_json, default=[]),
@@ -559,10 +559,10 @@ def create_logistics_draft(code: str, payload: dict[str, Any], current_user: dic
     draft_payload = {
         "logistics_model": str(payload.get("logistics_model") or country.logistics_model).strip().lower(),
         "default_vehicle_type": str(payload.get("default_vehicle_type") or country.default_vehicle_type or "").strip() or None,
-        "base_rate": payload.get("base_rate", float(country.base_rate) if country.base_rate is not None else None),
-        "per_km_rate": payload.get("per_km_rate", float(country.per_km_rate) if country.per_km_rate is not None else None),
-        "minimum_charge": payload.get("minimum_charge", float(country.minimum_charge) if country.minimum_charge is not None else None),
-        "weight_surcharge_rate": payload.get("weight_surcharge_rate", float(country.weight_surcharge_rate) if country.weight_surcharge_rate is not None else None),
+        "base_rate": payload.get("base_rate", Decimal(str(country.base_rate)) if country.base_rate is not None else None),
+        "per_km_rate": payload.get("per_km_rate", Decimal(str(country.per_km_rate)) if country.per_km_rate is not None else None),
+        "minimum_charge": payload.get("minimum_charge", Decimal(str(country.minimum_charge)) if country.minimum_charge is not None else None),
+        "weight_surcharge_rate": payload.get("weight_surcharge_rate", Decimal(str(country.weight_surcharge_rate)) if country.weight_surcharge_rate is not None else None),
         "weight_surcharge_threshold_kg": payload.get("weight_surcharge_threshold_kg", float(country.weight_surcharge_threshold_kg) if country.weight_surcharge_threshold_kg is not None else None),
         "delivery_zones": delivery_zones if isinstance(delivery_zones, list) else [],
     }
@@ -764,7 +764,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
                 if zone.id is None:
                     db.add(zone)
     elif row.config_type == "commission":
-        from domains.governance.models.admin import SupplierCountryCommission
+        from domains.governance.ports import SupplierCountryCommission
         rates = payload.get("rates") or []
         if isinstance(rates, list):
             existing_rows = {
@@ -957,7 +957,7 @@ def list_country_commissions(code: str, current_user: dict, db: Session) -> list
             "id": row.id,
             "country_code": row.country_code,
             "category_slug": row.category_slug,
-            "commission_rate": float(row.commission_rate),
+            "commission_rate": Decimal(str(row.commission_rate)),
             "notes": row.notes,
             "is_active": bool(row.is_active),
             "updated_at": row.updated_at,
@@ -976,10 +976,10 @@ def preview_country_tax(code: str, payload: dict[str, Any], current_user: dict, 
         inclusive = bool(inclusive)
 
     result = calculate_tax_for_country(amount, code, db, category=category, inclusive=inclusive)
-    result["tax_rate"] = float(result["tax_rate"])
-    result["tax_amount"] = float(result["tax_amount"])
-    result["net_amount"] = float(result["net_amount"])
-    result["total_amount"] = float(result["total_amount"])
+    result["tax_rate"] = Decimal(str(result["tax_rate"]))
+    result["tax_amount"] = Decimal(str(result["tax_amount"]))
+    result["net_amount"] = Decimal(str(result["net_amount"]))
+    result["total_amount"] = Decimal(str(result["total_amount"]))
     return result
 
 
@@ -1020,10 +1020,10 @@ def list_country_delivery_zones(code: str, current_user: dict, db: Session) -> l
             "zone_code": row.zone_code,
             "zone_name": row.zone_name,
             "description": row.description,
-            "car_rate": float(row.car_rate),
-            "van_rate": float(row.van_rate),
-            "truck_rate": float(row.truck_rate),
-            "weight_surcharge_rate": float(row.weight_surcharge_rate) if row.weight_surcharge_rate is not None else None,
+            "car_rate": Decimal(str(row.car_rate)),
+            "van_rate": Decimal(str(row.van_rate)),
+            "truck_rate": Decimal(str(row.truck_rate)),
+            "weight_surcharge_rate": Decimal(str(row.weight_surcharge_rate)) if row.weight_surcharge_rate is not None else None,
             "weight_surcharge_threshold_kg": float(row.weight_surcharge_threshold_kg) if row.weight_surcharge_threshold_kg is not None else None,
             "cities": _from_json(row.cities_json, default=[]),
             "is_active": bool(row.is_active),
@@ -1151,8 +1151,8 @@ def create_payment_gateways_draft(code: str, payload: dict[str, Any], current_us
             "credential_ref": str(gw.get("credential_ref") or "").strip() or None,
             "supports_cod": bool(gw.get("supports_cod", False)),
             "supports_installments": bool(gw.get("supports_installments", False)),
-            "fee_percentage": float(gw.get("fee_percentage") or 0),
-            "fee_fixed": float(gw.get("fee_fixed") or 0),
+            "fee_percentage": Decimal(str(gw.get("fee_percentage") or 0)),
+            "fee_fixed": Decimal(str(gw.get("fee_fixed") or 0)),
         })
 
     draft_payload = {"gateways": normalized}
@@ -1188,8 +1188,8 @@ def create_logistics_providers_draft(code: str, payload: dict[str, Any], current
             "service_areas": prov.get("service_areas") if isinstance(prov.get("service_areas"), list) else ["all_regions"],
             "sla_standard_days": str(prov.get("sla_standard_days") or "3-5").strip(),
             "sla_express_days": str(prov.get("sla_express_days") or "1-2").strip(),
-            "base_rate": float(prov.get("base_rate") or 0),
-            "per_kg_rate": float(prov.get("per_kg_rate") or 0),
+            "base_rate": Decimal(str(prov.get("base_rate") or 0)),
+            "per_kg_rate": Decimal(str(prov.get("per_kg_rate") or 0)),
             "currency": str(prov.get("currency") or "").strip().upper() or None,
         })
 
@@ -1303,7 +1303,7 @@ def create_payout_settings_draft(code: str, payload: dict[str, Any], current_use
     existing = _from_json(country.payout_settings_json, default={})
 
     draft_payload: dict[str, Any] = {
-        "minimum_payout_amount": float(payload.get("minimum_payout_amount", existing.get("minimum_payout_amount", 10)) or 10),
+        "minimum_payout_amount": Decimal(str(payload.get("minimum_payout_amount", existing.get("minimum_payout_amount", 10)) or 10)),
         "payout_schedule": str(payload.get("payout_schedule", existing.get("payout_schedule", "weekly")) or "weekly").strip().lower(),
         "payout_day": str(payload.get("payout_day", existing.get("payout_day", "sunday")) or "sunday").strip().lower(),
         "batch_size": int(payload.get("batch_size", existing.get("batch_size", 50)) or 50),
@@ -1336,10 +1336,10 @@ def create_commission_tiers_draft(code: str, payload: dict[str, Any], current_us
         if not isinstance(tier, dict):
             continue
         normalized.append({
-            "min_order_value": float(tier.get("min_order_value") or 0),
-            "max_order_value": float(tier.get("max_order_value") or 0) if tier.get("max_order_value") is not None else None,
-            "commission_percentage": float(tier.get("commission_percentage") or 0),
-            "fixed_fee": float(tier.get("fixed_fee") or 0),
+            "min_order_value": Decimal(str(tier.get("min_order_value") or 0)),
+            "max_order_value": Decimal(str(tier.get("max_order_value") or 0)) if tier.get("max_order_value") is not None else None,
+            "commission_percentage": Decimal(str(tier.get("commission_percentage") or 0)),
+            "fixed_fee": Decimal(str(tier.get("fixed_fee") or 0)),
         })
 
     draft_payload = {"tiers": normalized}
@@ -1661,8 +1661,8 @@ def create_payout_rule_category(country_code: str, payload: dict, current_user: 
         "type": payload.get("type") or "category",
         "threshold_min": payload.get("threshold_min"),
         "threshold_max": payload.get("threshold_max"),
-        "payout_rate": float(payload.get("payout_rate", 0)),
-        "fixed_fee": float(payload.get("fixed_fee", 0)),
+        "payout_rate": Decimal(str(payload.get("payout_rate", 0))),
+        "fixed_fee": Decimal(str(payload.get("fixed_fee", 0))),
         "currency": payload.get("currency"),
     }
     existing = _from_json(country.payout_settings_json, default=[])

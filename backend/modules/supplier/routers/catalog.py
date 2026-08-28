@@ -25,16 +25,16 @@ router = APIRouter(prefix="/api/v1/supplier/catalog", tags=["supplier", "catalog
 def list_my_products_route(
     page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100),
     current_user=Depends(require_supplier), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.list")),
 ):
-    require_feature("catalog.list")
     return list_my_products(page, size, current_user, db)
 
 
 @router.get("/{product_id}")
 def get_supplier_product_route(
     product_id: int, current_user=Depends(require_supplier), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.read")),
 ):
-    require_feature("catalog.read")
     return get_supplier_product(db, product_id, current_user.id)
 
 
@@ -42,8 +42,8 @@ def get_supplier_product_route(
 def update_supplier_product_route(
     product_id: int, body: dict = Body(...),
     current_user=Depends(require_supplier), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return update_supplier_product_fields(product_id, body, current_user, db)
 
 
@@ -51,8 +51,8 @@ def update_supplier_product_route(
 def update_product_discount_route(
     product_id: int, body: dict = Body(...),
     current_user=Depends(require_supplier), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     return update_product_discount_supplier(product_id, body, current_user, db)
 
 
@@ -60,8 +60,8 @@ def update_product_discount_route(
 async def upload_product_image_route(
     product_id: int, file: UploadFile = File(...),
     current_user=Depends(require_supplier), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.write")),
 ):
-    require_feature("catalog.write")
     content = await file.read()
     return upload_supplier_product_image(db, current_user.id, product_id, content, file.filename, file.content_type)
 
@@ -69,6 +69,6 @@ async def upload_product_image_route(
 @router.delete("/{product_id}")
 def delete_product_route(
     product_id: int, current_user=Depends(require_supplier), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("catalog.delete")),
 ):
-    require_feature("catalog.delete")
     return delete_supplier_product(product_id, current_user, db)

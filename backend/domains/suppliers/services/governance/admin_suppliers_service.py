@@ -12,17 +12,13 @@ from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
-from domains.governance.services.settings.misc_service import (
-    archive_entity,
-    hard_delete_entity,
-    restore_entity,
-)
+from domains.governance.ports import archive_entity, hard_delete_entity, restore_entity
 
 from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 
 from domains.country.utils.country_rls import enforce_country_access

@@ -29,6 +29,7 @@ class CountryBasics(Base):
     is_default = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    country_code = Column(String(2), ForeignKey('country.country_configs.code'), nullable=True, index=True)
     created_by = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True)
     official_name = Column(String(200), nullable=True)

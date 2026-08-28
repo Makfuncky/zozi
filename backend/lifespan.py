@@ -31,12 +31,14 @@ def _ensure_tables_exist() -> bool:
 
     Returns ``True`` if tables were freshly created (empty DB beforehand).
     Returns ``False`` if tables already existed or creation failed.
+
+    Raises:
+        RuntimeError: If table creation fails on an empty database.
     """
     try:
         from infrastructure.database import models  # noqa: F401 — register ORM tables in Base.metadata
     except Exception as exc:
-        logger.warning("Could not import ORM models: %s", exc)
-        return False
+        raise RuntimeError(f"Could not import ORM models: {exc}") from exc
     try:
         from sqlalchemy import inspect
 
@@ -50,12 +52,15 @@ def _ensure_tables_exist() -> bool:
         logger.info("DB tables freshly created")
         return True
     except Exception as exc:
-        logger.warning("Could not auto-create tables: %s", exc)
-        return False
+        raise RuntimeError(f"Could not auto-create tables: {exc}") from exc
 
 
 def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
-    """Attempt an Alembic migration upgrade on startup."""
+    """Attempt an Alembic migration upgrade on startup.
+
+    Raises:
+        RuntimeError: If migration fails in production.
+    """
     from infrastructure.utils.config import settings
 
     auto_migration_applied = False
@@ -70,8 +75,10 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
             auto_migration_applied = True
             migration_reason = "alembic_upgrade_head"
         except Exception as exc:
-            logger.warning("Alembic auto-upgrade failed at startup: %s", exc)
             migration_reason = f"alembic_upgrade_failed: {exc}"
+            logger.error("Alembic auto-upgrade failed at startup: %s", exc)
+            if str(getattr(settings, "app_env", "")).lower() == "production":
+                raise RuntimeError(f"Alembic migration failed: {exc}") from exc
 
     logger.info(
         "Startup health: auto_migration_applied=%s migration_reason=%s",
@@ -82,6 +89,11 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 
 
 def _startup_load_role_permissions() -> None:
+    """Load role-permission settings into the database.
+
+    Raises:
+        RuntimeError: If permission loading fails (critical for auth).
+    """
     try:
         from domains.accounts.services.permissions.permission_service import load_role_permission_settings
         from infrastructure.database.database import SessionLocal
@@ -91,8 +103,9 @@ def _startup_load_role_permissions() -> None:
             load_role_permission_settings(db)
         finally:
             db.close()
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to load role permission settings at startup")
+        raise RuntimeError(f"Failed to load role permissions: {exc}") from exc
 
 
 def _startup_register_services() -> None:
@@ -103,15 +116,21 @@ def _startup_register_services() -> None:
     their decorators/handlers register. It was previously never imported, so
     those registrations silently never ran. Importing it here (resiliently)
     restores that wiring without ``main`` importing ``services`` directly.
+
+    Non-critical: failure is logged but does not prevent startup.
     """
     try:
         import services.unknown._registry  # noqa: F401 — import side-effects only
         logger.info("Service side-effect registry imported")
     except Exception:
-        logger.exception("Failed to import services.unknown._registry at startup")
+        logger.exception("Failed to import services.unknown._registry at startup (non-critical)")
 
 
 def _startup_register_event_listeners() -> None:
+    """Register event listeners for domain events.
+
+    Non-critical: failure is logged but does not prevent startup.
+    """
     try:
         from domains.finance.services.payments.payments import _event_publisher
         from infrastructure.messaging.events import PaymentConfirmedEvent
@@ -132,10 +151,15 @@ def _startup_register_event_listeners() -> None:
         _event_publisher.register_listener(PaymentConfirmedEvent, _handle_fulfillment)
         logger.info("FulfillmentService registered as PaymentConfirmedEvent listener")
     except Exception:
-        logger.exception("Failed to register event listeners at startup")
+        logger.exception("Failed to register event listeners at startup (non-critical)")
 
 
 def _startup_seed_treasury() -> None:
+    """Seed the treasury chart of accounts if not present.
+
+    Raises:
+        RuntimeError: If treasury seeding fails (critical for finance).
+    """
     try:
         from infrastructure.database.database import SessionLocal
         from infrastructure.database.treasury_seeder import seed_treasury_system
@@ -146,12 +170,16 @@ def _startup_seed_treasury() -> None:
             logger.info("Treasury chart of accounts ensured at startup")
         finally:
             db.close()
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to seed treasury chart of accounts at startup")
+        raise RuntimeError(f"Failed to seed treasury: {exc}") from exc
 
 
 def _seed_demo_data() -> None:
-    """Seed demo catalog data from ``db.seed`` if enabled."""
+    """Seed demo catalog data from ``db.seed`` if enabled.
+
+    Non-critical: failure is logged but does not prevent startup.
+    """
     from infrastructure.utils.config import settings
 
     app_env = str(getattr(settings, "app_env", "development")).lower()
@@ -166,11 +194,14 @@ def _seed_demo_data() -> None:
         seed_data(SessionLocal)
         logger.info("Demo data seeded successfully")
     except Exception:
-        logger.exception("Failed to seed demo data at startup")
+        logger.exception("Failed to seed demo data at startup (non-critical)")
 
 
 def _ensure_default_accounts() -> None:
-    """Idempotently ensure demo accounts exist from environment variables."""
+    """Idempotently ensure demo accounts exist from environment variables.
+
+    Non-critical: failure is logged but does not prevent startup.
+    """
     raw = os.getenv("DEFAULT_ACCOUNTS_JSON")
     if not raw:
         logger.debug("Skipping default account bootstrap — DEFAULT_ACCOUNTS_JSON not set")
@@ -203,23 +234,20 @@ def _ensure_default_accounts() -> None:
         finally:
             db.close()
     except Exception:
-        logger.exception("Failed to ensure default accounts at startup")
+        logger.exception("Failed to ensure default accounts at startup (non-critical)")
 
 
 def _startup_background_jobs() -> list:
-    """Background jobs are now handled by Celery workers and beat scheduler.
-    
-    This function is kept for compatibility but returns empty list.
-    Celery workers should be started separately via:
-        celery -A jobs.celery_app worker -Q ml,periodic,payouts,emails -l info
-        celery -A jobs.celery_app beat -l info
+    """Background jobs are handled by APScheduler.
+
+    APScheduler is configured in the jobs module and runs periodic tasks
+    such as payout sweeps, email campaigns, and cache warming.
+    The scheduler is started automatically when the application boots.
     """
     from infrastructure.utils.config import settings
-    
-    logger.info("Background jobs delegated to Celery (workers + beat)")
-    logger.info("Start Celery worker: celery -A jobs.celery_app worker -Q ml,periodic,payouts,emails -l info")
-    logger.info("Start Celery beat: celery -A jobs.celery_app beat -l info")
-    
+
+    logger.info("Background jobs delegated to APScheduler")
+
     return []
 
 
@@ -260,6 +288,20 @@ def build_lifespan():
                 stop()
             except Exception:
                 logger.exception("Failed to stop background service: %s", name)
+
+        try:
+            from infrastructure.database.database import dispose_engine
+            dispose_engine()
+        except Exception:
+            logger.exception("Failed to dispose database engine")
+
+        try:
+            from infrastructure.database.redis_client import redis_client
+            client = redis_client()
+            if hasattr(client, "close") and callable(client.close):
+                client.close()
+        except Exception:
+            logger.exception("Failed to close Redis client")
 
     return lifespan
 

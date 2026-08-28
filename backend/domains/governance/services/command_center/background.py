@@ -25,7 +25,7 @@ from infrastructure.database.database import get_service_session
 from domains.governance.models.core import SupportTicket
 from domains.governance.models.core import NewsSource
 from domains.governance.models.core import SystemHealthEvent
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.country.models.countries import CountryConfig
 from domains.security.models.fraud import FraudAlert
 from domains.hr.models.employee_models import Employee
@@ -703,19 +703,14 @@ async def _run_finance_cycle_job() -> None:
         return
 
     try:
-
-        from domains.finance.services.treasury.cash_management_service import run_scheduled_finance_cycle
-
-
+        from domains.finance.ports import run_scheduled_finance_cycle, run_scheduled_reconciliation_cycle
 
         with get_service_session() as db:
-
             run_scheduled_finance_cycle(db)
 
         logger.info("Scheduled finance cycle completed")
 
     except Exception:
-
         logger.exception("Scheduled finance cycle failed")
 
 
@@ -732,7 +727,6 @@ async def _run_reconciliation_cycle_job() -> None:
 
     try:
 
-        from domains.finance.services.treasury.cash_management_service import run_scheduled_reconciliation_cycle
 
 
 

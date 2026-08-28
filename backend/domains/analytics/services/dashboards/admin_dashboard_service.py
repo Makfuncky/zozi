@@ -8,6 +8,7 @@ delegator that calls these functions, satisfying the
 """
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import func, select
@@ -39,7 +40,7 @@ def admin_dashboard_fallback(db: Session) -> dict:
     total_users = scalar_with_filters(db, func.count(UserModel.id)) or 0
     total_orders = scalar_with_filters(db, func.count(UserModel.id)) or 0
     return {
-        "total_revenue": float(total_revenue),
+        "total_revenue": Decimal(str(total_revenue)),
         "total_users": total_users,
         "total_orders": total_orders,
         "active_sessions": 0,
@@ -149,7 +150,7 @@ def admin_treasury_fallback(db: Session) -> dict:
     )
     account_count = count(db, AccountModel)
     return {
-        "total_cash": float(total_cash),
+        "total_cash": Decimal(str(total_cash)),
         "total_accounts": account_count,
         "metrics_available_at": "/admin/treasury/metrics",
     }
@@ -168,7 +169,7 @@ def admin_treasury_metrics_fallback(db: Session) -> dict:
     )
     return {
         "total_accounts": len(accounts),
-        "total_cash": float(total_cash),
+        "total_cash": Decimal(str(total_cash)),
         "accounts": [
             {
                 "id": a.id,

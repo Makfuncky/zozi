@@ -15,7 +15,7 @@ from typing import Any, Iterable, Mapping
 
 from sqlalchemy.orm import Session
 
-from domains.country.models.countries import CountryConfig
+from domains.country.ports import get_country_config
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -48,11 +48,7 @@ def get_restrictions(db: Session, country_code: str) -> dict[str, Any]:
     malformed. The malformed case is logged rather than silently swallowed
     (audit HL302).
     """
-    config = (
-        db.query(CountryConfig)
-        .filter(CountryConfig.code == country_code.upper())
-        .first()
-    )
+    config = get_country_config(db, country_code)
     if config is None:
         return EMPTY_RESTRICTIONS()
 

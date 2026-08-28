@@ -24,8 +24,6 @@ from domains.finance.services.payments.payment_engine import (  # noqa: F401
     Any,
     Decimal,
     Order,
-    ProcessedWebhookEvent,
-    Notification,
     decrypt_secret,
     datetime,
     timezone,
@@ -283,18 +281,12 @@ async def capture_paypal_order(body: PayPalCaptureRequest, current_user: dict, d
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
-
-
+                from domains.comms.ports import enqueue_payment_confirmed_email, enqueue_refund_processed_email
 
                 enqueue_payment_confirmed_email(
-
                     cast(int, order.id),
-
                     provider="paypal",
-
                     message="Your PayPal payment was successful and we are preparing your order.",
-
                 )
 
             except Exception:
@@ -327,22 +319,17 @@ async def capture_paypal_order(body: PayPalCaptureRequest, current_user: dict, d
 
                 setattr(order, "status", "failed")
 
-                db.add(
+                from domains.comms.ports import create_notification, Notification
 
+                create_notification(
+                    db,
                     Notification(
-
                         user_id=order.user_id,
-
                         type="order_update",
-
                         title="Payment Failed",
-
                         message=f"Order #{order.id} PayPal payment failed.",
-
                         link=f"/orders/{order.id}",
-
-                    )
-
+                    ),
                 )
 
                 db.commit()
@@ -541,7 +528,6 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
 
                 try:
 
-                    from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
 
 
 
@@ -565,22 +551,17 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
 
                 setattr(order, "status", "failed")
 
-                db.add(
+                from domains.comms.ports import create_notification, Notification
 
+                create_notification(
+                    db,
                     Notification(
-
                         user_id=order.user_id,
-
                         type="order_update",
-
                         title="Payment Failed",
-
                         message=f"Order #{order.id} PayPal payment failed.",
-
                         link=f"/orders/{order.id}",
-
-                    )
-
+                    ),
                 )
 
                 db.commit()
@@ -635,29 +616,23 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
 
                 logger.exception("Failed to log PayPal refund bank transaction for order %s", order.id)
 
-            db.add(
+            from domains.comms.ports import create_notification, Notification
 
+            create_notification(
+                db,
                 Notification(
-
                     user_id=order.user_id,
-
                     type="order_update",
-
                     title="Refund Processed",
-
                     message=f"Your PayPal refund for Order #{order.id} has been processed.",
-
                     link=f"/orders/{order.id}",
-
-                )
-
+                ),
             )
 
             db.commit()
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_refund_processed_email
 
 
 
@@ -677,7 +652,9 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
 
     if event_id:
 
-        db.add(ProcessedWebhookEvent(event_id=event_id, processor="paypal"))
+        from domains.governance.ports import create_processed_webhook_event
+
+        create_processed_webhook_event(db, event_id=event_id, processor="paypal")
 
         db.commit()
 

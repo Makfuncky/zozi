@@ -33,7 +33,7 @@ from domains.finance.services.payments.payments import build_order_payment_snaps
 from domains.finance.services.payments.payments import confirm_cash_on_delivery_order
 from domains.finance.services.payments.payments import is_checkout_payment_method_allowed
 from domains.finance.services.payments.payments import normalize_checkout_payment_method
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierProfile

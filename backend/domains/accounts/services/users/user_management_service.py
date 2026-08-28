@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from domains.accounts.models.core import Address, AuditLog, CartItem, SupportTicket
-from domains.governance.models.user import (
+from domains.governance.ports import (
     EmailVerificationToken,
     PasswordResetToken,
     ReferralPointEvent,
@@ -91,7 +91,7 @@ from infrastructure.utils.admin_shared import (
     ALLOWED_BANK_ACCOUNT_KINDS as _ALLOWED_BANK_ACCOUNT_KINDS,
     VALID_USER_ROLES,
 )
-from domains.audit.services.logs.audit_service import AuditAction, audit_log
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.auth import get_password_hash, require_permission
 from infrastructure.utils.performance_cache import invalidate_user_cache
 from infrastructure.utils.constants import (
@@ -117,9 +117,14 @@ def _sanitize_staff_permissions(permissions):
     return normalized
 
 
-def _default_permissions_for_role(role):
+def _get_role_features() -> dict[str, list[str]]:
+    """Lazily resolve the role→features map (rbac is above domains in the stack)."""
     from rbac.dependencies import _ROLE_FEATURES
-    features = _ROLE_FEATURES.get(role or "", [])
+    return _ROLE_FEATURES
+
+
+def _default_permissions_for_role(role):
+    features = _get_role_features().get(role or "", [])
     return sorted(features) if features else []
 
 

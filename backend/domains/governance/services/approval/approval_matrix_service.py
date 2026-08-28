@@ -15,9 +15,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 
 from domains.hr.models.employee_models import Employee
-from domains.hr.services.hierarchy.hierarchy_service import get_authority_level
-from domains.hr.services.hierarchy.hierarchy_service import get_user_chain
-from domains.hr.services.hierarchy.hierarchy_service import get_all_subordinates
+from domains.hr.ports import get_all_subordinates, get_authority_level, get_user_chain
 
 
 def require_approval(

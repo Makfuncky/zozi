@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 from infrastructure.database.database import SessionLocal
 from domains.governance.models.admin import ProcessedWebhookEvent
-from domains.orders.models.orders import Order
+from domains.orders.models.order_entities import Order
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def detect_ghost_orders(lookback_hours: int = 24) -> list[dict]:
                 findings.append({
                     "order_id": getattr(order, "id", None),
                     "order_uuid": getattr(order, "uuid", None),
-                    "amount": float(getattr(order, "total_amount", 0) or 0),
+                    "amount": Decimal(str(getattr(order, "total_amount", 0) or 0)),
                     "paid_at": str(getattr(order, "paid_at", "")),
                     "payment_intent_id": payment_intent_id,
                     "user_id": getattr(order, "user_id", None),

@@ -117,3 +117,28 @@ __all__ = [
     "list_coupons",
     "validate_coupon",
 ]
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "update_coupon": ("domains.promotions.services.coupons.coupon_service", "update_coupon"),
+    "create_promotion_tier": ("domains.promotions.services.engine.promotion_service", "create_promotion_tier"),
+    "delete_promotion_tier": ("domains.promotions.services.engine.promotion_service", "delete_promotion_tier"),
+    "get_promotion_config": ("domains.promotions.services.engine.promotion_service", "get_promotion_config"),
+    "list_promotion_tiers": ("domains.promotions.services.engine.promotion_service", "list_promotion_tiers"),
+    "preview_order_tier_discount": ("domains.promotions.services.engine.promotion_service", "preview_order_tier_discount"),
+    "update_promotion_config": ("domains.promotions.services.engine.promotion_service", "update_promotion_config"),
+    "update_promotion_tier": ("domains.promotions.services.engine.promotion_service", "update_promotion_tier"),
+}
+import importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

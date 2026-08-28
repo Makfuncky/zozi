@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
@@ -17,8 +17,7 @@ from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
-from domains.governance.services.settings.misc_service import archive_entity, restore_entity, hard_delete_entity
-from domains.governance.services.admin.bulk_ops_service import bulk_archive_entities, bulk_restore_entities
+from domains.governance.ports import archive_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, restore_entity
 
 from domains.logistics.ports import approve_partner
 from domains.logistics.ports import list_partners

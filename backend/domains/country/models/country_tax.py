@@ -9,7 +9,7 @@ from . import Base
 __all__ = ['CountryTax']
 
 class CountryTax(Base):
-    __tablename__ = 'country_tax'
+    __tablename__ = 'country_taxes'
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)
     __table_args__ = (Index('ix_country_tax_code', 'country_code', unique=True), Index('ix_country_tax_active', 'is_active', 'is_deleted'), Index('ix_country_tax_country_created', 'country_code', 'created_at'), {'schema': 'country'})

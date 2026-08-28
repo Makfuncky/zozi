@@ -4,6 +4,7 @@ Search Controller — natural-language query parsing and smart product search lo
 import hashlib
 import json
 import re
+from collections import OrderedDict
 from datetime import datetime, timezone
 from difflib import SequenceMatcher, get_close_matches
 from typing import Any, Dict, Optional, List, cast
@@ -863,12 +864,17 @@ from domains.catalog.models.products import ProductVideo, ProductFilterMetadata,
 
 
 class AdvancedFilterService:
-    _cache: Dict[str, Dict[str, Any]] = {}
     _cache_ttl = 300
+    _cache_max_size = 500
 
     def __init__(self, db: Session):
         self.db = db
         self._cache_version = 0
+        self._cache: Dict[str, Dict[str, Any]] = OrderedDict()
+
+    def _ensure_cache_bound(self):
+        while len(self._cache) > self._cache_max_size:
+            self._cache.popitem(last=False)
 
     def _get_cache_key(self, category_id: Optional[int], search_query: Optional[str], filters: Optional[Dict] = None) -> str:
         key_data = json.dumps({
@@ -901,6 +907,7 @@ class AdvancedFilterService:
         discount_count = self._get_discount_count(base_query)
         result = {"price_range": price_stats, "brands": brands, "ratings": ratings, "attributes": attributes, "video_count": video_count, "discount": discount_count}
         self._cache[cache_key] = result
+        self._ensure_cache_bound()
         return result
 
     def get_active_filters_summary(self, category_id: Optional[int] = None, search_query: Optional[str] = None) -> Dict[str, Any]:
@@ -944,7 +951,7 @@ class AdvancedFilterService:
         if filters.get("trending") is True: q = q.filter(Product.sales_count >= 1).order_by(Product.sales_count.desc())
         return q
 
-    def get_filtered_products(self, filters: Dict[str, Any], limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    def get_filtered_products(self, filters: Dict[str, Any], limit: int = 20, offset: int = 0, cursor: Optional[int] = None) -> Dict[str, Any]:
         cache_key = self._get_cache_key(None, None, filters)
         if cache_key in self._cache:
             cached = self._cache[cache_key]
@@ -952,9 +959,12 @@ class AdvancedFilterService:
         query = self.db.query(Product).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
         query = self.apply_filters(query, filters)
         total = query.count()
-        products = query.offset(offset).limit(limit).all()
+        if cursor:
+            query = query.filter(Product.id < cursor)
+        products = query.order_by(Product.id.desc()).limit(limit).all()
         result = {"products": [self._serialize_product(p) for p in products], "total": total, "limit": limit, "offset": offset}
         self._cache[cache_key] = result
+        self._ensure_cache_bound()
         return result
 
     def _serialize_product(self, product: Product) -> Dict[str, Any]:
@@ -1062,7 +1072,7 @@ class AdvancedSearchEngine:
             db_query = db_query.filter(or_(Product.name.ilike(like_pattern), Product.description.ilike(like_pattern), Product.category.ilike(like_pattern), Product.brand.ilike(like_pattern), Product.tags.ilike(like_pattern)))
         return db_query
 
-    def search(self, query: str, filters: Optional[Dict[str, Any]] = None, limit: int = 20, offset: int = 0, sort_by: str = "relevance") -> Dict[str, Any]:
+    def search(self, query: str, filters: Optional[Dict[str, Any]] = None, limit: int = 20, offset: int = 0, sort_by: str = "relevance", cursor: Optional[int] = None) -> Dict[str, Any]:
         limit = min(limit, _MAX_PAGE_SIZE); offset = max(offset, 0)
         parsed = self.parse_query(query); all_filters = {**(filters or {}), **parsed}
         db_query = self.db.query(Product).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
@@ -1083,7 +1093,9 @@ class AdvancedSearchEngine:
         elif sort_by == "rating": db_query = db_query.order_by(Product.rating.desc(), Product.sales_count.desc())
         elif sort_by == "newest": db_query = db_query.order_by(Product.created_at.desc())
         else: db_query = db_query.order_by(Product.sales_count.desc(), Product.rating.desc())
-        products = db_query.offset(offset).limit(limit).all()
+        if cursor:
+            db_query = db_query.filter(Product.id < cursor)
+        products = db_query.order_by(Product.id.desc()).limit(limit).all()
         return {"products": [self._serialize_product(p) for p in products], "total": total, "limit": limit, "offset": offset, "parsed_query": parsed}
 
     def _serialize_product(self, product: Product) -> Dict[str, Any]:

@@ -6,6 +6,6 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from domains.audit.services.compliance_engine import get_compliance_engine  # noqa: F401
+from domains.audit.ports import get_compliance_engine
 
 __all__ = ["get_compliance_engine"]

@@ -9,6 +9,7 @@ Usage:
     email_invoice(inv_data, to="customer@example.com")
 """
 from __future__ import annotations
+from decimal import Decimal
 import html as _html
 import io
 import logging
@@ -30,16 +31,16 @@ def generate_invoice_html(inv: dict) -> str:
         <tr>
             <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">{_e(item.get('description',''))}</td>
             <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:center;">{_e(item.get('quantity',''))}</td>
-            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;">{_e(inv.get('currency','AED'))} {float(item.get('unit_price',0)):.2f}</td>
-            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;">{_e(inv.get('currency','AED'))} {float(item.get('line_total',0)):.2f}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;">{_e(inv.get('currency','AED'))} {Decimal(str(item.get('unit_price',0))):.2f}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;">{_e(inv.get('currency','AED'))} {Decimal(str(item.get('line_total',0))):.2f}</td>
         </tr>"""
 
     currency = _e(inv.get("currency", "AED"))
-    subtotal = float(inv.get("subtotal", 0))
-    tax = float(inv.get("tax_amount", 0))
-    shipping = float(inv.get("shipping_amount", 0))
-    discount = float(inv.get("discount_amount", 0))
-    total = float(inv.get("total_amount", 0))
+    subtotal = Decimal(str(inv.get("subtotal", 0)))
+    tax = Decimal(str(inv.get("tax_amount", 0)))
+    shipping = Decimal(str(inv.get("shipping_amount", 0)))
+    discount = Decimal(str(inv.get("discount_amount", 0)))
+    total = Decimal(str(inv.get("total_amount", 0)))
     issued_at = _e(inv.get("issued_at", "")[:10] if inv.get("issued_at") else "—")
 
     return f"""<!DOCTYPE html>
@@ -184,19 +185,19 @@ def generate_invoice_pdf_bytes(inv: dict) -> bytes:
     pdf.setFont("Helvetica", 10)
     pdf.drawString(40, y, str(item.get("description", ""))[:42])
     pdf.drawString(320, y, str(item.get("quantity", "")))
-    pdf.drawRightString(450, y, f"{currency} {float(item.get('unit_price', 0)):.2f}")
-    pdf.drawRightString(540, y, f"{currency} {float(item.get('line_total', 0)):.2f}")
+    pdf.drawRightString(450, y, f"{currency} {Decimal(str(item.get('unit_price', 0))):.2f}")
+    pdf.drawRightString(540, y, f"{currency} {Decimal(str(item.get('line_total', 0))):.2f}")
     y -= 16
 
   y -= 8
   pdf.line(300, y, 550, y)
   y -= 18
   for label, value in (
-    ("Subtotal", float(inv.get("subtotal", 0))),
-    ("Discount", -float(inv.get("discount_amount", 0))),
-    ("Tax", float(inv.get("tax_amount", 0))),
-    ("Shipping", float(inv.get("shipping_amount", 0))),
-    ("Total", float(inv.get("total_amount", 0))),
+    ("Subtotal", Decimal(str(inv.get("subtotal", 0)))),
+    ("Discount", -Decimal(str(inv.get("discount_amount", 0)))),
+    ("Tax", Decimal(str(inv.get("tax_amount", 0)))),
+    ("Shipping", Decimal(str(inv.get("shipping_amount", 0)))),
+    ("Total", Decimal(str(inv.get("total_amount", 0)))),
   ):
     if label != "Total" and value == 0:
       continue

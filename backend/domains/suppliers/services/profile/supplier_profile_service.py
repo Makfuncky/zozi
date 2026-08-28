@@ -9,8 +9,8 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import SupplierProfileCreate, SupplierProfileOut, SupplierProfileUpdate
 
-from domains.governance.models.user import User
-from domains.comms.models.suppliers import SupplierProfile
+from domains.governance.ports import User
+from domains.comms.ports import SupplierProfile
 
 from infrastructure.utils.dependencies import get_current_user, require_supplier
 
@@ -35,11 +35,5 @@ def update_supplier_profile(payload: SupplierProfileUpdate, current_user: User, 
     for k, v in payload.model_dump(exclude_unset=True).items(): setattr(profile, k, v)
     db.commit(); db.refresh(profile)
     return profile
-
-
-def get_supplier_profile(db: Session, user_id: int):
-    """Sanctioned cross-domain read: fetch supplier profile by user id."""
-    from domains.catalog.services.products.products_service import get_supplier_profile as _svc
-    return _svc(db, user_id)
 
 

@@ -10,11 +10,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.governance.models.user import User
-from domains.governance.models.user import UserLoginHistory
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserLoginHistory
 from infrastructure.database.schemas import RegisterRequest, TokenResponse, UserOut
-from infrastructure.utils.auth import blacklist_token, create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from infrastructure.utils.auth import blacklist_token, create_access_token, create_refresh_token, decode_token, get_password_hash, is_refresh_token_used, mark_refresh_token_used, revoke_refresh_family, verify_password
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.config import settings
 from infrastructure.utils.dependencies import get_current_user
 from infrastructure.utils.ip_utils import get_request_ip
@@ -129,10 +129,18 @@ def refresh(payload: RefreshRequest | None=None, request: Request=None, db: Sess
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid refresh token')
     if decoded.get('type') != 'refresh':
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token type')
+    jti = decoded.get('jti')
+    family_id = decoded.get('family_id')
+    if jti and family_id and is_refresh_token_used(family_id, jti):
+        revoke_refresh_family(family_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token reuse detected - session revoked')
     user = db.query(User).filter(User.id == int(decoded.get('sub'))).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
-    family_id = decoded.get('family_id') or uuid.uuid4().hex
+    if not family_id:
+        family_id = uuid.uuid4().hex
+    if jti:
+        mark_refresh_token_used(family_id, jti)
     access = create_access_token({'sub': str(user.id), 'role': user.role})
     refresh = create_refresh_token({'sub': str(user.id), 'role': user.role}, family_id=family_id)
     resp = JSONResponse(jsonable_encoder(TokenResponse(access_token=access, refresh_token=refresh, token_type='bearer', user=UserOut.model_validate(user))))

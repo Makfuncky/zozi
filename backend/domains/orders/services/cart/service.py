@@ -29,8 +29,8 @@ from infrastructure.database.schemas import (
 )
 from domains.governance.models.core import CartItem
 from domains.catalog.models.products import Product
-from domains.catalog.services.products.products_service import resolve_product_variant
-from domains.logistics.services.partners.service import quote_shipping_for_destination
+from domains.catalog.ports import resolve_product_variant
+from domains.logistics.ports import quote_shipping_for_destination
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 from infrastructure.utils.config import settings
 from infrastructure.utils.performance_cache import cache_cart, set_cart, invalidate_cart

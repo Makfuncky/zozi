@@ -182,9 +182,9 @@ def bulk_restore_users(db: Session, country_code: str, payload) -> Dict[str, Any
 
 
 def hard_delete_user(db: Session, country_code: str, user_id: int, acting_user: dict, delete_orders: bool = False) -> Dict[str, Any]:
-    user = get_user_in_country(db, country_code, user_id)
-    db.delete(user)
-    db.commit()
+    get_user_in_country(db, country_code, user_id)
+    from domains.governance.ports import hard_delete_entity
+    hard_delete_entity("user", user_id, acting_user, db)
     return {"message": "User hard-deleted", "id": user_id}
 
 

@@ -16,10 +16,8 @@ from redis.exceptions import ConnectionError, ResponseError
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import User
-from domains.governance.models.user import UserLoginHistory
-from domains.governance.models.user import UserDevice
-from domains.governance.models.admin import SupplierBankAccount
+from domains.governance.ports import User, UserLoginHistory, UserDevice
+from domains.governance.ports import supplier_bank_account_query, supplier_bank_account_model
 from domains.security.models.fraud import FraudEvent
 from domains.security.models.fraud import FraudBlacklist
 from domains.security.models.fraud import FraudRule
@@ -39,9 +37,9 @@ logger = logging.getLogger(__name__)
 
 # Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
 _LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
-    "Shipment": ("domains.logistics.models.logistics", "Shipment"),
-    "Order": ("domains.orders.models.orders", "Order"),
-    "ReturnRequest": ("domains.orders.models.orders", "ReturnRequest"),
+    "Shipment": ("domains.logistics.ports", "shipment_model"),
+    "Order": ("domains.orders.ports", "order_model"),
+    "ReturnRequest": ("domains.orders.ports", "return_request_model"),
 }
 _IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
 
@@ -388,9 +386,9 @@ class GraphAnalysisService:
     
     def check_duplicate_bank_accounts(self, bank_account_hash: str, exclude_user_id: Optional[int] = None) -> dict[str, Any]:
         """Check if bank account is used by multiple suppliers."""
-        q = self.db.query(SupplierBankAccount).filter(
-            SupplierBankAccount.iban == bank_account_hash
-        )
+        SupplierBankAccount = supplier_bank_account_model()
+        q = supplier_bank_account_query(self.db)
+        q = q.filter(SupplierBankAccount.iban == bank_account_hash)
         if exclude_user_id:
             q = q.filter(SupplierBankAccount.supplier_id != exclude_user_id)
         existing = q.first()
@@ -424,7 +422,6 @@ class GraphAnalysisService:
     
     def check_session_anomaly(self, user_id: int, ip_address: str) -> dict[str, Any]:
         """Check for session anomalies like impossible travel."""
-        from domains.governance.models.user import UserLoginHistory
         last_login = self.db.query(UserLoginHistory).filter(
             UserLoginHistory.user_id == user_id
         ).order_by(UserLoginHistory.timestamp.desc()).first()
@@ -617,7 +614,6 @@ class FraudScoringEngine:
     
     def check_impossible_travel(self, user_id: int, ip_address: str) -> dict[str, Any]:
         """Check if user has logged in from geographically impossible locations."""
-        from domains.governance.models.user import UserLoginHistory
         last_login = self.db.query(UserLoginHistory).filter(
             UserLoginHistory.user_id == user_id
         ).order_by(UserLoginHistory.timestamp.desc()).first()

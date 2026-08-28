@@ -21,7 +21,10 @@ class AuditLog(Base):
     user_role = Column(String(50), nullable=True)
     details = Column(JSON, nullable=True)
     ip_address = Column(String(255), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
 
 class CommandCenterView(Base):
@@ -32,5 +35,7 @@ class CommandCenterView(Base):
     view_name = Column(String(100), nullable=False)
     config = Column(JSON, nullable=True)
     is_default = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)

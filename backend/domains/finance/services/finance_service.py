@@ -497,7 +497,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 from infrastructure.database.schemas import CommissionCategoryRateCreate, CommissionCategoryRateOut, CommissionBadgeTierCreate, CommissionBadgeTierOut
 

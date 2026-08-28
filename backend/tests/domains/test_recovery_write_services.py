@@ -14,37 +14,17 @@ from decimal import Decimal
 
 import pytest
 
-from infrastructure.database.models import (
-    Banner,
-    CountryConfig,
-    DynamicQRSession,
-    Employee,
-    EmployeeAttendance,
-    EmployeeBiometric,
-    EmployeeDocument,
-    EmployeeRelation,
-    EmployeeRiskScore,
-    EmployeeWorkLog,
-    GeoFenceLog,
-    Notification,
-    Order,
-    PhysicalIDCard,
-    PromotionEngineConfig,
-    ReturnRequest,
-    RevokedToken,
-    RolePermissionSetting,
-    Shipment,
-    ShipmentEvent,
-    ShippingCarrier,
-    ShippingZone,
-    SupplierBadge,
-    SupplierBadgeBillingHistory,
-    SupplierBadgeCatalog,
-    SupplierDispute,
-    SupplierNotificationPreference,
-    SupplierProfile,
-    User,
-)
+from domains.accounts.models.user import RevokedToken, User
+from domains.comms.models.communication import Notification
+from domains.country.models.countries import CountryConfig
+from domains.governance.models.admin import RolePermissionSetting
+from domains.hr.models.employee_models import DynamicQRSession, Employee, EmployeeAttendance, EmployeeBiometric, EmployeeDocument, EmployeeRelation, EmployeeRiskScore, EmployeeWorkLog, GeoFenceLog, PhysicalIDCard
+from domains.logistics.models.logistics_entities import Shipment, ShipmentEvent, ShippingCarrier
+from domains.logistics.models.logistics_schema_models import ShippingZone
+from domains.orders.models.order_entities import Order, ReturnRequest
+from domains.promotions.models.promotion_config import PromotionEngineConfig
+from domains.promotions.models.promotions import Banner
+from domains.suppliers.models.suppliers import SupplierBadge, SupplierBadgeBillingHistory, SupplierBadgeCatalog, SupplierDispute, SupplierNotificationPreference, SupplierProfile
 
 import domains.logistics.services.logistics_write_service as logistics
 import domains.hr.services.employee_write_service as emp

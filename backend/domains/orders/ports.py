@@ -1510,7 +1510,7 @@ def aggregate_supplier_revenue_window(
 
 def sum_supplier_total_revenue(db: Session) -> float:
     """Total revenue across all supplier OrderItems (OrderItem->Product->User)."""
-    from domains.governance.models.user import User
+    from domains.accounts.models.user import User
     from domains.catalog.models.products import Product
 
     return (
@@ -1521,3 +1521,37 @@ def sum_supplier_total_revenue(db: Session) -> float:
     .scalar()
     or 0
 )
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "CartShippingQuoteRequest": ("domains.orders.services.cart_legacy_service", "CartShippingQuoteRequest"),
+    "get_cart_shipping_quote": ("domains.orders.services.cart_legacy_service", "get_cart_shipping_quote"),
+    "create_campaign": ("domains.orders.services.core.admin_extra", "create_campaign"),
+    "delete_campaign": ("domains.orders.services.core.admin_extra", "delete_campaign"),
+    "list_all_campaigns": ("domains.orders.services.core.admin_extra", "list_all_campaigns"),
+    "list_campaigns": ("domains.orders.services.core.admin_extra", "list_campaigns"),
+    "create_coupon_from_payload": ("domains.orders.services.coupons_write_service", "create_coupon_from_payload"),
+    "delete_coupon_by_id": ("domains.orders.services.coupons_write_service", "delete_coupon_by_id"),
+    "list_coupons_paginated": ("domains.orders.services.coupons_write_service", "list_coupons_paginated"),
+    "validate_coupon": ("domains.orders.services.coupons_write_service", "validate_coupon"),
+    "_get_or_create_config": ("domains.orders.services.promotion_service", "_get_or_create_config"),
+    "order_status_label": ("domains.orders.services.tracking.service", "order_status_label"),
+    "shipment_status_label": ("domains.orders.services.tracking.service", "shipment_status_label"),
+    "canonical_scan_code": ("domains.orders.services.tracking.service", "canonical_scan_code"),
+    "derive_order_financials": ("domains.orders.services.tracking.service", "derive_order_financials"),
+    "ensure_shipment_identifiers": ("domains.orders.services.tracking.service", "ensure_shipment_identifiers"),
+    "reconcile_order_status": ("domains.orders.services.tracking.service", "reconcile_order_status"),
+}
+import importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

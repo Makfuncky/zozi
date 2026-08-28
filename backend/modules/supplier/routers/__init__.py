@@ -1,4 +1,4 @@
-"""Routers for the supplier module — 6 domain routers."""
+"""Routers for the supplier module — domain routers."""
 import importlib
 import logging
 
@@ -10,9 +10,18 @@ public_routers = []
 _module_names = [
     "accounts",
     "analytics",
+    "audit",
     "catalog",
+    "comms",
+    "country",
+    "customers",
     "finance",
+    "governance",
+    "hr",
+    "logistics",
     "orders",
+    "promotions",
+    "security",
     "suppliers",
 ]
 
@@ -25,3 +34,6 @@ for _n in _module_names:
     _r = getattr(_m, "router", None)
     if _r is not None:
         routers.append(_r)
+    _pr = getattr(_m, "public_router", None)
+    if _pr is not None:
+        public_routers.append(_pr)

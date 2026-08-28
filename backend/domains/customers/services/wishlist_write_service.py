@@ -9,7 +9,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import WishlistItem
+from domains.catalog.ports import WishlistItem
 import structlog
 
 logger = structlog.get_logger(__name__)

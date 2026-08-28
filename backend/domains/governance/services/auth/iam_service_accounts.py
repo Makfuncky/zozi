@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.infrastructure.config.settings import settings
+from infrastructure.utils.config import settings
 
 _QR_SECRET_KEY = settings.qr_secret_key or settings.secret_key
 if not _QR_SECRET_KEY:

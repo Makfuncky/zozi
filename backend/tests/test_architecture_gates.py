@@ -217,11 +217,11 @@ class TestNoNewBusinessLogicInRouters:
     only on *new* offenders so the remediation can be chipped away safely.
 
     Regenerate the baseline after an intentional migration with
-    ``python tests/_gen_router_baseline.py``.
+    ``python scripts/_gen_router_baseline.py``.
     """
 
     def test_no_new_router_embeds_business_logic(self):
-        from _gen_router_baseline import load_baseline, scan_router_files
+        from scripts._gen_router_baseline import load_baseline, scan_router_files
 
         baseline = load_baseline()
         new_offenders = []
@@ -267,11 +267,11 @@ class TestNoNewSdkInServices:
     provider concern (``providers/**``) wired by the service. Freeze the current
     offenders (P3 baseline); only *new* leakage fails the build, so debt can be
     chipped away safely per-feature. Regenerate the baseline after an intentional
-    move: ``python tests/_gen_service_provider_baseline.py``.
+    move: ``python scripts/_gen_service_provider_baseline.py``.
     """
 
     def test_no_new_external_sdk_in_services(self):
-        from _gen_service_provider_baseline import (
+        from scripts._gen_service_provider_baseline import (
             load_baseline,
             scan_service_sdk_files,
         )

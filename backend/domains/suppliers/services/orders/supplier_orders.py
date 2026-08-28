@@ -533,7 +533,7 @@ def upload_supplier_parcel_proof(
     scan_code = shipment.scan_code if shipment and shipment.scan_code else f"ORDER-{order.id}"
     note_text = (notes or "").strip() or "Packed parcel proof uploaded by supplier"
 
-    from domains.catalog.services.products.product_verification_service import create_verification
+    from domains.catalog.ports import create_verification
 
     verification = create_verification(
         {

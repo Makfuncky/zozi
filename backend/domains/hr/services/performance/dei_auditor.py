@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 import numpy as np
 
 from domains.hr.models.employee_models import Employee
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 logger = logging.getLogger("zozi.dei")
 

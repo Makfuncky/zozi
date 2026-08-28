@@ -12,7 +12,7 @@ from domains.orders.ports import ReturnRequest
 from infrastructure.utils.background_jobs import enqueue_job
 from infrastructure.utils.config import settings
 from infrastructure.utils.email_service import send_email
-from domains.orders.services.tracking.service import order_status_label, shipment_status_label
+from domains.orders.ports import order_status_label, shipment_status_label
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -186,7 +186,7 @@ def _send_shipment_status_email(shipment_id: int, *, event_type: str | None = No
 
 def _send_invoice_email(invoice_id: int) -> dict[str, Any]:
     with get_service_session() as db:
-        from domains.finance.models.finance import Invoice
+        from domains.finance.ports import Invoice
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if invoice is None:
             return {"invoice_id": invoice_id, "sent": False, "reason": "not-found"}
@@ -211,7 +211,7 @@ def _send_invoice_email(invoice_id: int) -> dict[str, Any]:
 
 def _send_low_stock_alert_email(product_id: int, stock_count: int) -> dict[str, Any]:
     with get_service_session() as db:
-        from domains.catalog.models.products import Product
+        from domains.catalog.ports import Product
         product = db.query(Product).filter(Product.id == product_id).first()  # type: ignore[attr-defined]
         if product is None:
             return {"product_id": product_id, "sent": False, "reason": "not-found"}
@@ -354,8 +354,7 @@ def enqueue_return_status_email(return_id: int, *, event_kind: str = "status") -
 
 def _send_dunning_email(invoice_id: int, reminder_type: str, message: str) -> dict[str, Any]:
     with get_service_session() as db:
-        from domains.finance.models.finance import ARInvoice
-        from domains.finance.models.finance import Customer
+        from domains.finance.ports import ARInvoice, Customer
         inv = db.query(ARInvoice).filter(ARInvoice.id == invoice_id).first()
         if not inv:
             return {"invoice_id": invoice_id, "sent": False, "reason": "not_found"}
@@ -394,7 +393,7 @@ def enqueue_dunning_email(invoice_id: int, reminder_type: str, message: str) -> 
 
 def _send_distributor_statement_email(customer_id: int, period: str, statement_data: dict) -> dict[str, Any]:
     with get_service_session() as db:
-        from domains.finance.models.finance import Customer
+        from domains.finance.ports import Customer
         customer = db.query(Customer).filter(Customer.id == customer_id).first()
         if not customer or not customer.contact_email:
             return {"customer_id": customer_id, "sent": False, "reason": "no_email"}
@@ -441,7 +440,7 @@ def enqueue_distributor_statement_email(customer_id: int, period: str, statement
 
 def _send_supplier_approval_email(supplier_id: int, batch_id: int, batch_number: str, total_amount: float) -> dict[str, Any]:
     with get_service_session() as db:
-        from domains.governance.models.user import User
+        from domains.governance.ports import User
         supplier = db.query(User).filter(User.id == supplier_id).first()
         if not supplier or not getattr(supplier, "email", None):
             return {"supplier_id": supplier_id, "sent": False, "reason": "no_email"}

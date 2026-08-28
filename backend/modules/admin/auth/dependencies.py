@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException
 
-from domains.security.services.iam.security_dependencies import require_admin, require_roles, get_current_user  # noqa: F401
+from domains.accounts.services.auth.security_dependencies import require_admin, require_roles, get_current_user  # noqa: F401
 
 
 def require_admin_role(current_user: dict) -> None:

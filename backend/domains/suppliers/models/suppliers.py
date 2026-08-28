@@ -110,7 +110,7 @@ class SupplierNotificationPreference(Base, TenantMixin):
 class SupplierBadgeCatalog(Base):
     """Catalogue of badge levels a supplier can purchase/earn."""
 
-    __tablename__ = 'supplier_badge_catalog'
+    __tablename__ = 'supplier_badge_catalogs'
     __table_args__ = (
         Index('ix_supplier_badge_catalog_country_created', 'country_code', 'created_at'),
         Index('ix_supplier_badge_catalog_benefits_gin', 'benefits'),
@@ -182,7 +182,7 @@ class SupplierBadge(Base):
 class SupplierBadgeBillingHistory(Base):
     """Billing events generated when a supplier purchases a badge."""
 
-    __tablename__ = 'supplier_badge_billing_history'
+    __tablename__ = 'supplier_badge_billing_histories'
     __table_args__ = (
         Index('ix_supplier_badge_billing_country_created', 'country_code', 'created_at'),
         {'schema': 'suppliers'},

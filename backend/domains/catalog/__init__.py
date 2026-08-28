@@ -22,7 +22,7 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     # models
     "Product": ("domains.catalog.models.products", "Product"),
     "Category": ("domains.catalog.models.products", "Category"),
-    "Coupon": ("domains.catalog.models.promotions", "Coupon"),
+    "Coupon": ("domains.promotions.models.promotions", "Coupon"),
     # functions
     "get_product_by_id": ("domains.catalog.services.products.products_service", "get_product_by_id"),
     "list_products": ("domains.catalog.services.products.products_service", "list_products"),

@@ -66,7 +66,7 @@ class CircuitBreaker:
         self._success_count = 0
         self._last_failure_time: float = 0.0
         self._half_open_calls = 0
-        self._lock = asyncio.Lock() if asyncio.get_event_loop().is_running() else None
+        self._lock: asyncio.Lock | None = None
 
     @property
     def state(self) -> CircuitState:
@@ -85,13 +85,17 @@ class CircuitBreaker:
         self._success_count = 0
         self._half_open_calls = 0
 
-    async def _acquire_lock(self):
+    def _get_lock(self) -> asyncio.Lock:
+        """Lazily initialize the lock to avoid deprecated get_event_loop()."""
         if self._lock is None:
-            try:
-                self._lock = asyncio.Lock()
-            except RuntimeError:
-                return _NullContext()
+            self._lock = asyncio.Lock()
         return self._lock
+
+    async def _acquire_lock(self):
+        try:
+            return self._get_lock()
+        except RuntimeError:
+            return _NullContext()
 
     def __call__(self, func: Callable[..., T]) -> Callable[..., T]:
         if asyncio.iscoroutinefunction(func):

@@ -10,6 +10,7 @@ from fastapi import Depends, HTTPException, Request, status
 
 from rbac.catalog import FEATURE_CATALOG
 from rbac.resolution import effective_features
+from infrastructure.security.dependencies import get_current_user  # noqa: F401
 
 _current_user_ctx: ContextVar = ContextVar("_current_user_ctx", default=None)
 
@@ -31,9 +32,13 @@ def _resolve_effective_features(user) -> set:
     """Resolve the effective feature set for a user based on role and overrides."""
     if user is None:
         return set()
-    role = getattr(user, "role", None) or ""
+    if isinstance(user, dict):
+        role = user.get("role", None) or ""
+        user_overrides = user.get("feature_overrides", []) or []
+    else:
+        role = getattr(user, "role", None) or ""
+        user_overrides = getattr(user, "feature_overrides", []) or []
     role_features = _ROLE_FEATURES.get(role, [])
-    user_overrides = getattr(user, "feature_overrides", []) or []
     return effective_features(
         role_features=role_features,
         db_grants=[],
@@ -175,3 +180,23 @@ def require_roles(*roles: str):
             )
         return user
     return _checker
+
+
+def require_admin(user=None) -> None:
+    """Enforce that the current user has an admin-level role.
+
+    Works whether the current user is a JWT dict or an ORM User instance.
+    Raises HTTPException(403) if the user is not an admin or super_admin.
+    """
+    if user is None:
+        user = _get_current_user()
+    role = None
+    if isinstance(user, dict):
+        role = user.get("role")
+    else:
+        role = getattr(user, "role", None)
+    if role not in ("admin", "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: admin access required",
+        )

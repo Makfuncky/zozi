@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import func
@@ -28,7 +29,7 @@ _PERIOD_DAYS = {"7d": 7, "30d": 30, "90d": 90}
 
 def compute_analytics_overview(db: Any) -> dict[str, Any]:
     total_orders = db.query(func.count(Order.id)).scalar() or 0
-    total_revenue = float(db.query(func.coalesce(func.sum(Order.total_amount), 0)).scalar() or 0)
+    total_revenue = Decimal(str(db.query(func.coalesce(func.sum(Order.total_amount), 0)).scalar() or 0))
     total_customers = db.query(func.count(User.id)).filter(User.role == "customer").scalar() or 0
     total_products = db.query(func.count(Product.id)).scalar() or 0
     return {
@@ -36,7 +37,7 @@ def compute_analytics_overview(db: Any) -> dict[str, Any]:
         "total_revenue": round(total_revenue, 2),
         "total_customers": total_customers,
         "total_products": total_products,
-        "average_order_value": round(total_revenue / total_orders, 2) if total_orders else 0.0,
+        "average_order_value": round(total_revenue / total_orders, 2) if total_orders else Decimal("0"),
     }
 
 
@@ -58,7 +59,7 @@ def compute_analytics_timeseries_payload(period: str, db: Any) -> dict[str, Any]
         {
             "date": str(row.date),
             "orders": int(row.orders or 0),
-            "revenue": round(float(row.revenue or 0), 2),
+            "revenue": round(Decimal(str(row.revenue or 0)), 2),
         }
         for row in rows
     ]
@@ -84,7 +85,7 @@ def compute_top_products_payload(limit: int, db: Any) -> dict[str, Any]:
             "id": row.id,
             "name": row.name,
             "units_sold": int(row.units_sold or 0),
-            "revenue": round(float(row.revenue or 0), 2),
+            "revenue": round(Decimal(str(row.revenue or 0)), 2),
         }
         for row in rows
     ]

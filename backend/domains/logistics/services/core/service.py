@@ -802,7 +802,7 @@ from fastapi import Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.governance.services.settings.admin_service import get_current_admin
+from domains.governance.ports import archive_entity, bulk_archive_entities, bulk_restore_entities, download_export_job_result, export_audit_logs_csv, export_coupons_csv, export_orders_csv, export_products_csv, export_transfer_csv, export_users_csv, get_audit_log_page, get_available_audit_actions, get_current_admin, get_ticket_detail, hard_delete_entity, queue_export_job, require_admin_2fa_enabled, require_admin_2fa_verified, restore_entity
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # # TODO: Module not yet created
@@ -821,7 +821,7 @@ from domains.finance.models.payments import Payout as PayoutModel
 def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple admin dashboard stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
     total_revenue = db.query(sqlfunc.sum(Payment.amount)).filter(Payment.status == 'completed').scalar() or 0
@@ -832,7 +832,7 @@ def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=De
 def admin_stats_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple aggregate stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
     return {'total_users': db.query(sqlfunc.count(UserModel.id)).scalar() or 0, 'total_customers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'customer').scalar() or 0, 'total_suppliers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'supplier').scalar() or 0, 'total_orders': db.query(sqlfunc.count(OrderModel.id)).scalar() or 0, 'total_products': db.query(sqlfunc.count(ProductModel.id)).filter(ProductModel.is_deleted == False).scalar() or 0, 'pending_payouts': db.query(PayoutModel).filter(PayoutModel.status == 'pending').count()}
@@ -858,7 +858,7 @@ def admin_commission_fallback(db: Session=Depends(get_db), current_admin: dict=D
 
 def admin_employees_fallback(page: int=Query(1, ge=1), page_size: int=Query(100, ge=1, le=500), db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """List all employees (no country code required)."""
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     skip = (page - 1) * page_size
     items = db.query(Employee).join(UserModel, Employee.user_id == UserModel.id).order_by(UserModel.full_name.asc().nullslast(), Employee.id).offset(skip).limit(page_size).all()
     total = db.query(Employee).count()
@@ -913,7 +913,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
@@ -923,7 +923,6 @@ from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
-from domains.governance.services.settings.misc_service import archive_entity, restore_entity, hard_delete_entity
 # TODO: Module not yet created
 # from domains.governance.services.admin.core.bulk_ops_service import bulk_archive_entities, bulk_restore_entities
 
@@ -1108,11 +1107,8 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.constants import MAX_BULK_ITEMS
 from infrastructure.database.database import get_db, Base
 from infrastructure.database.schemas import User as UserSchema, Product as ProductSchema, Order as OrderSchema, CouponSchema, ListPage, AuditLogSchema, AuditLogPage, CreateStaffAccount, UpdateStaffAccount, BulkUpdateStaffBody
-from domains.governance.services.settings.admin_service import get_current_admin
-from domains.accounts.services.auth.auth_service import get_current_user
+from domains.accounts.ports import get_current_user, get_hierarchy_permissions, get_staff_permission_catalog, update_role_permissions
 from infrastructure.utils.dependencies import require_admin
-from domains.governance.services.settings.admin_service import require_admin_2fa_enabled
-from domains.governance.services.settings.admin_service import require_admin_2fa_verified
 # TODO: Module not yet created
 # from domains.governance.services.permissions.effective_permissions import require_permission
 # TODO: Module not yet created
@@ -1158,8 +1154,6 @@ from domains.governance.ports import delete_user_admin
 # from domains.governance.services.suppliers.suppliers_service import get_supplier_comparison
 # TODO: Module not yet created
 # from domains.governance.services.analytics.analytics_service import get_customer_insights
-from domains.governance.services.settings.misc_service import get_audit_log_page
-from domains.governance.services.settings.misc_service import get_available_audit_actions
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # from domains.governance.services.suppliers.suppliers_service import get_pending_suppliers
@@ -1181,15 +1175,12 @@ from domains.orders.ports import update_coupon
 from domains.governance.ports import delete_coupon
 # TODO: Module not yet created
 # from domains.comms.services.ticket.tickets_service import list_tickets
-from domains.governance.services.settings.admin_service import get_ticket_detail
 # TODO: Module not yet created
 # from domains.comms.services.ticket.tickets_service import reply_to_ticket
 # TODO: Module not yet created
 # from domains.comms.services.ticket.tickets_write_service import update_ticket_status
 from domains.finance.ports import list_pending_payouts
 from domains.governance.ports import verify_payout
-from domains.accounts.services.permissions.permission_service import get_hierarchy_permissions
-from domains.accounts.services.permissions.permission_service import update_role_permissions
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # from domains.governance.services.analytics.analytics_service import get_analytics_timeseries
@@ -1224,7 +1215,6 @@ from domains.accounts.services.permissions.permission_service import update_role
 # from domains.governance.services.users.users_service_accounts import bulk_toggle_users_active
 # TODO: Module not yet created
 # from domains.governance.services.users.users_service_accounts import list_staff_accounts
-from domains.accounts.services.permissions.permission_service import get_staff_permission_catalog
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # from domains.governance.services.users.users_service_accounts import update_staff_account
@@ -1718,7 +1708,7 @@ from domains.finance.models.payments import Payout as PayoutModel
 def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple admin dashboard stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
     total_revenue = db.query(sqlfunc.sum(Payment.amount)).filter(Payment.status == 'completed').scalar() or 0
@@ -1729,7 +1719,7 @@ def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=De
 def admin_stats_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple aggregate stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
     return {'total_users': db.query(sqlfunc.count(UserModel.id)).scalar() or 0, 'total_customers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'customer').scalar() or 0, 'total_suppliers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'supplier').scalar() or 0, 'total_orders': db.query(sqlfunc.count(OrderModel.id)).scalar() or 0, 'total_products': db.query(sqlfunc.count(ProductModel.id)).filter(ProductModel.is_deleted == False).scalar() or 0, 'pending_payouts': db.query(PayoutModel).filter(PayoutModel.status == 'pending').count()}
@@ -1755,7 +1745,7 @@ def admin_commission_fallback(db: Session=Depends(get_db), current_admin: dict=D
 
 def admin_employees_fallback(page: int=Query(1, ge=1), page_size: int=Query(100, ge=1, le=500), db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """List all employees (no country code required)."""
-    from domains.governance.models.user import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     skip = (page - 1) * page_size
     items = db.query(Employee).join(UserModel, Employee.user_id == UserModel.id).order_by(UserModel.full_name.asc().nullslast(), Employee.id).offset(skip).limit(page_size).all()
     total = db.query(Employee).count()
@@ -1810,7 +1800,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
@@ -1820,7 +1810,6 @@ from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
-from domains.governance.services.settings.misc_service import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
 
 # TODO: Module not yet created
 # from domains.logistics.services.partner_geography_service import approve_partner
@@ -1925,7 +1914,6 @@ from infrastructure.database.schemas import User as UserSchema, Product as Produ
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # from domains.governance.services.admin_service import get_current_admin
-from domains.accounts.services.auth.auth_service import get_current_user
 from infrastructure.utils.dependencies import require_admin
 # TODO: Module not yet created
 # from domains.governance.services.admin_service import require_admin_2fa_enabled
@@ -1977,8 +1965,6 @@ from infrastructure.utils.dependencies import require_admin
 # from domains.governance.services.suppliers.suppliers_service import get_supplier_comparison
 # TODO: Module not yet created
 # from domains.governance.services.analytics_service import get_customer_insights
-from domains.governance.services.settings.misc_service import get_audit_log_page
-from domains.governance.services.settings.misc_service import get_available_audit_actions
 # TODO: Module not yet created
 # # TODO: Module not yet created
 # from domains.governance.services.suppliers.suppliers_service import get_pending_suppliers
@@ -2000,7 +1986,7 @@ from domains.governance.services.settings.misc_service import get_available_audi
 # from domains.promotions.services.admin_commerce_configuration_service import list_coupons
 # TODO: Module not yet created
 # from domains.promotions.services.admin_commerce_configuration_service import create_coupon
-from domains.promotions.services.coupons.coupon_service import update_coupon
+from domains.promotions.ports import create_promotion_tier, delete_promotion_tier, get_promotion_config, list_promotion_tiers, preview_order_tier_discount, update_coupon, update_promotion_config, update_promotion_tier
 # TODO: Module not yet created
 # from domains.promotions.services.public_commerce_validation_service import delete_coupon
 # TODO: Module not yet created
@@ -2066,7 +2052,7 @@ from domains.promotions.services.coupons.coupon_service import update_coupon
 from domains.hr.payroll_service import verify_bank_account
 # TODO: Module not yet created
 # from domains.governance.services.database_service import get_database_overview
-from domains.hr.services.hierarchy.hierarchy_service import get_authority_level, get_user_chain, get_all_subordinates, get_team_members, is_in_chain, can_manage, get_org_chart, get_home_org_unit, reassign_manager, backfill_authority_levels
+from domains.hr.ports import backfill_authority_levels, can_manage, get_all_subordinates, get_authority_level, get_home_org_unit, get_org_chart, get_team_members, get_user_chain, is_in_chain, reassign_manager
 # TODO: Module not yet created
 # from domains.governance.services.approval_matrix_service import APPROVAL_RULES
 # TODO: Module not yet created
@@ -2091,21 +2077,6 @@ from domains.hr.services.hierarchy.hierarchy_service import get_authority_level,
 # from domains.catalog.services.banners.banner_service import BannerCreate
 # TODO: Module not yet created
 # from domains.catalog.services.banners.banner_service import BannerUpdate
-from domains.governance.services.operations import export_users_csv
-from domains.governance.services.operations import export_orders_csv
-from domains.governance.services.operations import export_products_csv
-from domains.governance.services.operations import export_coupons_csv
-from domains.governance.services.operations import export_audit_logs_csv
-from domains.governance.services.operations import export_transfer_csv
-from domains.governance.services.operations import queue_export_job
-from domains.governance.services.operations import download_export_job_result
-from domains.promotions.services.engine.promotion_service import get_promotion_config
-from domains.promotions.services.engine.promotion_service import update_promotion_config
-from domains.promotions.services.engine.promotion_service import list_promotion_tiers
-from domains.promotions.services.engine.promotion_service import create_promotion_tier
-from domains.promotions.services.engine.promotion_service import update_promotion_tier
-from domains.promotions.services.engine.promotion_service import delete_promotion_tier
-from domains.promotions.services.engine.promotion_service import preview_order_tier_discount
 from domains.orders.models.orders import disputes_controller
 from infrastructure.utils.backup import get_backup_manager
 from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
@@ -2772,7 +2743,7 @@ from infrastructure.database.database import get_db
 from domains.country.models.countries import CountryConfig
 from domains.country.models.country_control import LogisticsPartnerLocation
 from domains.logistics.models.logistics import LogisticsPartner
-from rbac import get_current_user
+from infrastructure.utils.dependencies import get_current_user
 logger = logging.getLogger(__name__)
 
 def list_logistics_partner_locations(country_code: str=Path(...), partner_id: Optional[int]=Query(None), is_active: Optional[bool]=Query(None), db: Session=Depends(get_db), current_user=Depends(get_current_user)):
@@ -2816,7 +2787,6 @@ from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.services.auth.auth_service import get_current_user
 
 from infrastructure.database.database import get_db
 
@@ -2946,31 +2916,8 @@ async def admin_update_shipment_status(shipment_id: int, data: dict[str, Any], d
 
 # AUTO-GENERATED controller delegator (routers -> controllers -> services).
 """services.geography.country_audit_admin_service re-exports for HTTP routers."""
-from domains.country.services.staff.country_admin_write_service import add_city as svc_add_city
-from domains.country.services.staff.country_admin_write_service import assign_staff as svc_assign_staff
-from domains.country.services.staff.country_admin_write_service import delete_city as svc_delete_city
-from domains.country.services.staff.country_admin_write_service import list_cities as svc_list_cities
-from domains.country.services.staff.country_admin_write_service import list_communications as svc_list_communications
-from domains.country.services.staff.country_admin_write_service import list_staff as svc_list_staff
-from domains.country.services.staff.country_admin_write_service import list_tax_rates as svc_list_tax_rates
-from domains.country.services.staff.country_admin_write_service import mark_communication_read as svc_mark_communication_read
-from domains.country.services.staff.country_admin_write_service import remove_staff as svc_remove_staff
-from domains.country.services.staff.country_admin_write_service import send_country_communication as svc_send_country_communication
-from domains.country.services.staff.country_admin_write_service import set_tax_rate as svc_set_tax_rate
-from domains.country.services.staff.country_admin_write_service import update_city as svc_update_city
+from domains.country.ports import add_city, add_country_city, archive_country, assign_staff, bulk_archive_countries, bulk_restore_countries, create_country_commission_rate, create_feature_flag, delete_city, delete_country_city, delete_country_commission_rate, delete_feature_flag, hard_delete_country, list_cities, list_communications, list_country_commission_rates, list_staff, list_tax_rates, mark_communication_read, patch_country_city, remove_staff, restore_country, send_country_communication, set_tax_rate, toggle_country_active, update_city, update_feature_flag
 
-from domains.country.services.staff.country_admin_write_service import list_tax_rates
-from domains.country.services.staff.country_admin_write_service import set_tax_rate
-from domains.country.services.staff.country_admin_write_service import list_communications
-from domains.country.services.staff.country_admin_write_service import assign_staff
-from domains.country.services.staff.country_admin_write_service import list_staff
-from domains.country.services.staff.country_admin_write_service import update_city
-from domains.country.services.staff.country_admin_write_service import mark_communication_read
-from domains.country.services.staff.country_admin_write_service import remove_staff
-from domains.country.services.staff.country_admin_write_service import list_cities
-from domains.country.services.staff.country_admin_write_service import add_city
-from domains.country.services.staff.country_admin_write_service import delete_city
-from domains.country.services.staff.country_admin_write_service import send_country_communication
 
 # -------------------------------------------------------------------
 # FROM: geography_country_config_admin_service.py
@@ -2978,37 +2925,7 @@ from domains.country.services.staff.country_admin_write_service import send_coun
 
 # AUTO-GENERATED controller delegator (routers -> controllers -> services).
 """services.geography.country_config_admin_service re-exports for HTTP routers."""
-from domains.country.services.core.country_config_admin_service import add_country_city as svc_add_country_city
-from domains.country.services.core.country_config_admin_service import archive_country as svc_archive_country
-from domains.country.services.core.country_config_admin_service import bulk_archive_countries as svc_bulk_archive_countries
-from domains.country.services.core.country_config_admin_service import bulk_restore_countries as svc_bulk_restore_countries
-from domains.country.services.core.country_config_admin_service import create_country_commission_rate as svc_create_country_commission_rate
-from domains.country.services.core.country_config_admin_service import create_feature_flag as svc_create_feature_flag
-from domains.country.services.core.country_config_admin_service import delete_country_city as svc_delete_country_city
-from domains.country.services.core.country_config_admin_service import delete_country_commission_rate as svc_delete_country_commission_rate
-from domains.country.services.core.country_config_admin_service import delete_feature_flag as svc_delete_feature_flag
-from domains.country.services.core.country_config_admin_service import hard_delete_country as svc_hard_delete_country
-from domains.country.services.core.country_config_admin_service import list_country_commission_rates as svc_list_country_commission_rates
-from domains.country.services.core.country_config_admin_service import patch_country_city as svc_patch_country_city
-from domains.country.services.core.country_config_admin_service import restore_country as svc_restore_country
-from domains.country.services.core.country_config_admin_service import toggle_country_active as svc_toggle_country_active
-from domains.country.services.core.country_config_admin_service import update_feature_flag as svc_update_feature_flag
 
-from domains.country.services.core.country_config_admin_service import bulk_restore_countries
-from domains.country.services.core.country_config_admin_service import create_feature_flag
-from domains.country.services.core.country_config_admin_service import add_country_city
-from domains.country.services.core.country_config_admin_service import hard_delete_country
-from domains.country.services.core.country_config_admin_service import toggle_country_active
-from domains.country.services.core.country_config_admin_service import create_country_commission_rate
-from domains.country.services.core.country_config_admin_service import restore_country
-from domains.country.services.core.country_config_admin_service import bulk_archive_countries
-from domains.country.services.core.country_config_admin_service import delete_feature_flag
-from domains.country.services.core.country_config_admin_service import list_country_commission_rates
-from domains.country.services.core.country_config_admin_service import patch_country_city
-from domains.country.services.core.country_config_admin_service import delete_country_commission_rate
-from domains.country.services.core.country_config_admin_service import update_feature_flag
-from domains.country.services.core.country_config_admin_service import delete_country_city
-from domains.country.services.core.country_config_admin_service import archive_country
 
 # -------------------------------------------------------------------
 # FROM: main.py
@@ -3081,7 +2998,7 @@ def _get_current_user_geo(credentials: HTTPAuthorizationCredentials | None = Dep
     if credentials is None or not credentials.credentials:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        payload = decode_token(credentials.credentials)
+        payload = decode_token(credentials.credentials, expected_type="access")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
     user_id = payload.get("sub")

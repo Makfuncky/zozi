@@ -12,12 +12,11 @@ from sqlalchemy.orm import Session
 
 from domains.governance.models.admin import RolePermissionSetting
 from domains.governance.models.admin import SupplierDispute
-from domains.catalog.models.promotions import Banner
+from domains.promotions.models.promotions import Banner
 
 from infrastructure.database.seed import _ensure_demo_user, _seed_password
 
-from domains.finance.services.treasury.cash_write_service import create_cash_account
-from domains.finance.services.treasury.cash_write_service import create_cash_transaction
+from domains.finance.ports import create_cash_account, create_cash_transaction
 
 from infrastructure.utils.config import settings
 

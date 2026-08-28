@@ -5,11 +5,7 @@ from __future__ import annotations
 from fastapi import Body, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from domains.governance.services.settings.misc_service import (
-    archive_entity,
-    restore_entity,
-    hard_delete_entity,
-)
+from domains.governance.ports import archive_entity, hard_delete_entity, restore_entity
 from domains.catalog.services.products.bulk_ops_write_service import (
     bulk_archive_entities,
     bulk_restore_entities,

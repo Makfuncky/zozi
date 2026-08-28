@@ -26,6 +26,7 @@ __all__ = ["UploadJob"]
 
 class UploadJob(Base):
     __tablename__ = "upload_jobs"
+    __table_args__ = {"schema": "catalog"}
 
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)

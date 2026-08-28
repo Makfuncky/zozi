@@ -21,8 +21,8 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import User
-from domains.logistics.models.logistics import Shipment
+from domains.governance.ports import User
+from domains.logistics.ports import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from infrastructure.utils.config import settings
@@ -234,7 +234,7 @@ def _log_packing_event(
     notes: Optional[str] = None,
 ) -> None:
     """Log a packing status event."""
-    from domains.logistics.models.logistics import ShipmentEvent
+    from domains.logistics.ports import ShipmentEvent
     event = ShipmentEvent(
         shipment_id=shipment.id,
         order_id=order.id,
@@ -258,7 +258,7 @@ def _notify_party(
     link: Optional[str] = None,
 ) -> None:
     """Send a notification to a user."""
-    from domains.comms.models.communication import Notification
+    from domains.comms.ports import Notification
     try:
         notification = Notification(
             user_id=user_id,

@@ -10,26 +10,16 @@ from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
-from domains.governance.services.settings.misc_service import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    restore_entity,
-)
+from domains.governance.ports import archive_entity, bulk_archive_entities, bulk_restore_entities, restore_entity
 
 from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Category
 
-from domains.catalog.services.categories.category_service import (
-    create_category as create_category_model,
-    update_category as update_category_model,
-    delete_category as delete_category_model,
-    reorder_categories as reorder_categories_model,
-)
+from domains.catalog.ports import create_category, delete_category, reorder_categories, update_category
 
 from domains.catalog.utils.category_tree import rebuild_category_paths
 
@@ -232,8 +222,7 @@ def delete_campaign(country_code: str, campaign_id: int, db: Session) -> dict:
 # -------------------------------------------------------------------
 
 """Auto-migrated service logic from routers/addresses.py."""
-from domains.customers.services.customer_router_service import _serialize_address
-from domains.customers.services.customer_router_service import _normalize_address_payload
+from domains.customers.ports import _normalize_address_payload, _serialize_address, create_address, delete_address, get_user_address, list_user_addresses, set_default_address, unset_other_default_addresses, update_address
 
 from fastapi import Depends, HTTPException, status
 
@@ -245,14 +234,7 @@ from infrastructure.database.database import get_db
 
 from domains.governance.models.core import Address
 
-from domains.customers.services.commerce_write_service import create_address as create_address_model
-from domains.customers.services.commerce_write_service import update_address as update_address_model
-from domains.customers.services.commerce_write_service import delete_address as delete_address_model
-from domains.customers.services.commerce_write_service import set_default_address as set_default_address_model
-from domains.customers.services.commerce_write_service import unset_other_default_addresses
 
-from domains.customers.services.commerce_read_service import list_user_addresses
-from domains.customers.services.commerce_read_service import get_user_address
 
 
 

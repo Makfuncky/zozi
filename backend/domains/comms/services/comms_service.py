@@ -27,7 +27,7 @@ class NotificationPriority:
     MEDIUM = 'medium'
     HIGH = 'high'
     URGENT = 'urgent'
-from domains.governance.models.user import User
+from domains.governance.ports import User
 from domains.accounts.ports import get_user_by_id
 
 logger = logging.getLogger(__name__)

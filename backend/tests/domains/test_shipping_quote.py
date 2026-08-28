@@ -29,14 +29,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from infrastructure.database.models import (
-    LogisticsPartner,
-    LogisticsPartnerServiceArea,
-    Product,
-    SupplierProfile,
-    User,
-)
-from infrastructure.security.auth import get_password_hash
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics_entities import LogisticsPartnerServiceArea
+from domains.suppliers.models.suppliers import SupplierProfile
+from infrastructure.utils.auth import get_password_hash
 
 # ── Constants ────────────────────────────────────────────────────────────────
 

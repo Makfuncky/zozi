@@ -49,15 +49,17 @@ class CartItemUpdate(BaseModel):
 
 
 @router.get("")
-def get_cart(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("customers.cart.manage")
+def get_cart(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.cart.manage"))
+):
     result = svc_get_cart(current_user.id, db)
     return {"items": result.items, "subtotal": result.subtotal, "item_count": result.item_count}
 
 
 @router.post("/items")
-def add_to_cart(payload: CartItemCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("customers.cart.manage")
+def add_to_cart(payload: CartItemCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.cart.manage"))
+):
     return svc_add_to_cart(current_user.id, payload, db)
 
 
@@ -66,14 +68,15 @@ def sync_cart(
     body: CartSyncRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.cart.manage")),
 ):
-    require_feature("customers.cart.manage")
     return svc_sync_cart(current_user.id, body, db)
 
 
 @router.put("/items/{product_id}")
-def update_cart_item(product_id: int, body: CartItemUpdate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("customers.cart.manage")
+def update_cart_item(product_id: int, body: CartItemUpdate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.cart.manage"))
+):
     return svc_update_cart_item(
         user_id=current_user.id,
         product_id=product_id,
@@ -85,14 +88,16 @@ def update_cart_item(product_id: int, body: CartItemUpdate, current_user: dict =
 
 
 @router.delete("/items/{product_id}")
-def remove_from_cart(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("customers.cart.manage")
+def remove_from_cart(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.cart.manage"))
+):
     return svc_remove_cart_item(current_user.id, product_id, db)
 
 
 @router.delete("")
-def clear_cart(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("customers.cart.manage")
+def clear_cart(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.cart.manage"))
+):
     return svc_clear_cart(current_user.id, db)
 
 
@@ -100,8 +105,8 @@ def clear_cart(current_user: dict = Depends(get_current_user), db: Session = Dep
 def get_cart_shipping_quote(
     body: CartShippingQuoteRequest,
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.delivery.estimates")),
 ):
-    require_feature("logistics.delivery.estimates")
     return svc_get_cart_shipping_quote(body, db)
 
 
@@ -113,18 +118,18 @@ def get_cart_shipping_quote(
 def create_order_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
-    order: OrderCreate = Body(...)
+    order: OrderCreate = Body(...),
+    _rf_gate: None = Depends(require_feature("orders.create")),
 ):
-    require_feature("orders.create")
     return create_order(current_user=current_user, db=db, order=order)
 
 @router.post("/orders/preview", response_model=OrderPreviewOut, status_code=201, tags=['orders'])
 def preview_order_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
-    order: OrderCreate = Body(...)
+    order: OrderCreate = Body(...),
+    _rf_gate: None = Depends(require_feature("orders.create")),
 ):
-    require_feature("orders.create")
     return preview_order(current_user=current_user, db=db, order=order)
 
 @router.get("/orders", status_code=200, tags=['orders'])
@@ -132,36 +137,36 @@ def get_orders_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
     skip: int = Query(0),
-    limit: int = Query(50)
+    limit: int = Query(50),
+    _rf_gate: None = Depends(require_feature("orders.list")),
 ):
-    require_feature("orders.list")
     return get_orders(current_user=current_user, db=db, skip=skip, limit=limit)
 
 @router.get("/orders/{order_id}", status_code=200, tags=['orders'])
 def get_order_route(
     order_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.read")),
 ):
-    require_feature("orders.read")
     return get_order(order_id=order_id, current_user=current_user, db=db)
 
 @router.get("/orders/{order_id}/invoice", status_code=200, tags=['orders'])
 def get_order_invoice_route(
     order_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.read")),
 ):
-    require_feature("orders.read")
     return get_order_invoice(order_id=order_id, current_user=current_user, db=db)
 
 @router.get("/orders/{order_id}/tracking", status_code=200, tags=['orders'])
 def get_order_tracking_route(
     order_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
 ):
-    require_feature("logistics.shipping.tracking")
     return get_order_tracking(order_id=order_id, current_user=current_user, db=db)
 
 @router.post("/orders/{order_id}/scan-receipt", status_code=201, tags=['orders'])
@@ -169,18 +174,18 @@ def confirm_order_scan_receipt_route(
     order_id: int,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
-    data: dict = Body(...)
+    data: dict = Body(...),
+    _rf_gate: None = Depends(require_feature("orders.update")),
 ):
-    require_feature("orders.update")
     return confirm_order_scan_receipt(order_id=order_id, current_user=current_user, db=db, data=data)
 
 @router.post("/orders/{order_id}/cancel", status_code=201, tags=['orders'])
 def cancel_order_route(
     order_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.cancel")),
 ):
-    require_feature("orders.cancel")
     return cancel_order(order_id=order_id, current_user=current_user, db=db)
 
 @router.post("/orders/{order_id}/confirmation-requests/{confirmation_id}/respond", status_code=201, tags=['orders'])
@@ -189,9 +194,9 @@ def respond_to_shipment_confirmation_route(
     confirmation_id: int,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
-    data: dict = Body(...)
+    data: dict = Body(...),
+    _rf_gate: None = Depends(require_feature("orders.update")),
 ):
-    require_feature("orders.update")
     return respond_to_shipment_confirmation(order_id=order_id, confirmation_id=confirmation_id, current_user=current_user, db=db, data=data)
 
 
@@ -237,22 +242,25 @@ def _serialize_return(req) -> dict:
     }
 
 @router.get("/returns", response_model=list[ReturnRequestOut])
-def list_returns(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("orders.returns.read")
+def list_returns(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.returns.read"))
+):
     requests = list_return_requests(_user_context(current_user), db)
     return [_serialize_return(req) for req in requests]
 
 
 @router.post("/returns", response_model=ReturnRequestOut, status_code=201)
-def create_return(payload: ReturnRequestCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("customers.returns.request")
+def create_return(payload: ReturnRequestCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.returns.request"))
+):
     req = create_return_request(_user_context(current_user), payload, db)
     return _serialize_return(req)
 
 
 @router.get("/{return_id}", response_model=ReturnRequestOut)
-def get_return(return_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("orders.returns.read")
+def get_return(return_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.returns.read"))
+):
     req = get_return_request(return_id, _user_context(current_user), db)
     return _serialize_return(req)
 
@@ -262,8 +270,8 @@ def bulk_update_returns(
     body: BulkReturnStatusUpdateBody,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.returns.manage")),
 ):
-    require_feature("orders.returns.manage")
     payload = ReturnRequestUpdate(
         status=body.status,
         notes=body.resolution_notes if body.resolution_notes is not None else body.notes,
@@ -277,15 +285,16 @@ def update_return(
     payload: ReturnRequestUpdate,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.returns.manage")),
 ):
-    require_feature("orders.returns.manage")
     req = update_return_request(return_id, payload, _user_context(current_user), db)
     return _serialize_return(req)
 
 
 @router.put("/{return_id}/status")
-def update_return_status(return_id: int, status: str, notes: str = None,     _: dict = Depends(require_admin), db: Session = Depends(get_db)):
-    require_feature("orders.returns.manage")
+def update_return_status(return_id: int, status: str, notes: str = None,     _: dict = Depends(require_admin), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.returns.manage"))
+):
     payload = ReturnRequestUpdate(
         status=status,
         notes=notes,

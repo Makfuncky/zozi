@@ -40,7 +40,7 @@ from domains.hr.models.employee_models import Employee
 from domains.comms.models.communication import EmailFolder, InternalEmail
 from domains.orders.models import Order, OrderItem
 from domains.catalogger.models.products import Category, Product, Review
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.finance.services.commission.commission_engine import get_global_config, seed_defaults
 from infrastructure.utils.auth import get_password_hash
 
@@ -300,8 +300,7 @@ def _wipe_data():
                     raise ValueError(f"Invalid table name: {table}")
                 if table not in valid_tables:
                     continue
-                quoted_table = db.get_bind().dialect.identifier_preparer.quote_identifier(table)
-                db.execute(text("DELETE FROM " + quoted_table))
+                db.execute(text(f"DELETE FROM {table}"))
             except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError) as e:
                 logger.exception("_wipe_data_failed", error=str(e))
         db.commit()

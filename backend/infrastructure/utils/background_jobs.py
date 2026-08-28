@@ -111,8 +111,8 @@ def _store_job(payload: dict[str, Any]) -> None:
                 json.dumps(payload, default=str),
             )
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis _store_job failed: %s", exc)
 
     with _JOB_LOCK:
         now = time.monotonic()
@@ -130,8 +130,8 @@ def get_job(job_id: str) -> dict[str, Any] | None:
                 if isinstance(raw, (bytes, bytearray)):
                     raw = raw.decode("utf-8")
                 return json.loads(raw)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis get_job failed: %s", exc)
 
     with _JOB_LOCK:
         now = time.monotonic()
@@ -174,8 +174,8 @@ def _check_idempotency(dedup_key: str, ttl: int) -> dict[str, Any] | None:
                 raw = existing.decode("utf-8") if isinstance(existing, bytes) else existing
                 return json.loads(raw)
             return None
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis _check_idempotency failed: %s", exc)
 
     with _JOB_LOCK:
         for _, (expires_at, job) in list(_MEMORY_JOBS.items()):
@@ -193,8 +193,8 @@ def _set_dedup_key(dedup_key: str, payload: dict[str, Any], ttl: int) -> None:
         try:
             redis_client.setex(storage_key, ttl, json.dumps(payload, default=str))
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis _set_dedup_key failed: %s", exc)
 
 
 def _clear_dedup_key(dedup_key: str) -> None:
@@ -202,8 +202,8 @@ def _clear_dedup_key(dedup_key: str) -> None:
     if redis_client is not None:
         try:
             redis_client.delete(f"bg-dedup:{dedup_key}")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis _clear_dedup_key failed: %s", exc)
 
 
 def enqueue_job(

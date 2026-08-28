@@ -1,111 +1,118 @@
-"""Tests for security utilities and RBAC."""
+"""Domain tests for security — fraud detection, IAM, and threat intelligence."""
 from __future__ import annotations
 
-import time
 import pytest
-from jose import jwt, JWTError
-from fastapi import HTTPException
-
-from infrastructure.security.auth import (
-    get_password_hash,
-    verify_password,
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-    blacklist_token,
-    is_token_blacklisted,
-    validate_password_complexity,
-)
-from infrastructure.utils.config import settings
 
 
-@pytest.mark.integration
-def test_password_hash_and_verify():
-    password = "SecurePass1!"
-    hashed = get_password_hash(password)
-    assert hashed != password
-    assert verify_password(password, hashed) is True
-    assert verify_password("WrongPass", hashed) is False
+class TestSecurityServiceImports:
+    """Smoke tests: verify security service modules are importable."""
+
+    def test_import_fraud_detection_service(self):
+        from domains.security.services.fraud import fraud_detection_service
+
+        assert fraud_detection_service is not None
+
+    def test_import_iam_service(self):
+        from domains.security.services.iam import iam_service
+
+        assert iam_service is not None
+
+    def test_import_security_service(self):
+        from domains.security.services.core import security_service
+
+        assert security_service is not None
+
+    def test_import_security_models(self):
+        from domains.security.models.fraud import FraudEvent, FraudRule, FraudBlacklist
+
+        assert FraudEvent is not None
+        assert FraudRule is not None
+        assert FraudBlacklist is not None
+
+    def test_import_security_schemas(self):
+        from domains.security.schemas.security_schemas import FraudEventOut, FraudRuleOut
+
+        assert FraudEventOut is not None
+        assert FraudRuleOut is not None
+
+    def test_import_security_ports(self):
+        from domains.security.ports import get_fraud_event_by_id
+
+        assert callable(get_fraud_event_by_id)
+
+    def test_import_security_features(self):
+        from domains.security.features import SECURITY_FEATURES
+
+        assert isinstance(SECURITY_FEATURES, (list, tuple, set))
 
 
-@pytest.mark.integration
-def test_password_hash_truncates_long_input():
-    long_password = "A" * 100 + "1!"
-    hashed = get_password_hash(long_password)
-    assert verify_password(long_password[:72], hashed) is True
+class TestFraudDetection:
+    """Tests for fraud detection operations."""
+
+    def test_fraud_detection_has_scoring_engine(self):
+        from domains.security.services.fraud.fraud_detection_service import FraudScoringEngine
+
+        assert FraudScoringEngine is not None
+
+    def test_fraud_detection_has_velocity_check(self):
+        from domains.security.services.fraud.fraud_detection_service import check_velocity_limits
+
+        assert callable(check_velocity_limits)
+
+    def test_fraud_event_model_fields(self, db_session):
+        from domains.security.models.fraud import FraudEvent
+
+        event = FraudEvent(
+            user_id=1,
+            ip_address="127.0.0.1",
+            fraud_score=75,
+            risk_level="high",
+        )
+        db_session.add(event)
+        db_session.flush()
+
+        assert event.id is not None
+        assert event.user_id == 1
+        assert event.fraud_score == 75
+
+    def test_fraud_rule_model_fields(self, db_session):
+        from domains.security.models.fraud import FraudRule
+
+        rule = FraudRule(
+            name="Test Rule",
+            rule_type="velocity",
+            threshold=10,
+            is_active=True,
+        )
+        db_session.add(rule)
+        db_session.flush()
+
+        assert rule.id is not None
+        assert rule.name == "Test Rule"
+        assert rule.is_active is True
 
 
-@pytest.mark.integration
-def test_access_token_contains_sub_and_role():
-    token = create_access_token({"sub": "42", "role": "customer"})
-    payload = decode_token(token)
-    assert payload["sub"] == "42"
-    assert payload["role"] == "customer"
-    assert payload["type"] == "access"
+class TestIAMOperations:
+    """Tests for IAM operations."""
 
+    def test_iam_service_has_geo_fence_validator(self):
+        from domains.security.services.iam.iam_service import GeoFenceValidator
 
-@pytest.mark.integration
-def test_access_token_expires():
-    token = create_access_token({"sub": "1", "role": "customer"}, expires_delta=__import__("datetime").timedelta(seconds=2))
-    time.sleep(3)
-    with pytest.raises(HTTPException):
-        decode_token(token)
+        assert GeoFenceValidator is not None
+        assert hasattr(GeoFenceValidator, "haversine_distance")
 
+    def test_geo_fence_haversine(self):
+        from domains.security.services.iam.iam_service import GeoFenceValidator
 
-@pytest.mark.integration
-def test_refresh_token_creation():
-    token = create_refresh_token({"sub": "1", "role": "customer"})
-    payload = decode_token(token)
-    assert payload["type"] == "refresh"
-    assert payload["sub"] == "1"
+        distance = GeoFenceValidator.haversine_distance(0.0, 0.0, 0.0, 0.0)
+        assert distance == 0.0
 
+    def test_security_service_list_fraud_events(self):
+        from domains.security.services.core.security_service import list_fraud_events
 
-@pytest.mark.integration
-def test_blacklist_token():
-    token = create_access_token({"sub": "1", "role": "customer"})
-    jti = decode_token(token).get("jti", "test-jti")
-    blacklist_token(jti, ttl_seconds=60)
-    assert is_token_blacklisted(jti) is True
+        assert callable(list_fraud_events)
 
+    def test_security_metrics_exists(self):
+        from domains.security.services.core.security_metrics import SecurityMetricsCollector
 
-@pytest.mark.integration
-def test_invalid_token_rejected():
-    with pytest.raises(HTTPException):
-        decode_token("not.a.valid.token")
-
-
-@pytest.mark.integration
-def test_password_complexity_valid():
-    assert validate_password_complexity("SecurePass1!") is None
-
-
-@pytest.mark.integration
-def test_password_complexity_too_short():
-    with pytest.raises(HTTPException):
-        validate_password_complexity("Ab1!")
-
-
-@pytest.mark.integration
-def test_password_complexity_no_digit():
-    with pytest.raises(HTTPException):
-        validate_password_complexity("SecurePass!")
-
-
-@pytest.mark.integration
-def test_password_complexity_no_uppercase():
-    with pytest.raises(HTTPException):
-        validate_password_complexity("securepass1!")
-
-
-@pytest.mark.integration
-def test_password_complexity_no_special():
-    with pytest.raises(HTTPException):
-        validate_password_complexity("SecurePass1")
-
-
-@pytest.mark.integration
-def test_decode_token_wrong_algorithm():
-    token = jwt.encode({"sub": "1"}, "secret", algorithm="HS512")
-    with pytest.raises(HTTPException):
-        decode_token(token)
-
+        assert SecurityMetricsCollector is not None

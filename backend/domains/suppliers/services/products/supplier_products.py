@@ -1,6 +1,16 @@
 """Supplier sub-module — imports shared helpers from supplier_shared."""
 
+from datetime import datetime
+from typing import Any, List, Optional, cast
+
+from fastapi import HTTPException, UploadFile
+from sqlalchemy import func
+from sqlalchemy.orm import Session, selectinload
+
+from infrastructure.utils.pagination import keyset_offset_window
+from domains.catalog.models.products import Product
 from domains.suppliers.services.supplier_shared import (
+    _UNSET,
     _build_list_page_payload,
     _build_supplier_product_payload,
     _normalize_optional_product_text,
@@ -18,12 +28,13 @@ def get_supplier_products(current_user: dict, db: Session, limit: Optional[int] 
         Product.is_deleted == False,  # noqa: E712
     )
     total = base_query.count()
-    query = base_query.order_by(Product.created_at.desc())
-    if offset:
-        query = query.offset(offset)
-    if limit is not None:
-        query = query.limit(limit)
-    products = query.all()
+    sort_keys = [(Product.created_at, "desc"), (Product.id, "desc")]
+    products = keyset_offset_window(
+        base_query,
+        sort_keys=sort_keys,
+        offset=offset,
+        limit=limit if limit is not None else 100,
+    )
 
     product_ids = [cast(int, product.id) for product in products]
     sales_rows = (
@@ -82,13 +93,12 @@ def get_supplier_product(product_id: int, current_user: dict, db: Session) -> di
 
 def _save_upload(file: UploadFile, supplier_id: int, country_code: str = None, product_id: int = None, db: Session = None) -> str:
     """Save an uploaded product media file using hierarchical path structure."""
-    from domains.comms.services.media_service import save_product_media
+    from domains.comms.ports import auto_process_image, save_product_media, save_supplier_media
     return save_product_media(file, db=db, supplier_id=supplier_id, country_code=country_code, product_id=product_id or 0, is_main=False)
 
 
 def _save_supplier_profile_media_upload(file: UploadFile, supplier_id: int, field: str, country_code: str = None, db: Session = None) -> str:
     """Save supplier profile media using hierarchical path structure."""
-    from domains.comms.services.media_service import save_supplier_media
     return save_supplier_media(file, db=db, supplier_id=supplier_id, country_code=country_code, media_type=field.replace("_url", ""))
 
 
@@ -102,7 +112,7 @@ def _process_image_with_tools(data: bytes, tools: dict, bg_preset: Optional[str]
         return data
     if bg_preset:
         try:
-            from domains.finance.services.shared.bg_removal_service import remove_background
+            from domains.finance.ports import remove_background
             data = remove_background(data, strategy=bg_preset)
         except Exception as exc:
             logger.warning("bg_preset application failed, using original: %s", exc)
@@ -111,7 +121,6 @@ def _process_image_with_tools(data: bytes, tools: dict, bg_preset: Optional[str]
     if not enabled:
         return data
     try:
-        from domains.comms.services.free_image_tools import auto_process_image
         return auto_process_image(data, tools=enabled)
     except Exception as exc:
         logger.warning("Image processing failed: %s", exc)

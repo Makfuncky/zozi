@@ -23,7 +23,10 @@ class ShiftHandoverLog(Base):
     notes = Column(Text, nullable=True)
     handover_to_user_id = Column(Integer, nullable=True)
     handover_notes = Column(Text, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     user = relationship("User", foreign_keys=[user_id])
     country = relationship("CountryConfig")
@@ -31,7 +34,7 @@ class ShiftHandoverLog(Base):
 
 
 class PaymentOrchestratorSync(Base):
-    __tablename__ = "payment_orchestrator_sync"
+    __tablename__ = "payment_orchestrator_syncs"
     __table_args__ = (
         UniqueConstraint("country_code", "gateway_id", name="uq_pos_country_gateway"),
         Index("ix_pos_status", "status"), {"schema": "country"})
@@ -47,14 +50,15 @@ class PaymentOrchestratorSync(Base):
     supported_payment_methods = Column(Text, nullable=True)
     last_sync_at = Column(DateTime, nullable=True)
     status = Column(String(20), default="active")
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     country = relationship("CountryConfig")
 
 
 class SupplierOnboardingSync(Base):
-    __tablename__ = "supplier_onboarding_sync"
+    __tablename__ = "supplier_onboarding_syncs"
     __table_args__ = (
         UniqueConstraint("country_code", "supplier_id", name="uq_sos_country_supplier"),
         Index("ix_sos_status", "status"), {"schema": "country"})
@@ -68,8 +72,9 @@ class SupplierOnboardingSync(Base):
     monthly_fee_status = Column(String(20), default="pending")
     status = Column(String(20), default="pending")
     notes = Column(Text, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     country = relationship("CountryConfig")
     supplier = relationship("User")
@@ -107,8 +112,9 @@ class DataResidencyRecord(Base):
     compliance_status = Column(String(30), default="pending")
     last_audit_at = Column(DateTime, nullable=True)
     next_audit_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     country = relationship("CountryConfig")
 
@@ -125,8 +131,9 @@ class CountryMapConfig(Base):
     default_zoom = Column(Integer, default=5)
     show_regions = Column(Boolean, default=True)
     show_cities = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     country = relationship("CountryConfig")
 
@@ -144,7 +151,9 @@ class ShopWarehouseLocation(Base):
     longitude = Column(Float, nullable=True)
     address = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     country = relationship("CountryConfig")
 
@@ -162,7 +171,9 @@ class LogisticsPartnerLocation(Base):
     longitude = Column(Float, nullable=True)
     address = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     partner = relationship("LogisticsPartner")
     country = relationship("CountryConfig")
@@ -181,7 +192,9 @@ class ParcelLocationTracker(Base):
     longitude = Column(Float, nullable=True)
     location_name = Column(String(200), nullable=True)
     timestamp = Column(DateTime, default=_utcnow)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
     parcel = relationship("Shipment")
     country = relationship("CountryConfig")

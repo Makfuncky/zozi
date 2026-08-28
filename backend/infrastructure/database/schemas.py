@@ -344,6 +344,9 @@ class SupplierProfileUpdate(BaseModel):
     postal_code: Optional[str] = None
     phone_business: Optional[str] = None
     verification_status: Optional[str] = None
+    phone: Optional[str] = None
+    business_address: Optional[str] = None
+    established_year: Optional[int] = None
 
 class SupplierProfileOut(OrmBase):
     id: int

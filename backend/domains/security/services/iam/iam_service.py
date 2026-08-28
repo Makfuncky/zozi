@@ -12,15 +12,14 @@ from math import radians, sin, cos, sqrt, atan2
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import User
-from domains.governance.models.user import UserDevice
+from domains.governance.ports import User, UserDevice
 
 # Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
 _LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
-    "Employee": ("domains.hr.models.employee_models", "Employee"),
-    "Office": ("domains.hr.models.employee_models", "Office"),
-    "GeoFenceLog": ("domains.hr.models.employee_models", "GeoFenceLog"),
-    "DynamicQRSession": ("domains.hr.models.employee_models", "DynamicQRSession"),
+    "Employee": ("domains.hr.ports", "employee_model"),
+    "Office": ("domains.hr.ports", "office_model"),
+    "GeoFenceLog": ("domains.hr.ports", "geo_fence_log_model"),
+    "DynamicQRSession": ("domains.hr.ports", "dynamic_qr_session_model"),
 }
 _IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
 
@@ -284,7 +283,8 @@ def create_iam_service(db: Session) -> IAMService:
 
 def generate_qr_code(user_id: int, purpose: str = "access") -> str:
     """Generate a QR code token for mobile access."""
-    from domains.hr.models.employee_models import DynamicQRSession
+    from domains.hr.ports import dynamic_qr_session_model
+    DynamicQRSession = dynamic_qr_session_model()
     from infrastructure.utils.datetime_utils import utcnow
     from datetime import timedelta
     

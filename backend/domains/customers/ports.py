@@ -16,10 +16,7 @@ from sqlalchemy.orm import Session
 # Shipping quotes are owned by the orders domain; re-exported here so the
 # customer module routers import them from customers.ports instead of
 # directly from domains.orders.services.
-from domains.orders.services.cart_legacy_service import (  # noqa: F401
-    CartShippingQuoteRequest,
-    get_cart_shipping_quote,
-)
+from domains.orders.ports import CartShippingQuoteRequest, get_cart_shipping_quote
 
 
 def get_may_you_like(db: Session, user_id: int, limit: int = 8) -> list:
@@ -168,3 +165,33 @@ __all__ = [
     "create_wishlist_item",
     "delete_wishlist_item",
 ]
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "get_user_address": ("domains.customers.services.commerce_read_service", "get_user_address"),
+    "list_user_addresses": ("domains.customers.services.commerce_read_service", "list_user_addresses"),
+    "create_address": ("domains.customers.services.commerce_write_service", "create_address"),
+    "delete_address": ("domains.customers.services.commerce_write_service", "delete_address"),
+    "set_default_address": ("domains.customers.services.commerce_write_service", "set_default_address"),
+    "unset_other_default_addresses": ("domains.customers.services.commerce_write_service", "unset_other_default_addresses"),
+    "update_address": ("domains.customers.services.commerce_write_service", "update_address"),
+    "_normalize_address_payload": ("domains.customers.services.customer_router_service", "_normalize_address_payload"),
+    "_serialize_address": ("domains.customers.services.customer_router_service", "_serialize_address"),
+    "ConnectionManager": ("domains.customers.services.public_comms_status_service", "ConnectionManager"),
+    "UserConnectionManager": ("domains.customers.services.public_comms_status_service", "UserConnectionManager"),
+    "_decode_ws_token": ("domains.customers.services.public_comms_status_service", "_decode_ws_token"),
+    "websocket_chat": ("domains.customers.services.public_comms_status_service", "websocket_chat"),
+}
+import importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

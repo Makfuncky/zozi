@@ -5066,28 +5066,6 @@ Here are the **project rules and decisions** we've established:
 
 ---------------------------------------------------------------
 
----------------------------------------------------------------
-> COMPLETE SYSTEM PROBLEM INVESTIGATION PROMPT: 
----------------------------------------------------------------
-**Objective**: 
-- Do the complete investigation and inspection of `backend` and `frontend` of the problems.
-**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`
-**Target**: 
-- find out what are broken, need enhancement, improvement, wriing problem, architecture problem, logic problem, security problem, domain structure, infrastructure, rbac, providers, modules, backend and frontend wiring, violation of the architecture, errors, wrong imports, wrong logic to be correct, any duplication problems, enhancement of the logic, database problem, database connection problem, table problem and alignment issues and head of the table, security issues, concurrent handling, error handling, 100Ks user handling at a time and etc.
-- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.  
-- Use maximum sub-agent to identify the problem accurately and give them clear instructions to identify problem.
-
----------------------------------------------------------------
-> COMPLETE DOMAIN & SERVICES INVESTIGATION PROMPT: 
----------------------------------------------------------------
-
-**Objective**: 
-- Do the complete investigation and inspection of `backend/domains/**` and find problems.
-**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`
-**Target**: 
-- find out what are `broken`, `need enhancement`, `improvement`, `logical improvement`, `wriing problem`, `cross domain import problem`, `architecture problem`, `logic problem`, `security problem`, `domain structure`, `infrastructure connection`, `rbac connection`, `providers tools using connection`, `models problems`, `modules connection problem`,`violation of the architecture`, `code errors`, `wrong imports`, `wrong logic to be correct`, `logics to be improve and enhance`, `any duplication problems`, `database problem`, `database connection problem`, `table problem and alignment issues and head of the table`, `security issues`, `concurrent handling`, `error handling`, `100Ks user handling at a time` and etc.
-- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.
-- Use maximum sub-agent to identify the problem accurately and give them clear instructions to identify problem.
 
 ---------------------------------------------------------------
 > COMPLETE FULL CODEBASE `SOLVER` PROMPT: 
@@ -5109,48 +5087,80 @@ Here are the **project rules and decisions** we've established:
 - then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
 
 ---------------------------------------------------------------
-> COMPLETE FULL CODEBASE `SOLVER` PROMPT: 
----------------------------------------------------------------
-
-**Objective**: 
-- Resolve all the problems mentioned into `BACKEND_ARCHITECTURE_DIAGNOSIS.md`.
-
-**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`
-
-**Process**: 
-- let's proceed to reslove all the problem mentioned into  `BACKEND_ARCHITECTURE_DIAGNOSIS.md` after verifcation of correctness.
-- Read Backend completely while resolving the problems.
-- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
-- You are not allowed to make any mistake and ensure problem is resolved completely.
-- Run Maximum number of sub-agent to resolve the problem accurately and give them clear and precise instructions to resolve particular problem becasue we can't afford any new error.
-- Run agents for Verification and check the status and if any problem still remaining.
-- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
-- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
-
-
----------------------------------------------------------------
-> COMPLETE MODULES & ROUTERS INVESTIGATION PROMPT: 
+> COMPLETE *BACKEND* INVESTIGATION PROMPT: 
 ---------------------------------------------------------------
 - Perform the complete investigation and inspection of `backend\domains\**`, `backend\modules\{m}\router{d}`
 - Perform the complete investigation and inspection of `backend\domains\**`, `backend\modules\**`, `backend\infrastructure\**`, `backend\modules\{m}\router{d}`.
 
 - Perform the complete investigation and inspection of `backend`.
-- Identify all problems, violations, and risks compared to `ARCHITECTURE_DIAGRAM.md`.  
-- Benchmark against `ARCHITECTURE_DIAGRAM.md` (must be read top to bottom).  
+- Identify all problems, violations, and risks compared to `ARCHITECTURE_DIAGRAM.md` Law and architecture which is $Benchmark$ 
+- `ARCHITECTURE_DIAGRAM.md` must be read top to bottom becasue it is $Benchmark$.  
 - Do the detail investigation and findout the problems of the `backend` according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
 - list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.  
-- Use maximum sub-agent to identify the problem accurately and give them clear instructions to identify problem.
+- Use maximum sub-agent at a time to identify the problem *accurately* and *faster* and give them clear instructions to identify problem correctly.
+- Our target is to achieve architecture clean and production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality and etc.
 
 **Categories of Problems to Investigate**
 - **Architecture & Wiring** : Violations of `ARCHITECTURE_DIAGRAM.md`, Cross‑domain imports breaking modular boundaries, Wrong layering (domain vs infrastructure vs modules), Misplaced files or functions
 - **Code Quality & Logic** : Broken functions, Wrong or outdated logic, Duplication of code, Hardcoding values, Poor error handling, Missing concurrency handling, Inefficient algorithms for scale (100k+ users)
-- **Domain & Module Structure**: Incorrect domain boundaries, Module connection problems, Models not aligned with domains, Providers/tools miswired, RBAC misconfigured or missing
+- **Domain & Module Structure**	: Incorrect domain boundaries, Module connection problems, Models not aligned with domains, Providers/tools miswired, RBAC misconfigured or missing
 - **Database & Data Layer** : Database connection problems, Table misalignment with architecture, Wrong schema design,  Head of table issues, Missing migrations or broken ORM logic, Security gaps in queries
-- **Security**: RBAC violations, Hardcoded secrets, Insecure imports or dependencies, Missing validation/sanitization, Improper error exposure, Weak authentication/authorization flows
+- **Security** : RBAC violations, Hardcoded secrets, Insecure imports or dependencies, Missing validation/sanitization, Improper error exposure, Weak authentication/authorization flows
 - **Infrastructure & Connections**: Broken infrastructure wiring, Wrong provider connections, Misconfigured external tools, API gateway or service mesh misalignment, Faulty dependency injection
 - **Performance & Scalability**: Inefficient handling of concurrent requests,  Poor caching strategy, Memory leaks, Slow database queries, No load balancing or failover logic
 - **Error & Exception Handling** : Missing try/catch or fallback logic, Improper logging, Silent failures, Wrong error propagation
 - **Testing & Validation** : Missing unit/integration tests, Broken test coverage, No validation against architecture rules, Outdated mocks/stubs
+
+---------------------------------------------------------------
+> COMPLETE FULL CODEBASE `SOLVER` PROMPT: 
+---------------------------------------------------------------
+
+**Objective**: 
+- Resolve all the problems mentioned into `docs/action/BACKEND_COMPLETE_DIAGNOSIS.md`.
+
+**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`  $Law$ is architecture $Benchmark$ (must read top to bottom).
+
+**Process**: 
+- let's proceed to reslove all the problem mentioned into  `docs/action/BACKEND_COMPLETE_DIAGNOSIS.md` after verifcation of correctness.
+- Read Backend completely while resolving the problems.
+- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
+- You are not allowed to make any mistake and ensure problem is resolved completely.
+- Preform extentive correction properly to keep in mind of alignment, security, scalability, and completion of missing functionality.
+- > Do the test and verification at each step after completion, to avoid drifting of Agent and keep aware of the alignment and correction (it is essential)
+- Run Maximum number of sub-agent to resolve the problem *accurately* and *faster* at a time and give them clear and precise instructions to resolve particular problem becasue we can't afford any new error.
+- Run agents for Verification and check the status and if any problem still remaining.
+- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
+- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
+
+---------------------------------------------------------------
+> COMPLETE *BACKEND* TESTING PROMPT: 
+---------------------------------------------------------------
+- **Target** : Create complete `test suite` files inside of `backend\tests\**` of all the `domains`, `modules`, `providers` and other related folders.  
+- Perform the complete investigation and inspection of `backend`.
+- Prepare all the `test files` according to risks compared to `ARCHITECTURE_DIAGRAM.md` -  $Law$ which is architecture $Benchmark$ 
+- Prepare all the `test files` according to the features and domain and with complete architecture understanding.
+- Keep all the test aligned, cleaned, well structure which can be properly identified later and useble.
+- There are several old test files which needs to merge, update, and etc becasue mostly are borken, not properly filed, not well structured and not covering all the aspects of the architectual requirement. do the complete investigation in detail regading all the test file and make a report according to your best suggestion.
+- Use maximum sub-agent at a time to identify the problem *accurately* and *faster* and give them clear instructions to identify problem correctly, but you have to keep on eye on each agent continuously.
+- Our target is to achieve architecture clean and production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality and etc.
+- run the test one by one and check the result and comapare with the benchmark and logical understand are correct or suggest what changes needed into the code according to the logic and architecture requirement.
+- I am sure there a range of logics damges available which needs to be align.
+
+
+
+**Categories of Problems to Investigate**
+- **Architecture & Wiring** : Violations of `ARCHITECTURE_DIAGRAM.md`, Cross‑domain imports breaking modular boundaries, Wrong layering (domain vs infrastructure vs modules), Misplaced files or functions
+- **Code Quality & Logic** : Broken functions, Wrong or outdated logic, Duplication of code, Hardcoding values, Poor error handling, Missing concurrency handling, Inefficient algorithms for scale (100k+ users)
+- **Domain & Module Structure**	: Incorrect domain boundaries, Module connection problems, Models not aligned with domains, Providers/tools miswired, RBAC misconfigured or missing
+- **Database & Data Layer** : Database connection problems, Table misalignment with architecture, Wrong schema design,  Head of table issues, Missing migrations or broken ORM logic, Security gaps in queries
+- **Security** : RBAC violations, Hardcoded secrets, Insecure imports or dependencies, Missing validation/sanitization, Improper error exposure, Weak authentication/authorization flows
+- **Infrastructure & Connections**: Broken infrastructure wiring, Wrong provider connections, Misconfigured external tools, API gateway or service mesh misalignment, Faulty dependency injection
+- **Performance & Scalability**: Inefficient handling of concurrent requests,  Poor caching strategy, Memory leaks, Slow database queries, No load balancing or failover logic
+- **Error & Exception Handling** : Missing try/catch or fallback logic, Improper logging, Silent failures, Wrong error propagation
+- **Testing & Validation** : Missing unit/integration tests, Broken test coverage, No validation against architecture rules, Outdated mocks/stubs
+ 
+
+
 
 ------------------------------------------------------------------------------------------
 > comms domain is architecturally clean but not production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality.
@@ -5180,10 +5190,6 @@ Here are the **project rules and decisions** we've established:
 ------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------
-
-
-
-
 
 - Some problem, I dignose which are services are not proper aligned and code & files of services are in worst shape. and all the relevant code of the catalog domain is not correctly placed and logically broken. not proper files names and not right plaement also. Now your turn to list down all the problem in detail. a range of architectural and logical violation and also logics are completely broken which must be accoding to a professional codes and for professional virtual market place and e-commerce. 
 - Handling of the database, table, security, wiring with other backend folders, using of `providers-tools` 
@@ -5271,12 +5277,6 @@ The architecture files is `ARCHITECTURE_DIAGRAM.md`
 
 
 
-
-
-
-
-
-
 -------------------------------------------------------------
 > __pycache__ clean command
 -------------------------------------------------------------
@@ -5285,6 +5285,46 @@ Get-ChildItem -Recurse -Filter "__pycache__" -Path "D:\Projects\10- E-COMMERCE W
 (Get-ChildItem -Recurse -Filter "__pycache__" -Path "D:\Projects\10- E-COMMERCE WEBSITE\zozi" -Directory -ErrorAction SilentlyContinue | Measure-Object).Count
 
 (Get-ChildItem -Recurse -Filter "*.pyc" -Path "D:\Projects\10- E-COMMERCE WEBSITE\zozi" -File -ErrorAction SilentlyContinue | Measure-Object).Count	
+
+-------------------------------------------------------------
+
+
+
+- `ARCTECTURE_DIAGRAM.md` must be handle 100Ks user at a time, 100% secure even AI- Agent can't breach the seacurity, database mechanism must be capabale to handle 100Ks users at a time, table have complete details regarding each domain and feature, Performance & Scalability must be avaiable, Error & Exception Handling must be properly followed, using high quality of technology and if I am missing anything which should be inside of ARCHITECTURE are available ?
+
+- Now you have read complete file `scripts\audit\full_system_audit.py` and align with the `ARCTECTURE_DIAGRAM.md`.
+- `scripts\audit\full_system_audit.py` must have all the 325 and other Law which must read complete codebase in detail and each piece of code and generate the report according to which we can take action and make changes.
+- `scripts\audit\full_system_audit.py` should to generate `.json` or `.txt` file which is easier for system to read.
+- My recommendation rewrite complete `scripts\audit\full_system_audit.py` and run and get `results` file and systamcilly verify all the `recommendation` are correct or not. if not correct, then edit and repeat them process until everything is alinged and correct.
+
+
+
+
+-------------------------------------------------------------
+
+
+-------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

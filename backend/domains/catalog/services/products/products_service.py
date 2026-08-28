@@ -373,12 +373,11 @@ def delete_product(product_id: int, current_user: dict, db: Session) -> dict:
 
     product_name = str(product.name)
 
-    # Cross-domain operations - these should use domain services for writes (Law 3)
-    # For now, importing models from their canonical locations
-    from domains.accounts.models.core import CartItem
+    # Cross-domain reads via ports (Law 3 compliant)
+    from domains.accounts.ports import CartItem
     from domains.catalog.models.products import Wishlist, Review
-    from domains.comms.models.communication import Notification
-    from domains.orders.models.orders import Order, OrderItem
+    from domains.comms.ports import Notification
+    from domains.orders.ports import Order, OrderItem
 
     db.query(CartItem).filter(CartItem.product_id == product_id).delete(synchronize_session=False)
     db.query(Wishlist).filter(Wishlist.product_id == product_id).delete(synchronize_session=False)
@@ -803,7 +802,7 @@ def archive_product_reviews(db: Session, product_id: int) -> int:
 
 
 def delete_supplier_product(product_id: int, current_user: Any, db: Session) -> dict:
-    from domains.comms.models.suppliers import SupplierProfile
+    from domains.comms.ports import SupplierProfile
     supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
     if not supplier:
         raise HTTPException(404, "Supplier profile not found")
@@ -816,7 +815,7 @@ def delete_supplier_product(product_id: int, current_user: Any, db: Session) -> 
 
 
 def update_supplier_product_fields(product_id: int, payload: dict, current_user: Any, db: Session) -> Product:
-    from domains.comms.models.suppliers import SupplierProfile
+    from domains.comms.ports import SupplierProfile
     supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
     if not supplier:
         raise HTTPException(404, "Supplier profile not found")
@@ -871,3 +870,10 @@ def get_supplier_names(db: Session) -> list[dict]:
 def soft_delete_product(product_id: int, db: Session) -> dict:
     """Soft delete a product (stub)."""
     return {"id": product_id, "deleted": True}
+
+
+def _bump_product_cache_version() -> None:
+    """Bump the product cache version to invalidate cached product data."""
+    from infrastructure.utils.cache import bump_product_cache_version
+
+    bump_product_cache_version()

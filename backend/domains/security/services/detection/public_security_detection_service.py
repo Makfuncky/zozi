@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.security.models.fraud import FraudEvent
 from domains.security.models.fraud import FraudBlacklist
 from domains.security.models.fraud import FraudRule

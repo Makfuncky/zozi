@@ -13,10 +13,10 @@ from fastapi import Body, Depends, HTTPException, Query, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import Address
 from domains.governance.models.admin import CouponUsage
-from domains.catalog.models.promotions import Coupon
-from domains.accounts.services.auth.auth_service import get_current_user
+from domains.promotions.models.promotions import Coupon
+from domains.accounts.ports import get_current_user
+from domains.governance.ports import create_address
 from infrastructure.database.database import get_db
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
@@ -90,26 +90,22 @@ def create_address(
     is_default: bool = False,
     label: Optional[str] = None,
     phone: Optional[str] = None,
-) -> Address:
+):
     """Persist a new customer address and return the saved row."""
-    country_code = (country or "US").upper()
-    address = Address(
-        user_id=user_id,
-        full_name=full_name,
-        address_line1=address_line1,
-        city=city,
-        state=state,
-        postal_code=postal_code,
-        country=country,
-        country_code=country_code,
-        is_default=bool(is_default),
-        label=label,
-        phone=phone,
-    )
     try:
-        db.add(address)
-        db.commit()
-        db.refresh(address)
+        return create_address(
+            db,
+            user_id=user_id,
+            full_name=full_name,
+            address_line1=address_line1,
+            city=city,
+            state=state,
+            postal_code=postal_code,
+            country=country,
+            is_default=is_default,
+            label=label,
+            phone=phone,
+        )
     except IntegrityError as exc:
         db.rollback()
         logger.warning("create_address integrity_error user_id=%s: %s", user_id, exc)
@@ -118,7 +114,6 @@ def create_address(
         db.rollback()
         logger.error("create_address unexpected_error user_id=%s: %s", user_id, exc)
         raise HTTPException(status_code=500, detail="Failed to create address") from exc
-    return address
 
 
 def update_address(db: Session, address: Address, updates: dict) -> Address:
@@ -281,19 +276,35 @@ def create_coupon(request: Request, payload: dict | None = Body(default=None), _
     usage_limit = None
     if usage_limit_raw not in (None, '', 'none', 'null', 'nan'):
         usage_limit = _to_int(usage_limit_raw)
-    coupon = Coupon(code=code, title=payload.get('title'), description=payload.get('description'), discount_type=discount_type, value=discount_value, discount_value=discount_value, maximum_discount=payload.get('maximum_discount'), min_order=minimum_order, minimum_order=minimum_order, max_uses=usage_limit, usage_limit=usage_limit, per_user_limit=payload.get('per_user_limit'), applicable_to=payload.get('applicable_to'), is_active=bool(payload.get('is_active', True)), starts_at=payload.get('starts_at'), expires_at=payload.get('expires_at'))
-    coupon.discount_type = _normalize_discount_type(coupon.discount_type) or 'percent'
-    db.add(coupon)
+    from domains.catalog.ports import create_coupon as _catalog_create_coupon
     try:
-        db.commit()
+        coupon = _catalog_create_coupon(
+            db,
+            code=code,
+            title=payload.get('title'),
+            description=payload.get('description'),
+            discount_type=discount_type,
+            value=str(discount_value),
+            discount_value=str(discount_value),
+            maximum_discount=payload.get('maximum_discount'),
+            min_order=str(minimum_order),
+            minimum_order=str(minimum_order),
+            max_uses=usage_limit,
+            usage_limit=usage_limit,
+            per_user_limit=payload.get('per_user_limit'),
+            applicable_to=payload.get('applicable_to'),
+            is_active=bool(payload.get('is_active', True)),
+            starts_at=payload.get('starts_at'),
+            expires_at=payload.get('expires_at'),
+        )
     except IntegrityError as exc:
         db.rollback()
-        normalized_discount_type = _normalize_discount_type(coupon.discount_type)
-        if normalized_discount_type is None:
-            raise exc
-        coupon.discount_type = normalized_discount_type
-        db.add(coupon)
-        db.commit()
+        logger.warning("create_coupon integrity_error code=%s: %s", code, exc)
+        raise HTTPException(status_code=409, detail="Coupon could not be created due to a constraint violation") from exc
+    except Exception as exc:
+        db.rollback()
+        logger.error("create_coupon unexpected_error code=%s: %s", code, exc)
+        raise HTTPException(status_code=500, detail="Failed to create coupon") from exc
     db.refresh(coupon)
     return coupon
 

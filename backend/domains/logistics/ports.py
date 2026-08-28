@@ -147,6 +147,11 @@ def shipment_query(db: Session) -> object:
     """Return a base ``Shipment`` query for sanctioned cross-domain delegation."""
     return db.query(Shipment)
 
+
+def shipment_event_query(db: Session) -> object:
+    """Return a base ``ShipmentEvent`` query for sanctioned cross-domain delegation."""
+    return db.query(ShipmentEvent)
+
 def logistics_partner_service_area_query(db: Session) -> object:
     """Return a base ``LogisticsPartnerServiceArea`` query for sanctioned cross-domain delegation."""
     return db.query(LogisticsPartnerServiceArea)
@@ -164,6 +169,16 @@ def logistics_partner_model() -> type:
 def shipment_model() -> type:
     """Return the ``Shipment`` model class (for column reference only)."""
     return Shipment
+
+
+def shipment_event_model() -> type:
+    """Return the ``ShipmentEvent`` model class (for column reference only)."""
+    return ShipmentEvent
+
+
+def logistics_partner_service_area_model() -> type:
+    """Return the ``LogisticsPartnerServiceArea`` model class (for column reference only)."""
+    return LogisticsPartnerServiceArea
 
 
 def logistics_partner_service_area_model() -> type:
@@ -211,3 +226,36 @@ from domains.logistics.services.partners.logistics_partner_service import (  # n
     get_partner_profile,
     update_partner_profile,
 )
+
+# --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers import these from ports instead of reaching
+# into the services tree directly.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "review_logistics_partner_service_area": ("domains.logistics.services.partners.service", "review_logistics_partner_service_area"),
+    "create_logistics_partner_service_area": ("domains.logistics.services.partners.service", "create_logistics_partner_service_area"),
+    "update_logistics_partner_service_area": ("domains.logistics.services.partners.service", "update_logistics_partner_service_area"),
+    "delete_logistics_partner_service_area": ("domains.logistics.services.partners.service", "delete_logistics_partner_service_area"),
+    "normalize_country_code": ("domains.logistics.services.partners.service", "normalize_country_code"),
+    "quote_shipping_for_destination": ("domains.logistics.services.partners.service", "quote_shipping_for_destination"),
+    "normalize_city_name": ("domains.logistics.services.partners.service", "normalize_city_name"),
+    "partner_can_service_order": ("domains.logistics.services.partners.service", "partner_can_service_order"),
+    "partner_is_profile_approved": ("domains.logistics.services.partners.service", "partner_is_profile_approved"),
+    "serialize_category_pricing_rule": ("domains.logistics.services.partners.service", "serialize_category_pricing_rule"),
+    "serialize_pricing_profile": ("domains.logistics.services.partners.service", "serialize_pricing_profile"),
+    "serialize_service_area": ("domains.logistics.services.partners.service", "serialize_service_area"),
+    "serialize_vehicle_rule": ("domains.logistics.services.partners.service", "serialize_vehicle_rule"),
+}
+
+import importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+

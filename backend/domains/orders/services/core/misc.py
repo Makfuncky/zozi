@@ -37,7 +37,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.promotions import Banner
+from domains.promotions.models.promotions import Banner
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -127,7 +127,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import CategoryCreate, CategoryOut, CategoryUpdate, MessageResponse
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Category
 
 from infrastructure.utils.dependencies import require_admin
@@ -294,8 +294,7 @@ def list_addresses(db: Session, user_id: int, limit: int = 100, offset: int = 0)
 
 
 def create_address(db: Session, user_id: int, payload: dict) -> dict:
-    from domains.customers.services.commerce_write_service import create_address as create_address_db
-    from domains.customers.services.commerce_write_service import unset_other_default_addresses
+from domains.customers.ports import create_address, delete_address, set_default_address, unset_other_default_addresses, update_address
     
     normalized = _normalize_address_payload(payload)
     if normalized.get("is_default"):
@@ -329,8 +328,6 @@ def create_address(db: Session, user_id: int, payload: dict) -> dict:
 
 
 def update_address(db: Session, address_id: int, user_id: int, payload: dict) -> dict:
-    from domains.customers.services.commerce_write_service import update_address as update_address_db
-    from domains.customers.services.commerce_write_service import unset_other_default_addresses
     
     address = _get_user_address(address_id, user_id, db)
     updates = _normalize_address_payload(payload, partial=True)
@@ -343,7 +340,6 @@ def update_address(db: Session, address_id: int, user_id: int, payload: dict) ->
 
 
 def delete_address(db: Session, address_id: int, user_id: int) -> dict:
-    from domains.customers.services.commerce_write_service import delete_address
     
     address = _get_user_address(address_id, user_id, db)
     delete_address(db, address)
@@ -351,8 +347,6 @@ def delete_address(db: Session, address_id: int, user_id: int) -> dict:
 
 
 def set_default_address(db: Session, address_id: int, user_id: int) -> dict:
-    from domains.customers.services.commerce_write_service import unset_other_default_addresses
-    from domains.customers.services.commerce_write_service import set_default_address as set_default_address_db
     
     unset_other_default_addresses(db, user_id, address_id)
     address = _get_user_address(address_id, user_id, db)
@@ -376,7 +370,7 @@ from sqlalchemy.orm import Session
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeWorkLog
 from domains.hr.models.employee_models import EmployeeAttendance
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.finance.models.finance import TreasuryAccount
 
 logger = logging.getLogger("zozi.ghost_watchdog")
@@ -501,7 +495,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import SupplierDocumentOut
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.comms.models.suppliers import SupplierDocument
 from domains.comms.models.suppliers import SupplierProfile
 

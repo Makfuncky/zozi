@@ -6,7 +6,7 @@ from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product, WishlistItem
+from domains.catalog.ports import Product, WishlistItem
 from domains.customers.services.wishlist_read_service import (
     get_user_wishlist as _get_user_wishlist,
     get_wishlist_item_by_product,

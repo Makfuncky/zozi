@@ -224,7 +224,7 @@ def respond_to_shipment_confirmation(
             # ── Cash Management: create settlements when order is delivered ──
             if new_order_status == "delivered":
                 try:
-                    from domains.finance.services.treasury.cash_management_service import create_settlements_on_delivery
+from domains.finance.ports import create_settlements_on_delivery
                     create_settlements_on_delivery(order, db)
                 except Exception:
                     logger.exception("Failed to create settlements for delivered order %s", order.id)
@@ -259,7 +259,7 @@ def respond_to_shipment_confirmation(
     db.refresh(confirmation)
     if decision == "accepted":
         try:
-            from domains.comms.services.transactional_email_service import enqueue_shipment_status_email
+from domains.comms.ports import enqueue_shipment_status_email
 
             enqueue_shipment_status_email(cast(int, shipment.id), event_type=cast(str, confirmation.requested_event_type))
         except Exception:

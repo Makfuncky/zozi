@@ -64,10 +64,9 @@ def log_security_event(
         logger.warning("Unknown security event type: %s", action)
 
     from infrastructure.database.database import get_service_session
-    from domains.governance import ports as governance_ports
+    from domains.audit.ports import AuditLog
     try:
         with get_service_session() as db:
-            AuditLog = getattr(governance_ports, "AuditLog")
             entry = AuditLog(
                 user_id=user_id,
                 username=username,

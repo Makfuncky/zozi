@@ -262,7 +262,7 @@ def get_supplier_profile(current_user: dict, db: Session) -> dict:
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
 
     total_products = db.query(Product).filter(Product.supplier_id == current_user["id"]).count()
@@ -302,7 +302,7 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -347,7 +347,7 @@ def request_verification(current_user: dict, db: Session) -> dict:
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -1069,6 +1069,8 @@ async def bulk_upload_products(
         ai_description: Optional[str] = None
         if use_ai:
             try:
+                from providers.ai import ai_service
+
                 suggested_cat = ai_service.suggest_category(name, description)
                 if not category:
                     category = suggested_cat
@@ -1217,7 +1219,7 @@ def _public_supplier_slug(profile, user: User) -> str:
 
 
 def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -1228,7 +1230,7 @@ def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
 
 
 def update_supplier_profile_business(body: dict, current_user: dict, db: Session) -> dict:
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -1269,7 +1271,7 @@ def upload_supplier_profile_business_media(
     db: Session,
     index: Optional[int] = None,
 ) -> dict:
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
 
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
@@ -1316,7 +1318,7 @@ def upload_supplier_profile_business_media(
 
 
 def accept_supplier_terms(current_user: dict, db: Session) -> dict:
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"])
@@ -1329,7 +1331,7 @@ def accept_supplier_terms(current_user: dict, db: Session) -> dict:
 
 
 def get_supplier_onboarding_status(current_user: dict, db: Session) -> dict:
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     products_count = db.query(Product).filter(
         Product.supplier_id == current_user["id"],
@@ -1348,7 +1350,7 @@ def get_supplier_onboarding_status(current_user: dict, db: Session) -> dict:
 
 def get_supplier_regions(current_user: dict, db: Session) -> dict:
     """Return the supplier's configured operating regions."""
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
@@ -1366,7 +1368,7 @@ def get_supplier_regions(current_user: dict, db: Session) -> dict:
 
 def update_supplier_regions(body: dict, current_user: dict, db: Session) -> dict:
     """Save the supplier's list of operating countries/regions."""
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
@@ -1451,7 +1453,7 @@ def _load_active_badge_tiers(db: Session) -> list[CommissionBadgeTier]:
     if rows:
         return rows
 
-    from domains.finance.services.finance_service import commission_engine as _commission_engine
+    from domains.finance.ports import commission_engine, log_bank_transaction
 
     _commission_engine.seed_defaults(db)
     return (
@@ -1744,7 +1746,6 @@ def record_badge_billing_payment(
 
     paid_at = utcnow()
     if _round_badge_amount(record.amount) > 0 and not record.bank_transaction_id:
-        from domains.finance.services.treasury.cash_management_service import log_bank_transaction
 
         txn = log_bank_transaction(
             source="badge_billing",
@@ -1885,11 +1886,11 @@ def compute_credibility_score(supplier_id: int, db: Session) -> int:
       - Account age in days          (max 10 pts)
       - Number of approved products  (max 10 pts)
     """
-    from domains.catalog.models.products import Product
-    from domains.catalog.models.products import Review
-    from domains.comms.models.suppliers import SupplierProfile as SP
-    from domains.orders.models.orders import Order
-    from domains.orders.models.orders import OrderItem
+    from domains.catalog.ports import Product
+    from domains.catalog.ports import Review
+    from domains.comms.ports import SupplierProfile as SP
+    from domains.orders.ports import Order
+    from domains.orders.ports import OrderItem
 
     # 1. Fulfilment rate
     total_orders = (
@@ -2071,7 +2072,7 @@ async def upload_verification_documents(
     Upload KYC/verification documents for the supplier.
     Stores file paths in SupplierProfile.verified_documents (JSON).
     """
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     from infrastructure.utils.file_validation import validate_upload_image
     from infrastructure.utils.config import settings as _settings
 
@@ -2172,7 +2173,7 @@ def admin_set_supplier_badge(
     db: Session,
 ) -> dict:
     """Admin: manually override badge level for a supplier."""
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     normalized_badge_level = str(badge_level or "").strip().lower()
@@ -2218,7 +2219,7 @@ def _get_public_supplier_aggregates(supplier_ids: list[int], db: Session) -> dic
     if not supplier_ids:
         return {}
 
-    from domains.catalog.models.products import Review as ReviewModel
+    from domains.catalog.ports import Review as ReviewModel
 
     aggregates: dict[int, dict[str, float | int]] = {
         supplier_id: {
@@ -2304,7 +2305,7 @@ def _supplier_lookup_sql_expression(column):
     )
 
 def _get_public_supplier_record(supplier_id: int, db: Session):
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
 
     row = (
         db.query(User, SP)
@@ -2348,7 +2349,7 @@ def list_public_suppliers(
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
 
     base_query = db.query(SP, User).join(User, User.id == SP.user_id).filter(
         User.is_active == 1,
@@ -2417,7 +2418,7 @@ def resolve_public_supplier_slug(slug: str, db: Session) -> dict:
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.comms.ports import SupplierProfile as SP
 
     normalized_slug = _normalize_supplier_lookup_token(slug)
     if not normalized_slug:
@@ -2477,7 +2478,7 @@ def get_public_supplier_profile(supplier_id: int, db: Session) -> dict:
         {"product_count": 0, "avg_rating": 0.0, "total_reviews": 0, "total_sales": 0},
     )
 
-    from domains.catalog.models.products import Review as ReviewModel
+    from domains.catalog.ports import Review as ReviewModel
 
     recent_reviews = [
         {

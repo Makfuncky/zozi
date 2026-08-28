@@ -62,8 +62,8 @@ def _with_rls(country_code: Optional[str], db: Session):
 def seed_chart_of_accounts(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     return accounting_controller.seed_chart_of_accounts(
         db,
         audit_user_id=_admin.get("id"),
@@ -77,8 +77,8 @@ def list_accounts(
     country_code: str = Query(None, max_length=3),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.list_accounts(db)
@@ -92,8 +92,8 @@ def get_account(
     country_code: str = Query(None, max_length=3),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_account(db, code)
@@ -106,8 +106,8 @@ def create_journal_entry(
     body: accounting_controller.JournalEntryBody,
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    require_feature("finance.ledger.write")
     return accounting_controller.create_journal_entry(db, body, current_user)
 
 
@@ -119,8 +119,8 @@ def list_journal_entries(
     limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.list_journal_entries(
@@ -136,8 +136,8 @@ def get_journal_entry(
     country_code: str = Query(None, max_length=3),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_journal_entry(db, entry_id)
@@ -152,8 +152,8 @@ def get_balance(
     country_code: str = Query(None, max_length=3),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_account_balance(db, account_code, currency)
@@ -168,8 +168,8 @@ def trial_balance(
     country_code: Optional[str] = Query(None, max_length=3),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_trial_balance(
@@ -187,8 +187,8 @@ def income_statement(
     body: ReportPeriod,
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.reporting.generate")),
 ):
-    require_feature("finance.reporting.generate")
     cleanup = _with_rls(body.country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -217,8 +217,8 @@ def balance_sheet(
     country_code: Optional[str] = Query(None, max_length=3),
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.reporting.generate")),
 ):
-    require_feature("finance.reporting.generate")
     cleanup = _with_rls(country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -242,8 +242,8 @@ def cash_flow(
     body: ReportPeriod,
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.reporting.generate")),
 ):
-    require_feature("finance.reporting.generate")
     cleanup = _with_rls(body.country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -271,8 +271,8 @@ def list_reports(
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.reporting.read")),
 ):
-    require_feature("finance.reporting.read")
     cleanup = _with_rls(country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -297,8 +297,8 @@ def get_or_create(
     month: int = Query(..., ge=1, le=12),
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.period.manage")),
 ):
-    require_feature("finance.period.manage")
     cleanup = _with_rls(country_code, db)
     try:
         period = get_or_create_fiscal_period(db, country_code, year, month)
@@ -319,8 +319,8 @@ def current_period(
     country_code: str = Query(..., max_length=3),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.period.manage")),
 ):
-    require_feature("finance.period.manage")
     cleanup = _with_rls(country_code, db)
     try:
         period = get_current_fiscal_period(db, country_code)
@@ -344,8 +344,8 @@ def close_fiscal_period(
     body: ClosePeriodBody,
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.period.manage")),
 ):
-    require_feature("finance.period.manage")
     result = close_period(
         db,
         period_id=body.period_id,
@@ -373,8 +373,8 @@ def list_fiscal_periods(
     limit: int = Query(24, ge=1, le=120),
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.period.manage")),
 ):
-    require_feature("finance.period.manage")
     cleanup = _with_rls(country_code, db)
     try:
         periods = list_periods(db, country_code=country_code, status=status, limit=limit)
@@ -408,8 +408,8 @@ def reverse_entry(
     body: ReversalBody,
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.reverse")),
 ):
-    require_feature("finance.ledger.reverse")
     result = reverse_journal_entry(
         db,
         original_entry_id=body.entry_id,
@@ -439,8 +439,8 @@ def cash_flow_forecast(
     country_code: Optional[str] = Query(None, max_length=3),
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.forecast")),
 ):
-    require_feature("finance.treasury.forecast")
     cleanup = _with_rls(country_code, db)
     try:
         result = generate_cash_forecast(db, days=days, currency=currency, country_code=country_code)
@@ -469,8 +469,8 @@ def get_ar(
     limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.subledger.read")),
 ):
-    require_feature("finance.subledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return controller_get_ar_summary(db, customer_id=customer_id, status=status, country_code=country_code, limit=limit)
@@ -490,8 +490,9 @@ class ARInvoiceBody(BaseModel):
 
 
 @router.post("/ar-ledger/invoice", summary="Post AR invoice")
-def post_ar_invoice_route(body: ARInvoiceBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
-    require_feature("finance.subledger.post")
+def post_ar_invoice_route(body: ARInvoiceBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.subledger.post"))
+):
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ar_invoice(db, **body.model_dump(), admin_user=_admin)
@@ -510,8 +511,9 @@ class ARPaymentBody(BaseModel):
 
 
 @router.post("/ar-ledger/payment", summary="Post AR payment")
-def post_ar_payment_route(body: ARPaymentBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
-    require_feature("finance.subledger.post")
+def post_ar_payment_route(body: ARPaymentBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.subledger.post"))
+):
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ar_payment(db, **body.model_dump(), admin_user=_admin)
@@ -527,8 +529,8 @@ def get_ap_alias(
     limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.subledger.read")),
 ):
-    require_feature("finance.subledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return controller_get_ap_summary(db, supplier_id=supplier_id, status=status, country_code=country_code, limit=limit)
@@ -544,8 +546,8 @@ def get_ap(
     limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.subledger.read")),
 ):
-    require_feature("finance.subledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return controller_get_ap_summary(db, supplier_id=supplier_id, status=status, country_code=country_code, limit=limit)
@@ -565,8 +567,9 @@ class APPayableBody(BaseModel):
 
 
 @router.post("/ap-ledger/payable", summary="Post AP payable")
-def post_ap_payable_route(body: APPayableBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
-    require_feature("finance.subledger.post")
+def post_ap_payable_route(body: APPayableBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.subledger.post"))
+):
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ap_payable(db, **body.model_dump(), admin_user=_admin)
@@ -584,8 +587,9 @@ class APPaymentBody(BaseModel):
 
 
 @router.post("/ap-ledger/payment", summary="Post AP payment")
-def post_ap_payment_route(body: APPaymentBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
-    require_feature("finance.subledger.post")
+def post_ap_payment_route(body: APPaymentBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.subledger.post"))
+):
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ap_payment(db, **body.model_dump(), admin_user=_admin)
@@ -610,7 +614,7 @@ from sqlalchemy.orm import Session
 
 import domains.finance.services.treasury.cash_management_controller as ctrl
 from infrastructure.security.dependencies import require_admin
-from infrastructure.security.auth import require_permission
+from infrastructure.utils.auth import require_permission
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import (
     BadgeBillingOut,
@@ -672,8 +676,8 @@ class ReceiptReviewRequest(BaseModel):
 def admin_financial_summary(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_get_financial_summary(db)
 
@@ -686,8 +690,8 @@ def admin_financial_summary(
 def admin_reconciliation_summary(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_get_reconciliation_summary(db)
 
@@ -705,8 +709,8 @@ def admin_list_ledger(
     calculation_method: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    require_feature("finance.ledger.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_ledger_entries(
         db, skip=skip, limit=limit,
@@ -726,8 +730,8 @@ def admin_list_badge_billings(
     charge_type: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.commission.read")),
 ):
-    require_feature("finance.commission.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_badge_billing_records(
         db,
@@ -746,8 +750,8 @@ def admin_record_badge_billing_payment(
     body: BadgeBillingPaymentRequest,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.commission.read")),
 ):
-    require_feature("finance.commission.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_record_badge_billing_payment(
         billing_id=billing_id,
@@ -769,8 +773,8 @@ def admin_list_supplier_settlements(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.payout.read")),
 ):
-    require_feature("finance.payout.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_supplier_settlements(db, skip=skip, limit=limit, supplier_id=supplier_id, status=status)
 
@@ -783,8 +787,8 @@ def admin_list_logistics_settlements(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.payout.read")),
 ):
-    require_feature("finance.payout.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_logistics_settlements(db, skip=skip, limit=limit, partner_id=partner_id, status=status)
 
@@ -799,8 +803,8 @@ def admin_list_bank_transactions(
     flagged: Optional[bool] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_bank_transactions(
         db, skip=skip, limit=limit,
@@ -816,8 +820,8 @@ def admin_list_refunds(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_refunds(db, skip=skip, limit=limit, status=status)
 
@@ -828,8 +832,8 @@ def admin_list_vat_remittances(
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_vat_remittance_records(db, skip=skip, limit=limit)
 
@@ -838,8 +842,8 @@ def admin_list_vat_remittances(
 def admin_get_bank_settings(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_get_finance_bank_settings(db)
 
@@ -848,8 +852,8 @@ def admin_get_bank_settings(
 def admin_list_transfer_providers(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_transfer_providers(db)
 
@@ -858,8 +862,8 @@ def admin_list_transfer_providers(
 def admin_test_bank_settings_connection(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_test_finance_bank_connection(db)
 
@@ -869,8 +873,8 @@ def admin_upsert_bank_settings(
     body: FinanceBankSettingsUpdate,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_upsert_finance_bank_settings(body.model_dump(), current_admin, db)
     commit_db(db)
@@ -882,8 +886,8 @@ def admin_record_vat_remittance(
     body: VATRemittanceCreate,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_record_vat_remittance(body.model_dump(), current_admin, db)
     commit_db(db)
@@ -895,8 +899,8 @@ def admin_create_bank_transaction(
     data: BankTransactionCreate,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_create_bank_transaction(data.model_dump(), db)
     commit_db(db)
@@ -909,8 +913,8 @@ def admin_import_bank_transactions(
     auto_reconcile: bool = Query(False),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_import_bank_transactions(
         [item.model_dump() for item in items],
@@ -927,8 +931,8 @@ def admin_reconcile_transaction(
     txn_id: int,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_reconcile_transaction(txn_id, current_admin, db)
     commit_db(db)
@@ -941,8 +945,8 @@ def admin_flag_transaction(
     body: FlagRequest,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_flag_transaction(txn_id, body.reason, db)
     commit_db(db)
@@ -955,8 +959,8 @@ def admin_resolve_transaction(
     body: BankTransactionResolutionIn,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_resolve_transaction_exception(txn_id, body.model_dump(), current_admin, db)
     commit_db(db)
@@ -970,8 +974,8 @@ def admin_auto_reconcile_transactions(
     category: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_auto_reconcile_transactions(
         current_admin,
@@ -989,8 +993,8 @@ def admin_trigger_supplier_payouts(
     body: Optional[PayoutProcessRequest] = Body(default=None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.payout.write")),
 ):
-    require_feature("finance.payout.write")
     require_permission("payouts.verify", current_admin)
     results = ctrl.admin_trigger_supplier_payouts(db, settlement_ids=(body.settlement_ids if body else None))
     commit_db(db)
@@ -1002,8 +1006,8 @@ def admin_trigger_logistics_payouts(
     body: Optional[PayoutProcessRequest] = Body(default=None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.payout.write")),
 ):
-    require_feature("finance.payout.write")
     require_permission("payouts.verify", current_admin)
     results = ctrl.admin_trigger_logistics_payouts(db, settlement_ids=(body.settlement_ids if body else None))
     commit_db(db)
@@ -1018,8 +1022,8 @@ def admin_dispatch_payouts(
     background: bool = Query(False),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.payout.write")),
 ):
-    require_feature("finance.payout.write")
     require_permission("payouts.verify", current_admin)
     if background:
         return ctrl.admin_queue_dispatch_transfer_batch(
@@ -1046,8 +1050,8 @@ def admin_record_cod_remittance(
     body: CodRemittanceRequest,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.manage")),
 ):
-    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_record_cod_remittance(settlement_id, body.amount, current_admin, db)
     commit_db(db)
@@ -1062,8 +1066,8 @@ def admin_list_cod_remittance_receipts(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.manage")),
 ):
-    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_cod_remittance_receipts(db, skip=skip, limit=limit, partner_id=partner_id, status=status)
 
@@ -1074,8 +1078,8 @@ def admin_verify_cod_remittance_receipt(
     body: Optional[ReceiptReviewRequest] = Body(default=None),
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.manage")),
 ):
-    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_verify_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note if body else None)
     commit_db(db)
@@ -1088,8 +1092,8 @@ def admin_reject_cod_remittance_receipt(
     body: ReceiptReviewRequest,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("finance.treasury.manage")),
 ):
-    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_reject_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note or "")
     commit_db(db)
@@ -1104,8 +1108,8 @@ def admin_reject_cod_remittance_receipt(
 def supplier_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     if current_user.get("role") not in ("supplier", "admin"):
         return {"error": "Supplier access required"}, 403
     return ctrl.supplier_get_financial_summary(current_user["id"], db)
@@ -1118,8 +1122,8 @@ def supplier_list_settlements(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     if current_user.get("role") not in ("supplier", "admin"):
         return []
     return ctrl.supplier_list_settlements(current_user["id"], db, skip=skip, limit=limit, status=status)
@@ -1131,8 +1135,8 @@ def supplier_list_ledger(
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     if current_user.get("role") not in ("supplier", "admin"):
         return []
     return ctrl.supplier_list_ledger_entries(current_user["id"], db, skip=skip, limit=limit)
@@ -1146,8 +1150,8 @@ def supplier_list_ledger(
 def logistics_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     partner = get_logistics_partner_by_user_id(db, current_user["id"])
     if not partner:
         return {"error": "Logistics partner not found"}, 404
@@ -1161,8 +1165,8 @@ def logistics_list_settlements(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     partner = get_logistics_partner_by_user_id(db, current_user["id"])
     if not partner:
         return []
@@ -1175,8 +1179,8 @@ def logistics_list_ledger(
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     partner = get_logistics_partner_by_user_id(db, current_user["id"])
     if not partner:
         return []
@@ -1200,7 +1204,7 @@ empty ``APIRouter`` so the app boots. Implement
 """
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/api/v1", tags=["employee", "finance", "expense-stub"])
+expense_router = APIRouter(prefix="/api/v1/employee/finance/expense", tags=["employee", "finance", "expense-stub"])
 
 
 # === From invoices.py ===
@@ -1220,7 +1224,7 @@ from infrastructure.security.dependencies import get_current_user
 from infrastructure.utils.invoice_html import generate_invoice_html, generate_invoice_pdf_bytes
 
 
-@router.get("/")
+@expense_router.get("/")
 def list_invoices(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -1228,18 +1232,18 @@ def list_invoices(
     order_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.invoice.read")),
 ):
-    require_feature("finance.invoice.read")
     """List invoices — filtered by role (supplier sees own, admin sees all)."""
     return ctrl.list_invoices(current_user, db, page=page, page_size=page_size, status=status, order_id=order_id)
 
 
-@router.get("/overview")
+@expense_router.get("/overview")
 def invoice_overview(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.invoice.read")),
 ):
-    require_feature("finance.invoice.read")
     """Admin overview — totals and recent invoices."""
     if current_user.get("role") not in ("admin", "sub_admin", "moderator"):
         from fastapi import HTTPException
@@ -1247,25 +1251,25 @@ def invoice_overview(
     return ctrl.get_invoice_overview(db)
 
 
-@router.get("/{invoice_id}/html", response_class=HTMLResponse)
+@expense_router.get("/{invoice_id}/html", response_class=HTMLResponse)
 def get_invoice_html(
     invoice_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.invoice.read")),
 ):
-    require_feature("finance.invoice.read")
     """Render invoice as printable HTML (browser print-to-PDF)."""
     inv_data = ctrl.get_invoice(invoice_id, current_user, db)
     return HTMLResponse(content=generate_invoice_html(inv_data))
 
 
-@router.get("/{invoice_id}/pdf")
+@expense_router.get("/{invoice_id}/pdf")
 def get_invoice_pdf(
     invoice_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.invoice.read")),
 ):
-    require_feature("finance.invoice.read")
     """Render invoice as downloadable PDF."""
     inv_data = ctrl.get_invoice(invoice_id, current_user, db)
     pdf_bytes = generate_invoice_pdf_bytes(inv_data)
@@ -1277,35 +1281,35 @@ def get_invoice_pdf(
     )
 
 
-@router.get("/{invoice_id}")
+@expense_router.get("/{invoice_id}")
 def get_invoice(
     invoice_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.invoice.read")),
 ):
-    require_feature("finance.invoice.read")
     return ctrl.get_invoice(invoice_id, current_user, db)
 
 
-@router.post("/", status_code=201)
+@expense_router.post("/", status_code=201)
 def create_invoice(
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.invoice.create")),
 ):
-    require_feature("finance.invoice.create")
     """Create an invoice from an existing order."""
     return ctrl.create_invoice_from_order(data, current_user, db)
 
 
-@router.put("/{invoice_id}/status")
+@expense_router.put("/{invoice_id}/status")
 def update_status(
     invoice_id: int,
     data: dict,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("finance.invoice.create")),
 ):
-    require_feature("finance.invoice.create")
     """Advance invoice status through supply chain stages."""
     return ctrl.update_invoice_status(invoice_id, data, current_user, db)
 
@@ -1319,9 +1323,8 @@ delegating to the appropriate controller/service.
 from fastapi import APIRouter
 
 
-@router.get("/finance_automation/health")
-def health():
-    require_feature("finance.audit.read")
+@expense_router.get("/finance_automation/health")
+def health(    _rf_gate: None = Depends(require_feature("finance.audit.read"))):
     """Liveness probe for this router."""
     return {"status": "ok", "router": "finance_automation", "prefix": "/api/v1/accounting"}
 
@@ -1377,13 +1380,13 @@ class TreasuryEntryRequest(BaseModel):
 # ── Payroll / Treasury ──────────────────────────────────────────────────────
 
 
-@router.post("/payroll/process")
+@expense_router.post("/payroll/process")
 def process_payroll(
     request: PayrollProcessRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("hr.payroll.manage")),
 ):
-    require_feature("hr.payroll.manage")
     engine = PayrollEngine(db)
     result = engine.process_payroll_batch(request.month)
     audit_log(
@@ -1398,13 +1401,13 @@ def process_payroll(
     return result
 
 
-@router.get("/financial/cash-flow")
+@expense_router.get("/financial/cash-flow")
 def get_cash_flow(
     days: int = 30,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.audit.read")),
 ):
-    require_feature("finance.audit.read")
     service = FinancialReportingService(db)
     result = service.get_cash_flow_forecast(days)
     audit_log(
@@ -1419,12 +1422,12 @@ def get_cash_flow(
     return result
 
 
-@router.get("/financial/profitability")
+@expense_router.get("/financial/profitability")
 def get_profitability(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.audit.read")),
 ):
-    require_feature("finance.audit.read")
     service = FinancialReportingService(db)
     result = service.get_profitability_by_country()
     audit_log(
@@ -1442,10 +1445,11 @@ def get_profitability(
 # ── Expense Routing ──────────────────────────────────────────────────────────
 
 
-@router.post("/expense/route")
+@expense_router.post("/expense/route")
 def route_claim(employee_id: int, amount: float, category: str, description: str,
-                db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+                db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     router = get_expense_router(db)
     return router.route_expense_claim(
         employee_id=employee_id,
@@ -1455,25 +1459,28 @@ def route_claim(employee_id: int, amount: float, category: str, description: str
     )
 
 
-@router.get("/expense/deadline")
+@expense_router.get("/expense/deadline")
 def get_deadline(employee_id: int, submission_date: str, priority: str = "normal",
-                 db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+                 db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     router = get_expense_router(db)
     dt = datetime.fromisoformat(submission_date)
     return {"deadline": router.calculate_reimbursement_deadline(dt, priority).isoformat()}
 
 
-@router.get("/expense/chain/{employee_id}")
-def get_chain(employee_id: int, amount: float, db: Session = Depends(get_db)):
-    require_feature("finance.ledger.write")
+@expense_router.get("/expense/chain/{employee_id}")
+def get_chain(employee_id: int, amount: float, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.ledger.write"))
+):
     router = get_expense_router(db)
     return {"approval_chain": router.get_approval_chain(employee_id, Decimal(str(amount)))}
 
 
-@router.get("/contractor-milestones")
-def list_contractor_milestones_route(db: Session = Depends(get_db)):
-    require_feature("finance.subledger.read")
+@expense_router.get("/contractor-milestones")
+def list_contractor_milestones_route(db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.subledger.read"))
+):
     """Return contractor payment/delivery milestones."""
     return list_contractor_milestones(db)
 
@@ -1487,12 +1494,12 @@ from infrastructure.database.database import get_db
 from domains.audit.ports import AuditAction, audit_log
 
 
-@router.get("/metrics")
+@expense_router.get("/metrics")
 def treasury_metrics(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     result = get_treasury_metrics(db)
     audit_log(
         db=db,
@@ -1505,12 +1512,12 @@ def treasury_metrics(
     return result
 
 
-@router.get("/cash-position")
+@expense_router.get("/cash-position")
 def cash_position(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     result = get_cash_position(db)
     audit_log(
         db=db,
@@ -1523,13 +1530,13 @@ def cash_position(
     return result
 
 
-@router.get("/vat-liability")
+@expense_router.get("/vat-liability")
 def vat_liability(
     country_code: str = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     result = get_vat_liability(db, country_code)
     audit_log(
         db=db,
@@ -1543,13 +1550,13 @@ def vat_liability(
     return result
 
 
-@router.get("/supplier-payables")
+@expense_router.get("/supplier-payables")
 def supplier_payables(
     country_code: str = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.treasury.read")),
 ):
-    require_feature("finance.treasury.read")
     result = get_supplier_payables(db, country_code)
     audit_log(
         db=db,

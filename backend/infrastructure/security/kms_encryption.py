@@ -20,9 +20,9 @@ class KMSEncryption:
         self.master_key = master_key or os.getenv("KMS_MASTER_KEY")
         if not self.master_key:
             logger.warning("KMS_MASTER_KEY not set. KMS encryption is disabled.")
-            self._fernet = None
+            self._enabled = False
         else:
-            self._fernet = Fernet(self._derive_key(os.urandom(16)))
+            self._enabled = True
     
     def _derive_key(self, salt: bytes) -> bytes:
         kdf = PBKDF2HMAC(
@@ -35,7 +35,7 @@ class KMSEncryption:
         return key
     
     def encrypt(self, plaintext: str) -> str:
-        if not self._fernet:
+        if not self._enabled:
             return plaintext
         salt = os.urandom(16)
         key = self._derive_key(salt)
@@ -44,7 +44,7 @@ class KMSEncryption:
         return base64.urlsafe_b64encode(salt + token).decode()
     
     def decrypt(self, ciphertext: str) -> str:
-        if not self._fernet:
+        if not self._enabled:
             return ciphertext
         data = base64.urlsafe_b64decode(ciphertext.encode())
         salt, token = data[:16], data[16:]

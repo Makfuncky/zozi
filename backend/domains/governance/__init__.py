@@ -19,9 +19,8 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "IAMServiceAccounts": ("domains.governance.services.auth.iam_service_accounts", "IAMServiceAccounts"),
     # models
     "AuditLog": ("domains.governance.models.core", "AuditLog"),
-    "User": ("domains.governance.models.user", "User"),
+    "User": ("domains.accounts.models.user", "User"),
     "Fraud": ("domains.governance.models.fraud", "Fraud"),
-    "Incident": ("domains.governance.models.incident", "Incident"),
     # functions
     "archive_entity": ("domains.governance.services.operations", "archive_entity"),
     "restore_entity": ("domains.governance.services.operations", "restore_entity"),

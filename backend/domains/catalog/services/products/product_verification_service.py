@@ -13,9 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from domains.catalog.models.products import Product
-from domains.governance.models.admin import ProductVerification
-from domains.logistics.models.logistics import Shipment
-from domains.orders.models.orders import Order
+from domains.governance.ports import ProductVerification
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731

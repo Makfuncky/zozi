@@ -84,7 +84,7 @@ from domains.governance.models.admin import PaymentProviderConfig
 from domains.governance.models.admin import ProcessedWebhookEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.catalog.models.promotions import Coupon
+from domains.promotions.models.promotions import Coupon
 from domains.finance.models.payments import Payment
 from domains.finance.models.payments import PaymentGatewayConnection
 
@@ -4643,14 +4643,16 @@ def confirm_cash_on_delivery_order(order: Order, db: Session) -> None:
 # ── Stripe payment intent ─────────────────────────────────────────────────────
 
 
-def list_payments(db: Session, page: int = 1, page_size: int = 50, status: Optional[str] = None) -> dict:
+def list_payments(db: Session, page: int = 1, page_size: int = 50, status: Optional[str] = None, cursor: Optional[int] = None) -> dict:
     from domains.finance.models.payments import Payment
 
-    q = db.query(Payment).order_by(Payment.created_at.desc())
+    q = db.query(Payment).order_by(Payment.id.desc())
     if status:
         q = q.filter(Payment.status == status)
     total = q.count()
-    items = q.offset((page - 1) * page_size).limit(page_size).all()
+    if cursor:
+        q = q.filter(Payment.id < cursor)
+    items = q.limit(page_size).all()
     return {
         "items": [
             {

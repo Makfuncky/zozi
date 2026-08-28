@@ -64,8 +64,6 @@ from domains.finance.services.payments.payment_engine import (  # noqa: F401
     Decimal,
     Order,
     OrderItem,
-    ProcessedWebhookEvent,
-    Notification,
     convert_from_aed,
     hmac,
     hashlib,
@@ -310,9 +308,7 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
-
-
+                from domains.comms.ports import enqueue_payment_confirmed_email, enqueue_payment_failed_email, enqueue_refund_processed_email
 
                 enqueue_payment_confirmed_email(cast(int, order.id), provider="tap", message="Your Tap payment was successful and we are preparing your order.")
 
@@ -346,29 +342,23 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
 
             setattr(order, "status", "failed")
 
-            db.add(
+            from domains.comms.ports import create_notification, Notification
 
+            create_notification(
+                db,
                 Notification(
-
                     user_id=order.user_id,
-
                     type="order_update",
-
                     title="Payment Failed",
-
                     message=f"Order #{order.id} Tap payment failed.",
-
                     link=f"/orders/{order.id}",
-
-                )
-
+                ),
             )
 
             db.commit()
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_failed_email
 
 
 
@@ -429,29 +419,23 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
 
                 logger.exception("Failed to log Tap refund bank transaction for order %s", order.id)
 
-            db.add(
+            from domains.comms.ports import create_notification, Notification
 
+            create_notification(
+                db,
                 Notification(
-
                     user_id=order.user_id,
-
                     type="order_update",
-
                     title="Refund Processed",
-
                     message=f"Your Tap refund for Order #{order.id} has been processed.",
-
                     link=f"/orders/{order.id}",
-
-                )
-
+                ),
             )
 
             db.commit()
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_refund_processed_email
 
 
 
@@ -661,7 +645,6 @@ def _finalize_paytabs_transaction(order: Order, payload: dict[str, Any], db: Ses
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
 
 
 
@@ -697,29 +680,23 @@ def _finalize_paytabs_transaction(order: Order, payload: dict[str, Any], db: Ses
 
             setattr(order, "status", "failed")
 
-            db.add(
+            from domains.comms.ports import create_notification, Notification
 
+            create_notification(
+                db,
                 Notification(
-
                     user_id=order.user_id,
-
                     type="order_update",
-
                     title="Payment Failed",
-
                     message=f"Order #{order.id} PayTabs payment failed.",
-
                     link=f"/orders/{order.id}",
-
-                )
-
+                ),
             )
 
             db.commit()
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_failed_email
 
 
 
@@ -1085,7 +1062,9 @@ async def handle_tap_webhook(request: Request, db: Session) -> dict:
 
     # Record event as processed (idempotency guard)
 
-    db.add(ProcessedWebhookEvent(event_id=tap_event_id, processor="tap"))
+    from domains.governance.ports import create_processed_webhook_event
+
+    create_processed_webhook_event(db, event_id=tap_event_id, processor="tap")
 
     db.commit()
 
@@ -1199,7 +1178,9 @@ async def handle_paytabs_callback(request: Request, db: Session) -> dict:
 
     _finalize_paytabs_transaction(order, queried, db)
 
-    db.add(ProcessedWebhookEvent(event_id=paytabs_event_id, processor=PAYTABS_PAYMENT_METHOD))
+    from domains.governance.ports import create_processed_webhook_event
+
+    create_processed_webhook_event(db, event_id=paytabs_event_id, processor=PAYTABS_PAYMENT_METHOD)
 
     db.commit()
 
@@ -1545,7 +1526,6 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
 
 
 
@@ -1583,7 +1563,6 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
 
 
 
@@ -1601,22 +1580,17 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
 
             setattr(order, "status", "failed")
 
-            db.add(
+            from domains.comms.ports import create_notification, Notification
 
+            create_notification(
+                db,
                 Notification(
-
                     user_id=order.user_id,
-
                     type="order_update",
-
                     title="Payment Failed",
-
                     message=f"Order #{order.id} Thawani payment failed.",
-
                     link=f"/orders/{order.id}",
-
-                )
-
+                ),
             )
 
             db.commit()
@@ -1631,7 +1605,9 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
 
     if invoice_id or session_id_field:
 
-        db.add(ProcessedWebhookEvent(event_id=idempotency_key, processor=THAWANI_PAYMENT_METHOD))
+        from domains.governance.ports import create_processed_webhook_event
+
+        create_processed_webhook_event(db, event_id=idempotency_key, processor=THAWANI_PAYMENT_METHOD)
 
         db.commit()
 
@@ -1799,7 +1775,6 @@ async def confirm_thawani_payment(body: ConfirmThawaniPaymentRequest, current_us
 
             try:
 
-                from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
 
 
 

@@ -13,11 +13,11 @@ adoption) is in flight. It fails only on:
 Removing OFFSET (porting to a ``list_*_keyset`` reader) is allowed and should be
 followed by regenerating the baseline::
 
-    python tests/_gen_offset_adoption_baseline.py
+    python scripts/_gen_offset_adoption_baseline.py
 """
 from __future__ import annotations
 
-from ._gen_offset_adoption_baseline import load_baseline, scan_all
+from scripts._gen_offset_adoption_baseline import load_baseline, scan_all
 
 
 class TestOffsetAdoptionNoRegress:
@@ -31,7 +31,7 @@ class TestOffsetAdoptionNoRegress:
             "(keyset/cursor pagination on hot lists — never OFFSET). Port the "
             "list to a keyset reader (see domains/orders/ports.list_orders_keyset) "
             "or, if intentional, regenerate the baseline with "
-            "tests/_gen_offset_adoption_baseline.py. New offenders:\n  "
+            "scripts/_gen_offset_adoption_baseline.py. New offenders:\n  "
             + "\n  ".join(new_files)
         )
 

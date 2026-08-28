@@ -7,9 +7,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import random
 import time
 from typing import Any, Callable, Optional, cast
+
+logger = logging.getLogger(__name__)
 
 _LOCK_TTL = 5  # seconds — lock expires so a crashed worker doesn't block forever
 
@@ -34,7 +37,8 @@ def cache_get_json(key: str) -> Any | None:
         if isinstance(raw, (bytes, bytearray)):
             raw = raw.decode("utf-8")
         return json.loads(cast(str, raw))
-    except Exception:
+    except Exception as exc:
+        logger.debug("Cache get failed for key %s: %s", key, exc)
         return None
 
 
@@ -44,8 +48,8 @@ def cache_set_json(key: str, value: Any, ttl: int) -> None:
         if redis_client is None:
             return
         redis_client.setex(key, ttl, json.dumps(value, default=str))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Cache set failed for key %s: %s", key, exc)
 
 
 def get_cache_version(namespace: str) -> str:
@@ -61,7 +65,8 @@ def get_cache_version(namespace: str) -> str:
         if isinstance(raw, (bytes, bytearray)):
             return raw.decode("utf-8")
         return str(raw)
-    except Exception:
+    except Exception as exc:
+        logger.debug("Cache version get failed for namespace %s: %s", namespace, exc)
         return "0"
 
 
@@ -71,13 +76,13 @@ def bump_cache_version(namespace: str) -> None:
         redis_client = get_redis_client()
         if redis_client is not None:
             redis_client.incr(version_key)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Cache version bump failed for namespace %s: %s", namespace, exc)
 
 
 def build_versioned_cache_key(namespace: str, prefix: str, payload: dict[str, Any]) -> str:
     version = get_cache_version(namespace)
-    digest = hashlib.sha1(
+    digest = hashlib.sha256(
         json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
     ).hexdigest()
     return f"{namespace}:{prefix}:v{version}:{digest}"
@@ -107,8 +112,8 @@ def _release_lock(key: str) -> None:
         return
     try:
         redis_client.delete(_lock_key(key))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Cache lock release failed for key %s: %s", key, exc)
 
 
 def _jittered_ttl(base_ttl: int) -> int:
@@ -123,8 +128,8 @@ def cache_delete(key: str) -> None:
         if redis_client is None:
             return
         redis_client.delete(key)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Cache delete failed for key %s: %s", key, exc)
 
 
 def cache_or_compute(
@@ -151,6 +156,8 @@ def cache_or_compute(
         return cached
 
     if not _acquire_lock(key):
+        # Brief backoff to let the lock holder populate the cache before re-checking.
+        # This is a synchronous sleep in a sync function; acceptable for stampede protection.
         time.sleep(0.05)
         cached = cache_get_json(key)
         if cached is not None:
@@ -174,6 +181,6 @@ def bump_product_cache_version() -> None:
         redis_client = get_redis_client()
         if redis_client is not None:
             redis_client.incr(_PRODUCT_CACHE_VERSION_KEY)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Product cache version bump failed: %s", exc)
 

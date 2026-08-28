@@ -9,6 +9,7 @@ __all__ = ['LogisticsPartner', 'LogisticsPartnerProfile', 'LogisticsPartnerServi
 
 class LogisticsPartner(Base):
     __tablename__ = 'logistics_partners'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -62,6 +63,7 @@ class LogisticsPartner(Base):
 
 class LogisticsPartnerProfile(Base):
     __tablename__ = 'logistics_partner_profiles'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -87,6 +89,7 @@ class LogisticsPartnerProfile(Base):
 
 class LogisticsPartnerServiceArea(Base):
     __tablename__ = 'logistics_partner_service_areas'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -114,7 +117,7 @@ class LogisticsPartnerServiceArea(Base):
     is_active = Column(Boolean, default=True)
     approval_status = Column(String(50), default='pending')
     review_note = Column(String(255), nullable=True)
-    reviewed_by = Column(Integer, nullable=True)
+    reviewed_by_id = Column(Integer, nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -125,6 +128,7 @@ class LogisticsPartnerServiceArea(Base):
 
 class LogisticsPricingProfile(Base):
     __tablename__ = 'logistics_pricing_profiles'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -150,7 +154,7 @@ class LogisticsPricingProfile(Base):
     is_active = Column(Boolean, default=True)
     approval_status = Column(String(50), default='pending')
     review_note = Column(String(255), nullable=True)
-    reviewed_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    reviewed_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -160,6 +164,7 @@ class LogisticsPricingProfile(Base):
 
 class LogisticsVehicleRule(Base):
     __tablename__ = 'logistics_vehicle_rules'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -180,7 +185,7 @@ class LogisticsVehicleRule(Base):
     is_active = Column(Boolean, default=True)
     approval_status = Column(String(50), default='pending')
     review_note = Column(String(255), nullable=True)
-    reviewed_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    reviewed_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -190,6 +195,7 @@ class LogisticsVehicleRule(Base):
 
 class LogisticsCategoryPricingRule(Base):
     __tablename__ = 'logistics_category_pricing_rules'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -208,7 +214,7 @@ class LogisticsCategoryPricingRule(Base):
     is_active = Column(Boolean, default=True)
     approval_status = Column(String(50), default='pending')
     review_note = Column(String(255), nullable=True)
-    reviewed_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
+    reviewed_by_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -218,6 +224,7 @@ class LogisticsCategoryPricingRule(Base):
 
 class Shipment(Base):
     __tablename__ = 'shipments'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -264,6 +271,7 @@ class Shipment(Base):
 
 class ShipmentEvent(Base):
     __tablename__ = 'shipment_events'
+    __table_args__ = {"schema": "logistics"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

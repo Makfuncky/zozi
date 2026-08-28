@@ -11,8 +11,8 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product
-from domains.comms.models.suppliers import SupplierProfile
+from domains.catalog.ports import Product
+from domains.comms.ports import SupplierProfile
 from infrastructure.utils.storage import storage as _storage
 
 logger = logging.getLogger(__name__)

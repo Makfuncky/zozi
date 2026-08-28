@@ -126,7 +126,7 @@ class LogisticsSLAService:
 
 def run_treasury_sync():
     """Cron job to sync treasury settings from CountryConfig."""
-    from domains.finance.services.treasury.treasury_service import TreasuryService
+from domains.finance.ports import TreasuryService
     
     with get_db_context() as db:
         countries = db.query(CountryConfig).filter(CountryConfig.is_active == True).all()

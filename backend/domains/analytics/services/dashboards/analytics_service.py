@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any, Optional, cast
 
 from fastapi import HTTPException
@@ -16,7 +17,7 @@ from domains.governance.ports import AdminAnalyticsSnapshot
 from domains.governance.ports import ChatbotQueryEvent
 from domains.orders.ports import Order
 from domains.orders.ports import OrderItem
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.constants import _ADMIN_MAX_PAGE_SIZE, _ADMIN_DEFAULT_PAGE_SIZE
 from infrastructure.utils.cache import cache_get_json, cache_set_json, build_versioned_cache_key
 from providers.analytics.analytics import AnalyticsProvider, HAS_ANALYTICS
@@ -108,7 +109,7 @@ def get_customer_insights(db: Session) -> dict:
             "username": row.username,
             "email": row.email,
             "order_count": row.order_count,
-            "total_spent": round(float(row.total_spent or 0), 2),
+            "total_spent": round(Decimal(str(row.total_spent or 0)), 2),
         }
         for row in top_cust_rows
     ]
@@ -316,5 +317,5 @@ def get_analytics_summary(country_code: str = None, period: str = "30d"):
     try:
         provider = AnalyticsProvider()
         return provider.get_dashboard_summary(country_code=country_code, period=period)
-    except Exception as e:
-        return {"error": str(e)}
+    except Exception:
+        return {"error": "Internal server error"}

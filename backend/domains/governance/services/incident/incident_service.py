@@ -9,10 +9,10 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import User
-from domains.governance.models.incident import IncidentWarRoom
-from domains.governance.models.incident import IncidentThread
-from domains.governance.models.incident import IncidentActionItem
+from domains.accounts.models.user import User
+from domains.comms.models.incident import IncidentWarRoom
+from domains.comms.models.incident import IncidentThread
+from domains.comms.models.incident import IncidentActionItem
 from infrastructure.database.database import get_service_session
 
 logger = logging.getLogger("zozi.incident")
@@ -203,7 +203,7 @@ def get_incident_service(db: Session = None) -> IncidentService:
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.incident import IncidentWarRoom
+from domains.comms.models.incident import IncidentWarRoom
 import structlog
 
 logger = structlog.get_logger(__name__)

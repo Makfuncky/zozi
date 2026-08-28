@@ -119,8 +119,8 @@ def _get_category_recommendations() -> Dict[str, Dict[str, object]]:
     try:
         if _METRICS_PATH.exists():
             raw_metrics = json.loads(_METRICS_PATH.read_text(encoding='utf-8'))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Failed to load raw metrics: %s", exc)
     recommendations: Dict[str, Dict[str, object]] = {}
     for (category, cat_scores) in scores.items():
         best_strategy = max(cat_scores, key=cat_scores.get) if cat_scores else 'clean_commercial'
@@ -156,8 +156,8 @@ class _ConcurrencyGate:
     def release() -> None:
         try:
             _BG_SEMAPHORE.release()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Semaphore release failed: %s", exc)
 
 def _u2net_home() -> str:
     return os.path.expanduser(os.environ.get('U2NET_HOME', '~/.u2net'))
@@ -371,8 +371,8 @@ class CleanEdgeRefiner:
                 alpha_f = alpha.astype(np.float32)
                 refined = _ximgproc.guidedFilter(guide, alpha_f, radius=4, eps=0.0001)
                 alpha = np.clip(refined, 0, 1)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Guided filter failed: %s", exc)
         binary_final = (alpha > 0.5).astype(np.uint8) * 255
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         near_edge = cv2.dilate(binary_final, kernel, iterations=3)
@@ -778,7 +778,8 @@ def remove_background(data: bytes, strategy: str='auto', fast_mode: bool=False) 
         try:
             img0 = Image.open(io.BytesIO(data)).convert('RGB')
             strategy = _select_auto(np.array(img0))
-        except Exception:
+        except Exception as exc:
+            logger.debug("Auto strategy selection failed: %s", exc)
             strategy = 'clean_commercial'
     cfg = _STRATEGIES[strategy]
     try:
@@ -800,8 +801,8 @@ def remove_background(data: bytes, strategy: str='auto', fast_mode: bool=False) 
         _SessionManager.release_if_low_ram()
         gc.collect()
 
-def magic_erase(data: bytes, fast_mode: bool=False) -> bytes:
-    """Convenience wrapper â€” best-effort background removal for the magic eraser."""
+def magic_erase(data: bytes, fast_mode: bool = False) -> bytes:
+    """Convenience wrapper — best-effort background removal for the magic eraser."""
     return remove_background(data, strategy='auto', fast_mode=fast_mode)
 
 def remove_background_preset(data: bytes, preset: str='general', fast_mode: bool=False) -> bytes:

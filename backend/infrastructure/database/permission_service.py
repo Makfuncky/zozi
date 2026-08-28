@@ -301,8 +301,8 @@ def _invalidate_role_cache(role_name: str) -> None:
     try:
         from infrastructure.utils.performance_cache import invalidate_role_permissions_cache as _invalidate
         _invalidate(role_name)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Role cache invalidation failed: %s", exc)
 
 
 def _invalidate_user_cache(user_id: int) -> None:
@@ -310,8 +310,8 @@ def _invalidate_user_cache(user_id: int) -> None:
     try:
         from infrastructure.utils.performance_cache import invalidate_user_permissions_cache as _invalidate
         _invalidate(user_id)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("User cache invalidation failed: %s", exc)
 
 
 # ── Permission Check ──────────────────────────────────────────────

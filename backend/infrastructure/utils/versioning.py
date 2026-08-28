@@ -31,7 +31,7 @@ VERSION_SETTINGS: Dict[str, Dict[str, Any]] = {
     "v1": {
         "maintenance_mode": False,
         "rate_limit": "100 per minute",
-        "cors_origins": ["*"],
+        "cors_origins": [],
         "supported_formats": ["application/json"],
         "authentication": "jwt",
     },
@@ -199,7 +199,7 @@ def add_version(
     VERSION_SETTINGS[version] = settings or {
         "maintenance_mode": False,
         "rate_limit": "100 per minute",
-        "cors_origins": ["*"],
+        "cors_origins": [],
         "supported_formats": ["application/json"],
         "authentication": "jwt",
     }

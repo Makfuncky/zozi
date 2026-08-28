@@ -20,7 +20,7 @@ from infrastructure.database.schemas import (
     ShipmentUpdate,
 )
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent
 

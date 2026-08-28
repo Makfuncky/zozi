@@ -29,8 +29,8 @@ def list_rates(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    _rf_gate: None = Depends(require_feature("finance.commission.read")),
 ):
-    require_feature("finance.commission.read")
     return list_category_rates(db, country_code, page, page_size)
 
 
@@ -40,8 +40,8 @@ def create_rate(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.commission.write")),
 ):
-    require_feature("finance.commission.write")
     return create_category_rate(db, payload, country_code)
 
 
@@ -52,8 +52,8 @@ def update_rate(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.commission.write")),
 ):
-    require_feature("finance.commission.write")
     return update_category_rate(db, rate_id, country_code, payload)
 
 
@@ -64,8 +64,8 @@ def list_badge_tiers_route(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    _rf_gate: None = Depends(require_feature("finance.commission.read")),
 ):
-    require_feature("finance.commission.read")
     return list_badge_tiers(country_code, page, page_size, db)
 
 
@@ -75,8 +75,8 @@ def create_badge_tier_route(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.commission.write")),
 ):
-    require_feature("finance.commission.write")
     from infrastructure.database.schemas import CommissionBadgeTierCreate
     typed_payload = CommissionBadgeTierCreate(**payload) if isinstance(payload, dict) else payload
     return create_badge_tier(country_code, typed_payload, db)
@@ -89,7 +89,7 @@ def update_badge_tier_route(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.commission.write")),
 ):
-    require_feature("finance.commission.write")
     typed_payload = CommissionBadgeTierCreate(**payload) if isinstance(payload, dict) else payload
     return update_badge_tier(country_code, tier_id, typed_payload, db)

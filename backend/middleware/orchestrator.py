@@ -58,6 +58,7 @@ from middleware.csrf_middleware import CSRFMiddleware
 from middleware.logging_middleware import RequestLoggingMiddleware
 from middleware.api_version_middleware import ApiVersionMiddleware
 from middleware.authentication_middleware import AuthenticationMiddleware
+from middleware.device_binding_middleware import DeviceBindingMiddleware
 from middleware.webhook_verification import WebhookVerificationMiddleware
 from middleware.webhook_ip_whitelist import WebhookIPWhitelistMiddleware
 
@@ -85,6 +86,7 @@ _FOUNDATION: list[type] = [
 
 _AUTHENTICATION: list[type] = [
     AuthenticationMiddleware,  # Resolve user from JWT, populate request.state
+    DeviceBindingMiddleware,   # Bind device fingerprint to request.state
 ]
 
 # ──────────────────────────────────────────────

@@ -58,6 +58,7 @@ class AIUploadJob(Base):
     created_product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='SET NULL'), nullable=True)
     error_log = Column(Text, nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -93,6 +94,7 @@ class AIStagingProduct(Base):
     confidence_score = Column(Numeric(5, 4), nullable=True)
     requires_human_review = Column(Boolean, default=False)
     country_code = Column(String(2), nullable=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -127,6 +129,7 @@ class AIStagingVariant(Base):
     confidence_score = Column(Numeric(5, 4), nullable=True)
     requires_human_review = Column(Boolean, default=False)
     country_code = Column(String(2), nullable=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -146,6 +149,7 @@ class AIGenerationLog(Base):
     cost = Column(Numeric(12, 6), nullable=True)
     confidence = Column(Numeric(5, 4), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 

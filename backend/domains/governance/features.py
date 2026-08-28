@@ -369,6 +369,24 @@ FEATURES: dict[str, dict] = {
         "actions": ["read", "update", "delete"],
         "description": "Moderate user-generated content and enforce community guidelines.",
     },
+    "governance.referral.read": {
+        "label": "View Referrals",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View referral program data and referral history.",
+    },
+    "governance.access.read": {
+        "label": "View Access Records",
+        "risk": "medium",
+        "actions": ["read"],
+        "description": "View access control records and permission audit trails.",
+    },
+    "governance.dispute.read": {
+        "label": "View Disputes",
+        "risk": "medium",
+        "actions": ["read"],
+        "description": "View governance disputes and resolution records.",
+    },
 }
 
 

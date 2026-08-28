@@ -232,7 +232,7 @@ def test_shipments_service_user_type_hint_only():
     assert "if TYPE_CHECKING:" in src
     lines = src.split("\n")
     for i, line in enumerate(lines):
-        if "from domains.governance.models.user import User" in line:
+        if "from domains.accounts.models.user import User" in line:
             preceding = "\n".join(lines[max(0, i-3):i+1])
             assert "TYPE_CHECKING" in preceding, "User import not guarded by TYPE_CHECKING"
 
@@ -263,6 +263,6 @@ def test_partner_pricing_order_type_hint_only():
     assert "if TYPE_CHECKING:" in src
     lines = src.split("\n")
     for i, line in enumerate(lines):
-        if "from domains.orders.models.orders import Order" in line:
+        if "from domains.orders.models.order_entities import Order" in line:
             preceding = "\n".join(lines[max(0, i-3):i+1])
             assert "TYPE_CHECKING" in preceding, "Order import not guarded by TYPE_CHECKING"

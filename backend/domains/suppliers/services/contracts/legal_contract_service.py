@@ -16,7 +16,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from domains.country.models.countries import CountryConfig
-from domains.country.services.localization.localization_service import is_rtl_language
+from domains.country.ports import is_rtl_language
 
 logger = logging.getLogger(__name__)
 

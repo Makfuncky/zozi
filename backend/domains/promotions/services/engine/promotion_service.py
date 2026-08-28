@@ -11,7 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from domains.audit.services.logs.audit_service import audit_log
+from domains.audit.ports import audit_log
 from infrastructure.database.base import Base
 from domains.governance.ports import PromotionEngineConfig
 from domains.governance.ports import PromotionLedgerEntry

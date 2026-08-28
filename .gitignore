@@ -52,3 +52,7 @@ backend/schema-audit-report.json
 backend/alembic_test.json
 backend/requirements.lock
 backend/schema_mapping.json
+
+# Playwright test artifacts
+backend/tests/playwright/test-results/
+backend/tests/playwright/auth-*.png

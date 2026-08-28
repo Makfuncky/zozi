@@ -28,31 +28,21 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import String, func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from domains.governance.models.user import User
-from domains.catalog.models.products import Product
-from domains.catalog.models.products import ProductVariant
-from domains.comms.models.communication import Notification
-from domains.comms.models.suppliers import SupplierProfile
-from domains.finance.models.finance import BankTransaction
-from domains.finance.models.finance import SupplierSettlement
-from domains.governance.models.admin import BadgeBillingRecord
-from domains.governance.models.admin import CommissionBadgeTier
-from domains.governance.models.admin import SupplierBankAccount
-from domains.logistics.models.logistics import LogisticsPartner
-from domains.logistics.models.logistics import Shipment
-from domains.logistics.models.logistics import ShipmentEvent
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
-from domains.finance.models.payments import Payout
-from providers.ai.ai_variant_config import ai_service
+from domains.governance.ports import User, BadgeBillingRecord, CommissionBadgeTier, SupplierBankAccount
+from domains.catalog.ports import Product, ProductVariant
+from domains.comms.ports import Notification, SupplierProfile
+from domains.finance.ports import BankTransaction, SupplierSettlement, Payout
+from domains.logistics.ports import LogisticsPartner, Shipment, ShipmentEvent
+from domains.orders.ports import Order, OrderItem
+# from providers.ai.ai_variant_config import ai_service  # unused
 # TODO: Module not yet created
 # from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
-from domains.logistics.services.partners.service import normalize_country_code
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.logistics.ports import normalize_country_code
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from domains.catalog.services.products.products_service import _bump_product_cache_version
+from domains.catalog.ports import _bump_product_cache_version
 from infrastructure.utils.background_jobs import enqueue_job
-from domains.orders.services.tracking.service import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
+from domains.orders.ports import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
 from infrastructure.utils.realtime import logistics_realtime_hub
 from infrastructure.utils.config import settings
 from kernel.money import to_decimal
@@ -199,7 +189,7 @@ def _persist_supplier_product(
     supplier_country = str(current_user.get("preferred_country") or "").strip()
     country_code = current_user.get("country_code") or supplier_country or None
     if supplier_country:
-        from domains.country.services.restriction.country_restriction_service import is_product_restricted_for_country
+        from domains.country.ports import is_product_restricted_for_country
         if is_product_restricted_for_country(category, supplier_country, db):
             raise HTTPException(
                 status_code=422,
@@ -258,7 +248,7 @@ def _persist_supplier_product(
     db.add(new_product)
     db.flush()
     if video_url:
-        from domains.catalog.models.products import ProductVideo
+        from domains.catalog.ports import ProductVideo
         db.add(ProductVideo(product_id=new_product.id, video_url=video_url, upload_status="completed"))
     if parsed_variants:
         _replace_product_variants(new_product, parsed_variants, db)
@@ -502,7 +492,7 @@ def _resolve_category_id(category: Optional[str], db: Session) -> Optional[int]:
     text = str(category).strip()
     if not text:
         return None
-    from domains.catalog.models.products import Category
+    from domains.catalog.ports import Category
 
     slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
     row = (

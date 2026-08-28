@@ -8,6 +8,7 @@ return shapes used by the frontend Ghost Rows.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any, List, Optional
 
 from sqlalchemy import desc
@@ -322,7 +323,7 @@ def list_tax_rates(db: Session, *, country_code: str) -> List[dict]:
         {
             "id": r.id,
             "category_id": r.category_id,
-            "tax_rate": float(r.tax_rate),
+            "tax_rate": Decimal(str(r.tax_rate)),
             "tax_name": r.tax_name,
         }
         for r in rates

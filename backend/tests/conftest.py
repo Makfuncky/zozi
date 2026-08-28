@@ -92,10 +92,23 @@ def _TestSession():
 
 
 # Ensure all model modules are imported so that Base.metadata knows about every
-# table before create_all() runs. `infrastructure.database.models` walks every
-# `domains.<d>.models` package and re-exports all ORM classes (the successor to
-# the old `_legacy.models` aggregator), so importing it registers every table.
-import infrastructure.database.models  # noqa: E402
+# table before create_all() runs. Each domain models package is imported
+# directly (canonical locations per Law 1: arrows point down only).
+import infrastructure.database.base  # noqa: E402
+import domains.accounts.models.user  # noqa: E402
+import domains.catalog.models.products  # noqa: E402
+import domains.orders.models.order_entities  # noqa: E402
+import domains.finance.models.payments  # noqa: E402
+import domains.suppliers.models.suppliers  # noqa: E402
+import domains.logistics.models.logistics  # noqa: E402
+import domains.comms.models.communication  # noqa: E402
+import domains.hr.models.employee_models  # noqa: E402
+import domains.promotions.models.promotions  # noqa: E402
+import domains.security.models.fraud  # noqa: E402
+import domains.governance.models.core  # noqa: E402
+import domains.analytics.models.analytics_schema_models  # noqa: E402
+import domains.country.models.countries  # noqa: E402
+import domains.customers.models.customer_schema_models  # noqa: E402
 
 # The models declare Postgres schemas (e.g. {"schema": "commerce"}). SQLite
 # cannot create ``CREATE TABLE commerce.categories`` ("unknown database"), so
@@ -335,7 +348,7 @@ def app(engine, _seed_default_accounts):
 
 
 def _set_email_verified(email: str) -> None:
-    from infrastructure.database.models import User as _User
+    
 
     sess = _TestSession()
     try:
@@ -377,7 +390,8 @@ def _seed_default_accounts(engine):
     seeding only once per pytest session.
     """
     from infrastructure.database.seed import _ensure_demo_user
-    from infrastructure.database.models import CountryConfig, User as _UserModel
+    from domains.accounts.models.user import User as _UserModel
+    from domains.country.models.countries import CountryConfig
 
     TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = TestingSession()
@@ -453,7 +467,7 @@ def _auth_tokens(engine, _seed_default_accounts) -> dict[str, str]:
         "supplier": "eyJ...", "customer": "eyJ..."}``
     """
     from datetime import timedelta
-    from infrastructure.database.models import User as _User
+    from domains.accounts.models.user import User as _User
     from infrastructure.utils.auth import create_access_token as _create_token
 
     _Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)

@@ -7,11 +7,19 @@ public_routers = []
 _module_names = [
     "accounts",
     "analytics",
+    "audit",
+    "catalog",
     "comms",
+    "country",
     "customers",
     "finance",
+    "governance",
+    "hr",
+    "logistics",
     "orders",
     "promotions",
+    "security",
+    "suppliers",
 ]
 
 for _n in _module_names:

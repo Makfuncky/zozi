@@ -371,6 +371,54 @@ def _send_via_smtp(to: str, subject: str, html: str, *, from_address: str, trans
     )
 
 
+def _is_email_suppressed(db: Session | None, email: str) -> bool:
+    """Check if an email address is suppressed (Law 1: raw SQL, no domain import)."""
+    if db is None:
+        return False
+    from sqlalchemy import text  # noqa: E402
+    row = db.execute(
+        text(
+            "SELECT 1 FROM email_suppressions "
+            "WHERE email = :email AND status_code = 'active' LIMIT 1"
+        ),
+        {"email": email.strip().lower()},
+    ).first()
+    return row is not None
+
+
+def _record_email_delivery_event(
+    db: Session | None,
+    *,
+    recipient_email: str,
+    processor: str,
+    event_type: str,
+    source: str,
+    subject: str | None = None,
+    purpose: str | None = None,
+    campaign_recipient_id: int | None = None,
+    occurred_at: datetime | None = None,
+    payload: dict | None = None,
+) -> None:
+    """Persist an email delivery event (Law 1: raw SQL, no domain import)."""
+    if db is None:
+        return
+    from sqlalchemy import text  # noqa: E402
+    db.execute(
+        text(
+            "INSERT INTO email_delivery_events "
+            "(event_type, recipient_email, subject, status_code, details) "
+            "VALUES (:event_type, :recipient_email, :subject, :status_code, :details)"
+        ),
+        {
+            "event_type": event_type,
+            "recipient_email": recipient_email,
+            "subject": subject,
+            "status_code": event_type,
+            "details": json.dumps(payload) if payload else None,
+        },
+    )
+
+
 def send_email(
     to: str,
     subject: str,
@@ -382,22 +430,15 @@ def send_email(
     event_db: Session | None = None,
 ) -> None:
     """Dispatch an email using the active runtime configuration."""
-    # TODO(Law 1 cleanup 2026-08-27): domain suppression/event recording was
-    # moved to comms/services/email_event_service. To eliminate this import,
-    # the suppression check + event recording should be invoked via an
-    # infrastructure event hook (see infrastructure/event_bus.py) so that
-    # domains register handlers at startup. Until that event hook is in
-    # place we keep the lazy import scoped inside this function (the
-    # architecture test only flags module-level imports).
-    from domains.comms.services.email_event_service import is_email_suppressed, record_email_delivery_event  # noqa: E402  # TODO Law 1
 
     transport = _get_runtime_email_config()
     resolved_from = from_address or get_email_sender_address(purpose)
     processor = str(transport.get("provider") or "disabled")
 
-    if is_email_suppressed(to):
+    if _is_email_suppressed(event_db, to):
         logger.warning("Skipping suppressed email delivery to %s", to)
-        record_email_delivery_event(
+        _record_email_delivery_event(
+            event_db,
             recipient_email=to,
             processor=processor,
             event_type="suppressed",
@@ -407,7 +448,6 @@ def send_email(
             campaign_recipient_id=campaign_recipient_id,
             occurred_at=datetime.now(timezone.utc).replace(tzinfo=None),
             payload={"from_address": resolved_from},
-            db=event_db,
         )
         return
 
@@ -433,7 +473,8 @@ def send_email(
         logger.error("Email delivery failed to %s: %s", to, exc, exc_info=True)
         raise EmailDeliveryDisabledError(f"Email delivery failed: {exc}") from exc
 
-    record_email_delivery_event(
+    _record_email_delivery_event(
+        event_db,
         recipient_email=to,
         processor=processor,
         event_type="previewed" if transport.get("provider") == "console" else "sent",
@@ -443,7 +484,6 @@ def send_email(
         campaign_recipient_id=campaign_recipient_id,
         occurred_at=datetime.now(timezone.utc).replace(tzinfo=None),
         payload={"from_address": resolved_from},
-        db=event_db,
     )
 
 

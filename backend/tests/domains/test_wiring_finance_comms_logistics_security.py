@@ -41,7 +41,7 @@ _ensure_stub("domains.governance.models.otp", {"OtpCode": type("OtpCode", (), {}
 _ensure_stub("domains.governance.services.auth")
 _ensure_stub("domains.governance.services.auth.iam_service_accounts", {"_QR_SECRET_KEY": "default"})
 _ensure_stub(
-    "domains.governance.models.user",
+    "domains.accounts.models.user",
     {
         "User": type("User", (), {}),
         "UserDevice": type("UserDevice", (), {}),

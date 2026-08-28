@@ -1,13 +1,25 @@
-"""Routers for the logistics module — 1 domain router."""
+"""Routers for the logistics module — domain routers."""
 import importlib
 
 routers = []
 public_routers = []
 
 _module_names = [
-    "logistics",
     "accounts",
     "analytics",
+    "audit",
+    "catalog",
+    "comms",
+    "country",
+    "customers",
+    "finance",
+    "governance",
+    "hr",
+    "logistics",
+    "orders",
+    "promotions",
+    "security",
+    "suppliers",
 ]
 
 for _n in _module_names:

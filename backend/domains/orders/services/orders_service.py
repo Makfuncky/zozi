@@ -13,12 +13,10 @@ from sqlalchemy.orm import Session, selectinload
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from infrastructure.utils.auth import require_permission
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 from domains.orders.services.tracking.service import reconcile_order_status, order_status_label
-from domains.finance.services.payments.payment_engine import apply_order_status_change
-from domains.finance.services.payments.payment_engine import _apply_stripe_runtime_key
-from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
+from domains.finance.ports import _apply_stripe_runtime_key, apply_order_status_change, log_refund_bank_transaction
 from providers.payments.stripe_sdk import refund_payment_intent
 from providers.payments.registry import PaymentGatewayRegistry
 from providers.shipping.shipping_calculator import calculate_shipping_rate, compare_shipping_options
@@ -236,9 +234,10 @@ def get_all_orders(
     min_amount: Optional[float] = None,
     max_amount: Optional[float] = None,
     missing_tracking_only: bool = False,
+    cursor: Optional[int] = None,
 ) -> dict[str, Any]:
-    from domains.governance.models.user import User
-    from domains.logistics.models.logistics import Shipment, ShipmentEvent
+    from domains.governance.ports import User
+    from domains.logistics.ports import Shipment, ShipmentEvent
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
     query = db.query(Order).options(selectinload(Order.items).selectinload(OrderItem.product))
     if status and status != "all":
@@ -273,8 +272,8 @@ def get_all_orders(
         )
     query = query.order_by(Order.created_at.desc(), Order.id.desc())
     total = query.count()
-    if offset:
-        query = query.offset(offset)
+    if cursor:
+        query = query.filter(Order.id < cursor)
     query = query.limit(resolved_limit)
     orders = query.all()
     if not orders:
@@ -328,7 +327,7 @@ def get_all_orders(
             total_price_raw = getattr(item, "total_price", None)
             if total_price_raw is None:
                 quantity_value = int(getattr(item, "quantity", 0) or 0)
-                safe_unit_price = float(unit_price_raw or 0)
+                safe_unit_price = Decimal(str(unit_price_raw or 0))
                 setattr(item, "total_price", round(safe_unit_price * max(quantity_value, 0), 2))
 
         shipments = shipments_by_order.get(cast(int, order.id), [])
@@ -431,7 +430,7 @@ def update_order_status(order_id: int, status: str, acting_user: dict, db: Sessi
     apply_order_status_change(order, status, db)
     db.commit()
     try:
-        from domains.comms.services.transactional_email_service import enqueue_order_status_email
+        from domains.comms.ports import enqueue_order_status_email, enqueue_refund_processed_email
         enqueue_order_status_email(cast(int, order.id), status=status)
     except Exception:
         logger.exception("Failed to enqueue order-status email for order %s", order.id)
@@ -456,7 +455,7 @@ def update_order_status(order_id: int, status: str, acting_user: dict, db: Sessi
 
 
 def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
-    from domains.comms.models.communication import Notification
+    from domains.comms.ports import Notification
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -501,7 +500,6 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
         )
         db.commit()
         try:
-            from domains.comms.services.email.transactional_email_service import enqueue_refund_processed_email
             enqueue_refund_processed_email(cast(int, order.id), source="admin")
         except Exception:
             logger.exception("Failed to enqueue admin refund email for order %s", order.id)
@@ -526,7 +524,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
 
 
 def update_order_tracking(order_id: int, tracking_number: str, acting_user: dict, db: Session) -> dict:
-    from domains.comms.models.communication import Notification
+    from domains.comms.ports import Notification
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")

@@ -15,7 +15,7 @@ client = TestClient(app)
 
 class TestQueueAIResearch:
     def test_queue_ai_research_returns_job_id(self):
-        with patch("infrastructure.security.auth._get_redis", return_value=None), \
+        with patch("infrastructure.utils.auth._get_redis", return_value=None), \
              patch("services.ai.country_ai_research.CountryAIResearchService.enrich", new_callable=AsyncMock) as mock_enrich, \
              patch("routers.ai_research._run_ai_job") as mock_run:
             mock_enrich.return_value = {"module_01_country_identity": {"official_name": "India"}}
@@ -35,7 +35,7 @@ class TestQueueAIResearch:
             assert data["status"] == "queued"
 
     def test_queue_ai_research_requires_country_code(self):
-        with patch("infrastructure.security.auth._get_redis", return_value=None):
+        with patch("infrastructure.utils.auth._get_redis", return_value=None):
             payload = {
                 "country_code": "",
                 "base_report": {},
@@ -47,7 +47,7 @@ class TestQueueAIResearch:
 
     def test_queue_ai_research_returns_503_when_disabled(self):
         with patch("routers.ai_research.settings") as mock_settings, \
-             patch("infrastructure.security.auth._get_redis", return_value=None):
+             patch("infrastructure.utils.auth._get_redis", return_value=None):
             mock_settings.country_ai_enabled = False
             payload = {
                 "country_code": "IN",

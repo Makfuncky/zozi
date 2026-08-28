@@ -9,12 +9,13 @@ __all__ = ['Order', 'OrderItem', 'OrderLogisticsAllocation', 'ReturnRequest', 'O
 
 class Order(Base):
     __tablename__ = 'orders'
+    __table_args__ = {"schema": "orders"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_orders_user_id', 'user_id'), Index('ix_orders_customer_id', 'customer_id'), Index('ix_orders_status', 'status_code'), Index('ix_orders_country_created', 'country_code', 'created_at'), CheckConstraint("status_code IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned')", name='chk_orders_status_valid'), {'schema': 'commerce'})
+    __table_args__ = (Index('ix_orders_user_id', 'user_id'), Index('ix_orders_customer_id', 'customer_id'), Index('ix_orders_status', 'status_code'), Index('ix_orders_country_created', 'country_code', 'created_at'), CheckConstraint("status_code IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned')", name='chk_orders_status_valid'), {'schema': 'orders'})
     id = Column(Integer, primary_key=True, index=True)
     order_number = Column(String, unique=True, index=True)
     customer_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
@@ -58,7 +59,7 @@ class Order(Base):
     country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    is_deleted = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
     user = relationship('User', foreign_keys=[user_id])
     customer = relationship('User', foreign_keys=[customer_id])
@@ -68,6 +69,7 @@ class Order(Base):
 
 class OrderItem(Base):
     __tablename__ = 'order_items'
+    __table_args__ = {"schema": "orders"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -76,10 +78,10 @@ class OrderItem(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_order_items_order_id', 'order_id'), Index('ix_order_items_product_id', 'product_id'), Index('ix_order_items_country_created', 'country_code', 'created_at'), {'schema': 'commerce'})
+    __table_args__ = (Index('ix_order_items_order_id', 'order_id'), Index('ix_order_items_product_id', 'product_id'), Index('ix_order_items_country_created', 'country_code', 'created_at'), {'schema': 'orders'})
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey('commerce.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
-    product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=False, index=True)
+    order_id = Column(Integer, ForeignKey('orders.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey('catalog.products.id', ondelete='RESTRICT'), nullable=False, index=True)
     variant_id = Column(Integer, nullable=True)
     supplier_id = Column(Integer, nullable=True)
     quantity = Column(Integer, default=1)
@@ -98,6 +100,7 @@ class OrderItem(Base):
 
 class OrderLogisticsAllocation(Base):
     __tablename__ = 'order_logistics_allocations'
+    __table_args__ = {"schema": "orders"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -105,9 +108,9 @@ class OrderLogisticsAllocation(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_order_logistics_allocations_country_created', 'country_code', 'created_at'), {'schema': 'commerce'})
+    __table_args__ = (Index('ix_order_logistics_allocations_country_created', 'country_code', 'created_at'), {'schema': 'orders'})
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey('commerce.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    order_id = Column(Integer, ForeignKey('orders.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
     supplier_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=False, index=True)
     shipment_id = Column(Integer, ForeignKey('logistics.shipments.id', ondelete='RESTRICT'), nullable=True, index=True)
     partner_id = Column(Integer, ForeignKey('logistics.logistics_partners.id', ondelete='RESTRICT'), nullable=True, index=True)
@@ -139,6 +142,7 @@ class OrderLogisticsAllocation(Base):
 
 class ReturnRequest(Base):
     __tablename__ = 'return_requests'
+    __table_args__ = {"schema": "orders"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -146,9 +150,9 @@ class ReturnRequest(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_return_requests_country_created', 'country_code', 'created_at'), CheckConstraint("status_code IN ('requested', 'approved', 'rejected', 'completed', 'cancelled')", name='chk_return_requests_status_valid'), {'schema': 'commerce'})
+    __table_args__ = (Index('ix_return_requests_country_created', 'country_code', 'created_at'), CheckConstraint("status_code IN ('requested', 'approved', 'rejected', 'completed', 'cancelled')", name='chk_return_requests_status_valid'), {'schema': 'orders'})
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey('commerce.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    order_id = Column(Integer, ForeignKey('orders.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
     order_item_id = Column(Integer, nullable=True)
     customer_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     user_id = synonym('customer_id')
@@ -174,6 +178,7 @@ class ReturnRequest(Base):
 class OrderNotification(Base):
     """Order-related user notification (e.g. status changes, shipment updates)."""
     __tablename__ = 'order_notifications'
+    __table_args__ = {"schema": "orders"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -182,10 +187,10 @@ class OrderNotification(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_order_notifications_user_id', 'user_id'), {'schema': 'commerce'})
+    __table_args__ = (Index('ix_order_notifications_user_id', 'user_id'), {'schema': 'orders'})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=False, index=True)
-    order_id = Column(Integer, ForeignKey('commerce.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    order_id = Column(Integer, ForeignKey('orders.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
     title = Column(String(255), nullable=True)
     message = Column(Text, nullable=True)
     channel = Column(String(32), nullable=True)

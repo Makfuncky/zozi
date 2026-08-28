@@ -11,13 +11,13 @@ import importlib as _importlib
 # Registry: model_name → (module_path, class_name)
 _REGISTRY: dict[str, tuple[str, str]] = {
     # governance
-    "User": ("domains.governance.models.user", "User"),
+    "User": ("domains.accounts.models.user", "User"),
     # catalog
     "Category": ("domains.catalog.models.products", "Category"),
     "Product": ("domains.catalog.models.products", "Product"),
     # comms
     "EmailTemplate": ("domains.comms.models.marketing", "EmailTemplate"),
-    "SupplierProfile": ("domains.comms.models.suppliers", "SupplierProfile"),
+    "SupplierProfile": ("domains.suppliers.models.suppliers", "SupplierProfile"),
     # country
     "CountryConfig": ("domains.country.models.countries", "CountryConfig"),
     # logistics
@@ -28,9 +28,9 @@ _REGISTRY: dict[str, tuple[str, str]] = {
     "Shipment": ("domains.logistics.models.logistics", "Shipment"),
     "ShipmentEvent": ("domains.logistics.models.logistics", "ShipmentEvent"),
     # orders
-    "Order": ("domains.orders.models.orders", "Order"),
-    "OrderItem": ("domains.orders.models.orders", "OrderItem"),
-    "OrderLogisticsAllocation": ("domains.orders.models.orders", "OrderLogisticsAllocation"),
+    "Order": ("domains.orders.models.order_entities", "Order"),
+    "OrderItem": ("domains.orders.models.order_entities", "OrderItem"),
+    "OrderLogisticsAllocation": ("domains.orders.models.order_entities", "OrderLogisticsAllocation"),
     # hr
     "Employee": ("domains.hr.models.employee_models", "Employee"),
     "Office": ("domains.hr.models.employee_models", "Office"),

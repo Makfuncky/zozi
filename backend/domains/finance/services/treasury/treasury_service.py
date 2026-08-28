@@ -12,7 +12,7 @@ class TreasuryService:
         self.db = db
 
     def post_journal_entry(self, **kwargs):
-                adapter = TreasuryAdapter(self.db)
+        adapter = TreasuryAdapter(self.db)
         return adapter.post_journal_entry(**kwargs)
 
     def get_treasury_metrics(self) -> dict:

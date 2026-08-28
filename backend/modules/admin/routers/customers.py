@@ -24,8 +24,9 @@ router = APIRouter(prefix="/api/v1/admin/customers", tags=["admin", "customers"]
 
 
 @router.get("/referrals/config", status_code=200, tags=["referrals"])
-def get_referral_config_route(_: dict = Depends(require_admin), db: Session = Depends(get_db)):
-    require_feature("customers.referral.manage")
+def get_referral_config_route(_: dict = Depends(require_admin), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.referral.manage"))
+):
     return get_referral_config(db)
 
 
@@ -36,8 +37,8 @@ def get_product_reviews_route(
     db: Session = Depends(get_db),
     limit: int = Query(50),
     cursor: Optional[int] = Query(None),
+    _rf_gate: None = Depends(require_feature("customers.reviews.write")),
 ):
-    require_feature("customers.reviews.write")
     return get_product_reviews(product_id=product_id, db=db, limit=limit, cursor=cursor)
 
 
@@ -48,8 +49,8 @@ def list_reviews_route(
     product_id: Optional[int] = Query(None),
     limit: int = Query(50),
     cursor: Optional[int] = Query(None),
+    _rf_gate: None = Depends(require_feature("customers.reviews.write")),
 ):
-    require_feature("customers.reviews.write")
     return get_product_reviews(product_id=product_id, db=db, limit=limit, cursor=cursor)
 
 
@@ -59,8 +60,8 @@ def update_review_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
     review: dict = Body(...),
+    _rf_gate: None = Depends(require_feature("customers.reviews.write")),
 ):
-    require_feature("customers.reviews.write")
     return update_review(review_id=review_id, review_data=review, current_user=current_user, db=db)
 
 
@@ -70,8 +71,8 @@ def get_wishlist_route(
     db: Session = Depends(get_db),
     limit: int = Query(200),
     cursor: Optional[int] = Query(None),
+    _rf_gate: None = Depends(require_feature("customers.wishlist.manage")),
 ):
-    require_feature("customers.wishlist.manage")
     user_id = current_user.get("user_id") or current_user.get("id")
     return _get_user_wishlist(db=db, user_id=user_id, limit=limit, cursor=cursor)
 
@@ -81,8 +82,8 @@ def add_to_wishlist_route(
     product_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.wishlist.manage")),
 ):
-    require_feature("customers.wishlist.manage")
     user_id = current_user.get("user_id") or current_user.get("id")
     return add_to_wishlist(user_id=user_id, product_id=product_id, db=db)
 
@@ -91,8 +92,8 @@ def add_to_wishlist_route(
 def clear_user_wishlist_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.wishlist.manage")),
 ):
-    require_feature("customers.wishlist.manage")
     user_id = current_user.get("user_id") or current_user.get("id")
     deleted = _clear_wishlist(db=db, user_id=user_id)
     return {"cleared": deleted}

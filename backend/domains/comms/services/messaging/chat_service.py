@@ -456,7 +456,7 @@ class ChatSystem:
         """
         from domains.governance.models.core import EntityChatThread
         from domains.governance.models.core import EntityChatMessage
-        from domains.governance.models.user import User
+        from domains.accounts.models.user import User
         thread = self.db.query(EntityChatThread).filter(
             EntityChatThread.id == thread_id
         ).first()

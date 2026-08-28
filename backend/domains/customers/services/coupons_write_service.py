@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from domains.governance.models.admin import CouponUsage
-from domains.catalog.models.promotions import Coupon
+from domains.promotions.models.promotions import Coupon
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)

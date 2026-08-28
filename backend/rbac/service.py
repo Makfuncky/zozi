@@ -121,3 +121,21 @@ class RBACService:
             country_code=country_code,
         )
         self.db.add(log_entry)
+
+    def check_permission(self, role: str, permission: str) -> bool:
+        """Check if a role has a specific permission.
+
+        Args:
+            role: The role name to check.
+            permission: The feature/permission slug to check.
+
+        Returns:
+            True if the role has the permission, False otherwise.
+        """
+        from rbac.dependencies import _ROLE_FEATURES
+        from rbac.resolution import expand_wildcards
+        from rbac.catalog import FEATURE_CATALOG
+
+        role_features = _ROLE_FEATURES.get(role, [])
+        effective = expand_wildcards(role_features, FEATURE_CATALOG)
+        return permission in effective

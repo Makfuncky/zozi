@@ -24,6 +24,10 @@ from domains.audit.models.audit_schema_models import AuditLog, CommandCenterView
 _LAZY_AUDIT_EXPORTS: dict[str, tuple[str, str]] = {
     "AuditAction": ("domains.audit.services.logs.audit_service", "AuditAction"),
     "audit_log": ("domains.audit.services.logs.audit_service", "audit_log"),
+    "get_compliance_engine": ("domains.audit.services.compliance_engine", "get_compliance_engine"),
+    "AuditService": ("domains.audit.services.audit_service", "AuditService"),
+    "get_audit_logs": ("domains.audit.services.audit_service", "get_audit_logs"),
+    "get_unique_actions": ("domains.audit.services.audit_service", "get_unique_actions"),
 }
 
 
@@ -44,3 +48,4 @@ __all__ = [
     "AuditAction",
     "audit_log",
 ]
+

@@ -34,9 +34,9 @@ async def create_travel_request(
     end_date: str,
     purpose: str,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write")),
 ):
-    require_feature("suppliers.profile.write")
     service = get_travel_service(db)
     return service.create_travel_request(
         employee_id=employee_id,
@@ -55,9 +55,9 @@ async def validate_expense(
     description: str,
     receipt_image_hash: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write")),
 ):
-    require_feature("suppliers.profile.write")
     service = get_travel_service(db)
     return service.validate_expense(
         employee_id=employee_id,
@@ -72,9 +72,9 @@ async def validate_expense(
 async def approve_travel_request(
     request_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write")),
 ):
-    require_feature("suppliers.profile.write")
     service = get_travel_service(db)
     return service.approve_travel_request(request_id, int(current_user["sub"]))
 
@@ -89,32 +89,37 @@ def _user_to_dict(user: dict) -> dict:
 
 
 @router.get("")
-def list_tickets(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
-    require_feature("suppliers.profile.read")
+def list_tickets(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.read"))
+):
     return list_support_tickets(db, _user_to_dict(current_user), page=page, page_size=page_size)
 
 
 @router.post("", status_code=201)
-def create_ticket(payload: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("suppliers.profile.write")
+def create_ticket(payload: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write"))
+):
     return create_support_ticket(db, payload, _user_to_dict(current_user))
 
 
 @router.get("/{ticket_id}")
-def get_ticket(ticket_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("suppliers.profile.read")
+def get_ticket(ticket_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.read"))
+):
     return get_support_ticket(db, ticket_id, _user_to_dict(current_user))
 
 
 @router.post("/{ticket_id}/reply")
-def reply_to_ticket(ticket_id: int, payload: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("suppliers.profile.write")
+def reply_to_ticket(ticket_id: int, payload: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write"))
+):
     return reply_to_support_ticket(db, ticket_id, payload, _user_to_dict(current_user))
 
 
 @router.post("/{ticket_id}/messages", status_code=201)
-def add_message(ticket_id: int, payload: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("suppliers.profile.write")
+def add_message(ticket_id: int, payload: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write"))
+):
     return reply_to_support_ticket(db, ticket_id, payload, _user_to_dict(current_user))
 
 
@@ -135,9 +140,8 @@ from fastapi import APIRouter
 
 
 @router.get("/push_notifications/health")
-def health():
+def health(    _rf_gate: None = Depends(require_feature("suppliers.profile.read"))):
     """Liveness probe for this router."""
-    require_feature("suppliers.profile.read")
     return {"status": "ok", "router": "push_notifications", "prefix": "/api/v1/push-notifications"}
 
 

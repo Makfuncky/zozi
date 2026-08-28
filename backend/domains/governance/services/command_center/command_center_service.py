@@ -14,7 +14,7 @@ from domains.governance.models.core import CommandCenterView
 from domains.governance.models.core import SystemHealthEvent
 from domains.governance.models.core import UserSession
 from domains.governance.models.core import SupportTicket
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.country.models.countries import CountryConfig
 from domains.governance.models.admin import SystemAlert

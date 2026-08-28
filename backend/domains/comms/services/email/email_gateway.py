@@ -170,7 +170,7 @@ class EmailGateway:
         self.db.refresh(email)
 
         try:
-            from domains.hr.services.employee_communication_service import log_comm_event
+            from domains.hr.ports import log_comm_event
             log_comm_event(self.db, sender_id, to_user_ids[0] if to_user_ids else None, "email_sent", "internal_email", email.id)
         except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
             logger.debug("Activity log skipped: %s", exc)
@@ -337,7 +337,7 @@ class EmailGateway:
     def get_email_history(
         self, user_id: int, limit: int = 50, offset: int = 0
     ) -> dict:
-        from domains.governance.models.user import User
+        from domains.governance.ports import User
         from domains.comms.models.communication import Notification
         
         user = self.db.query(User).filter(User.id == user_id).first()
@@ -384,7 +384,7 @@ def _enqueue_email_delivery(email_id: int, body_html: str, subject: str) -> None
                 if not email:
                     return {"status": "skipped", "reason": "email_not_found"}
 
-                from domains.governance.models.user import User
+                from domains.governance.ports import User
                 recipients = email.recipients or []
                 if isinstance(recipients, str):
                     import json

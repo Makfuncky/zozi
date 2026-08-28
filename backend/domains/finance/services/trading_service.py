@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from domains.finance.models.erp import (
+from domains.logistics.models.erp import (
     GoodsReceiptNote,
     PurchaseOrder,
     SalesOrder,
@@ -40,7 +40,7 @@ def create_purchase_order(
     lines: Optional[list] = None,
     created_by: Optional[int] = None,
 ) -> dict:
-    from domains.finance.models.erp import PurchaseOrderLine
+    from domains.logistics.models.erp import PurchaseOrderLine
     po_number = f"PO-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{supplier_id}"
     po = PurchaseOrder(
         po_number=po_number,
@@ -119,7 +119,7 @@ def confirm_purchase_order(db: Session, po_id: int) -> dict:
 
 
 def receive_purchase_order(db: Session, po_id: int, payload: dict) -> dict:
-    from domains.finance.models.erp import GoodsReceiptNote, GoodsReceiptLine
+    from domains.logistics.models.erp import GoodsReceiptNote, GoodsReceiptLine
     po = db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).first()
     if not po:
         raise ValueError("Purchase order not found")
@@ -209,7 +209,7 @@ def create_sales_order(
     lines: Optional[list] = None,
     created_by: Optional[int] = None,
 ) -> dict:
-    from domains.finance.models.erp import SalesOrderLine
+    from domains.logistics.models.erp import SalesOrderLine
     so_number = f"SO-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{customer_id}"
     so = SalesOrder(
         so_number=so_number,

@@ -236,6 +236,10 @@ FEATURES = {
     "comms.sla.manage": "Configure escalation SLA rules",
     # Broadcast features
     "comms.broadcast": "Send broadcast messages and notifications to user segments",
+    # Audit features
+    "comms.audit.read": "Read communication audit logs and delivery records",
+    # Proxy use (short form)
+    "comms.proxy.use": "Use proxy phone/email for anonymized communication",
 }
 
 __all__ = [

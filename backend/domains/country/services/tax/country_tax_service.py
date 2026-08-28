@@ -1,5 +1,6 @@
 """Service methods for country category tax rates."""
 from __future__ import annotations
+from decimal import Decimal
 from typing import List
 from sqlalchemy.orm import Session
 from domains.country.models.country_enhancements import CountryCategoryTaxRate
@@ -43,7 +44,7 @@ def list_active_category_tax_rates(
         serializer=lambda r: {
             "id": r.id,
             "category_id": r.category_id,
-            "tax_rate": float(r.tax_rate),
+            "tax_rate": Decimal(str(r.tax_rate)),
             "tax_name": r.tax_name,
         },
     )

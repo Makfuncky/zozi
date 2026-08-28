@@ -26,8 +26,8 @@ def get_customer_health(
     user_id: int,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.health.view")),
 ):
-    require_feature("customers.health.view")
     engine = get_customer_health_engine(db)
     return engine.calculate_health_score(user_id)
 
@@ -38,6 +38,6 @@ def list_customer_health(
     db: Session = Depends(get_db),
     page: int = 1,
     size: int = 100,
+    _rf_gate: None = Depends(require_feature("customers.health.view")),
 ):
-    require_feature("customers.health.view")
     return svc_list_customer_health(db, page=page, size=size)

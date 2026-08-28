@@ -42,15 +42,16 @@ class ExecutiveNews(Base):
     is_published = Column(Boolean, default=False)
     ai_sentiment = Column(String(20), default="neutral")
     published_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     # --- standard column set (DBA03) added manually to avoid mixin column clash ---
     uuid = Column(String(36), unique=True, index=True, default=_new_uuid)
     version = Column(Integer, nullable=False, default=1)
     created_by_id = Column(Integer, nullable=True, index=True)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     updated_by_id = Column(Integer, nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True, index=True)
     deleted_by_id = Column(Integer, nullable=True)
 
@@ -65,15 +66,15 @@ class PredictiveSimulation(Base):
     simulation_type = Column(String(50), nullable=False)
     parameters_json = Column(Text, nullable=False)
     result_json = Column(Text, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     # --- standard column set (DBA03) added manually ---
     uuid = Column(String(36), unique=True, index=True, default=_new_uuid)
     version = Column(Integer, nullable=False, default=1)
-    country_code = Column(String(2), nullable=True, index=True)
     created_by_id = Column(Integer, nullable=True, index=True)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     updated_by_id = Column(Integer, nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True, index=True)
     deleted_by_id = Column(Integer, nullable=True)

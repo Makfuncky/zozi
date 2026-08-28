@@ -67,7 +67,7 @@ from lifespan import build_lifespan
 app = FastAPI(
     title=settings.app_name or "ZOZI Marketplace",
     version=settings.app_version or "1.0.0",
-    debug=settings.debug or str(settings.app_env or "").lower() == "test",
+    debug=settings.debug,
     lifespan=build_lifespan(),
     docs_url="/docs",
     redoc_url="/redoc",
@@ -218,6 +218,11 @@ async def websocket_background_jobs(websocket: WebSocket, token: str = None):
             # will raise an exception that we catch below.
             await websocket.receive_text()
     except Exception as e:
+        # Expected: WebSocketDisconnect (client closed), network drop, or
+        # transport error — these are normal lifecycle events, not bugs.
+        # Unexpected: anything else (e.g. RuntimeError) may indicate a real issue
+        # and is logged above for investigation. No reconnection logic here
+        # because the client is responsible for reconnecting with a fresh token.
         logger.warning("WebSocket background jobs connection error", exc_info=e)
     finally:
         manager.disconnect(websocket, BACKGROUND_JOBS_ROOM)

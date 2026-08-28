@@ -37,8 +37,8 @@ def monitored_session(timeout_seconds: int = 30) -> Generator[Any, None, None]:
         if db is not None:
             try:
                 db.__exit__(type(exc), exc, exc.__traceback__)
-            except Exception:
-                pass
+            except Exception as exit_exc:
+                logger.debug("Session exit failed: %s", exit_exc)
         raise
     finally:
         elapsed = time.monotonic() - start_time
@@ -57,8 +57,8 @@ def _update_connection_metrics() -> None:
         metrics = get_pool_metrics()
         if metrics and "size" in metrics:
             db_connections.set(metrics["size"])
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Connection metrics update failed: %s", exc)
 
 
 def get_connection_leak_report() -> dict[str, Any]:

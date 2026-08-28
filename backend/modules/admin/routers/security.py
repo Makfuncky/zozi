@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, Body
+import logging
+
+from fastapi import APIRouter, Depends, Query, Body, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -32,6 +34,57 @@ from domains.security.services.core.security_service import (
 from domains.security.services.fraud.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
 from domains.security.services.risk_service import get_risk_scores
 from domains.accounts.schemas.user_schemas import OtpRequest
+
+logger = logging.getLogger(__name__)
+
+
+def _otp_rate_limit(request: Request, user_id: int, suffix: str, max_attempts: int, window: int = 60) -> None:
+    """Enforce per-user OTP rate limit using Redis INCR+EXPIRE.
+
+    Raises HTTPException(429) when the limit is exceeded or when Redis is
+    unavailable (fail-closed to prevent brute-force / OTP bombing).
+    """
+    from fastapi import HTTPException, status
+
+    ip_address = "unknown"
+    if getattr(request, "client", None) is not None:
+        ip_address = request.client.host or "unknown"
+    else:
+        ip_address = request.headers.get("x-forwarded-for", "unknown").split(",")[0].strip()
+
+    try:
+        from domains.accounts.services.auth.auth_service import _get_redis
+
+        r = _get_redis()
+        if r is None:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Rate limiting temporarily unavailable. Please try again later.",
+            )
+
+        key = f"rate_limit:otp:{suffix}:{ip_address}:{user_id}"
+        pipe = r.pipeline()
+        pipe.incr(key)
+        pipe.expire(key, window)
+        count, _ = pipe.execute()
+        count = int(count) if count is not None else 0
+        if count > max_attempts:
+            logger.warning(
+                "OTP rate limit exceeded for user %s on %s (count=%s, limit=%s/%ss)",
+                user_id, ip_address, count, max_attempts, window,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many OTP requests. Please try again later.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limiting temporarily unavailable. Please try again later.",
+        )
+
 
 router = APIRouter(tags=["admin", "security"])
 
@@ -68,8 +121,8 @@ def calculate_fraud_score(
     payload: FraudScoreRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     engine = FraudScoringEngine(db)
     return engine.calculate_score(
         user_id=payload.user_id,
@@ -90,8 +143,8 @@ def list_fraud_events_route(
     min_score: int = Query(0, ge=0, le=100),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return list_fraud_events(page, size, user_id, ip_address, min_score, _, db)
 
 
@@ -101,8 +154,8 @@ def list_blacklist_route(
     status: str = Query("active"),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.policies.read")),
 ):
-    require_feature("security.policies.read")
     return list_blacklist(entity_type, status, _, db)
 
 
@@ -111,8 +164,8 @@ def add_to_blacklist_route(
     payload: BlacklistCreateRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.policies.manage")),
 ):
-    require_feature("security.policies.manage")
     return add_to_blacklist(payload, _, db)
 
 
@@ -121,8 +174,8 @@ def remove_from_blacklist_route(
     entry_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.policies.manage")),
 ):
-    require_feature("security.policies.manage")
     return remove_from_blacklist(entry_id, _, db)
 
 
@@ -131,8 +184,8 @@ def list_rules_route(
     is_active: bool = True,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.policies.read")),
 ):
-    require_feature("security.policies.read")
     return list_rules(is_active, _, db)
 
 
@@ -141,8 +194,8 @@ def create_rule_route(
     payload: RuleCreateRequest,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.policies.manage")),
 ):
-    require_feature("security.policies.manage")
     return create_rule(payload, _, db)
 
 
@@ -152,8 +205,8 @@ def list_review_queue_route(
     priority: str | None = None,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return list_review_queue(status, priority, _, db)
 
 
@@ -161,8 +214,8 @@ def list_review_queue_route(
 def update_threat_feeds(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.manage")),
 ):
-    require_feature("security.events.manage")
     updater = ThreatFeedUpdater(db)
     return updater.update_all_feeds()
 
@@ -171,8 +224,8 @@ def update_threat_feeds(
 def get_threat_feed_status_route(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return get_threat_feed_status(db)
 
 
@@ -181,8 +234,8 @@ def get_risk_score_route(
     employee_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return get_risk_scores(db, employee_id)
 
 
@@ -194,8 +247,8 @@ def admin_ghost_employees_route(
     threshold_days: int = Query(30, ge=1, le=365),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return detect_ghost_employees(db, threshold_days)
 
 
@@ -204,8 +257,8 @@ def admin_impossible_travel_route(
     threshold_hours: int = Query(24, ge=1, le=168),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return detect_impossible_travel(db, threshold_hours)
 
 
@@ -216,8 +269,8 @@ def admin_update_flight_risk_score_route(
     score: float = Query(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.manage")),
 ):
-    require_feature("security.events.manage")
     return update_flight_risk_score(employee_id, metric, score, db)
 
 
@@ -226,8 +279,8 @@ def admin_team_health_route(
     manager_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return get_team_health_radar(manager_id, db)
 
 
@@ -237,8 +290,8 @@ def admin_audit_timeline_route(
     limit: int = Query(100, ge=1, le=500),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("security.events.read")),
 ):
-    require_feature("security.events.read")
     return get_audit_timeline(employee_id, db, limit)
 
 
@@ -246,9 +299,8 @@ def admin_audit_timeline_route(
 
 
 @router.get("/api/v1/rbac/catalog")
-def get_rbac_catalog():
+def get_rbac_catalog(    _rf_gate: None = Depends(require_feature("security.read"))):
     """Return the full feature catalog for frontend permission sync."""
-    require_feature("security.read")
     return {
         "features": FEATURE_CATALOG,
         "namespaces": list(FEATURE_NAMESPACES),
@@ -260,14 +312,26 @@ def get_rbac_catalog():
 
 
 @router.post("/otp/start", tags=["auth", "otp"])
-def start_otp_challenge(payload: OtpRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    require_feature("security.mfa.manage")
+def start_otp_challenge(
+    payload: OtpRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("security.mfa.manage")),
+):
+    _otp_rate_limit(request, current_user.id, "start", max_attempts=3, window=60)
     start_otp(current_user, purpose=payload.purpose, channel=payload.channel, destination=payload.destination, db=db)
     return {"status": "sent", "channel": payload.channel, "purpose": payload.purpose}
 
 
 @router.post("/otp/verify", tags=["auth", "otp"])
-def verify_otp_challenge(payload: OtpRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    require_feature("security.mfa.manage")
+def verify_otp_challenge(
+    payload: OtpRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _rf_gate: None = Depends(require_feature("security.mfa.manage")),
+):
+    _otp_rate_limit(request, current_user.id, "verify", max_attempts=5, window=60)
     verified = verify_otp(current_user, purpose=payload.purpose, code=payload.code or "", db=db)
     return {"verified": verified}

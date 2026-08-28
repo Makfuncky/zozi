@@ -27,8 +27,8 @@ router = APIRouter(prefix="/api/v1/supplier/orders", tags=["supplier", "orders"]
 def list_supplier_orders_route(
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.list")),
 ):
-    require_feature("orders.list")
     return list_supplier_orders(current_user, db)
 
 
@@ -37,8 +37,8 @@ def get_supplier_label_route(
     order_id: int,
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.read")),
 ):
-    require_feature("orders.read")
     return get_supplier_label(current_user, order_id, db)
 
 
@@ -49,8 +49,8 @@ async def upload_parcel_proof_route(
     notes: str = Form(""),
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.write")),
 ):
-    require_feature("orders.write")
     content = await file.read()
     return upload_parcel_proof(current_user, order_id, content, file.filename, file.content_type, notes, db)
 
@@ -60,8 +60,8 @@ async def verify_parcel_proof_route(
     order_id: int,
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.write")),
 ):
-    require_feature("orders.write")
     return verify_parcel_proof(current_user, order_id, db)
 
 
@@ -71,8 +71,8 @@ async def replace_reference_image_route(
     file: UploadFile = File(...),
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.write")),
 ):
-    require_feature("orders.write")
     content = await file.read()
     return replace_reference_image(current_user, order_id, content, file.filename, file.content_type, db)
 
@@ -82,8 +82,8 @@ def get_reference_image_route(
     order_id: int,
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.read")),
 ):
-    require_feature("orders.read")
     url = get_reference_image(current_user, order_id, db)
     return RedirectResponse(url=url, status_code=302)
 
@@ -93,6 +93,6 @@ def get_parcel_verification_history_route(
     limit: int = Query(10, ge=1, le=100),
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("orders.read")),
 ):
-    require_feature("orders.read")
     return get_parcel_verification_history(current_user, limit, db)

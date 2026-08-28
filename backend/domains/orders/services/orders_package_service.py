@@ -11,7 +11,7 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from infrastructure.database.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
 from domains.governance.ports import Address

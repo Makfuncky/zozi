@@ -1,4 +1,4 @@
-"""Tests for shopping cart."""
+﻿"""Tests for shopping cart."""
 from __future__ import annotations
 
 import pytest
@@ -7,8 +7,9 @@ import uuid
 
 @pytest.fixture
 def user_with_product(client, db_session):
-    from infrastructure.database.models import User, Product
-    from infrastructure.security.auth import get_password_hash
+    from domains.accounts.models.user import User
+    from domains.catalog.models.products import Product
+    from infrastructure.utils.auth import get_password_hash
     supplier_email = f"cartsupplier_{uuid.uuid4().hex[:8]}@zozi.test"
     supplier = User(
         email=supplier_email,
@@ -118,7 +119,7 @@ def test_clear_cart(client, user_with_product):
 
 @pytest.mark.integration
 def test_add_inactive_product_to_cart(client, user_with_product, db_session):
-    from infrastructure.database.models import Product
+    from domains.catalog.models.products import Product
     headers, _ = user_with_product
     bad_product = Product(
         name="Inactive Product",

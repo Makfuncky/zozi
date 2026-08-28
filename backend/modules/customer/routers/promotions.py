@@ -94,8 +94,8 @@ def validate_coupon(
     payload: dict | None = Body(default=None),
     _: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.coupons.redeem")),
 ):
-    require_feature("promotions.coupons.redeem")
     payload = {**dict(request.query_params), **(payload or {})}
     code = str(payload.get("code") or "").strip()
     order_total = payload.get("order_total", payload.get("order_subtotal"))
@@ -105,8 +105,9 @@ def validate_coupon(
 
 
 @router.get("")
-def list_coupons(_: dict = Depends(_require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
-    require_feature("promotions.coupons.read")
+def list_coupons(_: dict = Depends(_require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+    _rf_gate: None = Depends(require_feature("promotions.coupons.read"))
+):
     return svc_list_coupons_paginated(db, cursor=None, page_size=page_size)
 
 
@@ -116,15 +117,16 @@ def create_coupon(
     payload: dict | None = Body(default=None),
     _: dict = Depends(_require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.coupons.write")),
 ):
-    require_feature("promotions.coupons.write")
     payload = {**dict(request.query_params), **(payload or {})}
     return svc_create_coupon_from_payload(db, payload)
 
 
 @router.delete("/coupons/{coupon_id}")
-def delete_coupon(coupon_id: str, _: dict = Depends(_require_admin), db: Session = Depends(get_db)):
-    require_feature("promotions.coupons.write")
+def delete_coupon(coupon_id: str, _: dict = Depends(_require_admin), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.coupons.write"))
+):
     return svc_delete_coupon_by_id(db, coupon_id)
 
 
@@ -176,8 +178,8 @@ def validate_coupon_get(
     order_total: Optional[float] = Query(None),
     order_amount: Optional[float] = Query(None),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.coupons.redeem")),
 ):
-    require_feature("promotions.coupons.redeem")
     total = order_total if order_total is not None else order_amount
     if not code or total is None:
         return {"valid": False, "discount_amount": 0.0, "new_total": 0.0, "coupon": None}
@@ -197,8 +199,9 @@ def _current_user_role(current_user: dict) -> str:
 
 
 @router.get("/products/{product_id}")
-def get_product_reviews_route(product_id: int, db: Session = Depends(get_db)):
-    require_feature("promotions.promotions.read")
+def get_product_reviews_route(product_id: int, db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.read"))
+):
     return get_product_reviews(db, product_id)
 
 
@@ -208,8 +211,8 @@ def create_product_review(
     payload: dict = Body(default_factory=dict),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write")),
 ):
-    require_feature("promotions.promotions.write")
     if not product_exists(db, product_id):
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -237,8 +240,9 @@ def create_product_review(
 
 
 @router.post("/reviews", status_code=status.HTTP_201_CREATED)
-def create_review_route(payload: ReviewCreate,     current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("promotions.promotions.write")
+def create_review_route(payload: ReviewCreate,     current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write"))
+):
     return create_product_review(
         product_id=payload.product_id,
         payload={"rating": payload.rating, "comment": getattr(payload, "body", None), "image_url": None},
@@ -248,8 +252,9 @@ def create_review_route(payload: ReviewCreate,     current_user: dict = Depends(
 
 
 @router.delete("/reviews/{review_id}")
-def delete_review(review_id: int,     current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("promotions.promotions.write")
+def delete_review(review_id: int,     current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write"))
+):
     user_id = _current_user_id(current_user)
     user_role = _current_user_role(current_user)
     return delete_review_by_user(db, review_id, user_id, user_role)
@@ -260,8 +265,9 @@ def delete_review(review_id: int,     current_user: dict = Depends(get_current_u
 
 
 @router.post("/wishlist/{product_id}")
-def add_to_wishlist(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("promotions.promotions.write")
+def add_to_wishlist(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write"))
+):
     if not wishlist_product_exists(db, product_id):
         raise HTTPException(status_code=404, detail="Product not found")
     existing = get_wishlist_item_by_product(db, current_user["id"], product_id)
@@ -272,8 +278,9 @@ def add_to_wishlist(product_id: int, current_user: dict = Depends(get_current_us
 
 
 @router.delete("/wishlist/{product_id}")
-def remove_from_wishlist(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    require_feature("promotions.promotions.write")
+def remove_from_wishlist(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write"))
+):
     item = get_wishlist_item_by_product(db, current_user["id"], product_id)
     if not item:
         raise HTTPException(status_code=404, detail="Wishlist item not found")

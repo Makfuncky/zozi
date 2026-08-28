@@ -1,4 +1,4 @@
-"""
+﻿"""
 Comprehensive tests for search/autocomplete/visual endpoints.
 Verifies the search/filter/sort integration with the database.
 """
@@ -22,7 +22,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(autouse=True)
 def _setup_db():
     """Create tables before each test and drop after."""
-    from infrastructure.database.models import Base
+    from infrastructure.database.base import Base
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -52,7 +52,7 @@ def client(db_session):
 
 def _seed_test_products(db_session):
     """Insert sample products for search tests."""
-    from infrastructure.database.models import Product
+    from domains.catalog.models.products import Product
     import random
     from datetime import datetime, timezone
 

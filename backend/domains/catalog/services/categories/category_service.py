@@ -434,14 +434,13 @@ def list_categories_flat(
 
 def archive_category(category_id: int, acting_user: dict, db: Session, *, reason: Optional[str] = None) -> dict:
     """Soft-archive a category."""
-    from domains.governance.services.settings.misc_service import archive_entity
+    from domains.governance.ports import archive_entity, restore_entity
 
     return archive_entity("category", category_id, acting_user, db, reason)
 
 
 def restore_category(category_id: int, acting_user: dict, db: Session) -> dict:
     """Restore a soft-archived category."""
-    from domains.governance.services.settings.misc_service import restore_entity
 
     return restore_entity("category", category_id, acting_user, db)
 

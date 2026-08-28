@@ -66,9 +66,9 @@ def list_pending_bank_accounts_route(
     page_size: int = Query(50),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.permissions.manage")),
 ):
     """List bank accounts awaiting verification."""
-    require_feature("accounts.permissions.manage")
     return list_pending_bank_accounts(
         kind=kind,
         db=db,
@@ -87,9 +87,9 @@ def verify_bank_account_route(
     db: Session = Depends(get_db),
     action: str = Body("approve", embed=True),
     note: Optional[str] = Body(None, embed=True),
+    _rf_gate: None = Depends(require_feature("accounts.permissions.manage")),
 ):
     """Approve or reject a bank account."""
-    require_feature("accounts.permissions.manage")
     return verify_bank_account(
         kind=kind,
         account_id=account_id,
@@ -107,9 +107,9 @@ def delete_bank_account_route(
     account_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.permissions.manage")),
 ):
     """Delete a bank account record."""
-    require_feature("accounts.permissions.manage")
     return delete_bank_account_record(
         kind=kind,
         account_id=account_id,
@@ -131,9 +131,9 @@ def list_users_by_country_route(
     include_deleted: bool = Query(False),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.list")),
 ):
     """List users in a specific country."""
-    require_feature("accounts.user.list")
     return list_users_by_country(
         db=db,
         country_code=country_code,
@@ -151,9 +151,9 @@ def get_user_in_country_route(
     user_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.read")),
 ):
     """Get a single user within a specific country."""
-    require_feature("accounts.user.read")
     return get_user_in_country(db, country_code, user_id)
 
 
@@ -163,9 +163,9 @@ def list_all_users_route(
     page_size: int = Query(50, ge=1, le=200),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.list")),
 ):
     """List users across all countries (admin console, no RLS scoping)."""
-    require_feature("accounts.user.list")
     return list_all_users(
         db=db,
         skip=(page - 1) * page_size,
@@ -178,9 +178,9 @@ def get_user_by_id_route(
     user_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.read")),
 ):
     """Fetch a user by primary key."""
-    require_feature("accounts.user.read")
     return get_user_by_id_or_404(db, user_id)
 
 
@@ -190,9 +190,9 @@ def update_user_by_id_route(
     payload: dict = Body(...),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.update")),
 ):
     """Update a user's profile fields (no country scoping)."""
-    require_feature("accounts.user.update")
     return update_user_by_id(db, user_id, payload)
 
 
@@ -203,9 +203,9 @@ def archive_user_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
     reason: Optional[str] = Body(None, embed=True),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Soft-archive (soft-delete) a user within a country."""
-    require_feature("accounts.user.delete")
     return archive_user(db, country_code, user_id, reason=reason)
 
 
@@ -215,9 +215,9 @@ def restore_user_route(
     user_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Restore a previously archived user."""
-    require_feature("accounts.user.delete")
     return restore_user(db, country_code, user_id)
 
 
@@ -228,9 +228,9 @@ def bulk_archive_users_route(
     reason: Optional[str] = Body(None, embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Bulk soft-archive users in a country."""
-    require_feature("accounts.user.delete")
 
     class _Payload:
         pass
@@ -247,9 +247,9 @@ def bulk_toggle_active_route(
     is_active: bool = Body(True, embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.update")),
 ):
     """Bulk enable or disable users in a country."""
-    require_feature("accounts.user.update")
     return bulk_toggle_active(db, country_code, user_ids, is_active=is_active)
 
 
@@ -259,9 +259,9 @@ def bulk_restore_users_route(
     ids: list[int] = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Bulk restore archived users in a country."""
-    require_feature("accounts.user.delete")
 
     class _Payload:
         pass
@@ -278,9 +278,9 @@ def hard_delete_user_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
     delete_orders: bool = Query(False),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Hard-delete a user within a country."""
-    require_feature("accounts.user.delete")
     return hard_delete_user(db, country_code, user_id, current_user, delete_orders=delete_orders)
 
 
@@ -291,9 +291,9 @@ def set_user_role_route(
     role: str = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.role.assign")),
 ):
     """Set a user's role (country-scoped)."""
-    require_feature("accounts.role.assign")
     return set_user_role(db, country_code, user_id, role, current_user)
 
 
@@ -303,9 +303,9 @@ def set_user_active_route(
     user_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.update")),
 ):
     """Toggle a user's active status (country-scoped)."""
-    require_feature("accounts.user.update")
     return set_user_active(db, country_code, user_id, current_user)
 
 
@@ -316,9 +316,9 @@ def force_reset_password_route(
     new_password: str = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.password.reset")),
 ):
     """Force-reset a user's password (country-scoped)."""
-    require_feature("accounts.password.reset")
     return force_reset_password(db, country_code, user_id, new_password, current_user)
 
 
@@ -329,9 +329,9 @@ def delete_user_admin_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
     delete_orders: bool = Body(False, embed=True),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Hard-delete a user within a country (admin variant)."""
-    require_feature("accounts.user.delete")
     return delete_user_admin(db, country_code, user_id, current_user, delete_orders=delete_orders)
 
 
@@ -342,9 +342,9 @@ def delete_user_admin_route(
 def list_staff_accounts_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.list")),
 ):
     """List all staff accounts."""
-    require_feature("accounts.user.list")
     return list_staff_accounts(db)
 
 
@@ -354,9 +354,9 @@ def update_user_role_route(
     role: str = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.role.assign")),
 ):
     """Update a user's role (admin console)."""
-    require_feature("accounts.role.assign")
     return update_user_role(user_id, role, current_user, db)
 
 
@@ -365,9 +365,9 @@ def toggle_user_active_route(
     user_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.update")),
 ):
     """Toggle a user's active flag."""
-    require_feature("accounts.user.update")
     return toggle_user_active(user_id, current_user, db)
 
 
@@ -377,9 +377,9 @@ def force_reset_password_admin_route(
     password_hash: str = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.password.reset")),
 ):
     """Force-reset a user's password using a pre-hashed password (admin)."""
-    require_feature("accounts.password.reset")
     return force_reset_password_admin(user_id, password_hash, current_user, db)
 
 
@@ -388,9 +388,9 @@ def create_staff_account_route(
     payload: CreateStaffAccount,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.create")),
 ):
     """Create a new staff account."""
-    require_feature("accounts.user.create")
     return create_staff_account(payload, current_user, db)
 
 
@@ -400,9 +400,9 @@ def update_staff_account_route(
     payload: UpdateStaffAccount,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.update")),
 ):
     """Update an existing staff account."""
-    require_feature("accounts.user.update")
     return update_staff_account(user_id, payload, current_user, db)
 
 
@@ -411,9 +411,9 @@ def delete_staff_account_route(
     user_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Delete a staff account."""
-    require_feature("accounts.user.delete")
     return delete_staff_account(user_id, current_user, db)
 
 
@@ -423,9 +423,9 @@ def bulk_update_users_role_route(
     role: str = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.role.assign")),
 ):
     """Bulk assign the same role to multiple users."""
-    require_feature("accounts.role.assign")
     return bulk_update_users_role(user_ids, role, current_user, db)
 
 
@@ -435,9 +435,9 @@ def bulk_toggle_users_active_route(
     is_active: bool = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.update")),
 ):
     """Bulk enable or disable users (cross-country)."""
-    require_feature("accounts.user.update")
     return bulk_toggle_users_active(user_ids, is_active, current_user, db)
 
 
@@ -446,9 +446,9 @@ def bulk_update_staff_accounts_route(
     body: BulkUpdateStaffBody,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.update")),
 ):
     """Bulk update multiple staff accounts."""
-    require_feature("accounts.user.update")
     return bulk_update_staff_accounts(body.user_ids, body.updates, current_user, db)
 
 
@@ -457,9 +457,9 @@ def bulk_delete_users_admin_route(
     user_ids: list[int] = Body(..., embed=True),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.user.delete")),
 ):
     """Bulk hard-delete multiple users (admin-only)."""
-    require_feature("accounts.user.delete")
     return bulk_delete_users_admin(user_ids, current_user, db)
 
 
@@ -492,7 +492,6 @@ def social_login(
     db: Session = Depends(get_db),
     _feature: None = Depends(require_feature("accounts.session.manage")),
 ):
-    require_feature("accounts.session.manage")
     identity = verify_social_identity(
         payload.provider,
         id_token=payload.id_token,

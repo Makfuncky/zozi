@@ -6,11 +6,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import AuditLog
-from domains.comms.models.marketing import CampaignRecipient
-from domains.governance.models.admin import ChatbotQueryEvent
-from domains.governance.models.admin import RetentionJobRun
-from domains.logistics.models.logistics import ShipmentEvent
+from domains.governance.ports import ChatbotQueryEvent, RetentionJobRun
+from domains.comms.ports import CampaignRecipient
+from domains.logistics.ports import ShipmentEvent
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 

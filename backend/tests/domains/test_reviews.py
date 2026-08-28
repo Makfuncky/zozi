@@ -23,8 +23,9 @@ def customer_headers(client):
 
 @pytest.fixture
 def product_in_db(client, db_session):
-    from infrastructure.database.models import User, Product
-    from infrastructure.security.auth import get_password_hash
+    from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+    from infrastructure.utils.auth import get_password_hash
     email = f"revowner_{uuid.uuid4().hex[:8]}@zozi.test"
     user = User(
         email=email,

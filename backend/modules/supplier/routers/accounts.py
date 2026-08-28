@@ -28,9 +28,10 @@ from domains.accounts.services.sessions.session_service import (
 )
 from domains.suppliers.ports import (
     get_supplier_bank_account,
-    upsert_supplier_bank_account,
+    upsert_supplier_bank_account_from_router,
     get_supplier_profile,
     update_supplier_profile,
+    deactivate_supplier_bank_account,
 )
 
 router = APIRouter(prefix="/api/v1/supplier/accounts", tags=["supplier", "accounts"])
@@ -81,8 +82,8 @@ class BankAccountRequest(BaseModel):
 def get_profile_route(
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.read")),
 ):
-    require_feature("suppliers.profile.read")
     return get_supplier_profile(db, current_user.id)
 
 
@@ -91,8 +92,8 @@ def update_profile_route(
     body: ProfileUpdateRequest,
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("suppliers.profile.write")),
 ):
-    require_feature("suppliers.profile.write")
     profile = update_supplier_profile(body.model_dump(exclude_unset=True), current_user, db)
     if profile is None:
         raise HTTPException(status_code=404, detail="Profile not found")
@@ -107,8 +108,8 @@ def change_password_route(
     body: ChangePasswordRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.password.change")),
 ):
-    require_feature("accounts.password.change")
     return change_password(body, current_user, db)
 
 
@@ -116,8 +117,8 @@ def change_password_route(
 def totp_status_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.enable")),
 ):
-    require_feature("accounts.mfa.enable")
     return get_totp_status(current_user, db)
 
 
@@ -125,8 +126,8 @@ def totp_status_route(
 def totp_setup_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.enable")),
 ):
-    require_feature("accounts.mfa.enable")
     return setup_totp(current_user, db)
 
 
@@ -135,8 +136,8 @@ def totp_enable_route(
     body: TotpEnableRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.enable")),
 ):
-    require_feature("accounts.mfa.enable")
     return enable_totp(current_user, db, body.code)
 
 
@@ -145,8 +146,8 @@ def totp_disable_route(
     body: TotpDisableRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.disable")),
 ):
-    require_feature("accounts.mfa.disable")
     return disable_totp(current_user, db, body.password)
 
 
@@ -157,8 +158,8 @@ def totp_disable_route(
 def list_sessions_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.session.manage")),
 ):
-    require_feature("accounts.session.manage")
     sessions = list_sessions(int(current_user["sub"]), db)
     return [
         {
@@ -180,8 +181,8 @@ def revoke_session_route(
     session_id: int = Path(..., ge=1),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.session.revoke")),
 ):
-    require_feature("accounts.session.revoke")
     revoked = revoke_session(int(current_user["sub"]), session_id, db)
     if not revoked:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -195,8 +196,8 @@ def revoke_session_route(
 def get_bank_account_route(
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
     return get_supplier_bank_account(current_user, db)
 
 
@@ -205,9 +206,9 @@ def create_bank_account_route(
     body: BankAccountRequest,
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.write")),
 ):
-    require_feature("finance.bank.write")
-    return upsert_supplier_bank_account(body.model_dump(exclude_unset=True), current_user, db)
+    return upsert_supplier_bank_account_from_router(body.model_dump(exclude_unset=True), current_user, db)
 
 
 @router.put("/bank-accounts/{account_id}")
@@ -216,11 +217,11 @@ def update_bank_account_route(
     account_id: int = Path(..., ge=1),
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.write")),
 ):
-    require_feature("finance.bank.write")
     payload = body.model_dump(exclude_unset=True)
     payload["account_id"] = account_id
-    return upsert_supplier_bank_account(payload, current_user, db)
+    return upsert_supplier_bank_account_from_router(payload, current_user, db)
 
 
 @router.delete("/bank-accounts/{account_id}")
@@ -228,20 +229,6 @@ def delete_bank_account_route(
     account_id: int = Path(..., ge=1),
     current_user: Any = Depends(require_supplier),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.write")),
 ):
-    require_feature("finance.bank.write")
-    from domains.governance.models.admin import SupplierBankAccount
-
-    account = (
-        db.query(SupplierBankAccount)
-        .filter(
-            SupplierBankAccount.id == account_id,
-            SupplierBankAccount.supplier_id == current_user.id,
-        )
-        .first()
-    )
-    if not account:
-        raise HTTPException(status_code=404, detail="Bank account not found")
-    account.is_active = False
-    db.commit()
-    return {"detail": "Bank account deactivated", "account_id": account_id}
+    return deactivate_supplier_bank_account(db, account_id, current_user.id)

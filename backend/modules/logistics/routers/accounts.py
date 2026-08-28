@@ -28,11 +28,16 @@ from domains.accounts.services.sessions.session_service import (
     revoke_session,
 )
 from domains.logistics.ports import (
+    get_logistics_partner_by_user_id,
     get_partner_profile,
     update_partner_profile,
 )
-from domains.logistics.models.logistics import LogisticsPartner
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.logistics.services.bank_account_service import (
+    create_logistics_bank_account,
+    update_logistics_bank_account,
+    deactivate_logistics_bank_account,
+    list_logistics_bank_accounts,
+)
 
 router = APIRouter(prefix="/api/v1/logistics/accounts", tags=["logistics", "accounts"])
 
@@ -75,22 +80,6 @@ class BankAccountRequest(BaseModel):
     bank_country: Optional[str] = Field(None, min_length=2, max_length=3)
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-
-def _get_partner_id(current_user: Any, db: Session) -> int:
-    """Resolve the LogisticsPartner.id for the authenticated user."""
-    user_id = getattr(current_user, "id", None) or current_user.get("id")
-    partner = (
-        db.query(LogisticsPartner)
-        .filter(LogisticsPartner.user_id == user_id)
-        .first()
-    )
-    if not partner:
-        raise HTTPException(status_code=404, detail="Logistics partner not found")
-    return partner.id
-
-
 # ── Profile ───────────────────────────────────────────────────────────────────
 
 
@@ -98,8 +87,8 @@ def _get_partner_id(current_user: Any, db: Session) -> int:
 def get_profile_route(
     current_user: Any = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.profile.read")),
 ):
-    require_feature("logistics.profile.read")
     return get_partner_profile(db, current_user)
 
 
@@ -108,8 +97,8 @@ def update_profile_route(
     body: ProfileUpdateRequest,
     current_user: Any = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.profile.write")),
 ):
-    require_feature("logistics.profile.write")
     profile = update_partner_profile(
         body.model_dump(exclude_unset=True), db, current_user
     )
@@ -126,8 +115,8 @@ def change_password_route(
     body: ChangePasswordRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.password.change")),
 ):
-    require_feature("accounts.password.change")
     return change_password(body, current_user, db)
 
 
@@ -135,8 +124,8 @@ def change_password_route(
 def totp_status_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.enable")),
 ):
-    require_feature("accounts.mfa.enable")
     return get_totp_status(current_user, db)
 
 
@@ -144,8 +133,8 @@ def totp_status_route(
 def totp_setup_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.enable")),
 ):
-    require_feature("accounts.mfa.enable")
     return setup_totp(current_user, db)
 
 
@@ -154,8 +143,8 @@ def totp_enable_route(
     body: TotpEnableRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.enable")),
 ):
-    require_feature("accounts.mfa.enable")
     return enable_totp(current_user, db, body.code)
 
 
@@ -164,8 +153,8 @@ def totp_disable_route(
     body: TotpDisableRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.mfa.disable")),
 ):
-    require_feature("accounts.mfa.disable")
     return disable_totp(current_user, db, body.password)
 
 
@@ -176,8 +165,8 @@ def totp_disable_route(
 def list_sessions_route(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.session.manage")),
 ):
-    require_feature("accounts.session.manage")
     sessions = list_sessions(int(current_user["sub"]), db)
     return [
         {
@@ -199,8 +188,8 @@ def revoke_session_route(
     session_id: int = Path(..., ge=1),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("accounts.session.revoke")),
 ):
-    require_feature("accounts.session.revoke")
     revoked = revoke_session(int(current_user["sub"]), session_id, db)
     if not revoked:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -216,23 +205,15 @@ def list_bank_accounts_route(
     page_size: int = Query(20, ge=1, le=100, description="Items per page (max 100)"),
     current_user: Any = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.read")),
 ):
-    require_feature("finance.bank.read")
-    partner_id = _get_partner_id(current_user, db)
-    base_query = (
-        db.query(LogisticsPartnerBankAccount)
-        .filter(LogisticsPartnerBankAccount.partner_id == partner_id)
-        .order_by(LogisticsPartnerBankAccount.created_at.desc())
-    )
-    total = base_query.count()
-    accounts = (
-        base_query
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    user_id = getattr(current_user, "id", None) or current_user.get("id")
+    partner = get_logistics_partner_by_user_id(db, user_id)
+    if not partner:
+        raise HTTPException(status_code=404, detail="Logistics partner not found")
+    result = list_logistics_bank_accounts(db, partner.id, page, page_size)
     return {
-        "configured": total > 0,
+        "configured": result["total"] > 0,
         "items": [
             {
                 "id": a.id,
@@ -247,12 +228,12 @@ def list_bank_accounts_route(
                 "verification_status": a.verification_status,
                 "is_active": a.is_active,
             }
-            for a in accounts
+            for a in result["items"]
         ],
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": (total + page_size - 1) // page_size if total else 0,
+        "page": result["page"],
+        "page_size": result["page_size"],
+        "total": result["total"],
+        "total_pages": result["total_pages"],
     }
 
 
@@ -261,28 +242,24 @@ def create_bank_account_route(
     body: BankAccountRequest,
     current_user: Any = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.write")),
 ):
-    require_feature("finance.bank.write")
-    partner_id = _get_partner_id(current_user, db)
-    account = LogisticsPartnerBankAccount(partner_id=partner_id)
-    for field in (
-        "bank_name",
-        "beneficiary_name",
-        "account_number",
-        "iban",
-        "swift_code",
-        "routing_number",
-        "branch_name",
-        "currency",
-        "bank_country",
-    ):
-        value = getattr(body, field, None)
-        if value is not None:
-            setattr(account, field, str(value).strip())
-    account.is_active = True
-    db.add(account)
-    db.commit()
-    db.refresh(account)
+    user_id = getattr(current_user, "id", None) or current_user.get("id")
+    partner = get_logistics_partner_by_user_id(db, user_id)
+    if not partner:
+        raise HTTPException(status_code=404, detail="Logistics partner not found")
+    account = create_logistics_bank_account(
+        db, partner.id,
+        bank_name=body.bank_name,
+        beneficiary_name=body.beneficiary_name,
+        account_number=body.account_number,
+        iban=body.iban,
+        swift_code=body.swift_code,
+        routing_number=body.routing_number,
+        branch_name=body.branch_name,
+        currency=body.currency,
+        bank_country=body.bank_country,
+    )
     return {
         "status": "success",
         "detail": "Bank account created",
@@ -297,36 +274,26 @@ def update_bank_account_route(
     account_id: int = Path(..., ge=1),
     current_user: Any = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.write")),
 ):
-    require_feature("finance.bank.write")
-    partner_id = _get_partner_id(current_user, db)
-    account = (
-        db.query(LogisticsPartnerBankAccount)
-        .filter(
-            LogisticsPartnerBankAccount.id == account_id,
-            LogisticsPartnerBankAccount.partner_id == partner_id,
-        )
-        .first()
+    user_id = getattr(current_user, "id", None) or current_user.get("id")
+    partner = get_logistics_partner_by_user_id(db, user_id)
+    if not partner:
+        raise HTTPException(status_code=404, detail="Logistics partner not found")
+    account = update_logistics_bank_account(
+        db, account_id, partner.id,
+        bank_name=body.bank_name,
+        beneficiary_name=body.beneficiary_name,
+        account_number=body.account_number,
+        iban=body.iban,
+        swift_code=body.swift_code,
+        routing_number=body.routing_number,
+        branch_name=body.branch_name,
+        currency=body.currency,
+        bank_country=body.bank_country,
     )
     if not account:
         raise HTTPException(status_code=404, detail="Bank account not found")
-    for field in (
-        "bank_name",
-        "beneficiary_name",
-        "account_number",
-        "iban",
-        "swift_code",
-        "routing_number",
-        "branch_name",
-        "currency",
-        "bank_country",
-    ):
-        value = getattr(body, field, None)
-        if value is not None:
-            setattr(account, field, str(value).strip())
-    account.is_active = True
-    db.commit()
-    db.refresh(account)
     return {
         "status": "success",
         "detail": "Bank account updated",
@@ -340,19 +307,12 @@ def delete_bank_account_route(
     account_id: int = Path(..., ge=1),
     current_user: Any = Depends(require_logistics),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("finance.bank.write")),
 ):
-    require_feature("finance.bank.write")
-    partner_id = _get_partner_id(current_user, db)
-    account = (
-        db.query(LogisticsPartnerBankAccount)
-        .filter(
-            LogisticsPartnerBankAccount.id == account_id,
-            LogisticsPartnerBankAccount.partner_id == partner_id,
-        )
-        .first()
-    )
-    if not account:
+    user_id = getattr(current_user, "id", None) or current_user.get("id")
+    partner = get_logistics_partner_by_user_id(db, user_id)
+    if not partner:
+        raise HTTPException(status_code=404, detail="Logistics partner not found")
+    if not deactivate_logistics_bank_account(db, account_id, partner.id):
         raise HTTPException(status_code=404, detail="Bank account not found")
-    account.is_active = False
-    db.commit()
     return {"detail": "Bank account deactivated", "account_id": account_id}

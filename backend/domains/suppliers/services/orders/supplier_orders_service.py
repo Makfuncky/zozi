@@ -9,7 +9,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem

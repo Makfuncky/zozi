@@ -54,4 +54,4 @@ async def update_threat_feeds():
 
 if __name__ == "__main__":
     results = asyncio.run(update_threat_feeds())
-    print(f"Threat feed update complete: {results}")
+    logger.info("Threat feed update complete: %s", results)

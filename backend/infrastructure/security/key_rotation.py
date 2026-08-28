@@ -49,6 +49,24 @@ _ENCRYPTED_TABLES: list[tuple[str, list[str]]] = [
     ("logistics_partners", ["contact_email", "contact_phone"]),
 ]
 
+_VALID_TABLES = {t for t, _ in _ENCRYPTED_TABLES}
+_VALID_COLUMNS: dict[str, set[str]] = {
+    t: set(cols) for t, cols in _ENCRYPTED_TABLES
+}
+_VALID_PK_COLS = {"id"}
+
+
+def _validate_table(table_name: str) -> None:
+    if table_name not in _VALID_TABLES:
+        raise ValueError(f"Refusing to interpolate non-allowlisted table '{table_name}'")
+
+
+def _validate_columns(table_name: str, columns: list[str]) -> None:
+    allowed = _VALID_COLUMNS.get(table_name, set())
+    for col in columns:
+        if col not in allowed:
+            raise ValueError(f"Column '{col}' not in allowlist for table '{table_name}'")
+
 
 def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> dict:
     """Re-encrypt every EncryptedString column from *old_raw_key* to *new_raw_key*.
@@ -79,8 +97,12 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
 
         try:
             offset = 0
+            _validate_table(table_name)
+            _validate_columns(table_name, columns)
             # Determine the primary key column once (default to ``id``).
             pk_col = "id"
+            if pk_col not in _VALID_PK_COLS:
+                raise ValueError(f"Primary key column '{pk_col}' not in allowlist")
             select_cols_sql = ", ".join([pk_col] + list(columns))
             update_cols_sql = ", ".join([f"{col} = :{col}" for col in columns])
 

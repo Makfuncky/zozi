@@ -80,8 +80,8 @@ def blacklist_token(jti: str, ttl_seconds: int) -> None:
         try:
             client.setex(f"bl:{jti}", ttl_seconds, "1")
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis blacklist_token failed: %s", exc)
 
     app_env = os.environ.get("APP_ENV", "").lower()
     if app_env == "production":
@@ -98,8 +98,13 @@ def is_token_blacklisted(jti: str) -> bool:
     if client is not None:
         try:
             return client.exists(f"bl:{jti}") == 1
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis is_token_blacklisted failed: %s", exc)
+
+    app_env = os.environ.get("APP_ENV", "").lower()
+    if app_env == "production":
+        logger.error("Redis unavailable for token blacklist check in production - failing closed")
+        return True
 
     expiry = _memory_blacklist.get(jti)
     if expiry is None:
@@ -119,8 +124,8 @@ def record_failed_login(identifier: str) -> int:
             if count == 1:
                 client.expire(key, LOGIN_LOCKOUT_TTL)
             return count
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis record_failed_login failed: %s", exc)
 
     now = time.monotonic()
     count, expiry = _coerce_failed_login_entry(
@@ -142,8 +147,8 @@ def is_account_locked(identifier: str) -> bool:
         try:
             raw = client.get(key)
             return raw is not None and int(raw) >= LOGIN_FAIL_MAX
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis is_account_locked failed: %s", exc)
 
     entry = _memory_failed_logins.get(identifier)
     if entry is None:
@@ -163,8 +168,8 @@ def clear_failed_logins(identifier: str) -> None:
         try:
             client.delete(key)
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis clear_failed_logins failed: %s", exc)
     _memory_failed_logins.pop(identifier, None)
 
 
@@ -214,8 +219,8 @@ def mark_refresh_token_used(family_id: str, jti: str) -> None:
         try:
             client.setex(f"rtu:{family_id}:{jti}", REFRESH_TOKEN_USED_TTL, "1")
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis mark_refresh_token_used failed: %s", exc)
     _memory_blacklist[f"rtu:{family_id}:{jti}"] = time.monotonic() + REFRESH_TOKEN_USED_TTL
 
 
@@ -225,8 +230,8 @@ def is_refresh_token_used(family_id: str, jti: str) -> bool:
     if client is not None:
         try:
             return client.exists(f"rtu:{family_id}:{jti}") == 1
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis is_refresh_token_used failed: %s", exc)
     expiry = _memory_blacklist.get(f"rtu:{family_id}:{jti}")
     if expiry is None:
         return False
@@ -243,8 +248,8 @@ def revoke_refresh_family(family_id: str) -> None:
         try:
             client.setex(f"rtf:{family_id}", REFRESH_TOKEN_USED_TTL, "1")
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis revoke_refresh_family failed: %s", exc)
     _memory_blacklist[f"rtf:{family_id}"] = time.monotonic() + REFRESH_TOKEN_USED_TTL
 
 
@@ -254,8 +259,8 @@ def is_refresh_family_revoked(family_id: str) -> bool:
     if client is not None:
         try:
             return client.exists(f"rtf:{family_id}") == 1
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis is_refresh_family_revoked failed: %s", exc)
     expiry = _memory_blacklist.get(f"rtf:{family_id}")
     if expiry is None:
         return False
@@ -299,13 +304,7 @@ def validate_password_complexity(password: str) -> None:
             "one lowercase letter, one digit, and one special character",
         )
     if len(password) > 72:
-        import warnings
-        warnings.warn(
-            "Passwords longer than 72 characters are truncated to 72 characters by bcrypt. "
-            "The user should be informed that only the first 72 characters will be used.",
-            UserWarning,
-            stacklevel=2,
-        )
+        raise ValueError("Password exceeds maximum length of 72 characters")
 
 
 def _decode_and_validate(token: str, token_type: str) -> dict[str, Any]:
@@ -340,11 +339,19 @@ def verify_refresh_token(token: str) -> tuple[str, str]:
     return str(subject), str(family_id)
 
 
-def decode_token(token: str) -> dict[str, Any]:
+def decode_token(token: str, check_blacklist: bool = True, expected_type: str | None = None) -> dict[str, Any]:
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
+    if expected_type and payload.get("type") != expected_type:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token type, expected {expected_type}",
+        )
+    if check_blacklist and is_token_blacklisted(payload.get("jti")):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
+    return payload
 
 
 def rotate_refresh_token(token: str, device_fp: str | None = None) -> tuple[str, str]:
@@ -358,9 +365,8 @@ def rotate_refresh_token(token: str, device_fp: str | None = None) -> tuple[str,
         HTTPException: If token is invalid, reused, or family revoked
     """
     subject, family_id = verify_refresh_token(token)
-    
+
     # Check if this specific refresh token was already used (replay attack)
-    jti = uuid.uuid4().hex  # We need to extract the old JTI from the token
     old_payload = decode_token(token)
     old_jti = old_payload.get("jti")
     

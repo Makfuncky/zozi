@@ -12,7 +12,7 @@ import pytest
 
 import domains.governance.services.user.user_write_ops as ops
 import domains.governance.services.users_service as users_ctrl
-from infrastructure.database.models import User
+from domains.accounts.models.user import User
 
 _RECOVERED_NAMES = [
     "_build_user_delete_blocker",

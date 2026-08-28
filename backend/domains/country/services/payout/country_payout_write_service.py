@@ -7,6 +7,7 @@ moved here (Q1). Return shapes match the previous router implementation.
 """
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -22,9 +23,9 @@ def _category_row(r: PayoutRuleCategory) -> dict:
         "id": r.id,
         "country_code": r.country_code,
         "category_slug": r.category_slug,
-        "payout_rate": float(r.payout_rate),
-        "min_amount": float(r.min_amount) if r.min_amount else None,
-        "max_amount": float(r.max_amount) if r.max_amount else None,
+        "payout_rate": Decimal(str(r.payout_rate)),
+        "min_amount": Decimal(str(r.min_amount)) if r.min_amount else None,
+        "max_amount": Decimal(str(r.max_amount)) if r.max_amount else None,
         "is_active": r.is_active,
     }
 
@@ -34,9 +35,9 @@ def _product_row(r: PayoutRuleProduct) -> dict:
         "id": r.id,
         "country_code": r.country_code,
         "product_id": r.product_id,
-        "payout_rate": float(r.payout_rate),
-        "min_amount": float(r.min_amount) if r.min_amount else None,
-        "max_amount": float(r.max_amount) if r.max_amount else None,
+        "payout_rate": Decimal(str(r.payout_rate)),
+        "min_amount": Decimal(str(r.min_amount)) if r.min_amount else None,
+        "max_amount": Decimal(str(r.max_amount)) if r.max_amount else None,
         "is_active": r.is_active,
     }
 

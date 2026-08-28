@@ -18,6 +18,7 @@ Fault states:
 """
 from __future__ import annotations
 
+from decimal import Decimal
 import hashlib
 import hmac
 import json
@@ -30,11 +31,10 @@ from typing import Any, Iterable, Optional, Sequence, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, object_session
 
-from domains.comms.models.communication import Notification
-from domains.finance.models.finance import RefundLedger, TransactionLedger
-from domains.governance.models.admin import ShipmentConfirmation
-from domains.governance.models.user import User
-from domains.logistics.models.logistics import LogisticsPartner, Shipment, ShipmentEvent
+from domains.comms.ports import Notification
+from domains.finance.ports import RefundLedger, TransactionLedger
+from domains.governance.ports import ShipmentConfirmation, User
+from domains.logistics.ports import LogisticsPartner, Shipment, ShipmentEvent
 from domains.orders.models.orders import Order, OrderItem, OrderLogisticsAllocation, ReturnRequest
 from infrastructure.utils.config import settings
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -328,13 +328,13 @@ def order_status_label(
 # ── Financial helpers ─────────────────────────────────────────────────
 
 def derive_order_financials(order: Order) -> dict[str, float]:
-    subtotal = float(cast(Any, getattr(order, "subtotal_amount", 0)) or 0)
-    shipping = float(cast(Any, getattr(order, "shipping_amount", 0)) or 0)
-    vat = float(cast(Any, getattr(order, "vat_amount", 0)) or 0)
-    discount = float(cast(Any, getattr(order, "discount_amount", 0)) or 0)
-    total = float(cast(Any, getattr(order, "total_amount", 0)) or 0)
+    subtotal = Decimal(str(cast(Any, getattr(order, "subtotal_amount", 0)) or 0))
+    shipping = Decimal(str(cast(Any, getattr(order, "shipping_amount", 0)) or 0))
+    vat = Decimal(str(cast(Any, getattr(order, "vat_amount", 0)) or 0))
+    discount = Decimal(str(cast(Any, getattr(order, "discount_amount", 0)) or 0))
+    total = Decimal(str(cast(Any, getattr(order, "total_amount", 0)) or 0))
 
-    after_discount = round(max(subtotal - discount, 0), 2)
+    after_discount = round(max(subtotal - discount, Decimal("0")), 2)
     legacy_zero_charges = (
         settings.app_env != "test"
         and subtotal > 0
@@ -343,8 +343,8 @@ def derive_order_financials(order: Order) -> dict[str, float]:
         and total <= after_discount
     )
     if legacy_zero_charges:
-        shipping = round(float(settings.shipping_flat_rate or 0), 2)
-        vat = round(after_discount * float(settings.vat_rate or 0), 2)
+        shipping = round(Decimal(str(settings.shipping_flat_rate or 0)), 2)
+        vat = round(after_discount * Decimal(str(settings.vat_rate or 0)), 2)
         total = round(after_discount + shipping + vat, 2)
 
     return {
@@ -431,9 +431,9 @@ def _build_order_finance_breakdown(order: Order) -> dict[str, Any]:
                 "allocation_source": allocation.allocation_source,
                 "destination_country": allocation.destination_country,
                 "destination_city": allocation.destination_city,
-                "shipping_amount": float(cast(Any, allocation.shipping_amount or 0)),
-                "pickup_charge": float(cast(Any, allocation.pickup_charge or 0)),
-                "dropoff_charge": float(cast(Any, allocation.dropoff_charge or 0)),
+                "shipping_amount": Decimal(str(cast(Any, allocation.shipping_amount or 0))),
+                "pickup_charge": Decimal(str(cast(Any, allocation.pickup_charge or 0))),
+                "dropoff_charge": Decimal(str(cast(Any, allocation.dropoff_charge or 0))),
                 "estimated_delivery_min": allocation.estimated_delivery_min,
                 "estimated_delivery_max": allocation.estimated_delivery_max,
                 "currency": allocation.currency,
@@ -444,10 +444,10 @@ def _build_order_finance_breakdown(order: Order) -> dict[str, Any]:
 
         ledgers = session.query(TransactionLedger).filter(TransactionLedger.order_id == order.id).all()
         if ledgers:
-            service_fee_amount = sum(float(cast(Any, ledger.zozi_commission or 0)) for ledger in ledgers)
+            service_fee_amount = sum(Decimal(str(cast(Any, ledger.zozi_commission or 0))) for ledger in ledgers)
         else:
             taxable_amount = max(financials["subtotal"] - financials["discount"], 0)
-            service_fee_amount = round(taxable_amount * float(settings.zozi_commission_rate or 0), 2)
+            service_fee_amount = round(taxable_amount * Decimal(str(settings.zozi_commission_rate or 0)), 2)
 
         refund = (
             session.query(RefundLedger)
@@ -461,11 +461,11 @@ def _build_order_finance_breakdown(order: Order) -> dict[str, Any]:
                 "status": refund.status,
                 "refund_reason": refund.refund_reason,
                 "refund_method": refund.refund_method,
-                "customer_refund_amount": float(cast(Any, refund.customer_refund_amount or 0)),
-                "supplier_reversal": float(cast(Any, refund.supplier_reversal or 0)),
-                "logistics_reversal": float(cast(Any, refund.logistics_reversal or 0)),
-                "commission_reversal": float(cast(Any, refund.commission_reversal or 0)),
-                "vat_adjustment": float(cast(Any, refund.vat_adjustment or 0)),
+                "customer_refund_amount": Decimal(str(cast(Any, refund.customer_refund_amount or 0))),
+                "supplier_reversal": Decimal(str(cast(Any, refund.supplier_reversal or 0))),
+                "logistics_reversal": Decimal(str(cast(Any, refund.logistics_reversal or 0))),
+                "commission_reversal": Decimal(str(cast(Any, refund.commission_reversal or 0))),
+                "vat_adjustment": Decimal(str(cast(Any, refund.vat_adjustment or 0))),
                 "created_at": refund.created_at.isoformat() if refund.created_at else None,
                 "processed_at": refund.processed_at.isoformat() if refund.processed_at else None,
             }
@@ -825,7 +825,7 @@ def build_order_tracking_payload(
             "product_id": item.product_id,
             "product_name": item.product.name if item.product else f"Product #{item.product_id}",
             "quantity": item.quantity,
-            "price": float(item.price or 0),
+            "price": Decimal(str(item.price or 0)),
             "supplier_id": item.product.supplier_id if item.product else None,
             "return_window_days": _normalized_return_window_days(
                 cast(Any, getattr(item.product, "return_window_days", None)) if item.product is not None else None
@@ -1609,18 +1609,18 @@ def get_order_shipment_label(order_id: int, db: Session) -> Optional[dict]:
             {
                 "product_name": item.product_name or f"Product #{item.product_id}",
                 "quantity": item.quantity,
-                "price": float(item.price or 0),
-                "total": float((item.price or 0) * item.quantity),
+                "price": Decimal(str(item.price or 0)),
+                "total": Decimal(str((item.price or 0) * item.quantity)),
                 "variant": f"{item.selected_size or ''} {item.selected_color or ''}".strip() or None,
             }
             for item in items
         ],
         "totals": {
-            "subtotal": float(order.subtotal_amount or 0),
-            "shipping": float(order.shipping_amount or 0),
-            "discount": float(order.discount_amount or 0),
-            "tax": float(order.tax_amount or 0),
-            "total": float(order.total_amount or 0),
+            "subtotal": Decimal(str(order.subtotal_amount or 0)),
+            "shipping": Decimal(str(order.shipping_amount or 0)),
+            "discount": Decimal(str(order.discount_amount or 0)),
+            "tax": Decimal(str(order.tax_amount or 0)),
+            "total": Decimal(str(order.total_amount or 0)),
         },
         "payment_method": order.payment_method,
         "ordered_at": order.created_at.isoformat() if order.created_at else None,

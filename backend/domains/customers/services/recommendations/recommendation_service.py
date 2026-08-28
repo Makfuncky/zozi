@@ -15,8 +15,8 @@ from typing import Any, Optional
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product, WishlistItem
-from domains.orders.models.orders import Order, OrderItem
+from domains.catalog.ports import Product, WishlistItem
+from domains.orders.ports import Order, OrderItem
 from infrastructure.utils.cache import cache_or_compute
 
 logger = logging.getLogger(__name__)

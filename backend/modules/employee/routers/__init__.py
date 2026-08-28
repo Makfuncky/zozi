@@ -1,4 +1,4 @@
-"""Routers for the employee module — 8 domain routers."""
+"""Routers for the employee module — domain routers."""
 import importlib
 
 routers = []
@@ -7,11 +7,17 @@ public_routers = []
 _module_names = [
     "accounts",
     "analytics",
+    "audit",
+    "catalog",
     "comms",
     "country",
+    "customers",
     "finance",
+    "governance",
     "hr",
+    "logistics",
     "orders",
+    "promotions",
     "security",
     "suppliers",
 ]

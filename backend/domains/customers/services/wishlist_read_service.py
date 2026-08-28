@@ -13,7 +13,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session, selectinload
 
-from domains.catalog.models.products import Product, WishlistItem
+from domains.catalog.ports import Product, WishlistItem
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 

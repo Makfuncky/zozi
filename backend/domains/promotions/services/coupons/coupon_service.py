@@ -43,10 +43,10 @@ from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.promotions import Coupon
+from domains.promotions.models.promotions import Coupon
 from domains.governance.models.admin import CouponUsage
 from domains.catalog.models.products import Product
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.cache import get_redis_client
 from infrastructure.utils.datetime_utils import utcnow
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT

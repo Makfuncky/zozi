@@ -39,8 +39,6 @@ from domains.finance.services.payments.payment_engine import (  # noqa: F401
     Decimal,
     Order,
     OrderItem,
-    ProcessedWebhookEvent,
-    Notification,
     convert_from_aed,
     money_to_minor_units_for_currency,
 )
@@ -804,9 +802,7 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
 
                 try:
 
-                    from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
-
-
+                    from domains.comms.ports import enqueue_payment_confirmed_email, enqueue_payment_failed_email, enqueue_refund_processed_email
 
                     enqueue_payment_confirmed_email(cast(int, order.id), provider="stripe", message="Your Stripe payment was successful and we are preparing your order.")
 
@@ -898,29 +894,23 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
 
                 setattr(order, "status", "failed")
 
-                db.add(
+                from domains.comms.ports import create_notification, Notification
 
+                create_notification(
+                    db,
                     Notification(
-
                         user_id=order.user_id,
-
                         type="order_update",
-
                         title="Payment Failed",
-
                         message=f"Order #{order.id} payment failed: {error_msg}. Please try again.",
-
                         link=f"/orders/{order.id}",
-
-                    )
-
+                    ),
                 )
 
                 db.commit()
 
                 try:
 
-                    from domains.comms.services.transactional_email_service import enqueue_payment_failed_email
 
 
 
@@ -975,29 +965,23 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
 
                     logger.exception("Failed to log Stripe refund bank transaction for order %s", order.id)
 
-                db.add(
+                from domains.comms.ports import create_notification, Notification
 
+                create_notification(
+                    db,
                     Notification(
-
                         user_id=order.user_id,
-
                         type="order_update",
-
                         title="Refund Processed",
-
                         message=f"Your refund for Order #{order.id} has been processed.",
-
                         link=f"/orders/{order.id}",
-
-                    )
-
+                    ),
                 )
 
                 db.commit()
 
                 try:
 
-                    from domains.comms.services.transactional_email_service import enqueue_refund_processed_email
 
 
 
@@ -1029,7 +1013,9 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
 
     if stripe_event_id:
 
-        db.add(ProcessedWebhookEvent(event_id=stripe_event_id, processor="stripe"))
+        from domains.governance.ports import create_processed_webhook_event
+
+        create_processed_webhook_event(db, event_id=stripe_event_id, processor="stripe")
 
         db.commit()
 

@@ -15,7 +15,7 @@ from domains.governance.models.core import GroupChatMessage
 from domains.governance.models.core import EntityChatThread
 from domains.governance.models.core import EntityChatMessage
 from domains.governance.models.core import SupportTicket
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.comms.models.communication import Notification
 from domains.governance.models.admin import TicketReply
 from infrastructure.utils.config import settings
@@ -176,8 +176,8 @@ def _mark_messages_read(db: Session, room_id: str, user_id: int):
 def _decode_ws_token(token: str) -> Optional[dict]:
     """Decode JWT token for WebSocket authentication."""
     try:
-        from infrastructure.utils.auth import SECRET_KEY, ALGORITHM
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        from infrastructure.utils.auth import decode_token
+        return decode_token(token, expected_type="access")
     except Exception:
         return None
 

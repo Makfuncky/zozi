@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import time
@@ -147,6 +148,7 @@ SessionLocal = sessionmaker(
 # handlers to share the same connection-pool budget as the sync engine.
 _async_engine = None
 _AsyncSessionLocal = None
+_async_init_lock = asyncio.Lock()
 
 
 def _build_async_database_url(sync_url: str) -> str | None:
@@ -167,7 +169,7 @@ def _build_async_database_url(sync_url: str) -> str | None:
     return None
 
 
-def _get_async_engine():
+async def _get_async_engine():
     global _async_engine, _AsyncSessionLocal
     if not _HAS_ASYNC_SA:
         raise RuntimeError(
@@ -177,42 +179,47 @@ def _get_async_engine():
     if _async_engine is not None:
         return _async_engine
 
-    async_url = _build_async_database_url(DATABASE_URL)
-    if async_url is None:
-        raise RuntimeError(
-            f"Cannot derive an async database URL from DATABASE_URL='{DATABASE_URL}'."
+    async with _async_init_lock:
+        # Double-check after acquiring lock
+        if _async_engine is not None:
+            return _async_engine
+
+        async_url = _build_async_database_url(DATABASE_URL)
+        if async_url is None:
+            raise RuntimeError(
+                f"Cannot derive an async database URL from DATABASE_URL='{DATABASE_URL}'."
+            )
+
+        async_connect_args: dict = {}
+        if async_url.startswith("sqlite"):
+            async_connect_args["check_same_thread"] = False
+        elif async_url.startswith("postgresql+asyncpg"):
+            ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
+            if ssl_mode and ssl_mode != "disable":
+                async_connect_args["ssl"] = ssl_mode
+
+        async_pool_kwargs: dict = {}
+        if not async_url.startswith("sqlite"):
+            async_pool_kwargs = {
+                "pool_size": settings.db_pool_size,
+                "max_overflow": settings.db_max_overflow,
+                "pool_recycle": settings.db_pool_recycle,
+                "pool_pre_ping": True,
+                "pool_timeout": settings.db_connect_timeout,
+            }
+
+        _async_engine = create_async_engine(
+            async_url,
+            connect_args=async_connect_args,
+            echo=getattr(settings, "debug", False),
+            **async_pool_kwargs,
         )
-
-    async_connect_args: dict = {}
-    if async_url.startswith("sqlite"):
-        async_connect_args["check_same_thread"] = False
-    elif async_url.startswith("postgresql+asyncpg"):
-        ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
-        if ssl_mode and ssl_mode != "disable":
-            async_connect_args["ssl"] = ssl_mode
-
-    async_pool_kwargs: dict = {}
-    if not async_url.startswith("sqlite"):
-        async_pool_kwargs = {
-            "pool_size": settings.db_pool_size,
-            "max_overflow": settings.db_max_overflow,
-            "pool_recycle": settings.db_pool_recycle,
-            "pool_pre_ping": True,
-            "pool_timeout": settings.db_connect_timeout,
-        }
-
-    _async_engine = create_async_engine(
-        async_url,
-        connect_args=async_connect_args,
-        echo=getattr(settings, "debug", False),
-        **async_pool_kwargs,
-    )
-    _AsyncSessionLocal = async_sessionmaker(
-        bind=_async_engine,
-        expire_on_commit=False,
-        class_=AsyncSession,
-    )
-    return _async_engine
+        _AsyncSessionLocal = async_sessionmaker(
+            bind=_async_engine,
+            expire_on_commit=False,
+            class_=AsyncSession,
+        )
+        return _async_engine
 
 
 async def get_async_db() -> AsyncGenerator["AsyncSession", None]:
@@ -226,9 +233,9 @@ async def get_async_db() -> AsyncGenerator["AsyncSession", None]:
             "Async database support requires SQLAlchemy 1.4+ with async drivers "
             "installed (asyncpg for PostgreSQL, aiosqlite for SQLite)."
         )
-    factory = _AsyncSessionLocal or _get_async_engine() and _AsyncSessionLocal
+    factory = _AsyncSessionLocal
     if factory is None:
-        _get_async_engine()
+        await _get_async_engine()
         factory = _AsyncSessionLocal
     assert factory is not None
     session = factory()
@@ -239,6 +246,31 @@ async def get_async_db() -> AsyncGenerator["AsyncSession", None]:
         raise
     finally:
         await session.close()
+
+
+@asynccontextmanager
+async def get_async_db_context() -> AsyncGenerator["AsyncSession", None]:
+    """Async context manager for non-request async code (background tasks, workers).
+
+    Unlike the sync ``get_db()`` context manager, this properly awaits
+    ``session.close()`` without blocking the event loop.
+    """
+    if not _HAS_ASYNC_SA:
+        raise RuntimeError(
+            "Async database support requires SQLAlchemy 1.4+ with async drivers "
+            "installed (asyncpg for PostgreSQL, aiosqlite for SQLite)."
+        )
+    factory = _AsyncSessionLocal
+    if factory is None:
+        await _get_async_engine()
+        factory = _AsyncSessionLocal
+    assert factory is not None
+    async with factory() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 # --- Read replica ---
@@ -362,7 +394,10 @@ def get_db_session() -> Session:
 
 
 def get_service_session(timeout_seconds: int = 30):
-    """Session wrapper for background services with guaranteed cleanup."""
+    """Session wrapper for background services with guaranteed cleanup.
+    
+    Does NOT auto-commit — callers must explicitly commit when ready.
+    """
     from contextlib import contextmanager
     
     @contextmanager
@@ -376,7 +411,6 @@ def get_service_session(timeout_seconds: int = 30):
                 logger.warning(
                     f"Service session took {elapsed:.2f}s, exceeding timeout of {timeout_seconds}s"
                 )
-            db.commit()
         except Exception:
             db.rollback()
             raise
@@ -386,7 +420,10 @@ def get_service_session(timeout_seconds: int = 30):
 
 
 def get_db_context():
-    """Context manager for non-FastAPI usage (e.g., controllers, background tasks)."""
+    """Context manager for non-FastAPI usage (e.g., controllers, background tasks).
+    
+    Does NOT auto-commit — callers must explicitly commit when ready.
+    """
     from contextlib import contextmanager
     
     @contextmanager
@@ -394,7 +431,6 @@ def get_db_context():
         db = SessionLocal()
         try:
             yield db
-            db.commit()
         except Exception:
             db.rollback()
             raise
@@ -489,17 +525,10 @@ def dispose_engine() -> None:
     if _replica_engine is not None:
         _replica_engine.dispose()
     if _async_engine is not None:
-        # async_engine.dispose is a coroutine; close synchronously best-effort.
-        try:
-            close_fn = getattr(_async_engine, "close", None)
-            if close_fn is not None:
-                result = close_fn()
-                if hasattr(result, "__await__"):
-                    # Running event loop is the caller's responsibility in
-                    # startup/shutdown hooks; fall through to sync dispose.
-                    pass
-        except Exception:
-            logger.debug("Async engine close() best-effort failed", exc_info=True)
+        # Use sync_engine.dispose() to avoid unawaited coroutine issues.
+        # The async engine's close() is a coroutine and cannot be awaited
+        # in a sync context; sync_engine.dispose() releases the underlying
+        # connection pool synchronously.
         try:
             _async_engine.sync_engine.dispose()
         except Exception:

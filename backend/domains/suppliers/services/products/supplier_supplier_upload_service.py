@@ -16,7 +16,7 @@ import base64
 import numpy as np
 from providers.image import Image
 from fastapi import Depends, File, Form, HTTPException, UploadFile
-from domains.security.services.iam.security_dependencies import require_roles
+from domains.security.ports import require_roles
 # TODO: Module not yet created
 # from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
 # TODO: Module not yet created

@@ -34,6 +34,7 @@ class NewsArticle(Base):
     ai_tags = Column(JSON, nullable=True)
     is_published = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 
 
 __all__ = ["NewsArticle"]

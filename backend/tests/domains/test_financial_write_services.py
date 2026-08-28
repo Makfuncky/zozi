@@ -14,16 +14,10 @@ import pytest
 import domains.finance.services.commission.commission_write_service as commission
 import domains.finance.services.payments.payments_write_service as payments
 import domains.finance.services.ledger.invoice_write_service as invoice
-from infrastructure.database.models import (
-    CommissionAgreement,
-    CommissionBadgeTier,
-    CommissionCategoryRate,
-    CommissionGlobalConfig,
-    CommissionLedgerEntry,
-    Order,
-    Product,
-    User,
-)
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.finance.models.commission import CommissionAgreement, CommissionBadgeTier, CommissionCategoryRate, CommissionGlobalConfig, CommissionLedgerEntry
+from domains.orders.models.order_entities import Order
 
 
 def _user(db):

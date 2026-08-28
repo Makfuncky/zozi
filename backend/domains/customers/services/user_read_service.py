@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 import structlog
 
 logger = structlog.get_logger(__name__)

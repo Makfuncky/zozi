@@ -204,8 +204,8 @@ def svc_delete_country_commission_rate(code, tier, name, current_user, db):
 def list_public_countries_route(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return list_public_countries(db)
 
 
@@ -214,8 +214,8 @@ def get_public_country_config_route(
     code: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return get_public_country_config(code, db)
 
 
@@ -224,8 +224,8 @@ def create_admin_country_route(
     body: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return create_admin_country(body, _, db)
 
 
@@ -234,8 +234,8 @@ def get_admin_country_route(
     code: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return get_admin_country(code, _, db)
 
 
@@ -245,8 +245,8 @@ def update_admin_country_identity(
     body: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return update_country_identity(code, body, _, db)
 
 
@@ -257,8 +257,8 @@ def list_cities(
     limit: int = Query(100, le=500),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.localization.manage")),
 ):
-    require_feature("country.localization.manage")
     return svc_list_cities(country_code, active=active, limit=limit, db=db)
 
 
@@ -273,8 +273,8 @@ def add_city(
     longitude: float | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.localization.manage")),
 ):
-    require_feature("country.localization.manage")
     return svc_add_city(
         country_code=country_code,
         name=name,
@@ -300,8 +300,8 @@ def update_city(
     status: str | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.localization.manage")),
 ):
-    require_feature("country.localization.manage")
     return svc_update_city(
         country_code=country_code,
         city_id=city_id,
@@ -322,8 +322,8 @@ def delete_city(
     city_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.localization.manage")),
 ):
-    require_feature("country.localization.manage")
     return svc_delete_city(country_code=country_code, city_id=city_id, db=db)
 
 
@@ -332,8 +332,8 @@ def list_staff(
     country_code: str = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.staff.assign")),
 ):
-    require_feature("country.staff.assign")
     return svc_list_staff(country_code=country_code, db=db)
 
 
@@ -344,8 +344,8 @@ def assign_staff(
     role_in_country: str = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.staff.assign")),
 ):
-    require_feature("country.staff.assign")
     return svc_assign_staff(country_code=country_code, user_id=user_id, role_in_country=role_in_country, db=db)
 
 
@@ -355,8 +355,8 @@ def remove_staff(
     staff_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.staff.assign")),
 ):
-    require_feature("country.staff.assign")
     return svc_remove_staff(country_code=country_code, staff_id=staff_id, db=db)
 
 
@@ -365,8 +365,8 @@ def list_tax_rates(
     country_code: str = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.tax.manage")),
 ):
-    require_feature("country.tax.manage")
     return svc_list_tax_rates(country_code=country_code, db=db)
 
 
@@ -378,8 +378,8 @@ def set_tax_rate(
     tax_name: str | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.tax.manage")),
 ):
-    require_feature("country.tax.manage")
     return svc_set_tax_rate(
         country_code=country_code,
         category_id=category_id,
@@ -401,8 +401,8 @@ def send_country_communication(
     related_entity_id: int | None = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.communications.send")),
 ):
-    require_feature("country.communications.send")
     return svc_send_country_communication(
         country_code=country_code,
         to_user_id=to_user_id,
@@ -423,8 +423,8 @@ def list_communications(
     limit: int = Query(50, le=200),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.communications.send")),
 ):
-    require_feature("country.communications.send")
     return svc_list_communications(status=status, priority=priority, limit=limit, db=db)
 
 
@@ -433,8 +433,8 @@ def mark_communication_read(
     comm_id: int,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.communications.send")),
 ):
-    require_feature("country.communications.send")
     return svc_mark_communication_read(comm_id=comm_id, db=db)
 
 
@@ -443,8 +443,8 @@ def toggle_country_active_route(
     code: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_toggle_country_active(code, _, db)
 
 
@@ -453,8 +453,8 @@ def archive_country_route(
     code: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_archive_country(code, _, db)
 
 
@@ -463,8 +463,8 @@ def restore_country_route(
     code: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_restore_country(code, _, db)
 
 
@@ -473,8 +473,8 @@ def bulk_archive_countries(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_bulk_archive_countries(payload.get("ids", []), _, db)
 
 
@@ -483,8 +483,8 @@ def bulk_restore_countries(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_bulk_restore_countries(payload.get("ids", []), _, db)
 
 
@@ -493,8 +493,8 @@ def hard_delete_country_route(
     code: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     svc_hard_delete_country(code, _, db)
     return {"message": "Deleted"}
 
@@ -504,8 +504,8 @@ def list_country_commission_rates_route(
     code: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_list_country_commission_rates(code, _, db)
 
 
@@ -515,8 +515,8 @@ def create_country_commission_rate_route(
     body: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_create_country_commission_rate(code, body, _, db)
 
 
@@ -527,6 +527,6 @@ def delete_country_commission_rate_route(
     name: str,
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("country.configure")),
 ):
-    require_feature("country.configure")
     return svc_delete_country_commission_rate(code, tier, name, _, db)

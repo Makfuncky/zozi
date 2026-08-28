@@ -27,9 +27,9 @@ async def search_audit_trail(
     limit: int = Query(100, le=500),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("audit.read")),
 ):
     service = get_ediscovery_service(db)
-    require_feature("audit.read")
     return service.search_audit_trail(
         entity_type=entity_type,
         entity_id=entity_id,
@@ -47,9 +47,9 @@ async def get_entity_timeline(
     entity_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("audit.read")),
 ):
     service = get_ediscovery_service(db)
-    require_feature("audit.read")
     return service.get_entity_timeline(entity_type, entity_id)
 
 
@@ -60,7 +60,7 @@ async def export_for_legal(
     format: str = Query("json"),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("audit.logs.export")),
 ):
     service = get_ediscovery_service(db)
-    require_feature("audit.logs.export")
     return service.export_for_legal(entity_type, entity_id, format)

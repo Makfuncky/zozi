@@ -8,7 +8,7 @@ import pytest
 
 from domains.hr.models.employee_models import Employee
 from domains.comms.models.communication import EmailFolder, InternalEmail
-from infrastructure.database.models import User
+from domains.accounts.models.user import User
 
 
 @pytest.fixture

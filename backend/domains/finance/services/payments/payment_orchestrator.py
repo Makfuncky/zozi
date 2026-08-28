@@ -1592,7 +1592,7 @@ from sqlalchemy.orm import Session
 
 from domains.country.models.countries import CountryConfig
 from domains.country.models.countries import CountryGatewayCredentials
-from domains.country.services.research.country_auto_populate import GATEWAY_REGISTRY
+from domains.country.ports import GATEWAY_REGISTRY
 
 logger = logging.getLogger(__name__)
 

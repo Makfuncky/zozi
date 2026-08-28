@@ -22,12 +22,12 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from domains.accounts.models.user_consent import UserConsent
-from domains.governance.models.user import (
+from domains.accounts.models.user import (
     User,
     UserDevice,
     UserLoginHistory,
 )
-from domains.governance.models.core import UserSession
+from domains.accounts.models.core import UserSession
 
 logger = logging.getLogger(__name__)
 

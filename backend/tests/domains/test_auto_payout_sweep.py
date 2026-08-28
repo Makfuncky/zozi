@@ -1,4 +1,4 @@
-"""
+﻿"""
 Integration test for the auto-payout sweep (``run_auto_payout_sweep``).
 
 Verifies the full pipeline:
@@ -18,12 +18,8 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy.orm import Session
 
-from infrastructure.database.models import (
-    Payout,
-    PayoutBatch,
-    PayoutBatchItem,
-    SupplierSettlement,
-)
+from domains.finance.models.general_ledger import PayoutBatch, PayoutBatchItem, SupplierSettlement
+from domains.finance.models.payments import Payout
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -45,7 +41,7 @@ def test_auto_payout_sweep_creates_payout_and_batch(
     """Create a settlement whose holding period has elapsed, run the sweep,
     and verify Payout + PayoutBatch + settlement.payout_id are all set."""
     # ── 1. Look up the demo supplier ──────────────────────────────────────
-    from infrastructure.database.models import User
+    from domains.accounts.models.user import User
 
     supplier = (
         db_session.query(User)
@@ -161,7 +157,7 @@ def test_auto_payout_sweep_skips_future_eligible(
     db_session: Session,
 ) -> None:
     """A settlement with ``eligible_at`` in the future should NOT be picked up."""
-    from infrastructure.database.models import User
+    from domains.accounts.models.user import User
 
     supplier = (
         db_session.query(User)
@@ -199,7 +195,7 @@ def test_auto_payout_sweep_dry_run(
     db_session: Session,
 ) -> None:
     """Dry-run mode should count eligible settlements without creating records."""
-    from infrastructure.database.models import User
+    from domains.accounts.models.user import User
 
     supplier = (
         db_session.query(User)

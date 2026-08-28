@@ -26,8 +26,8 @@ class _NoOpRedis:
     def expire(self, *args: Any, **kwargs: Any) -> None:
         return None
 
-    def ping(self, *args: Any, **kwargs: Any) -> None:
-        return None
+    def ping(self, *args: Any, **kwargs: Any) -> bool:
+        return False
 
     def keys(self, *args: Any, **kwargs: Any) -> list:
         return []
@@ -80,13 +80,16 @@ def redis_client() -> redis.Redis | _NoOpRedis:
     global _client
     if not _redis_available:
         return _NoOpRedis()
-    if _client is None:
-        client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
-        try:
-            client.ping()
-        except Exception:
-            client = _NoOpRedis()
-        _client = client
+    if _client is not None:
+        return _client
+    client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+    try:
+        client.ping()
+    except Exception:
+        # Do NOT cache the NoOp fallback — retry on next call so a
+        # temporarily unreachable Redis can recover without a restart.
+        return _NoOpRedis()
+    _client = client
     return _client
 
 

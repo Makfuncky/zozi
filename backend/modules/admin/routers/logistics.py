@@ -21,8 +21,9 @@ router = APIRouter(prefix="/api/v1/admin/logistics", tags=["admin", "logistics"]
 
 
 @router.get("/admin_logistics_routes/health")
-def health(_: dict = Depends(require_admin)):
-    require_feature("logistics.shipping.tracking")
+def health(_: dict = Depends(require_admin),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking"))
+):
     return {"status": "ok", "router": "admin_logistics_routes", "prefix": "/api/v1/admin"}
 
 
@@ -34,8 +35,8 @@ def list_partners_route(
     cursor: str | None = Query(None, description="Cursor for keyset pagination"),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     return list_partners_paginated(country_code, include_deleted, limit, cursor, db)
 
 
@@ -45,8 +46,8 @@ def approve_partner_route(
     partner_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -61,8 +62,8 @@ def reject_partner_route(
     partner_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -77,8 +78,8 @@ def toggle_partner_active_route(
     partner_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -94,8 +95,8 @@ def archive_partner(
     payload: Optional[dict] = Body(None),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -112,8 +113,8 @@ def restore_partner(
     partner_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -129,8 +130,8 @@ def delete_partner_permanent(
     partner_id: int = Path(...),
     _: dict = Depends(require_super_admin),
     db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.partners.manage")),
 ):
-    require_feature("logistics.partners.manage")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:

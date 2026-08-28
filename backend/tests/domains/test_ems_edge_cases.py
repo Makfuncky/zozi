@@ -1,4 +1,4 @@
-"""Edge-case and property-based tests for the EMS domain.
+﻿"""Edge-case and property-based tests for the EMS domain.
 
 Topics covered:
   - Duplicate onboarding (UNIQUE constraint on employee_id)
@@ -30,8 +30,8 @@ from sqlalchemy.orm import sessionmaker
 # ── Shared helpers (mirror test_ems_lifecycle.py) ─────────────────────
 
 def _create_test_user(db_session, role: str = "admin", email_suffix: str = None) -> int:
-    from infrastructure.security.auth import get_password_hash
-    from infrastructure.database.models import User
+    from infrastructure.utils.auth import get_password_hash
+    from domains.accounts.models.user import User
 
     suffix = email_suffix or uuid.uuid4().hex[:8]
     user = User(
@@ -75,7 +75,7 @@ def _create_test_employee(
 
 
 def _ensure_country_config(db_session):
-    from infrastructure.database.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     existing = db_session.query(CountryConfig).filter(CountryConfig.code == "OM").first()
     if not existing:
         cfg = CountryConfig(code="OM", name="Oman", currency="OMR", currency_symbol="﷼")
@@ -855,7 +855,7 @@ class TestBackgroundCheckStep:
         user_id = _create_test_user(db_session)
 
         # Set the user's full_name to a watchlist match
-        from infrastructure.database.models import User
+        from domains.accounts.models.user import User
         user = db_session.query(User).filter(User.id == user_id).first()
         user.full_name = "John Doe Flagged"  # In _KNOWN_FLAGGED_NAMES
         db_session.flush()
@@ -915,7 +915,7 @@ class TestBackgroundCheckStep:
         """An employee from a sanctions-flagged country should still pass (advisory, not block)."""
         _ensure_country_config(db_session)
         # Add Iran to country configs for the FK constraint
-        from infrastructure.database.models import CountryConfig
+        from domains.country.models.countries import CountryConfig
         existing = db_session.query(CountryConfig).filter(CountryConfig.code == "IR").first()
         if not existing:
             db_session.add(CountryConfig(code="IR", name="Iran", currency="IRR", currency_symbol="﷼"))
@@ -1133,8 +1133,9 @@ class TestRedTeamOnboarding:
 
         def _worker(idx: int) -> dict:
             """Worker: create own engine → User → Employee → Pipeline."""
-            from infrastructure.security.auth import get_password_hash
-            from infrastructure.database.models import User, CountryConfig
+            from infrastructure.utils.auth import get_password_hash
+            from domains.accounts.models.user import User
+            from domains.country.models.countries import CountryConfig
             from domains.hr.models.employee_models import Employee
             from domains.hr.services.employee_lifecycle_service import create_onboarding_pipeline
             from decimal import Decimal
@@ -1246,8 +1247,9 @@ class TestRedTeamOnboarding:
         """Fire 10 concurrent threads all trying to create a pipeline for
         the *same* employee.  Exactly one must succeed; the rest must
         fail with ``IntegrityError`` (UNIQUE constraint)."""
-        from infrastructure.security.auth import get_password_hash
-        from infrastructure.database.models import User, CountryConfig
+        from infrastructure.utils.auth import get_password_hash
+        from domains.accounts.models.user import User
+        from domains.country.models.countries import CountryConfig
         from domains.hr.models.employee_models import Employee
         from decimal import Decimal
         from datetime import date, timedelta
@@ -1366,8 +1368,9 @@ class TestRedTeamOnboarding:
         - The pipeline status is valid (``in_progress`` or ``completed``)
         - ``completed_steps`` is at least 1 (progress was made)
         """
-        from infrastructure.security.auth import get_password_hash
-        from infrastructure.database.models import User, CountryConfig
+        from infrastructure.utils.auth import get_password_hash
+        from domains.accounts.models.user import User
+        from domains.country.models.countries import CountryConfig
         from domains.hr.models.employee_models import Employee
         from domains.hr.services.employee_lifecycle_service import (
             create_onboarding_pipeline,

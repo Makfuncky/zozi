@@ -1,4 +1,4 @@
-"""Integration tests for EMS critical paths: onboarding pipeline,
+﻿"""Integration tests for EMS critical paths: onboarding pipeline,
 offboarding workflow, and payroll auto-disbursement.
 
 Each test receives a ``db_session`` fixture that wraps every operation in a
@@ -19,8 +19,8 @@ from sqlalchemy import text as sa_text
 
 def _create_test_user(db_session, role: str = "admin", email_suffix: str = None) -> int:
     """Create a test User and return its id."""
-    from infrastructure.security.auth import get_password_hash
-    from infrastructure.database.models import User
+    from infrastructure.utils.auth import get_password_hash
+    from domains.accounts.models.user import User
 
     suffix = email_suffix or uuid.uuid4().hex[:8]
     user = User(
@@ -58,7 +58,7 @@ def _create_test_employee(db_session, user_id: int = None, country_code: str = "
 
 def _create_test_company_config(db_session):
     """Ensure a minimal country_config row exists."""
-    from infrastructure.database.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
 
     existing = db_session.query(CountryConfig).filter(CountryConfig.code == "OM").first()
     if not existing:

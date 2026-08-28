@@ -41,6 +41,7 @@ from .image_similarity import (
     compute_similarity,
     find_similar_images,
 )
+from .ai_service import ai_service, HF_API_TOKEN
 
 __all__ = [
     "suggest_price",
@@ -78,4 +79,6 @@ __all__ = [
     "compute_image_embedding",
     "compute_similarity",
     "find_similar_images",
+    "ai_service",
+    "HF_API_TOKEN",
 ]

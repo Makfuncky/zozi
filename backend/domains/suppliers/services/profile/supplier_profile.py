@@ -1,5 +1,13 @@
 """Supplier sub-module — imports shared helpers from supplier_shared."""
 
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+from fastapi import HTTPException
+
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
 from domains.suppliers.services.supplier_shared import _sanitize_profile_string
 
 def get_supplier_profile(current_user: dict, db: Session) -> dict:

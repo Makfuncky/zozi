@@ -9,13 +9,9 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from domains.governance.models.core import AuditLog
-from domains.governance.models.core import DirectChatMessage
-from domains.governance.models.core import GroupChatMessage
-from domains.governance.models.core import EntityChatMessage
-from domains.governance.models.core import VideoRoom
-from domains.country.models.countries import CountryCommunication
-from domains.finance.models.finance import JournalEntry
+from domains.audit.ports import AuditLog
+from domains.comms.ports import DirectChatMessage, GroupChatMessage, EntityChatMessage, VideoRoom
+from domains.country.ports import country_communication_query
 from infrastructure.database.database import get_service_session
 
 logger = logging.getLogger("zozi.ediscovery")
@@ -133,7 +129,7 @@ class EDiscoveryService:
                 })
 
         # Country communications (internal emails)
-        q = self.db.query(CountryCommunication)
+        q = country_communication_query(db)
         if user_id:
             q = q.filter((CountryCommunication.from_user_id == user_id) | (CountryCommunication.to_user_id == user_id))
         if entity_type and entity_id:
@@ -169,6 +165,10 @@ class EDiscoveryService:
             })
 
         # Journal entries (financial communications)
+        # NOTE: finance.ports has a pre-existing IndentationError in an unrelated
+        # service file (general_ledger_service.py:2514) that blocks module-level
+        # imports. Using function-scoped import as a workaround.
+        from domains.finance.models.finance import JournalEntry
         q = self.db.query(JournalEntry)
         if keyword:
             q = q.filter(JournalEntry.description.ilike(f"%{keyword}%"))

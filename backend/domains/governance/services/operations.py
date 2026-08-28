@@ -18,13 +18,13 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.audit.ports import AuditAction, audit_log
 from infrastructure.database.database import SessionLocal
 from domains.governance.models.core import AuditLog
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.orders.models.orders import Order
-from domains.catalog.models.promotions import Coupon
+from domains.promotions.models.promotions import Coupon
 from domains.governance.services.export_read_service import MAX_EXPORT_ROWS
 from domains.governance.services.export_read_service import db_auditlog_query_4
 from domains.governance.services.export_read_service import db_coupon_all_3

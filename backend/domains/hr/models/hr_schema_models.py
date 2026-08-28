@@ -14,7 +14,7 @@ so both registration sites share the same MetaData entry.
 
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, JSON
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, JSON, Boolean
 from sqlalchemy.orm import relationship
 
 from . import Base
@@ -60,8 +60,11 @@ class ShiftHandoverTask(Base):
     description = Column(Text, nullable=False)
     priority = Column(String(20), default="normal")
     status_code = Column(String(20), default="open")
-    assigned_to = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
     session = relationship("ShiftHandoverSession", back_populates="tasks")
 
 

@@ -25,7 +25,21 @@ from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.schema import CreateTable  # noqa: E402
 from sqlalchemy.exc import NoReferencedTableError  # noqa: E402
 
-import infrastructure.database.models as models  # noqa: E402
+import infrastructure.database.base as models  # noqa: E402
+import domains.accounts.models.user  # noqa: E402
+import domains.catalog.models.products  # noqa: E402
+import domains.orders.models.order_entities  # noqa: E402
+import domains.finance.models.payments  # noqa: E402
+import domains.suppliers.models.suppliers  # noqa: E402
+import domains.logistics.models.logistics  # noqa: E402
+import domains.comms.models.communication  # noqa: E402
+import domains.hr.models.employee_models  # noqa: E402
+import domains.promotions.models.promotions  # noqa: E402
+import domains.security.models.fraud  # noqa: E402
+import domains.governance.models.core  # noqa: E402
+import domains.analytics.models.analytics_schema_models  # noqa: E402
+import domains.country.models.countries  # noqa: E402
+import domains.customers.models.customer_schema_models  # noqa: E402
 
 md = models.Base.metadata
 tables = md.tables

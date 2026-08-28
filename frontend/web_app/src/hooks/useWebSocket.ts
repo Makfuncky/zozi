@@ -6,11 +6,13 @@ import { useComm, type WsStatus } from "@/components/comms/CommShell";
 
 // ── Config ──────────────────────────────────────────────────────────────
 
-const WS_BASE =
-  typeof window !== "undefined" &&
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "ws://127.0.0.1:8000"
-    : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}:8000`;
+const WS_BASE = (() => {
+  if (typeof window === "undefined") return "";
+  const isLocal =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) return "ws://127.0.0.1:8000";
+  return `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}:8000`;
+})();
 
 const PING_INTERVAL_MS = 25_000;
 const RECONNECT_BASE_MS = 1_000;

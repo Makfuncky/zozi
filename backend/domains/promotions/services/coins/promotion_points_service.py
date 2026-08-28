@@ -32,7 +32,7 @@ from domains.governance.ports import User
 from domains.comms.ports import UserPoints
 from domains.comms.ports import PointsTransaction
 from domains.governance.ports import PromotionEngineConfig
-from domains.orders.services.promotion_service import _get_or_create_config as _get_promotion_config
+from domains.orders.ports import _get_or_create_config
 from kernel.money import to_decimal
 
 logger = logging.getLogger(__name__)

@@ -10,6 +10,7 @@ __all__ = ['FlashSale', 'FlashSaleItem', 'EmailCampaign', 'EmailTemplate', 'News
 
 class FlashSale(Base, TenantMixin):
     __tablename__ = 'flash_sales'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -38,6 +39,7 @@ class FlashSale(Base, TenantMixin):
 
 class FlashSaleItem(Base, TenantMixin):
     __tablename__ = 'flash_sale_items'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -64,6 +66,7 @@ class FlashSaleItem(Base, TenantMixin):
 
 class EmailCampaign(Base, TenantMixin):
     __tablename__ = 'email_campaigns'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -109,6 +112,7 @@ class EmailTemplate(Base):
 
 class NewsletterSubscriber(Base):
     __tablename__ = 'newsletter_subscribers'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -124,6 +128,7 @@ class NewsletterSubscriber(Base):
 
 class EmailCampaignLog(Base):
     __tablename__ = 'email_campaign_logs'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -144,6 +149,7 @@ class EmailCampaignLog(Base):
 
 class CampaignRecipient(Base):
     __tablename__ = 'campaign_recipients'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -169,6 +175,7 @@ class CampaignRecipient(Base):
 
 class EmailDeliveryEvent(Base):
     __tablename__ = 'email_delivery_events'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -188,6 +195,7 @@ class EmailDeliveryEvent(Base):
 
 class EmailSuppression(Base):
     __tablename__ = 'email_suppressions'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -209,7 +217,8 @@ class EmailSuppression(Base):
     created_at = Column(DateTime, default=utcnow)
 
 class EmailRuntimeConfig(Base):
-    __tablename__ = 'email_runtime_config'
+    __tablename__ = 'email_runtime_configs'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -242,6 +251,7 @@ class EmailRuntimeConfig(Base):
 
 class PointsTransaction(Base):
     __tablename__ = 'points_transactions'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -263,6 +273,7 @@ class PointsTransaction(Base):
 
 class UserPoints(Base):
     __tablename__ = 'user_points'
+    __table_args__ = {"schema": "comms"}
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

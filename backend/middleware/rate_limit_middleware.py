@@ -163,8 +163,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     )
 
                 return await call_next(request)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Redis rate limit check failed — failing closed: %s", exc)
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Rate limiting unavailable. Please retry."},
+                    headers={"Retry-After": "10"},
+                )
 
         is_allowed, retry_after = self._check_memory_limit(key, max_r, window)
         if not is_allowed:
@@ -235,6 +240,7 @@ class TokenBucket:
                 retry_after = math.ceil((tokens - current) / self.rate)
                 return False, int(current), retry_after
 
-        except Exception:
-            return True, self.capacity - tokens, 0
+        except Exception as exc:
+            logger.warning("Redis token bucket consume failed — failing closed: %s", exc)
+            return False, 0, 10
 

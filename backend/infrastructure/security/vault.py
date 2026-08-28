@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 _VAULT_PREFIX = "v1:"
 
 _ALLOWED_FIELDS = {"secret_key", "webhook_secret", "extra_config_json", "api_key", "encryption_key"}
+_VAULT_TABLE = "payment_gateway_connections"
 
 
 def _validate_field(field: str) -> None:
@@ -154,15 +155,14 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
             conn_id = row[0]
             provider_code = row[1]
             for field_idx, field in enumerate(['secret_key', 'webhook_secret', 'extra_config_json'], start=2):
-                if field not in _ALLOWED_FIELDS:
-                    raise VaultError(f"Refusing to interpolate non-allowlisted field '{field}' into SQL")
+                _validate_field(field)
                 val = row[field_idx]
                 if val and old_vault.is_encrypted(val):
                     try:
                         decrypted = old_vault.decrypt(val)
                         new_encrypted = new_vault.encrypt(decrypted)
                         db.execute(
-                            _text(f"UPDATE payment_gateway_connections SET {field} = :val WHERE id = :id"),
+                            _text(f"UPDATE {_VAULT_TABLE} SET {field} = :val WHERE id = :id"),
                             {"val": new_encrypted, "id": conn_id},
                         )
                         reencrypted_count += 1

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +36,7 @@ class Settings:
         "refresh_token_cookie_name": "refresh_token",
         "refresh_cookie_samesite": "lax",
         "cors_origins": os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"),
-        "database_url": os.getenv("DATABASE_URL", "postgresql://zozimarketplace:zozimarketplace@localhost:5432/zozimarketplace"),
+        "database_url": os.getenv("DATABASE_URL", ""),
         "database_replica_url": os.getenv("DATABASE_REPLICA_URL", ""),
         # Pool sizing tuned for 100K+ concurrent users. Per-worker values;
         # total capacity = workers * (pool_size + max_overflow). Re-tune based
