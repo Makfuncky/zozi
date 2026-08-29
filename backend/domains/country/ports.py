@@ -19,10 +19,11 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.country.models.countries import CountryConfig, CountryGatewayCredentials, PayoutRuleCategory, PayoutRuleProduct
+from domains.country.models.countries import CountryConfig, CountryGatewayCredentials
+from domains.finance.models.tax_rules import PayoutRuleCategory, PayoutRuleProduct
 from domains.country.models.country_control import PaymentOrchestratorSync, SupplierOnboardingSync
 from domains.country.models.country_enhancements import CountryCategoryTaxRate, CountryCity
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 
 def get_country_config(db: Session, country_code: str) -> Optional[CountryConfig]:

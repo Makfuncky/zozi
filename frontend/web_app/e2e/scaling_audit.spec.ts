@@ -5,6 +5,8 @@
  * Run: cd frontend/web_app && npx playwright test e2e/scaling_audit.spec.ts
  */
 import { test, expect } from "@playwright/test";
+import fs from "fs";
+import path from "path";
 
 const API = "http://127.0.0.1:8000";
 
@@ -107,8 +109,8 @@ test("presigned upload endpoint is reachable", async ({ request }) => {
 // ── File existence checks (code-level) ─────────────────────────────────────
 
 test("Dockerfile.worker exists with correct CMD", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const workerDockerfile = path.resolve(__dirname, "../../../backend/Dockerfile.worker");
   expect(fs.existsSync(workerDockerfile)).toBe(true);
   const content = fs.readFileSync(workerDockerfile, "utf-8");
@@ -117,8 +119,8 @@ test("Dockerfile.worker exists with correct CMD", () => {
 });
 
 test("docker-compose.prod.yml has worker and pgbouncer services", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const composePath = path.resolve(__dirname, "../../../docker-compose.prod.yml");
   expect(fs.existsSync(composePath)).toBe(true);
   const content = fs.readFileSync(composePath, "utf-8");
@@ -129,8 +131,8 @@ test("docker-compose.prod.yml has worker and pgbouncer services", () => {
 });
 
 test("S3Storage.purge_cdn exists", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const storagePath = path.resolve(__dirname, "../../../backend/services/storage.py");
   expect(fs.existsSync(storagePath)).toBe(true);
   const content = fs.readFileSync(storagePath, "utf-8");
@@ -139,8 +141,8 @@ test("S3Storage.purge_cdn exists", () => {
 });
 
 test("pagination.py has CursorPage and cursor_paginate", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const paginationPath = path.resolve(__dirname, "../../../backend/utils/pagination.py");
   expect(fs.existsSync(paginationPath)).toBe(true);
   const content = fs.readFileSync(paginationPath, "utf-8");
@@ -150,8 +152,8 @@ test("pagination.py has CursorPage and cursor_paginate", () => {
 });
 
 test("rate_limit_middleware has presigned URL limits", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const middlewarePath = path.resolve(__dirname, "../../../backend/middleware/rate_limit_middleware.py");
   expect(fs.existsSync(middlewarePath)).toBe(true);
   const content = fs.readFileSync(middlewarePath, "utf-8");
@@ -159,8 +161,8 @@ test("rate_limit_middleware has presigned URL limits", () => {
 });
 
 test("pg_backup script exists", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const scriptPath = path.resolve(__dirname, "../../../backend/scripts/pg_backup.py");
   expect(fs.existsSync(scriptPath)).toBe(true);
   const content = fs.readFileSync(scriptPath, "utf-8");
@@ -169,8 +171,8 @@ test("pg_backup script exists", () => {
 });
 
 test("alembic merge migration exists with all heads", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const mergePath = path.resolve(__dirname, "../../../backend/alembic/versions/2026_07_17_09_00-opencode20260717a1_merge_heads.py");
   expect(fs.existsSync(mergePath)).toBe(true);
   const content = fs.readFileSync(mergePath, "utf-8");
@@ -207,9 +209,9 @@ test("full user flow: login + browse + search", async ({ request }) => {
 
 // ── Rate Limiting Integration ─────────────────────────────────────────────
 
-const _isLoadTest = require("fs")
+const _isLoadTest = fs
   .readFileSync(
-    require("path").resolve(__dirname, "../../../backend/.env"),
+    path.resolve(__dirname, "../../../backend/.env"),
     "utf8"
   )
   .includes("RUNTIME_PROFILE=loadtest");
@@ -230,8 +232,8 @@ test("rate limit middleware responds with 429 under rapid failed logins", async 
 // ── Worker Script Import ──────────────────────────────────────────────────
 
 test("run_worker.py imports cleanly", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const workerPath = path.resolve(__dirname, "../../../backend/run_worker.py");
   expect(fs.existsSync(workerPath)).toBe(true);
   const content = fs.readFileSync(workerPath, "utf-8");
@@ -244,8 +246,8 @@ test("run_worker.py imports cleanly", () => {
 // ── Storage Backend Interface ─────────────────────────────────────────────
 
 test("storage.py has complete StorageBackend interface", () => {
-  const fs = require("fs");
-  const path = require("path");
+  
+  
   const storagePath = path.resolve(__dirname, "../../../backend/services/storage.py");
   const content = fs.readFileSync(storagePath, "utf-8");
   // All required methods

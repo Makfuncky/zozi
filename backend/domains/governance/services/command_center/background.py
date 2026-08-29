@@ -22,7 +22,7 @@ from providers.automation.scheduler import IntervalTrigger
 from providers.automation.scheduler import create_scheduler
 from infrastructure.database.database import get_service_session
 
-from domains.governance.models.core import SupportTicket
+from domains.comms.models.communication_schema_models import SupportTicket
 from domains.governance.models.core import NewsSource
 from domains.governance.models.core import SystemHealthEvent
 from domains.accounts.models.user import User

@@ -31,9 +31,9 @@ export default function MobileNav() {
             <li key={href} className="flex-1">
               <Link
                 href={href}
-                className={`relative flex flex-col items-center justify-center gap-0.5 h-14 w-full transition-colors ${
+                className={`relative flex flex-col items-center justify-center gap-0.5 h-14 w-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
                   active
-                    ? "text-indigo-400"
+                    ? "text-primary"
                     : "text-text-faint hover:text-text-muted"
                 }`}
                 aria-current={active ? "page" : undefined}
@@ -41,7 +41,7 @@ export default function MobileNav() {
                 <span className="relative">
                   <Icon className="w-5 h-5" />
                   {badge && itemCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 bg-indigo-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
                       {itemCount > 99 ? "99+" : itemCount}
                     </span>
                   )}

@@ -8,7 +8,7 @@ from infrastructure.database.database import get_db
 from domains.accounts.models.user import User
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from infrastructure.utils.dependencies import require_admin, require_super_admin
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from domains.governance.ports import archive_entity, restore_entity, hard_delete_entity
 from domains.logistics.ports import approve_partner, list_partners, reject_partner, toggle_partner_active

@@ -23,16 +23,17 @@ class TestRLSSessionContext:
         assert _COUNTRY_DIR.exists(), "domains/country/ must exist"
 
     def test_country_rls_module_exists(self):
-        rls_path = _COUNTRY_DIR / "utils" / "country_rls.py"
-        assert rls_path.exists(), "country/utils/country_rls.py must exist for RLS context"
+        # RLS utilities live in infrastructure/utils/ (shared platform layer)
+        rls_path = _BACKEND_ROOT / "infrastructure" / "utils" / "country_rls.py"
+        assert rls_path.exists(), "infrastructure/utils/country_rls.py must exist for RLS context"
 
     def test_rls_module_has_normalize_function(self):
-        rls_path = _COUNTRY_DIR / "utils" / "country_rls.py"
+        rls_path = _BACKEND_ROOT / "infrastructure" / "utils" / "country_rls.py"
         source = rls_path.read_text(encoding="utf-8")
         assert "normalize_country_code" in source
 
     def test_rls_module_has_scope_function(self):
-        rls_path = _COUNTRY_DIR / "utils" / "country_rls.py"
+        rls_path = _BACKEND_ROOT / "infrastructure" / "utils" / "country_rls.py"
         source = rls_path.read_text(encoding="utf-8")
         assert "get_country_scope_from_db" in source or "get_current_country_scope" in source
 
@@ -51,16 +52,16 @@ class TestRLSSessionContext:
         assert "clear_rls_context" in source
 
     def test_normalize_country_code_uppercases(self):
-        from domains.country.utils.country_rls import normalize_country_code
+        from infrastructure.utils.country_rls import normalize_country_code
         assert normalize_country_code("ae") == "AE"
         assert normalize_country_code("us") == "US"
 
     def test_normalize_country_code_strips_whitespace(self):
-        from domains.country.utils.country_rls import normalize_country_code
+        from infrastructure.utils.country_rls import normalize_country_code
         assert normalize_country_code("  AE  ") == "AE"
 
     def test_normalize_country_code_empty(self):
-        from domains.country.utils.country_rls import normalize_country_code
+        from infrastructure.utils.country_rls import normalize_country_code
         assert normalize_country_code("") == ""
 
 

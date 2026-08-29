@@ -29,28 +29,28 @@ class TestSecurityJWT:
         """Law 33: JWT must include 'type' claim."""
         from infrastructure.utils.auth import create_access_token, decode_token
         token = create_access_token(data={"sub": "1", "role": "admin"})
-        payload = decode_token(token, check_blacklist=False)
+        payload = decode_token(token, expected_type="access", check_blacklist=False)
         assert payload.get("type") == "access"
 
     def test_create_refresh_token_has_type_claim(self) -> None:
         """Law 33: refresh token must have type='refresh'."""
         from infrastructure.utils.auth import create_refresh_token, decode_token
         token = create_refresh_token(data={"sub": "1"})
-        payload = decode_token(token, check_blacklist=False)
+        payload = decode_token(token, expected_type="refresh", check_blacklist=False)
         assert payload.get("type") == "refresh"
 
     def test_create_temp_token_has_type_claim(self) -> None:
         """Law 33: temp token must have type='temp'."""
         from infrastructure.utils.auth import create_temp_token, decode_token
         token = create_temp_token(data={"sub": "1"})
-        payload = decode_token(token, check_blacklist=False)
+        payload = decode_token(token, expected_type="temp", check_blacklist=False)
         assert payload.get("type") == "temp"
 
     def test_access_token_has_jti(self) -> None:
         """JWT must include jti for revocation."""
         from infrastructure.utils.auth import create_access_token, decode_token
         token = create_access_token(data={"sub": "1"})
-        payload = decode_token(token, check_blacklist=False)
+        payload = decode_token(token, expected_type="access", check_blacklist=False)
         assert "jti" in payload
         assert len(payload["jti"]) > 0
 

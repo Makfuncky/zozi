@@ -48,8 +48,8 @@ class TestJWTTokenCreation:
         token1 = create_access_token(data={"sub": "1", "role": "customer"})
         token2 = create_access_token(data={"sub": "1", "role": "customer"})
 
-        payload1 = decode_token(token1)
-        payload2 = decode_token(token2)
+        payload1 = decode_token(token1, expected_type="access")
+        payload2 = decode_token(token2, expected_type="access")
 
         assert payload1["jti"] != payload2["jti"]
 
@@ -212,7 +212,7 @@ class TestTokenRefreshFlow:
 
         refresh = create_refresh_token(data={"sub": "42"}, family_id="fam-dfp")
         new_access, _ = rotate_refresh_token(refresh, device_fp="device-abc-123")
-        payload = decode_token(new_access)
+        payload = decode_token(new_access, expected_type="access")
 
         assert payload.get("dfp") == "device-abc-123"
 
@@ -227,7 +227,7 @@ class TestJTIblacklist:
         )
 
         token = create_access_token(data={"sub": "1", "role": "customer"})
-        payload = decode_token(token)
+        payload = decode_token(token, expected_type="access")
         jti = payload["jti"]
 
         assert is_token_blacklisted(jti) is False
@@ -245,7 +245,7 @@ class TestJTIblacklist:
 
         # Blacklist and re-verify
         from infrastructure.utils.auth import decode_token
-        decoded = decode_token(token)
+        decoded = decode_token(token, expected_type="access")
         blacklist_token(decoded["jti"], 3600)
 
         with pytest.raises(Exception) as exc_info:
@@ -499,7 +499,7 @@ class TestDeviceBinding:
         from infrastructure.utils.auth import create_access_token, decode_token
 
         token = create_access_token(data={"sub": "1"}, device_fp="fp-abc-123")
-        payload = decode_token(token)
+        payload = decode_token(token, expected_type="access")
 
         assert payload["dfp"] == "fp-abc-123"
 
@@ -507,7 +507,7 @@ class TestDeviceBinding:
         from infrastructure.utils.auth import create_access_token, decode_token
 
         token = create_access_token(data={"sub": "1"})
-        payload = decode_token(token)
+        payload = decode_token(token, expected_type="access")
 
         assert "dfp" not in payload
 
@@ -539,7 +539,7 @@ class TestIntegrationAuthFlow:
         """Verify that a blacklisted token cannot access protected endpoints."""
         from infrastructure.utils.auth import decode_token, blacklist_token
 
-        payload = decode_token(admin_token)
+        payload = decode_token(admin_token, expected_type="access")
         blacklist_token(payload["jti"], 3600)
 
         resp = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {admin_token}"})

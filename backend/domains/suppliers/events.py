@@ -8,7 +8,6 @@ logistics, comms) may react.
 Transport is the sanctioned in-process ``event_bus`` (circuit-exempt data layer).
 """
 
-from __future__ import annotations
 
 from infrastructure.messaging.events.event_bus import publish
 
@@ -174,3 +173,43 @@ __all__ = [
     "publish_supplier_settlement_created",
     "publish_supplier_return_window_updated",
 ]
+
+# imports merged from services/
+import logging
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+from uuid import uuid4
+
+# base classes merged from services/
+class SuppliersEvent:
+    """Base class for all suppliers-domain events."""
+
+    event_type: str = field(init=False)
+    event_id: str = field(default_factory=lambda: str(uuid4()), init=False)
+    occurred_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), init=False
+    )
+
+    def serialize(self) -> Dict[str, Any]:
+        """Plain-dict form for the event bus."""
+        d = asdict(self)
+        d["occurred_at"] = self.occurred_at.isoformat()
+        return d
+
+# derived classes merged from services/
+class SupplierRegistered(SuppliersEvent):
+    supplier_id: int = 0
+    user_id: Optional[int] = None
+    company_name: str = ""
+    country_code: str = ""
+    event_type: str = field(default=EVENT_SUPPLIER_REGISTERED, init=False)
+class SupplierSuspended(SuppliersEvent):
+    supplier_id: int = 0
+    reason: str = ""
+    suspended_by: Optional[int] = None
+    event_type: str = field(default=EVENT_SUPPLIER_SUSPENDED, init=False)
+class SupplierVerified(SuppliersEvent):
+    supplier_id: int = 0
+    verified_by: Optional[int] = None
+    event_type: str = field(default=EVENT_SUPPLIER_VERIFIED, init=False)

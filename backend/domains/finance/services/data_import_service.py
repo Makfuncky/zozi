@@ -38,8 +38,8 @@ FX_GAIN_LOSS = "6060"
 
 
 def _ensure_import_accounts(db: Session) -> None:
-    existing = {a.code for a in db.query(Account).all()}
-    groups = {g.code: g.id for g in db.query(AccountGroup).all()}
+    existing = {a.code for a in db.query(Account).limit(1000).all()}
+    groups = {g.code: g.id for g in db.query(AccountGroup).limit(1000).all()}
     asset_group = groups.get("1.1")
     liability_group = groups.get("2.1")
     expense_group = groups.get("5.2")

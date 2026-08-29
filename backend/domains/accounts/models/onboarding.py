@@ -14,11 +14,11 @@ __all__ = ["OnboardingPipeline", "OnboardingStep", "DocumentVerification", "OCRR
 
 class OnboardingPipeline(Base):
     __tablename__ = "onboarding_pipelines"
-    __table_args__ = ({"schema": "accounts"},)
+    __table_args__ = ({"schema": "hr", "extend_existing": True},)
     id = Column(Integer, primary_key=True, index=True)
     # TODO(migration): governance.users is a cross-domain FK (Law 3). After the User
     # model is migrated into the accounts domain, this must become ``accounts.users.id``.
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     pipeline_type = Column(String(50), nullable=False)
     pipeline_status = Column("status", String, default="pending")
     current_step = Column(Integer, default=0)
@@ -37,9 +37,9 @@ class OnboardingPipeline(Base):
 
 class OnboardingStep(Base):
     __tablename__ = "onboarding_steps"
-    __table_args__ = ({"schema": "accounts"},)
+    __table_args__ = ({"schema": "hr", "extend_existing": True},)
     id = Column(Integer, primary_key=True, index=True)
-    pipeline_id = Column(Integer, ForeignKey("accounts.onboarding_pipelines.id", ondelete='CASCADE'), nullable=False, index=True)
+    pipeline_id = Column(Integer, ForeignKey("hr.onboarding_pipelines.id", ondelete='CASCADE'), nullable=False, index=True)
     step_name = Column(String(255), nullable=False)
     step_status = Column("status", String, default="pending")
     data = Column(JSON, nullable=True)

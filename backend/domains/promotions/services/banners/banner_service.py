@@ -29,7 +29,7 @@ from sqlalchemy.orm import Session
 
 from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from domains.promotions.models.promotions import Banner
 

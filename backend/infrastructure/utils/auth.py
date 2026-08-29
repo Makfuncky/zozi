@@ -34,10 +34,12 @@ def _coerce_failed_login_entry(entry: object, *, now: float) -> tuple[int, float
         try:
             count = int(entry[0])
         except Exception:
+            logger.debug("Failed to coerce login count from %r", entry[0], exc_info=True)
             count = 0
         try:
             expiry = float(entry[1])
         except Exception:
+            logger.debug("Failed to coerce login expiry from %r", entry[1], exc_info=True)
             expiry = now + LOGIN_LOCKOUT_TTL
         return count, expiry
     if isinstance(entry, int):
@@ -184,7 +186,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     if len(password) > 72:
         raise ValueError("Password exceeds maximum length of 72 characters")
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=13)).decode("utf-8")
 
 
 def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None, device_fp: str | None = None) -> str:
@@ -339,7 +341,7 @@ def verify_refresh_token(token: str) -> tuple[str, str]:
     return str(subject), str(family_id)
 
 
-def decode_token(token: str, check_blacklist: bool = True, expected_type: str | None = None) -> dict[str, Any]:
+def decode_token(token: str, expected_type: str, check_blacklist: bool = True) -> dict[str, Any]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError as exc:
@@ -367,7 +369,7 @@ def rotate_refresh_token(token: str, device_fp: str | None = None) -> tuple[str,
     subject, family_id = verify_refresh_token(token)
 
     # Check if this specific refresh token was already used (replay attack)
-    old_payload = decode_token(token)
+    old_payload = decode_token(token, expected_type="refresh")
     old_jti = old_payload.get("jti")
     
     if old_jti and is_refresh_token_used(family_id, old_jti):

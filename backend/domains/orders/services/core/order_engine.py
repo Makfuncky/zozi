@@ -19,7 +19,7 @@ import random
 import string
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
@@ -226,7 +226,7 @@ def _load_products_for_order(order: OrderCreate, db: Session) -> Tuple[Dict[int,
         for product in db.query(Product).options(selectinload(Product.variants)).filter(
             Product.id.in_(requested_quantities.keys()),
             Product.is_deleted == False,  # noqa: E712
-        ).with_for_update().all()
+        ).with_for_update().limit(1000).all()
     }
 
     for item in order.items:
@@ -355,7 +355,7 @@ def _group_supplier_totals(
     if supplier_totals:
         supplier_profiles = {
             cast(int, profile.user_id): profile
-            for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(supplier_totals.keys())).all()
+            for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(supplier_totals.keys())).limit(1000).all()
         }
         for supplier_id, metrics in supplier_totals.items():
             profile = supplier_profiles.get(supplier_id)
@@ -677,33 +677,6 @@ def _calculate_order_amounts(
     country_code = normalize_country_code(order.country or current_user.get("preferred_country") or "OM") or "OM"
     currency = str(current_user.get("preferred_currency") or settings.default_currency)
 
-    try:
-        from domains.country.services.cross_border.cross_border_detection import CrossBorderDetectionMiddleware
-        cb = CrossBorderDetectionMiddleware(db)
-        user_id = current_user.get("id")
-        home_country = current_user.get("country_code") or country_code
-        result = cb.detect_cross_border_session(user_id, home_country, country_code)
-        if result:
-            logger.info(
-                f"Cross-border checkout: user {user_id} from {home_country} -> {country_code}"
-            )
-            # Persist cross-country session
-            try:
-                from domains.country.models.country_enhancements import CrossCountryCustomerSession
-                session = CrossCountryCustomerSession(
-                    user_id=user_id,
-                    source_country_code=home_country,
-                    target_country_code=country_code,
-                    ip_address=current_user.get("ip_address", ""),
-                    conversion=True,
-                )
-                db.add(session)
-                db.flush()
-            except Exception as persist_err:
-                logger.debug("Cross-country session persist skipped: %s", persist_err)
-    except Exception as exc:
-        logger.debug("Cross-border detection skipped: %s", exc)
-
     tax_type = "VAT"
     tax_amount = Decimal("0.00")
     vat_amount = Decimal("0.00")
@@ -870,6 +843,12 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
                 )
                 db.add(db_item)
 
+        except HTTPException:
+            raise
+        except Exception as exc:
+            log_service_error("orders", "create_order", exc, order_id=order_id, order_number=order_number)
+            _rollback_order_creation(db, order_id, order_number)
+            raise HTTPException(status_code=500, detail="Order creation failed. Please try again.") from exc
     db.flush()
 
     if applied_tier is not None and tier_discount > 0:
@@ -935,12 +914,6 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
     except Exception:
         logger.exception("Failed to enqueue order-created email for order %s", cast(Any, db_order).id)
     return db_order
-        except HTTPException:
-            raise
-        except Exception as exc:
-            log_service_error("orders", "create_order", exc, order_id=order_id, order_number=order_number)
-            _rollback_order_creation(db, order_id, order_number)
-            raise HTTPException(status_code=500, detail="Order creation failed. Please try again.") from exc
 
 
 def preview_order(order: OrderCreate, current_user: dict, db: Session) -> dict[str, Any]:
@@ -1023,16 +996,18 @@ def preview_order(order: OrderCreate, current_user: dict, db: Session) -> dict[s
     }
 
 
-def get_orders(current_user: dict, db: Session, *, skip: int = 0, limit: int = 50) -> List[Order]:
+def get_orders(current_user: dict, db: Session, *, skip: int = 0, limit: int = 50, cursor: Optional[int] = None) -> List[Order]:
     orders = (
         db.query(Order)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.user_id == current_user["id"])
         .order_by(Order.created_at.desc())
-        .offset(skip)
-        .limit(min(limit, 200))
-        .all()
     )
+    if cursor is not None:
+        orders = orders.filter(Order.id < cursor)
+    else:
+        orders = orders.offset(skip)
+    orders = orders.limit(min(limit, 200)).all()
     order_ids = [cast(int, order.id) for order in orders]
     shipments_by_order = _load_shipments_for_orders(order_ids, db)
     shipment_ids = [cast(int, shipment.id) for shipments in shipments_by_order.values() for shipment in shipments]
@@ -1206,7 +1181,7 @@ def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
     elif order.user_id != user_id:
         raise HTTPException(status_code=403, detail="You do not have access to this order invoice")
 
-    shipments = db.query(Shipment).filter(Shipment.order_id == order_id).order_by(Shipment.created_at.asc()).all()
+    shipments = db.query(Shipment).filter(Shipment.order_id == order_id).order_by(Shipment.created_at.asc()).limit(1000).all()
     shipment_ids = [shipment.id for shipment in shipments]
     events = (
         db.query(ShipmentEvent)
@@ -1219,7 +1194,7 @@ def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
 
     supplier_ids = sorted({item.product.supplier_id for item in order.items if item.product and item.product.supplier_id})
     suppliers = (
-        db.query(User).filter(User.id.in_(supplier_ids)).all()
+        db.query(User).filter(User.id.in_(supplier_ids)).limit(1000).all()
         if supplier_ids
         else []
     )

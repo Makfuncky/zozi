@@ -479,6 +479,7 @@ def _normalize_product_video_reference(value: Optional[object]) -> Optional[str]
             if hostname in {"youtube.com", "m.youtube.com", "youtu.be", "vimeo.com"} or hostname.endswith(".vimeo.com"):
                 return normalized
         except Exception:
+            logger.warning("Failed to parse hostname from URL: %s", normalized, exc_info=True)
             pass
         if re.search(r"\.(mp4|webm)(?:$|[?#])", lower):
             return normalized

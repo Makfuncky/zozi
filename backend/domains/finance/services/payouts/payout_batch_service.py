@@ -1571,7 +1571,7 @@ def stop_auto_payout_background_job() -> None:
 def _run_once_with_retry(delay_before: int = 0) -> None:
     """Run both supplier and logistics sweeps inside a fresh DB session."""
     if delay_before > 0:
-        time.sleep(delay_before)
+        _stop_event.wait(delay_before)
 
     try:
         from infrastructure.database.database import SessionLocal
@@ -1689,8 +1689,8 @@ __all__ = [
     "confirm_cash_on_delivery_order",
     "is_checkout_payment_method_allowed",
     "normalize_checkout_payment_method",
-    "_event_publisher",
-    "_order_holds_inventory",
+    "event_publisher",
+    "order_holds_inventory",
 ]
 
 # === MERGED from admin_payouts_service.py ===
@@ -1730,7 +1730,7 @@ from domains.audit.ports import AuditAction, audit_log
 # TODO: Module not yet created
 # from domains.finance.services.auto_payout_scheduler import stop_auto_payout_background_job as _stop_bg_job
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.datetime_utils import utcnow
 
@@ -2575,13 +2575,19 @@ from domains.governance.ports import LogisticsSettlement
 from domains.finance.models.payments import Payout
 
 
-def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0) -> list:
+def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0, cursor: Optional[int] = None) -> list:
     payouts = (
         db.query(Payout)
         .options(joinedload(Payout.supplier))
         .filter(Payout.status.in_(["pending", "processing"]))
-        .order_by(Payout.created_at.asc())
-        .offset(max(0, offset))
+    )
+    if cursor is not None:
+        payouts = payouts.filter(Payout.id < cursor)
+    else:
+        payouts = payouts.offset(max(0, offset))
+    payouts = (
+        payouts
+        .order_by(Payout.id.desc())
         .limit(min(max(1, limit), 200))
         .all()
     )
@@ -2872,10 +2878,14 @@ def _enrich_batch_items(batch: PayoutBatch, db: Session) -> list[dict[str, Any]]
     return enriched
 
 
-def _load_unbatched_payouts(db: Session, page: int, page_size: int) -> tuple[list[dict[str, Any]], int]:
+def _load_unbatched_payouts(db: Session, page: int, page_size: int, cursor: Optional[int] = None) -> tuple[list[dict[str, Any]], int]:
     query = db.query(Payout).filter(Payout.status.in_(["pending", "draft"]))
     total = query.count()
-    payouts = query.order_by(Payout.created_at.desc()).limit(page_size).all()
+    if cursor is not None:
+        query = query.filter(Payout.id < cursor)
+    else:
+        query = query.offset((page - 1) * page_size)
+    payouts = query.order_by(Payout.id.desc()).limit(page_size).all()
 
     supplier_ids = {cast(int, p.supplier_id) for p in payouts if p.supplier_id}
     supplier_names = _resolve_supplier_names(supplier_ids, db) if supplier_ids else {}
@@ -4015,11 +4025,15 @@ def _serialize_batch_item(item: PayoutBatchItem) -> dict[str, Any]:
 def _serialize_batch(batch: PayoutBatch) -> dict[str, Any]:
     return {'id': cast(int, batch.id), 'batch_number': cast(str, batch.batch_number), 'country_code': cast(str, batch.country_code), 'total_amount': float(cast(Decimal, batch.total_amount or 0)), 'item_count': cast(int, batch.item_count or 0), 'status': cast(str, batch.status), 'notes': cast(str | None, batch.notes), 'created_at': cast(Any, batch.created_at).isoformat() if getattr(batch, 'created_at', None) else None, 'items': [_serialize_batch_item(item) for item in batch.items or []]}
 
-def _load_pending_batches_with_items(db: Session, page: int, page_size: int) -> tuple[list[dict[str, Any]], int]:
+def _load_pending_batches_with_items(db: Session, page: int, page_size: int, cursor: Optional[int] = None) -> tuple[list[dict[str, Any]], int]:
     """Return paginated batches in draft/pending status with enriched items."""
     query = db.query(PayoutBatch).options(joinedload(PayoutBatch.items)).filter(PayoutBatch.status.in_(['draft', 'pending']))
     total = query.count()
-    batches = query.order_by(PayoutBatch.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    if cursor is not None:
+        query = query.filter(PayoutBatch.id < cursor)
+    else:
+        query = query.offset((page - 1) * page_size)
+    batches = query.order_by(PayoutBatch.created_at.desc()).limit(page_size).all()
     result = []
     for batch in batches:
         enriched_items = _enrich_batch_items(batch, db)
@@ -4066,11 +4080,15 @@ def _enrich_batch_items(batch: PayoutBatch, db: Session) -> list[dict[str, Any]]
 def _serialize_payout(p: Payout) -> dict[str, Any]:
     return {'id': cast(int, p.id), 'supplier_id': cast(int | None, p.supplier_id), 'order_id': cast(int | None, p.order_id), 'amount': float(cast(Decimal, p.amount or 0)), 'currency': cast(str | None, p.currency) or 'OMR', 'method': cast(str | None, p.method) or '', 'status': cast(str | None, p.status) or '', 'reference': cast(str | None, p.reference), 'notes': cast(str | None, p.notes), 'country_code': cast(str | None, p.country_code) or '', 'created_at': cast(Any, p.created_at).isoformat() if getattr(p, 'created_at', None) else None, 'processed_at': cast(Any, p.processed_at).isoformat() if getattr(p, 'processed_at', None) else None}
 
-def _load_unbatched_payouts(db: Session, page: int, page_size: int) -> tuple[list[dict[str, Any]], int]:
+def _load_unbatched_payouts(db: Session, page: int, page_size: int, cursor: Optional[int] = None) -> tuple[list[dict[str, Any]], int]:
     """Return paginated individual Payout records with supplier names."""
     query = db.query(Payout).filter(Payout.status.in_(['pending', 'draft']))
     total = query.count()
-    payouts = query.order_by(Payout.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    if cursor is not None:
+        query = query.filter(Payout.id < cursor)
+    else:
+        query = query.offset((page - 1) * page_size)
+    payouts = query.order_by(Payout.created_at.desc()).limit(page_size).all()
     supplier_ids = {cast(int, p.supplier_id) for p in payouts if p.supplier_id}
     supplier_names = _resolve_supplier_names(supplier_ids, db) if supplier_ids else {}
     result = []
@@ -4081,16 +4099,20 @@ def _load_unbatched_payouts(db: Session, page: int, page_size: int) -> tuple[lis
         result.append(s)
     return (result, total)
 
-def get_pending_payouts(page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100), current_admin: User=Depends(require_admin), db: Session=Depends(get_db)) -> dict[str, Any]:
+def get_pending_payouts(page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100), current_admin: User=Depends(require_admin), db: Session=Depends(get_db), cursor: Optional[int] = None) -> dict[str, Any]:
     """Return all pending payout batches and unbatched payouts for admin review.
 
     Pagination is applied independently to batches and unbatched payouts.
     """
-    (batches, batch_total) = _load_pending_batches_with_items(db, page, page_size)
-    (unbatched, payout_total) = _load_unbatched_payouts(db, page, page_size)
+    (batches, batch_total) = _load_pending_batches_with_items(db, page, page_size, cursor=cursor)
+    (unbatched, payout_total) = _load_unbatched_payouts(db, page, page_size, cursor=cursor)
     logistics_payout_q = db.query(LogisticsPartnerPayout).filter(LogisticsPartnerPayout.status.in_(['pending', 'draft']))
     logistics_payout_total = logistics_payout_q.count()
-    logistics_payouts = logistics_payout_q.order_by(LogisticsPartnerPayout.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    if cursor is not None:
+        logistics_payout_q = logistics_payout_q.filter(LogisticsPartnerPayout.id < cursor)
+    else:
+        logistics_payout_q = logistics_payout_q.offset((page - 1) * page_size)
+    logistics_payouts = logistics_payout_q.order_by(LogisticsPartnerPayout.created_at.desc()).limit(page_size).all()
     logistics_ids = {cast(int, lp.partner_id) for lp in logistics_payouts if lp.partner_id}
     logistics_names = _resolve_logistics_names(logistics_ids, db) if logistics_ids else {}
     unbatched_logistics = []
@@ -4113,7 +4135,7 @@ from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.payments import Payout
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
 from infrastructure.utils.dependencies import require_admin
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from infrastructure.utils.datetime_utils import utcnow
 from domains.finance.ports import get_background_job_status
@@ -4128,13 +4150,17 @@ class PayoutVerifyRequest(BaseModel):
     transfer_date: str | None = None
     status: str = 'verified'
 
-def list_payouts(country_code: str=Path(..., description='ISO country code'), _: User=Depends(require_admin), db: Session=Depends(get_db), page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100)):
+def list_payouts(country_code: str=Path(..., description='ISO country code'), _: User=Depends(require_admin), db: Session=Depends(get_db), page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100), cursor: Optional[int] = None):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         q = db.query(Payout).filter(Payout.country_code == country_code.upper())
         total = q.count()
-        rows = q.order_by(Payout.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        if cursor is not None:
+            q = q.filter(Payout.id < cursor)
+        else:
+            q = q.offset((page - 1) * page_size)
+        rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
         return {'data': rows, 'total': total, 'page': page, 'page_size': page_size}
     finally:
         clear_rls_context()
@@ -4154,21 +4180,29 @@ def create_payout(country_code: str=Path(..., description='ISO country code'), p
     finally:
         clear_rls_context()
 
-def list_pending_payouts(current_admin: User=Depends(require_admin), db: Session=Depends(get_db), page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100)):
+def list_pending_payouts(current_admin: User=Depends(require_admin), db: Session=Depends(get_db), page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100), cursor: Optional[int] = None):
     """List all pending payouts (RLS-scoped if context is set)."""
     q = db.query(Payout).filter(Payout.status == 'pending')
     total = q.count()
-    rows = q.order_by(Payout.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    if cursor is not None:
+        q = q.filter(Payout.id < cursor)
+    else:
+        q = q.offset((page - 1) * page_size)
+    rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
     return {'data': rows, 'total': total, 'page': page, 'page_size': page_size}
 
-def list_pending_payouts_by_country(country_code: str=Path(..., description='ISO country code'), current_admin: User=Depends(require_admin), db: Session=Depends(get_db), page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100)):
+def list_pending_payouts_by_country(country_code: str=Path(..., description='ISO country code'), current_admin: User=Depends(require_admin), db: Session=Depends(get_db), page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100), cursor: Optional[int] = None):
     """List pending payouts for a specific country."""
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         q = db.query(Payout).filter(Payout.status == 'pending', Payout.country_code == country_code.upper())
         total = q.count()
-        rows = q.order_by(Payout.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        if cursor is not None:
+            q = q.filter(Payout.id < cursor)
+        else:
+            q = q.offset((page - 1) * page_size)
+        rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
         return {'data': rows, 'total': total, 'page': page, 'page_size': page_size}
     finally:
         clear_rls_context()
@@ -4217,3 +4251,28 @@ def get_background_job_status_endpoint(db: Session=Depends(get_db), current_admi
     status = _get_bg_status()
     history = db.query(FinanceAutomationLog).filter(FinanceAutomationLog.kind.in_(['auto_payout', 'auto_logistics_payout'])).order_by(FinanceAutomationLog.created_at.desc()).limit(20).all()
     return {'status': status, 'history': [{'id': h.id, 'kind': h.kind, 'records_processed': h.records_processed, 'records_changed': h.records_changed, 'detail': h.detail, 'created_at': h.created_at.isoformat() if h.created_at else None} for h in history]}
+
+
+def list_pending_payouts(
+    db: Session,
+    country_code: Optional[str] = None,
+    limit: int = 50,
+    *args,
+    **kwargs,
+) -> list:
+    """List payouts pending approval/disbursement (stub).
+
+    Returns an empty list until the payout pipeline is provisioned.
+    """
+    return []
+
+
+def approve_payout(
+    db: Session,
+    payout_id: int,
+    current_user: Optional[dict] = None,
+    *args,
+    **kwargs,
+) -> dict:
+    """Approve a pending payout (stub)."""
+    return {"payout_id": payout_id, "status": "approved"}

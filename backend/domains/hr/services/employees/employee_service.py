@@ -26,7 +26,7 @@ from domains.hr.models.employee_models import EmployeeShiftRoster
 from domains.hr.models.employee_models import Office
 from domains.hr.models.employee_models import EmployeeWorkLog
 from domains.hr.models.employee_models import EmployeeRole
-from domains.country.utils.country_rls import enforce_country_access
+from infrastructure.utils.country_rls import enforce_country_access
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

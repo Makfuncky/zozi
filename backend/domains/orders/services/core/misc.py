@@ -294,8 +294,8 @@ def list_addresses(db: Session, user_id: int, limit: int = 100, offset: int = 0)
 
 
 def create_address(db: Session, user_id: int, payload: dict) -> dict:
-from domains.customers.ports import create_address, delete_address, set_default_address, unset_other_default_addresses, update_address
-    
+    from domains.customers.ports import create_address, delete_address, set_default_address, unset_other_default_addresses, update_address
+
     normalized = _normalize_address_payload(payload)
     if normalized.get("is_default"):
         unset_other_default_addresses(db, user_id)

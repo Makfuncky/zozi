@@ -58,7 +58,7 @@ class COIEngine:
                     EmployeeRelation.employee_id == current_id,
                     EmployeeRelation.internal_employee_id == current_id
                 )
-            ).all()
+            ).limit(1000).all()
 
             for rel in relations:
                 other_id = (
@@ -152,7 +152,7 @@ class COIService:
 
     def build_relationship_graph(self) -> dict:
         """Build graph of all employee relationships."""
-        employees = self.db.query(Employee).all()
+        employees = self.db.query(Employee).limit(1000).all()
         graph = {}
 
         for emp in employees:

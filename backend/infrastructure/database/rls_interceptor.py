@@ -13,10 +13,32 @@ rls_is_restricted_ctx: ContextVar[bool] = ContextVar("rls_is_restricted", defaul
 logger = logging.getLogger(__name__)
 
 
+def derive_country_aware_tables_from_db(engine=None) -> dict[str, str]:
+    """Auto-derive the country-aware registry from the LIVE database."""
+    try:
+        from infrastructure.database.database import _engine
+        actual_engine = engine or _engine
+        if actual_engine is None:
+            return {}
+        from sqlalchemy import inspect
+        inspector = inspect(actual_engine)
+        result = {}
+        for table_name in inspector.get_table_names():
+            try:
+                cols = [c["name"] for c in inspector.get_columns(table_name)]
+                if "country_code" in cols:
+                    result[table_name] = "country_code"
+            except Exception:
+                continue
+        return result
+    except Exception:
+        return {}
+
+
 def _build_country_aware_tables() -> dict[str, str]:
     try:
         return derive_country_aware_tables_from_db()
-    except Exception as exc:  # pragma: no cover - defensive
+    except Exception as exc:
         logger.warning("RLS auto-derivation failed at import (%s); falling back to empty registry", exc)
         return {}
 
@@ -24,30 +46,7 @@ def _build_country_aware_tables() -> dict[str, str]:
 COUNTRY_AWARE_TABLES: dict[str, str] = _build_country_aware_tables()
 
 
-def derive_country_aware_tables_from_db(engine=None) -> dict[str, str]:
-    """Auto-derive the country-aware registry from the LIVE database.
-
-    Any table that actually contains a ``country_code`` column (or the explicit
-    special-case columns below) is treated as country-aware. Deriving from the
-    connected DB — rather than the ORM models — guarantees we never inject an RLS
-    filter against a column that is absent from the table (which would raise a
-    "no such column" error and break otherwise-valid queries).
-
-    This is the automation that keeps the RLS registry honest: new country-scoped
-    tables are picked up automatically per environment, and the CI drift gate
-    (see ``scripts/inventory_database.py --check``) flags any divergence between
-    the models, the registry, and the DB.
-    """
-    from sqlalchemy import inspect
-
-    if engine is None:
-        from infrastructure.database.database import engine as engine
-
-    try:
-        insp = inspect(engine)
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.warning("RLS auto-derivation skipped (inspector unavailable): %s", exc)
-        return dict(COUNTRY_AWARE_TABLES)
+def instrument_rls(engine: Engine, country_codes: frozenset[str] | None = None, restricted: bool = False) -> None:
 
     explicit_columns = {"destination_country", "code"}
     derived: dict[str, str] = {}
@@ -236,31 +235,38 @@ def generate_rls_policy_sql(schema: str = "public") -> str:
     )
 
     for table_name, column_name in COUNTRY_AWARE_TABLES.items():
-        policy_name = f"{table_name}_rls_policy"
+        policy_name = _quote_ident(f"{table_name}_rls_policy")
+        safe_schema = _quote_ident(schema)
+        safe_table = _quote_ident(table_name)
+        safe_column = _quote_ident(column_name)
         lines.append(
             f"CREATE POLICY {policy_name}\n"
-            f"    ON {schema}.{table_name}\n"
+            f"    ON {safe_schema}.{safe_table}\n"
             f"    FOR ALL\n"
             f"    USING (\n"
-            f"        {schema}.{table_name}.{column_name} IS NULL\n"
-            f"        OR auth.country_access_check({schema}.{table_name}.{column_name})\n"
+            f"        {safe_schema}.{safe_table}.{safe_column} IS NULL\n"
+            f"        OR auth.country_access_check({safe_schema}.{safe_table}.{safe_column})\n"
             f"    );\n"
         )
 
     return "\n".join(lines)
 
 
+def _quote_ident(name: str) -> str:
+    """Return a safely quoted PostgreSQL identifier (double-quoted, escaped)."""
+    return '"' + name.replace('"', '""') + '"'
+
+
 def install_rls_policies(engine: Engine, schema: str = "public") -> None:
     """Enable RLS and apply policies on every country-aware Postgres table."""
     from sqlalchemy import text
-    from sqlalchemy.sql import quoted_name
 
-    safe_schema = quoted_name(schema, False)
+    safe_schema = _quote_ident(schema)
     policy_sql = generate_rls_policy_sql(schema=schema)
 
     with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
         for table_name in COUNTRY_AWARE_TABLES.keys():
-            safe_table = quoted_name(table_name, False)
+            safe_table = _quote_ident(table_name)
             conn.execute(
                 text(f"ALTER TABLE {safe_schema}.{safe_table} ENABLE ROW LEVEL SECURITY;")
             )

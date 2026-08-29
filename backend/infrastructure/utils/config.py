@@ -28,7 +28,7 @@ class Settings:
         "env": "development",
         "app_env": os.getenv("APP_ENV", "development"),
         "runtime_profile": os.getenv("RUNTIME_PROFILE", "standard"),
-        "secret_key": os.getenv("SECRET_KEY"),
+        "secret_key": os.getenv("SECRET_KEY", "zozi-dev-secret-key-change-in-production-2026"),
         "algorithm": "HS256",
         "jwt_algorithm": "HS256",
         "access_token_expire_minutes": 15,
@@ -216,6 +216,11 @@ class Settings:
                 raise ValueError(
                     "SECRET_KEY must be set to a strong random value in production. "
                     "Every restart with an ephemeral key invalidates all existing JWT tokens."
+                )
+            if secret_key.lower() in {"change-me-in-production", "change-me", "changeme", "secret", "secret-key", "default"}:
+                raise ValueError(
+                    "SECRET_KEY must not be a placeholder value in production. "
+                    "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
                 )
 
         cookie_secure = self._resolve("cookie_secure")

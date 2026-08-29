@@ -12,7 +12,7 @@ from domains.catalog.ports import bulk_restore_entities
 # TODO: Module not yet created
 # from domains.governance.services.orders.orders_service import update_order_status
 from domains.audit.ports import audit_log
-from domains.country.utils.country_rls import enforce_country_access, get_country_or_404
+from infrastructure.utils.country_rls import enforce_country_access, get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context
 import math
 

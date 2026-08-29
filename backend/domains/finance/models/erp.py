@@ -19,80 +19,31 @@ from infrastructure.database.base import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
-class LandedCostAllocation(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
-    is_deleted = Column(Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
-    version = Column(Integer, default=1, nullable=False, server_default='1')
-    created_by_id = Column(Integer, nullable=True)
-    updated_by = Column(Integer, nullable=True)
-    __tablename__ = 'landed_cost_allocations'
-    __table_args__ = (
-                         Index("ix_landed_cost_allocations_country_created", "country_code", "created_at"),
-                         {'schema': 'finance'},
-                     )
-    id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
-    cost_type = Column(String(30), nullable=True)
-    description = Column(Text, nullable=True)
-    total_amount = Column(Numeric(14, 2), default=0)
-    allocation_method = Column(String(20), nullable=True)
-    currency = Column(String(3), default='OMR')
-    exchange_rate = Column(Numeric(14, 6), default=1)
-    country_code = Column(String(2), nullable=True, index=True)
-    status = Column(String(20), default='allocated')
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+# Backwards-compatible re-export shims. The logistics-owned ERP models
+# (CustomsEntry, LandedCostAllocation, …) now live in
+# ``domains.logistics.models.erp``. Importing them from here is kept working via
+# a lazy ``__getattr__`` broker so existing call sites need not change.
+_ERP_RE_EXPORTS: dict[str, tuple[str, str]] = {
+    "CustomsEntry": ("domains.logistics.models.erp", "CustomsEntry"),
+    "LandedCostAllocation": ("domains.logistics.models.erp", "LandedCostAllocation"),
+    "ImportCostTemplate": ("domains.logistics.models.erp", "ImportCostTemplate"),
+    "Warehouse": ("domains.logistics.models.erp", "Warehouse"),
+    "PurchaseOrder": ("domains.logistics.models.erp", "PurchaseOrder"),
+    "GoodsReceiptNote": ("domains.logistics.models.erp", "GoodsReceiptNote"),
+    "SalesOrder": ("domains.logistics.models.erp", "SalesOrder"),
+    "StockMovement": ("domains.logistics.models.erp", "StockMovement"),
+    "ImportShipment": ("domains.logistics.models.erp", "ImportShipment"),
+}
 
-class CustomsEntry(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
-    is_deleted = Column(Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
-    version = Column(Integer, default=1, nullable=False, server_default='1')
-    created_by_id = Column(Integer, nullable=True)
-    updated_by = Column(Integer, nullable=True)
-    __tablename__ = 'customs_entries'
-    __table_args__ = (
-                         Index("ix_customs_entries_country_created", "country_code", "created_at"),
-                         {'schema': 'finance'},
-                     )
-    id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
-    customs_declaration_number = Column(String(80), nullable=True)
-    customs_broker = Column(String(160), nullable=True)
-    entry_date = Column(DateTime, default=_utcnow)
-    duty_rate_applied = Column(Numeric(6, 2), nullable=True)
-    duty_amount = Column(Numeric(14, 2), default=0)
-    vat_on_duty = Column(Numeric(14, 2), default=0)
-    penalties = Column(Numeric(14, 2), default=0)
-    total_customs_cost = Column(Numeric(14, 2), default=0)
-    status = Column(String(20), default='cleared')
-    notes = Column(Text, nullable=True)
-    country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-class ImportCostTemplate(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
-    is_deleted = Column(Boolean, default=False, nullable=False)
-    deleted_at = Column(DateTime, nullable=True)
-    version = Column(Integer, default=1, nullable=False, server_default='1')
-    created_by_id = Column(Integer, nullable=True)
-    updated_by = Column(Integer, nullable=True)
-    __tablename__ = 'import_cost_templates'
-    __table_args__ = (
-                         Index("ix_import_cost_templates_country_created", "country_code", "created_at"),
-                         {'schema': 'finance'},
-                     )
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(160), nullable=False)
-    default_duty_rate = Column(Numeric(6, 2), nullable=True)
-    default_freight_percent = Column(Numeric(6, 2), nullable=True)
-    default_insurance_percent = Column(Numeric(6, 2), nullable=True)
-    default_port_charges_percent = Column(Numeric(6, 2), nullable=True)
-    default_bank_charges_percent = Column(Numeric(6, 2), nullable=True)
-    allocation_method = Column(String(20), default='by_value')
-    country_code = Column(String(2), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+def __getattr__(name: str):
+    if name in _ERP_RE_EXPORTS:
+        import importlib
+        module_path, attr_name = _ERP_RE_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, attr_name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+

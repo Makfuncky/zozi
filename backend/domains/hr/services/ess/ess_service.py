@@ -66,8 +66,9 @@ def ess_update_profile(phone: Optional[str], address: Optional[str], emergency_c
         params["ec_phone"] = emergency_contact_phone
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
+    set_clause = ", ".join(updates)
     db.execute(
-        text("UPDATE employees SET " + ", ".join(updates) + " WHERE id = :eid"),
+        text(f"UPDATE employees SET {set_clause} WHERE id = :eid"),
         params,
     )
     db.commit()
@@ -84,6 +85,7 @@ def ess_leave_balance(current_user: User, db: Session):
             FROM employee_leave_ledgers
             WHERE employee_id = :eid
             ORDER BY year DESC, leave_type
+            LIMIT 1000
         """),
         {"eid": emp.id},
     ).mappings().all()
@@ -164,6 +166,7 @@ def ess_okrs(current_user: User, db: Session):
             FROM okr_objectives
             WHERE employee_id = :eid
             ORDER BY year DESC, quarter DESC
+            LIMIT 1000
         """),
         {"eid": emp.id},
     ).mappings().all()
@@ -175,6 +178,7 @@ def ess_okrs(current_user: User, db: Session):
                 SELECT id, metric_name, metric_type, target_value, current_value, weight_pct
                 FROM kpi_metrics
                 WHERE objective_id = :oid
+                LIMIT 1000
             """),
             {"oid": obj_dict["id"]},
         ).mappings().all()
@@ -209,6 +213,7 @@ def ess_org_chart(current_user: User, db: Session):
             JOIN users u ON u.id = e.user_id
             WHERE e.org_unit_id = :ouid AND e.id != :eid AND e.employment_status = 'active'
             ORDER BY u.full_name
+            LIMIT 1000
         """),
         {"ouid": emp.org_unit_id, "eid": emp.id},
     ).mappings().all()
@@ -223,6 +228,7 @@ def ess_org_chart(current_user: User, db: Session):
             LEFT JOIN users u ON u.id = e.user_id
             WHERE ou.parent_unit_id = :ouid
             ORDER BY ou.name
+            LIMIT 1000
         """),
         {"ouid": emp.org_unit_id},
     ).mappings().all()

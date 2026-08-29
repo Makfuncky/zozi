@@ -21,7 +21,7 @@ from infrastructure.database.schemas import ArchiveRequest
 from domains.accounts.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 
-from domains.country.utils.country_rls import enforce_country_access
+from infrastructure.utils.country_rls import enforce_country_access
 
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.utils.pagination import paginated_response

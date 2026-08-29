@@ -64,7 +64,7 @@ class HREmployeeService:
 
     def list_offices(self, country_code: str, db: Session) -> List[dict]:
         rows = db.execute(
-            text("SELECT * FROM offices WHERE country_code = :code ORDER BY name"),
+            text("SELECT id, name, address, city, phone, email, latitude, longitude, is_active, country_code, created_at, updated_at FROM offices WHERE country_code = :code ORDER BY name"),
             {"code": country_code},
         ).mappings().all()
         return [dict(r) for r in rows]
@@ -95,7 +95,7 @@ class HREmployeeService:
         db.commit()
 
     def list_employees(self, country_code: str, db: Session, **filters) -> List[dict]:
-        query = "SELECT * FROM employees WHERE country_code = :code"
+        query = "SELECT id, user_id, employee_code, office_id, department, position, employment_type, employment_status, salary, currency, country_code, hire_date, termination_date, is_verified, gender, years_of_experience, performance_score, education_level, notes, reporting_manager_id, hiring_manager_id, authority_level, org_unit_id, is_deleted, created_at, updated_at FROM employees WHERE country_code = :code"
         params = {"code": country_code}
         if filters.get("department"):
             query += " AND department = :department"
@@ -128,7 +128,7 @@ class HREmployeeService:
 
     def get_employee(self, employee_id: int, db: Session) -> Optional[dict]:
         row = db.execute(
-            text("SELECT * FROM employees WHERE id = :id"),
+            text("SELECT id, user_id, employee_code, office_id, department, position, employment_type, employment_status, salary, currency, country_code, hire_date, termination_date, is_verified, gender, years_of_experience, performance_score, education_level, notes, reporting_manager_id, hiring_manager_id, authority_level, org_unit_id, is_deleted, created_at, updated_at FROM employees WHERE id = :id"),
             {"id": employee_id},
         ).mappings().first()
         return dict(row) if row else None
@@ -136,7 +136,7 @@ class HREmployeeService:
     def get_employee_by_user_id(self, user_id: int) -> Optional[dict]:
         """Get employee record by user_id."""
         row = self.db.execute(
-            text("SELECT * FROM employees WHERE user_id = :uid"),
+            text("SELECT id, user_id, employee_code, office_id, department, position, employment_type, employment_status, salary, currency, country_code, hire_date, termination_date, is_verified, gender, years_of_experience, performance_score, education_level, notes, reporting_manager_id, hiring_manager_id, authority_level, org_unit_id, is_deleted, created_at, updated_at FROM employees WHERE user_id = :uid"),
             {"uid": user_id},
         ).mappings().first()
         return dict(row) if row else None
@@ -155,7 +155,7 @@ class HREmployeeService:
 
     def list_employee_documents(self, employee_id: int, db: Session) -> List[dict]:
         rows = db.execute(
-            text("SELECT * FROM employee_documents WHERE employee_id = :eid ORDER BY created_at DESC"),
+            text("SELECT id, employee_id, doc_type, file_url, expiry_date, verified_by_id, verified_at, created_at, updated_at, country_code FROM employee_documents WHERE employee_id = :eid ORDER BY created_at DESC"),
             {"eid": employee_id},
         ).mappings().all()
         return [dict(r) for r in rows]
@@ -182,7 +182,7 @@ class HREmployeeService:
         return {"id": doc_id, **safe_data}
 
     def list_attendance(self, employee_id: int, db: Session, **filters) -> List[dict]:
-        query = "SELECT * FROM attendance_records WHERE employee_id = :eid"
+        query = "SELECT id, employee_id, clock_in, clock_out, latitude, longitude, ip_address, device_fingerprint, notes, status, created_at, updated_at, country_code FROM attendance_records WHERE employee_id = :eid"
         params = {"eid": employee_id}
         if filters.get("from_date"):
             query += " AND created_at >= :from_date"
@@ -233,7 +233,7 @@ class HREmployeeService:
 
     def list_employee_relations(self, employee_id: int, db: Session) -> List[dict]:
         rows = db.execute(
-            text("SELECT * FROM employee_relations WHERE employee_id = :eid OR related_employee_id = :eid"),
+            text("SELECT id, employee_id, related_employee_id, relation_type, notes, created_at, updated_at, country_code FROM employee_relations WHERE employee_id = :eid OR related_employee_id = :eid"),
             {"eid": employee_id},
         ).mappings().all()
         return [dict(r) for r in rows]
@@ -256,7 +256,7 @@ class HREmployeeService:
         db.commit()
 
     def list_work_logs(self, employee_id: int, db: Session, **filters) -> List[dict]:
-        query = "SELECT * FROM work_logs WHERE employee_id = :eid"
+        query = "SELECT id, employee_id, date, hours_worked, description, status, created_at, updated_at, country_code FROM work_logs WHERE employee_id = :eid"
         params = {"eid": employee_id}
         if filters.get("from_date"):
             query += " AND date >= :from_date"
@@ -310,7 +310,7 @@ class HREmployeeService:
 
     def validate_qr_login(self, qr_token: str, db: Session) -> dict:
         row = db.execute(
-            text("SELECT * FROM qr_login_tokens WHERE token = :token AND expires_at > :now"),
+            text("SELECT id, employee_id, token, expires_at, created_at, updated_at, country_code FROM qr_login_tokens WHERE token = :token AND expires_at > :now"),
             {"token": qr_token, "now": datetime.now(timezone.utc)},
         ).mappings().first()
         return {"valid": row is not None, "employee_id": row["employee_id"] if row else None}
@@ -320,7 +320,7 @@ class HREmployeeService:
 
     def list_employee_roles(self, country_code: str, db: Session) -> List[dict]:
         rows = db.execute(
-            text("SELECT * FROM employee_roles WHERE country_code = :code ORDER BY name"),
+            text("SELECT id, name, slug, permissions, country_code, created_at, updated_at FROM employee_roles WHERE country_code = :code ORDER BY name"),
             {"code": country_code},
         ).mappings().all()
         return [dict(r) for r in rows]

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from domains.suppliers.models.suppliers import SupplierBankAccount
+from domains.accounts.models.banking import SupplierBankAccount
 
 
 def deactivate_supplier_bank_account(

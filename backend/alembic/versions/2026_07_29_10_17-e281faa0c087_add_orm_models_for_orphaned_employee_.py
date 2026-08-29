@@ -33,6 +33,8 @@ def _index_exists(conn, table_name: str, index_name: str) -> bool:
 
 def _fk_exists(conn, table_name: str, from_col: str, to_table: str, to_col: str) -> bool:
     """Check if a FK already exists on a table in SQLite."""
+    if not table_name.replace("_", "").isalnum():
+        raise ValueError(f"Invalid table name: {table_name}")
     fks = conn.execute(sa.text(f"PRAGMA foreign_key_list({table_name})")).fetchall()
     for fk in fks:
         # fk[3] = from_column, fk[2] = to_table, fk[4] = to_col

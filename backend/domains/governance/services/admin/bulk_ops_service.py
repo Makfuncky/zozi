@@ -6,14 +6,14 @@ from typing import Any, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import SupportTicket
+from domains.comms.models.communication_schema_models import SupportTicket
 from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import Category
 from domains.catalog.models.products import Review
-from domains.comms.models.marketing import FlashSale
 from domains.comms.models.suppliers import SupplierProfile
 from domains.comms.models.suppliers import SupplierDocument
+from domains.promotions.models.promotions import FlashSale
 from domains.country.models.countries import CountryConfig
 from domains.finance.models.finance import Invoice
 from domains.logistics.models.logistics import LogisticsPartner

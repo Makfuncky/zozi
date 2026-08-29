@@ -8,7 +8,6 @@ These are pure read helpers: no writes, no business decisions, no permission
 checks (callers remain responsible for feature gating via ``rbac``).
 """
 
-from __future__ import annotations
 
 from typing import List, Optional
 
@@ -37,7 +36,8 @@ def _keyset_page(model, db: Session, cursor: Optional[str] = None,
     return cursor_paginate_asc(db.query(model), cursor=cursor, page_size=page_size)
 
 from domains.hr.models.employee_models import AlumniNetwork, COIReport, DisciplinaryCase, DynamicQRSession, Employee, EmployeeActivityLog, EmployeeAddress, EmployeeAsset, EmployeeAttendance, EmployeeBiometric, EmployeeCertification, EmployeeDependent, EmployeeDocument, EmployeeLeaveLedger, EmployeeLeaveRequest, EmployeeRelation, EmployeeRiskScore, EmployeeRole, EmployeeShiftRoster, EmployeeTraining, EmployeeWorkLog, GeoFenceLog, OffboardingCase, Office, OrgUnit, PayrollRecord, PhysicalIDCard, TrainingModule, TravelRequest
-from domains.hr.models.hr_schema_models import OnboardingPipeline, OnboardingStep, ShiftHandoverTask  # A3: sanctioned ports surface for accounts hub
+from domains.hr.models.hr_schema_models import OnboardingPipeline, OnboardingStep  # A3: sanctioned ports surface for accounts hub
+from domains.hr.models.employee_models import ShiftHandoverTask
 # TODO: payroll_engine not yet created
 # from domains.hr.services.payroll_engine import PayrollEngine
 
@@ -621,3 +621,17 @@ def __getattr__(name: str):
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
+# imports merged from services/
+from typing import List, Optional
+from sqlalchemy.orm import Session
+from .events import HREvent  # noqa: F401 — re-export for type hints
+
+# functions merged from services/
+def _get_models():
+    from domains.hr.models.employee_models import Employee
+    from domains.hr.models.employee_models import EmployeeAttendance
+    from domains.hr.models.employee_models import EmployeeLeaveRequest
+    from domains.hr.models.employee_models import EmployeeDocument
+    from domains.hr.models.employee_models import OrgUnit
+    from domains.hr.models.employee_models import Office
+    return Employee, EmployeeAttendance, EmployeeLeaveRequest, EmployeeDocument, OrgUnit, Office

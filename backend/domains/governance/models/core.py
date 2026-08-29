@@ -46,8 +46,8 @@ class UserBrowsingHistory(Base):
     __tablename__ = "user_browsing_histories"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='CASCADE'), nullable=False, index=True)
-    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='CASCADE'), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete='CASCADE'), nullable=False, index=True)
     viewed_at = Column(DateTime, server_default=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
@@ -70,56 +70,26 @@ class SystemHealthEvent(Base):
     __table_args__ = (Index("ix_health_events_metric_time", "metric_name", "created_at"), {"schema": "governance"})
 
 
-class UserSession(Base):
-    __tablename__ = "user_sessions"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='CASCADE'), nullable=False, index=True)
-    session_token = Column(String(255), unique=True, nullable=False, index=True)
-    ip_address = Column(String(45), nullable=True)
-    user_agent = Column(String(500), nullable=True)
-    is_active = Column(Boolean, default=True)
-    last_activity = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
-    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), nullable=True, index=True)
-    __table_args__ = (
-        Index("ix_user_sessions_user_active", "user_id", "is_active"),
-        Index("ix_user_sessions_last_activity", "last_activity"),
-        Index("ix_user_sessions_created", "created_at"),
-        {"schema": "governance"})
+# Lazy re-export shims for models whose canonical home is another domain.
+# These are resolved on first access to avoid circular imports.
 
-
-# ──────────────────────────────────────────────
-# Re-export shims (lazy imports to avoid circular imports and InvalidRequestError)
-# These models are defined in their canonical domain and imported lazily.
-# ──────────────────────────────────────────────
-
-_CANONICAL_EXPORTS = {
-    # accounts domain
+_CANONICAL_EXPORTS: dict[str, tuple[str, str]] = {
+    "AuditLog": ("domains.audit.models.audit_schema_models", "AuditLog"),
+    "CommandCenterView": ("domains.audit.models.audit_schema_models", "CommandCenterView"),
+    "CityDistanceMatrix": ("domains.logistics.models.logistics_schema_models", "CityDistanceMatrix"),
+    # accounts-owned tables (re-exported; do not redefine)
     "Address": ("domains.accounts.models.core", "Address"),
     "Cart": ("domains.accounts.models.core", "Cart"),
     "CartItem": ("domains.accounts.models.core", "CartItem"),
-    # audit domain
-    "AuditLog": ("domains.audit.models.audit_schema_models", "AuditLog"),
-    "CommandCenterView": ("domains.audit.models.audit_schema_models", "CommandCenterView"),
-    # comms domain
+    "UserSession": ("domains.accounts.models.user", "UserSession"),
+    # comms-owned tables
     "SupportTicket": ("domains.comms.models.communication_schema_models", "SupportTicket"),
     "SupportTicketReply": ("domains.comms.models.communication_schema_models", "SupportTicketReply"),
     "TicketAttachment": ("domains.comms.models.communication_schema_models", "TicketAttachment"),
     "NewsSource": ("domains.comms.models.communication_schema_models", "NewsSource"),
     "InternalNotice": ("domains.comms.models.communication_schema_models", "InternalNotice"),
     "EscalationSLARule": ("domains.comms.models.communication_schema_models", "EscalationSLARule"),
-    # analytics domain
-    "ExecutiveNews": ("domains.analytics.models.analytics_schema_models", "ExecutiveNews"),
-    "PredictiveSimulation": ("domains.analytics.models.analytics_schema_models", "PredictiveSimulation"),
-    # security domain
-    "AlertEscalationRule": ("domains.security.models.security_schema_models", "AlertEscalationRule"),
-    # logistics domain
-    "CityDistanceMatrix": ("domains.logistics.models.logistics_schema_models", "CityDistanceMatrix"),
-    # comms domain (news)
     "NewsArticle": ("domains.comms.models.news", "NewsArticle"),
-    # comms domain (chat)
     "DirectChatMessage": ("domains.comms.models.chat", "DirectChatMessage"),
     "DirectChatRoom": ("domains.comms.models.chat", "DirectChatRoom"),
     "EntityChatMessage": ("domains.comms.models.chat", "EntityChatMessage"),
@@ -131,23 +101,26 @@ _CANONICAL_EXPORTS = {
     "VideoRoom": ("domains.comms.models.chat", "VideoRoom"),
     "VideoRoomParticipant": ("domains.comms.models.chat", "VideoRoomParticipant"),
     "VideoRoomRecording": ("domains.comms.models.chat", "VideoRoomRecording"),
-    # hr domain (shift handover)
+    # analytics-owned
+    "ExecutiveNews": ("domains.analytics.models.analytics_schema_models", "ExecutiveNews"),
+    "PredictiveSimulation": ("domains.analytics.models.analytics_schema_models", "PredictiveSimulation"),
+    # security-owned
+    "AlertEscalationRule": ("domains.security.models.security_schema_models", "AlertEscalationRule"),
+    # hr-owned
     "ShiftHandoverSession": ("domains.hr.models.employee_models", "ShiftHandoverSession"),
     "ShiftHandoverTask": ("domains.hr.models.employee_models", "ShiftHandoverTask"),
 }
 
-_IMPORTED: dict[str, object] = {}
-
 
 def __getattr__(name: str):
-    """Lazy import of canonical models to avoid circular imports and InvalidRequestError."""
-    if name in _IMPORTED:
-        return _IMPORTED[name]
+    """Lazily resolve cross-domain re-exports."""
     if name in _CANONICAL_EXPORTS:
-        module_path, class_name = _CANONICAL_EXPORTS[name]
+        module_path, attr_name = _CANONICAL_EXPORTS[name]
         import importlib
         mod = importlib.import_module(module_path)
-        cls = getattr(mod, class_name)
-        _IMPORTED[name] = cls
-        return cls
+        value = getattr(mod, attr_name)
+        globals()[name] = value
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+

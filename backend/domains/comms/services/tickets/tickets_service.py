@@ -231,3 +231,12 @@ def db_invoice_all_6(db: Session) -> Optional[Any]:
     """Read-only query delegated from controller."""
     result = db.query(Invoice).order_by(desc(Invoice.created_at)).limit(10).all()
     return result
+
+def list_tickets_paginated(db, page: int = 1, page_size: int = 50, user_id=None, **kwargs):
+    """Paginated ticket listing (support desk).
+
+    Returns an empty page when the ticket store is unavailable so the comms
+    router registers and responds gracefully (Law 30). Replace the body with a
+    real query once the support-ticket model is provisioned.
+    """
+    return [], 0

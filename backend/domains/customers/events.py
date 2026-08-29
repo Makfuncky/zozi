@@ -7,7 +7,6 @@ change so downstream domains (orders, governance, comms) may react.
 Transport is the sanctioned in-process ``event_bus`` (circuit-exempt data layer).
 """
 
-from __future__ import annotations
 
 from infrastructure.messaging.events.event_bus import publish
 
@@ -72,3 +71,83 @@ __all__ = [
     "publish_review_submitted",
     "publish_return_requested",
 ]
+
+# imports merged from services/
+import logging
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+from uuid import uuid4
+
+# constants merged from services/
+EVENT_COINS_EARNED = "customers.coins.earned"
+EVENT_COINS_REDEEMED = "customers.coins.redeemed"
+EVENT_CUSTOMER_REGISTERED = "customers.customer.registered"
+
+# base classes merged from services/
+class CustomersEvent:
+    """Base class for all customers-domain events."""
+
+    event_type: str = field(init=False)
+    event_id: str = field(default_factory=lambda: str(uuid4()), init=False)
+    occurred_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), init=False
+    )
+
+    def serialize(self) -> Dict[str, Any]:
+        """Plain-dict form for the event bus."""
+        d = asdict(self)
+        d["occurred_at"] = self.occurred_at.isoformat()
+        return d
+
+# derived classes merged from services/
+class CoinsEarned(CustomersEvent):
+    user_id: int = 0
+    amount: int = 0
+    reason: str = ""
+    reference_id: Optional[int] = None
+    event_type: str = field(default=EVENT_COINS_EARNED, init=False)
+class CoinsRedeemed(CustomersEvent):
+    user_id: int = 0
+    amount: int = 0
+    reason: str = ""
+    order_id: Optional[int] = None
+    event_type: str = field(default=EVENT_COINS_REDEEMED, init=False)
+class CustomerRegistered(CustomersEvent):
+    user_id: int = 0
+    email: str = ""
+    country_code: str = ""
+    referral_code: Optional[str] = None
+    event_type: str = field(default=EVENT_CUSTOMER_REGISTERED, init=False)
+class ReviewSubmitted(CustomersEvent):
+    review_id: int = 0
+    product_id: int = 0
+    user_id: int = 0
+    rating: int = 0
+    event_type: str = field(default=EVENT_REVIEW_SUBMITTED, init=False)
+
+# functions merged from services/
+def publish_coins_earned(user_id: int, amount: int, reason: str, reference_id: Optional[int] = None) -> None:
+    """Publish a CoinsEarned event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = CoinsEarned(user_id=user_id, amount=amount, reason=reason, reference_id=reference_id)
+        publish(EVENT_COINS_EARNED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish CoinsEarned event: %s", exc)
+def publish_coins_redeemed(user_id: int, amount: int, reason: str, order_id: Optional[int] = None) -> None:
+    """Publish a CoinsRedeemed event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = CoinsRedeemed(user_id=user_id, amount=amount, reason=reason, order_id=order_id)
+        publish(EVENT_COINS_REDEEMED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish CoinsRedeemed event: %s", exc)
+def publish_customer_registered(user_id: int, email: str, country_code: str, referral_code: Optional[str] = None) -> None:
+    """Publish a CustomerRegistered event to the canonical event bus."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = CustomerRegistered(user_id=user_id, email=email, country_code=country_code, referral_code=referral_code)
+        publish(EVENT_CUSTOMER_REGISTERED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish CustomerRegistered event: %s", exc)

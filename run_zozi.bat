@@ -18,21 +18,15 @@ REM ============================================================================
 REM START BACKEND (FastAPI on port 8000)
 REM ============================================================================
 echo [1/3] Starting Backend (FastAPI on port 8000)...
-if not exist "%PROJECT_ROOT%backend\venv\Scripts\python.exe" (
-    echo [ERROR] Virtual environment not found at backend\venv
-    echo Please ensure venv exists in the backend folder.
-    pause
-    exit /b 1
-)
 
-REM Kill any leftover process on port 8000 before starting (robust parsing)
+REM Kill any leftover process on port 8000 before starting
 for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr /C:":8000 " ^| findstr /C:"LISTENING"') do (
     if not "%%p"=="" if not "%%p"=="0" taskkill /F /PID %%p >nul 2>&1
 )
 timeout /t 2 /nobreak >nul
 
-REM Start backend using run_server.py (handles SO_REUSEADDR, port 8000)
-start "ZOZI Backend (port 8000)" cmd /k "cd /d "%PROJECT_ROOT%backend" & venv\Scripts\python.exe run_server.py"
+REM Start backend using uvicorn (main:app)
+start "ZOZI Backend (port 8000)" cmd /k "cd /d "%PROJECT_ROOT%backend" & python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload"
 echo [SUCCESS] Backend terminal opened on port 8000.
 echo.
 
@@ -72,6 +66,14 @@ echo [OK] Backend healthy after ~%WAITED%s. Proceeding.
 echo.
 
 REM ============================================================================
+REM KILL PORT 3000 BEFORE STARTING FRONTEND
+REM ============================================================================
+for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr /C:":3000 " ^| findstr /C:"LISTENING"') do (
+    if not "%%p"=="" if not "%%p"=="0" taskkill /F /PID %%p >nul 2>&1
+)
+timeout /t 2 /nobreak >nul
+
+REM ============================================================================
 REM START FRONTEND WEB (Next.js on port 3000)
 REM ============================================================================
 echo [2/3] Starting Frontend Web App (Next.js on port 3000)...
@@ -92,6 +94,11 @@ REM START FRONTEND MOBILE (Expo)
 REM ============================================================================
 echo [3/3] Checking Mobile App (Expo)...
 if exist "%PROJECT_ROOT%frontend\mobile_app\package.json" (
+    REM Kill any leftover process on port 19006 (Expo default)
+    for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr /C:":19006 " ^| findstr /C:"LISTENING"') do (
+        if not "%%p"=="" if not "%%p"=="0" taskkill /F /PID %%p >nul 2>&1
+    )
+    timeout /t 1 /nobreak >nul
     start "ZOZI Mobile (Expo)" cmd /k "cd /d "%PROJECT_ROOT%frontend\mobile_app" && npx expo start"
     echo [SUCCESS] Mobile App terminal opened.
 ) else (
@@ -112,9 +119,11 @@ echo   API Docs (Swagger):   http://127.0.0.1:8000/docs
 echo   Mobile App (Expo):    http://localhost:19006  (or scan QR in terminal)
 echo.
 echo ============================================================================
-echo   TEST ACCOUNTS — see scripts/testing/loadtests/README.md for credentials
-echo   (Credentials are seeded by db/seed.py on first startup)
+echo   TEST ACCOUNTS
 echo ============================================================================
+echo   Admin:     admin@zozi.com / admin123
+echo   Supplier:  supplier@zozi.com / supplier123
+echo   Customer:  customer@zozi.com / customer123
 echo.
 echo ============================================================================
 echo   INSTRUCTIONS

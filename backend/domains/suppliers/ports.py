@@ -38,6 +38,15 @@ def get_supplier_profile_by_id(db: Session, profile_id: int) -> Optional[Supplie
     return db.query(SupplierProfile).filter(SupplierProfile.id == profile_id).first()
 
 
+def get_supplier_profile(db: Session, user_id: int) -> Optional[SupplierProfile]:
+    """Return the supplier profile for a user, or None if not found.
+
+    Alias for ``get_supplier_profile_by_user`` — some callers reference the
+    shorter name. Both resolve to the same sanctioned cross-domain read.
+    """
+    return get_supplier_profile_by_user(db, user_id)
+
+
 # ── sanctioned READ surface re-exports (Law 3) ─────────────────────────────
 # Cross-domain consumers import these from ``domains.suppliers.ports`` instead
 # of from the model modules directly. Read-only; no service logic re-exported.
@@ -81,6 +90,9 @@ from domains.suppliers.services.profile.supplier_bank_account_service import (  
     get_supplier_bank_account,
     upsert_supplier_bank_account_from_router,
 )
+from domains.suppliers.services.profile.supplier_profile_service import (  # noqa: E402, F401
+    update_supplier_profile,
+)
 
 
 __all__ = [
@@ -108,6 +120,7 @@ __all__ = [
     "deactivate_supplier_bank_account",
     "get_supplier_bank_account",
     "upsert_supplier_bank_account_from_router",
+    "update_supplier_profile",
 ]
 
 

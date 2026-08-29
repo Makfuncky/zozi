@@ -570,7 +570,7 @@ def get_chat_metrics(db: Session) -> dict:
 
 # ── Entity-Linked Messaging Service (merged from entity_messaging.py) ───
 
-from domains.country.models.countries import Message
+from domains.comms.models.message import Message
 from domains.country.models.country_control import ShiftHandoverLog
 
 

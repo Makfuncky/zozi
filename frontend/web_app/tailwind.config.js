@@ -20,6 +20,7 @@ module.exports = {
         "accent-light": "var(--color-accent-light)",
         success: "rgb(var(--color-success-rgb) / <alpha-value>)",
         danger: "rgb(var(--color-danger-rgb) / <alpha-value>)",
+        error: "rgb(var(--color-error-rgb) / <alpha-value>)",
         warning: "rgb(var(--color-warning-rgb) / <alpha-value>)",
         info: "rgb(var(--color-info-rgb) / <alpha-value>)",
         "on-brand": "var(--color-on-brand)",

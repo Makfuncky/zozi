@@ -21,24 +21,60 @@
   --color-accent-light: #FFEA00;
   --color-accent-dark: #C09000;
   --color-surface-0: #000000;
-  --gradient-logo: var(--color-brand);
-  --gradient-brand-text: var(--color-brand);
-  --gradient-banner: var(--color-brand);
-  --gradient-banner-alt: var(--color-brand);
-  --gradient-brand-alt: var(--color-brand);
-  --gradient-banner-luxe: var(--color-brand);
-  --gradient-banner-festive: var(--color-brand);
-  --gradient-banner-nocturne: var(--color-brand);
-  --gradient-banner-royal: var(--color-brand);
-  --gradient-banner-coral: var(--color-brand);
-  --gradient-banner-midnight: var(--color-brand);
+  --color-background-rgb: 0 0 0;
+  --color-surface-1: #0f172a;
+  --color-surface-2: #1e293b;
+  --color-surface-3: #334155;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-faint: #64748b;
+  --color-border: #334155;
+  --color-success: #22c55e;
+  --color-success-rgb: 34 197 94;
+  --color-warning: #f59e0b;
+  --color-warning-rgb: 245 158 11;
+  --color-error: #ef4444;
+  --color-error-rgb: 239 68 68;
+  --color-info: #3b82f6;
+  --color-info-rgb: 59 130 246;
+  --color-danger: #ef4444;
+  --color-danger-rgb: 239 68 68;
+
+  /* Product color swatches */
+  --color-red: #ef4444;
+  --color-blue: #3b82f6;
+  --color-green: #22c55e;
+  --color-yellow: #f59e0b;
+  --color-orange: #f97316;
+  --color-purple: #a855f7;
+  --color-pink: #ec4899;
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-gray: #6b7280;
+  --color-brown: #92400e;
+  --color-navy: #1e3a5f;
+  --color-teal: #14b8a6;
+  --color-cream: #fef3c7;
+
+  /* Gradients */
+  --gradient-logo: linear-gradient(135deg, var(--color-brand-light), var(--color-brand-dark));
+  --gradient-brand-text: linear-gradient(135deg, var(--color-brand), var(--color-brand-light));
+  --gradient-banner: linear-gradient(135deg, var(--color-brand-dark), var(--color-brand));
+  --gradient-banner-alt: linear-gradient(135deg, var(--color-brand), var(--color-accent));
+  --gradient-brand-alt: linear-gradient(135deg, var(--color-brand), var(--color-info));
+  --gradient-banner-luxe: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  --gradient-banner-festive: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb);
+  --gradient-banner-nocturne: linear-gradient(135deg, #0c0c1d, #1a1a3e, #2d2d5e);
+  --gradient-banner-royal: linear-gradient(135deg, #667eea, #764ba2);
+  --gradient-banner-coral: linear-gradient(135deg, #ff9a9e, #fecfef);
+  --gradient-banner-midnight: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
   --gradient-card: var(--color-surface-1);
-  --gradient-banner-accent: var(--color-brand);
-  --gradient-brand-to-success: var(--color-brand);
-  --gradient-brand-to-brand-dark: var(--color-brand);
-  --gradient-brand-to-brand-light: var(--color-brand);
+  --gradient-banner-accent: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  --gradient-brand-to-success: linear-gradient(135deg, var(--color-brand), var(--color-success));
+  --gradient-brand-to-brand-dark: linear-gradient(135deg, var(--color-brand), var(--color-brand-dark));
+  --gradient-brand-to-brand-light: linear-gradient(135deg, var(--color-brand), var(--color-brand-light));
   --gradient-shimmer: var(--color-surface-1);
-  --gradient-logo-text: var(--color-brand);
+  --gradient-logo-text: linear-gradient(135deg, var(--color-brand-light), var(--color-brand));
 
   /* -- Radius scale (DS09) ----------------------------------------- */
   --zozi-radius-sm: 4px;
@@ -159,4 +195,52 @@
   --zozi-space-14: 56px;
   --zozi-space-15: 60px;
   --zozi-space-16: 64px;
+
+  /* -- Typography scale (DS07) -------------------------------------- */
+  --zozi-text-xs: 0.75rem;
+  --zozi-text-sm: 0.875rem;
+  --zozi-text-base: 1rem;
+  --zozi-text-lg: 1.125rem;
+  --zozi-text-xl: 1.25rem;
+  --zozi-text-2xl: 1.5rem;
+  --zozi-text-3xl: 1.875rem;
+  --zozi-text-4xl: 2.25rem;
+  --zozi-text-5xl: 3rem;
+  --zozi-text-6xl: 3.75rem;
+  --zozi-text-7xl: 4.5rem;
+  --zozi-text-8xl: 6rem;
+
+  /* -- Font weights ----------------------------------------------- */
+  --zozi-weight-normal: 400;
+  --zozi-weight-medium: 500;
+  --zozi-weight-semibold: 600;
+  --zozi-weight-bold: 700;
+  --zozi-weight-extrabold: 800;
+  --zozi-weight-black: 900;
+
+  /* -- Line heights ----------------------------------------------- */
+  --zozi-leading-none: 1;
+  --zozi-leading-tight: 1.25;
+  --zozi-leading-snug: 1.375;
+  --zozi-leading-normal: 1.5;
+  --zozi-leading-relaxed: 1.625;
+  --zozi-leading-loose: 2;
+
+  /* -- Letter spacing --------------------------------------------- */
+  --zozi-tracking-tighter: -0.05em;
+  --zozi-tracking-tight: -0.025em;
+  --zozi-tracking-normal: 0;
+  --zozi-tracking-wide: 0.025em;
+  --zozi-tracking-wider: 0.05em;
+  --zozi-tracking-widest: 0.1em;
+
+  /* -- Component spacing (DS08) ----------------------------------- */
+  --zozi-card-padding: var(--zozi-space-5);
+  --zozi-card-gap: var(--zozi-space-3);
+  --zozi-section-padding: var(--zozi-space-12);
+  --zozi-section-gap: var(--zozi-space-8);
+  --zozi-container-padding: var(--zozi-space-4);
+  --zozi-input-padding: var(--zozi-space-3);
+  --zozi-button-padding-x: var(--zozi-space-4);
+  --zozi-button-padding-y: var(--zozi-space-2);
 }

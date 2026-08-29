@@ -880,7 +880,7 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "create_invoice_from_order": ("domains.finance.services.ledger.invoice_service", "create_invoice_from_order"),
     "_apply_stripe_runtime_key": ("domains.finance.services.payments.payment_engine", "_apply_stripe_runtime_key"),
     "apply_order_status_change": ("domains.finance.services.payments.payment_engine", "apply_order_status_change"),
-    "_order_holds_inventory": ("domains.finance.services.payments.payments", "_order_holds_inventory"),
+    "_order_holds_inventory": ("domains.finance.services.payments.payment_engine", "_order_holds_inventory"),
     "remove_background": ("domains.finance.services.shared.bg_removal_service", "remove_background"),
     "confirm_purchase_order": ("domains.finance.services.trading_service", "confirm_purchase_order"),
     "confirm_sales_order": ("domains.finance.services.trading_service", "confirm_sales_order"),
@@ -915,6 +915,31 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "create_cash_account": ("domains.finance.services.treasury.cash_write_service", "create_cash_account"),
     "create_cash_transaction": ("domains.finance.services.treasury.cash_write_service", "create_cash_transaction"),
     "TreasuryService": ("domains.finance.services.treasury.treasury_service", "TreasuryService"),
+    "controller_get_ap_summary": ("domains.finance.services.ledger.accounting_controller", "controller_get_ap_summary"),
+    "FinancialReportingService": ("domains.finance.services.ledger.accounting_controller", "FinancialReportingService"),
+    "get_or_create_fiscal_period": ("domains.finance.services.ledger.accounting_controller", "get_or_create_fiscal_period"),
+    "get_current_fiscal_period": ("domains.finance.services.ledger.accounting_controller", "get_current_fiscal_period"),
+    "close_period": ("domains.finance.services.ledger.accounting_controller", "close_period"),
+    "controller_get_ar_summary": ("domains.finance.services.ledger.accounting_controller", "controller_get_ar_summary"),
+    "controller_post_ar_invoice": ("domains.finance.services.ledger.accounting_controller", "controller_post_ar_invoice"),
+    "controller_post_ar_payment": ("domains.finance.services.ledger.accounting_controller", "controller_post_ar_payment"),
+    "controller_post_ap_payable": ("domains.finance.services.ledger.accounting_controller", "controller_post_ap_payable"),
+    "controller_post_ap_payment": ("domains.finance.services.ledger.accounting_controller", "controller_post_ap_payment"),
+    "list_pending_payouts": ("domains.finance.services.payouts.payout_batch_service", "list_pending_payouts"),
+    "approve_payout": ("domains.finance.services.payouts.payout_batch_service", "approve_payout"),
+    "reject_payout": ("domains.finance.services.payouts.payout_batch_service", "reject_payout"),
+    "approve_batch": ("domains.finance.services.payouts.payout_batch_service", "approve_batch"),
+    "reject_batch": ("domains.finance.services.payouts.payout_batch_service", "reject_batch"),
+    "dispatch_batch": ("domains.finance.services.payouts.payout_batch_service", "dispatch_batch"),
+    "get_background_job_status": ("domains.finance.services.payouts.payout_batch_service", "get_background_job_status"),
+    "start_auto_payout_background_job": ("domains.finance.services.payouts.payout_batch_service", "start_auto_payout_background_job"),
+    "stop_auto_payout_background_job": ("domains.finance.services.payouts.payout_batch_service", "stop_auto_payout_background_job"),
+    "run_auto_payout_sweep": ("domains.finance.services.payouts.payout_batch_service", "run_auto_payout_sweep"),
+    "run_auto_logistics_payout_sweep": ("domains.finance.services.payouts.payout_batch_service", "run_auto_logistics_payout_sweep"),
+    "list_periods": ("domains.finance.services.ledger.general_ledger_service", "list_periods"),
+    "reverse_journal_entry": ("domains.finance.services.ledger.je_reversal_service", "reverse_journal_entry"),
+    "generate_forecast": ("domains.finance.services.treasury.cash_management_service", "generate_forecast"),
+    "Coupon": ("domains.promotions.models.promotions", "Coupon"),
     # Model re-exports (for cross-domain column access)
     "JournalEntry": ("domains.finance.models.finance", "JournalEntry"),
 }
@@ -929,3 +954,8 @@ def __getattr__(name: str):
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
+
+# Accounting controller facade (Law 3 sanctioned cross-domain surface). The
+# controller module is exposed directly so callers may use it as a namespace
+# (`accounting_controller.seed_chart_of_accounts(db)`).
+import domains.finance.services.ledger.accounting_controller as accounting_controller  # noqa: E402,F401

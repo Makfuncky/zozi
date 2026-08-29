@@ -9,7 +9,7 @@ Code has been moved to:
 from domains.orders.services.core.order_engine import *  # noqa: F401,F403
 from domains.orders.services.core.order_admin import *  # noqa: F401,F403
 from domains.orders.services.core.order_dtos import *  # noqa: F401,F403
-from domains.orders.services.core.order_bulk import *  # noqa: F401,F403
+from domains.orders.services.core.bulk import *  # noqa: F401,F403
 
 __all__ = (
     # order_engine exports

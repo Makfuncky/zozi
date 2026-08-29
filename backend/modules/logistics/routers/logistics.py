@@ -1,5 +1,7 @@
 """Logistics logistics router — consolidated from 12 source files."""
 
+from __future__ import annotations
+
 import logging
 from typing import Any, List, Optional
 
@@ -76,7 +78,7 @@ def create_logistics_partner_location(
 
 # === Logistics Status (from logistics_logistics_status.py) ===
 
-import domains.orders.services.logistics_controller as ctrl
+import domains.orders.services.logistics_service as ctrl
 
 
 # ── Summary ────────────────────────────────────────────────────────────────────
@@ -299,11 +301,10 @@ async def update_shipment_event_gps(
 
 # === Logistics Orders (from logistics_orders_list.py) ===
 
-from domains.accounts.models.user import User
 
 
 @router.get("")
-def list_assigned_shipments(current_user: User = Depends(require_logistics), db: Session = Depends(get_db)):
+def list_assigned_shipments(current_user: Any = Depends(require_logistics), db: Session = Depends(get_db)):
     from domains.logistics.services.geo.logistics_locations_service import list_assigned_shipments as _svc_list
     return _svc_list(db, current_user)
 
@@ -459,7 +460,7 @@ def get_label(
 
 # === Logistics Partner (from logistics_partner.py) ===
 
-import domains.orders.services.logistics_partner_controller as partner_ctrl
+import domains.orders.services.logistics_partner_service as partner_ctrl
 
 
 @router.get("/public")

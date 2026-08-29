@@ -1,82 +1,34 @@
-"use client";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Home, Search, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { Home, Search } from "lucide-react";
 
 export default function NotFound() {
-  const router = useRouter();
-
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-surface-base px-4 overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 max-w-lg w-full text-center"
-      >
-        <div className="theme-card rounded-2xl border p-8 sm:p-10">
-          {/* 404 visual */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-            className="mb-6"
+    <div className="min-h-screen bg-surface-0 flex items-center justify-center px-4">
+      <div className="text-center max-w-md">
+        <h1 className="text-8xl font-display font-black text-primary/20 mb-4">404</h1>
+        <h2 className="text-2xl font-display font-bold text-text-primary mb-3">
+          Page Not Found
+        </h2>
+        <p className="text-text-secondary mb-8">
+          The page you are looking for does not exist or has been moved.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary-dark transition-colors"
           >
-            <span className="text-7xl sm:text-8xl font-bold text-primary/20 select-none">404</span>
-          </motion.div>
-
-          <h1 className="text-xl sm:text-2xl font-bold text-text mb-2">Page Not Found</h1>
-          <p className="text-sm text-text-muted mb-8">
-            The page you are looking for does not exist, has been moved, or is temporarily unavailable.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={() => router.back()}
-              className="theme-btn-secondary rounded-xl px-5 py-2.5 text-xs font-semibold flex items-center gap-2 w-full sm:w-auto justify-center"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Go Back
-            </button>
-            <button
-              onClick={() => router.push("/products")}
-              className="theme-btn-primary rounded-xl px-5 py-2.5 text-xs font-semibold flex items-center gap-2 w-full sm:w-auto justify-center"
-            >
-              <Home className="h-4 w-4" />
-              Browse Products
-            </button>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-border">
-            <p className="text-[11px] text-text-faint mb-3">Popular destinations</p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {[
-                { label: "Products", href: "/products" },
-                { label: "Cart", href: "/cart" },
-                { label: "Orders", href: "/orders" },
-                { label: "Help", href: "/help" },
-                { label: "Admin", href: "/admin/dashboard" },
-              ].map((item) => (
-                <button
-                  key={item.href}
-                  onClick={() => router.push(item.href)}
-                  className="text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/40 transition-colors"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
+            <Home className="w-4 h-4" />
+            Go Home
+          </Link>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-text-primary font-medium hover:bg-surface-1 transition-colors"
+          >
+            <Search className="w-4 h-4" />
+            Browse Products
+          </Link>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
-
-

@@ -10,7 +10,7 @@ from typing import Any, Optional, cast
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsPartnerDocument
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.logistics.services.partners.partner_service import _get_partner_for_user

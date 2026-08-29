@@ -12,7 +12,7 @@ from infrastructure.database.database import get_db, Base
 from infrastructure.database.schemas import User as UserSchema, Product as ProductSchema, Order as OrderSchema, CouponSchema, ListPage, AuditLogSchema, AuditLogPage, CreateStaffAccount, UpdateStaffAccount, BulkUpdateStaffBody
 # TODO: Module not yet created
 # from domains.governance.services.settings.admin_controller import get_current_admin
-from domains.accounts.ports import get_current_user, get_hierarchy_permissions, get_staff_permission_catalog, update_role_permissions
+from domains.accounts.ports import get_current_user, get_hierarchy_permissions, update_role_permissions
 from infrastructure.utils.dependencies import require_admin
 # TODO: Module not yet created
 # from domains.governance.services.settings.admin_controller import require_admin_2fa_enabled
@@ -77,7 +77,6 @@ from domains.governance.ports import reject_product
 # from domains.governance.services.products.products_service import toggle_product_badge
 from domains.governance.ports import list_coupons
 from domains.governance.ports import create_coupon
-from domains.orders.ports import update_coupon
 from domains.governance.ports import delete_coupon
 # TODO: Module not yet created
 # from domains.comms.services.ticket.tickets_service import list_tickets
@@ -155,13 +154,11 @@ from domains.orders.ports import create_promotion_tier
 from domains.orders.ports import update_promotion_tier
 from domains.orders.ports import delete_promotion_tier
 from domains.orders.ports import preview_order_tier_discount
-from domains.orders.ports import disputes_controller
 from infrastructure.utils.backup import get_backup_manager
 from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
 from orders.ports import get_all_flash_sales
 from domains.orders.ports import create_flash_sale
 from domains.orders.ports import update_flash_sale
-from domains.orders.ports import delete_flash_sale
 
 class BulkDeleteUsersBody(BaseModel):
     user_ids: List[int]

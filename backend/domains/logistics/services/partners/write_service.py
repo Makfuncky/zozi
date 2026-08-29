@@ -12,7 +12,7 @@ from domains.country.models.countries import CountryConfig
 from domains.logistics.models.logistics_country_sync import LogisticsPartnerLocation
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsPartnerDocument
 from domains.governance.models.admin import LogisticsSettlement
 from domains.governance.models.admin import ShipmentConfirmation

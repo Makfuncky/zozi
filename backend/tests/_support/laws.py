@@ -16,8 +16,11 @@ from __future__ import annotations
 
 import ast
 import importlib
+import logging
 from pathlib import Path
 from typing import Iterable
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Canonical axis constants (Law 12 / 13 / 160 / 138)
@@ -222,6 +225,7 @@ def iter_domain_models(domain: str) -> Iterable[type]:
     try:
         importlib.import_module(f"domains.{domain}.models")
     except Exception:
+        logger.warning("Failed to import domain models: %s", domain, exc_info=True)
         pass
     seen = set()
     for model in Base.__subclasses__():

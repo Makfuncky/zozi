@@ -6,36 +6,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from infrastructure.database.mixins import TenantMixin, VersionMixin
-__all__ = ['FlashSale', 'FlashSaleItem', 'EmailCampaign', 'EmailTemplate', 'NewsletterSubscriber', 'EmailCampaignLog', 'CampaignRecipient', 'EmailDeliveryEvent', 'EmailSuppression', 'EmailRuntimeConfig', 'PointsTransaction', 'UserPoints']
-
-class FlashSale(Base, TenantMixin):
-    __tablename__ = 'flash_sales'
-    __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (
-        Index('ix_flash_sales_product_ids', 'product_ids'),
-        Index('ix_flash_sales_country_created', 'country_code', 'created_at'),
-        {'schema': 'comms'},
-    )
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    starts_at = Column(DateTime, nullable=False)
-    ends_at = Column(DateTime, nullable=False)
-    discount_pct = Column(Numeric(5, 2), default=0)
-    deleted_at = Column(DateTime, nullable=True)
-    deleted_by_id = Column(Integer, nullable=True)
-    product_ids = Column(JSON, nullable=True)
-    country_code = Column(String(2), nullable=True)
-    country = relationship('CountryConfig', foreign_keys='FlashSale.country_code', primaryjoin='foreign(FlashSale.country_code) == CountryConfig.code')
-    items = relationship('FlashSaleItem', back_populates='flash_sale', cascade='all, delete-orphan')
+__all__ = ['FlashSaleItem', 'EmailCampaign', 'EmailTemplate', 'NewsletterSubscriber', 'EmailCampaignLog', 'CampaignRecipient', 'EmailDeliveryEvent', 'EmailSuppression', 'EmailRuntimeConfig']
 
 class FlashSaleItem(Base, TenantMixin):
     __tablename__ = 'flash_sale_items'
@@ -54,8 +25,8 @@ class FlashSaleItem(Base, TenantMixin):
         {'schema': 'comms'},
     )
     id = Column(Integer, primary_key=True, index=True)
-    flash_sale_id = Column(Integer, ForeignKey('commerce.flash_sales.id', ondelete='RESTRICT'), nullable=False, index=True)
-    product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=False, index=True)
+    flash_sale_id = Column(Integer, ForeignKey('promotions.flash_sales.id', ondelete='RESTRICT'), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey('catalog.products.id', ondelete='RESTRICT'), nullable=False, index=True)
     original_price = Column(Numeric(10, 2), nullable=False)
     discounted_price = Column(Numeric(10, 2), nullable=False)
     country_code = Column(String(2), nullable=True)
@@ -139,7 +110,7 @@ class EmailCampaignLog(Base):
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (CheckConstraint("status_code IN ('sent', 'delivered', 'bounced', 'failed')", name='chk_email_campaign_logs_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
-    campaign_id = Column(Integer, ForeignKey('communication.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
+    campaign_id = Column(Integer, ForeignKey('comms.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
     recipient_email = Column(String(255), nullable=False)
     status_code = Column(String(50), default='sent')
     sent_at = Column(DateTime, default=utcnow)
@@ -160,7 +131,7 @@ class CampaignRecipient(Base):
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (CheckConstraint("status_code IN ('pending', 'sent', 'delivered', 'bounced', 'failed', 'unsubscribed')", name='chk_campaign_recipients_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
-    campaign_id = Column(Integer, ForeignKey('communication.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
+    campaign_id = Column(Integer, ForeignKey('comms.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
     user_id = Column(Integer, nullable=False)
     email = Column(String(255), nullable=False)
     status_code = Column(String(50), default='pending')
@@ -249,43 +220,25 @@ class EmailRuntimeConfig(Base):
     email_from_password_reset = Column(String(255), nullable=True)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
-class PointsTransaction(Base):
-    __tablename__ = 'points_transactions'
-    __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'comms'},)
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=False, index=True)
-    points = Column(Numeric(12, 2), nullable=False, default=0)
-    balance_after = Column(Numeric(12, 2), nullable=True)
-    tx_type = Column(String(30), nullable=False, default='earn')
-    reason = Column(String(100), nullable=True)
-    reference_id = Column(Integer, nullable=True)
-    reference_type = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=utcnow)
 
-class UserPoints(Base):
-    __tablename__ = 'user_points'
-    __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'comms'},)
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=False, unique=True, index=True)
-    points = Column(Numeric(12, 2), nullable=False, default=0)
-    lifetime_points = Column(Numeric(12, 2), nullable=False, default=0)
-    tier = Column(String(20), default='bronze')
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+# Lazy re-export shims for models whose canonical home is the promotions domain.
+# These are resolved on first access to avoid a direct cross-domain import at
+# module load (Law 3: cross-domain reads resolve via the owning domain's exports).
+_CANONICAL_PROMOTIONS_EXPORTS: dict[str, tuple[str, str]] = {
+    "FlashSale": ("domains.promotions.models.promotions", "FlashSale"),
+    "UserPoints": ("domains.promotions.models.loyalty_points", "UserPoints"),
+    "PointsTransaction": ("domains.promotions.models.loyalty_points", "PointsTransaction"),
+}
+
+
+def __getattr__(name: str):
+    """Lazily resolve promotions-owned re-exports."""
+    if name in _CANONICAL_PROMOTIONS_EXPORTS:
+        import importlib
+        module_path, attr_name = _CANONICAL_PROMOTIONS_EXPORTS[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, attr_name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

@@ -182,7 +182,7 @@ logger = structlog.get_logger(__name__)
 
 def resolve_country_from_ip(ip_address: str) -> Optional[str]:
     from infrastructure.database.database import get_db_context
-from domains.country.ports import CountryDetectionService
+    from domains.country.ports import CountryDetectionService
 
     with get_db_context() as db:
         service = CountryDetectionService(db)

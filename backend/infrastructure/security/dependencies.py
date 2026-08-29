@@ -3,10 +3,17 @@
 Canonical implementation lives in
 ``domains.accounts.services.auth.security_dependencies``.
 All auth flows through ``infrastructure.utils.auth`` (decode_token / verify_token).
+
+This module uses lazy resolution to avoid a static upward import (Law 1).
 """
 from __future__ import annotations
 
-from domains.accounts.services.auth.security_dependencies import *  # noqa: F401,F403
+import importlib as _importlib
 
-# Re-exported symbols preserve backward compatibility for any
-# ``from infrastructure.security.dependencies import <name>`` callers.
+_SOURCE = "domains.accounts.services.auth.security_dependencies"
+
+def __getattr__(name: str):
+    mod = _importlib.import_module(_SOURCE)
+    value = getattr(mod, name)
+    globals()[name] = value
+    return value

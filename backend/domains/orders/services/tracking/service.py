@@ -417,7 +417,7 @@ def _build_order_finance_breakdown(order: Order) -> dict[str, Any]:
         if supplier_ids:
             supplier_names = {
                 supplier.id: supplier.username
-                for supplier in session.query(User).filter(User.id.in_(supplier_ids)).all()
+                for supplier in session.query(User).filter(User.id.in_(supplier_ids)).limit(1000).all()
             }
         allocations = [
             {
@@ -442,7 +442,7 @@ def _build_order_finance_breakdown(order: Order) -> dict[str, Any]:
             for allocation in allocation_rows
         ]
 
-        ledgers = session.query(TransactionLedger).filter(TransactionLedger.order_id == order.id).all()
+        ledgers = session.query(TransactionLedger).filter(TransactionLedger.order_id == order.id).limit(1000).all()
         if ledgers:
             service_fee_amount = sum(Decimal(str(cast(Any, ledger.zozi_commission or 0))) for ledger in ledgers)
         else:
@@ -1347,7 +1347,7 @@ def admin_override_status(
     order.updated_at = _utcnow()
 
     # Update any shipments too
-    shipments = db.query(Shipment).filter(Shipment.order_id == order_id).all()
+    shipments = db.query(Shipment).filter(Shipment.order_id == order_id).limit(1000).all()
     for shipment in shipments:
         shipment.status = new_status
         shipment.updated_at = _utcnow()
@@ -1587,7 +1587,7 @@ def get_order_shipment_label(order_id: int, db: Session) -> Optional[dict]:
 
     shipment = db.query(Shipment).filter(Shipment.order_id == order_id).first()
     customer = order.user
-    items = db.query(OrderItem).filter(OrderItem.order_id == order_id).all()
+    items = db.query(OrderItem).filter(OrderItem.order_id == order_id).limit(1000).all()
 
     return {
         "order_id": order.id,

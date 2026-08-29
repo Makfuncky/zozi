@@ -166,6 +166,7 @@ def process_finance_voice_command(transcript: str) -> Dict[str, Any]:
         try:
             result["amount"] = float(amount_str)
         except ValueError:
+            logger.warning("Failed to parse amount from string: %s", amount_str, exc_info=True)
             pass
 
     # Extract task type based on keywords

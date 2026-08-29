@@ -23,7 +23,7 @@ from infrastructure.database.schemas import (
 from domains.accounts.models.user import User
 from domains.orders.models.orders import Order
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 

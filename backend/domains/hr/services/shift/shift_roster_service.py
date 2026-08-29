@@ -63,7 +63,7 @@ def get_employee_shift_roster(employee_id: int, db: Session, month: Optional[int
             )
         )
     
-    rosters = query.order_by(EmployeeShiftRoster.shift_date).all()
+    rosters = query.order_by(EmployeeShiftRoster.shift_date).limit(1000).all()
     return [{
         "id": r.id,
         "shift_date": r.shift_date.isoformat(),
@@ -155,7 +155,7 @@ def request_leave(employee_id: int, leave_type: str, start_date: date, end_date:
 
 
 def get_leave_balance(employee_id: int, db: Session) -> dict:
-    ledgers = db.query(EmployeeLeaveLedger).filter(EmployeeLeaveLedger.employee_id == employee_id).all()
+    ledgers = db.query(EmployeeLeaveLedger).filter(EmployeeLeaveLedger.employee_id == employee_id).limit(1000).all()
 
     return {
         "employee_id": employee_id,

@@ -16,7 +16,7 @@ def check_permission(user_id: int, permission: str, country_code: str, db) -> bo
     False otherwise. Failures are logged and return False (fail-closed).
     """
     try:
-from domains.accounts.ports import RBACService
+        from domains.accounts.ports import RBACService
 
         svc = RBACService(db)
         return svc.check_permission(user_id, permission, country_code)

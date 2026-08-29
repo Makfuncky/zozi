@@ -7,7 +7,7 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 __all__ = [
     "FraudEvent", "FraudBlacklist", "FraudRule", "ManualReviewQueue", "IPReputation", "DeviceFingerprint", 
-    "CreditCardBin", "ReturnAbusePattern", "SupplierFraudIndicator", "LogisticsFraudIndicator", "FraudAlert", 
+    "CreditCardBin", "ReturnAbusePattern", "LogisticsFraudIndicator", "FraudAlert", 
     "IPAccountLinkage", "VelocityCounter", "FraudScoringLog", "FraudCase", "FraudCaseAssignment",
     "DLPViolation", "MeetingTranscript", "MeetingActionItem"
 ]
@@ -23,8 +23,8 @@ class FraudEvent(Base):
         {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete='CASCADE'), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    order_id = Column(Integer, ForeignKey("orders.orders.id", ondelete='CASCADE'), nullable=True)
     event_type = Column(String(50), nullable=False)
     ip_address = Column(String(45), nullable=True)
     device_hash = Column(String(64), nullable=True)
@@ -34,7 +34,7 @@ class FraudEvent(Base):
     details = Column(JSON, nullable=True)
     is_flagged = Column(Boolean, default=False)
     status_code = Column(String(20), default="logged")
-    reviewed_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    reviewed_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -97,7 +97,7 @@ class ManualReviewQueue(Base):
     triggered_rules = Column(Text, nullable=True)
     reason = Column(String(255), nullable=False)
     priority = Column(String(50), default="medium")
-    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     admin_notes = Column(Text, nullable=True)
     status_code = Column(String(50), default="queued")
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -130,7 +130,7 @@ class DeviceFingerprint(Base):
     __table_args__ = (Index("ix_device_fingerprint", "fingerprint_hash"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     fingerprint_hash = Column(String(255), nullable=False, index=True)
     user_agent = Column(String(255), nullable=True)
     ip_addresses = Column(Text, nullable=True)
@@ -164,7 +164,7 @@ class ReturnAbusePattern(Base):
     __tablename__ = "return_abuse_patterns"
     __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     abuse_type = Column(String(50), nullable=False)
     occurrence_count = Column(Integer, default=1)
     first_occurrence = Column(DateTime, default=_utcnow)
@@ -175,22 +175,9 @@ class ReturnAbusePattern(Base):
     user = relationship("User", backref="return_abuse_patterns")
 
 
-class SupplierFraudIndicator(Base):
-    __tablename__ = "supplier_fraud_indicators"
-    __table_args__ = ({"schema": "suppliers"},)
-    id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    indicator_type = Column(String(50), nullable=False)
-    value = Column(String(255), nullable=True)
-    is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(2), nullable=True, index=True)
-
-
 class LogisticsFraudIndicator(Base):
     __tablename__ = "logistics_fraud_indicators"
-    __table_args__ = ({"schema": "logistics"},)
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete='CASCADE'), nullable=False)
     indicator_type = Column(String(50), nullable=False)
@@ -224,7 +211,7 @@ class IPAccountLinkage(Base):
     __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     ip_address = Column(String(255), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     device_fingerprint = Column(String(255), nullable=True)
     session_id = Column(String(100), nullable=True)
     interaction_count = Column(Integer, default=1)
@@ -259,8 +246,8 @@ class FraudScoringLog(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String(50), nullable=False)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete='CASCADE'), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    order_id = Column(Integer, ForeignKey("orders.orders.id", ondelete='CASCADE'), nullable=True)
     ip_address = Column(String(45), nullable=True)
     device_hash = Column(String(64), nullable=True)
     session_id = Column(String(128), nullable=True)
@@ -292,8 +279,8 @@ class FraudCase(Base):
     status_code = Column(String(20), default="open")
     entity_type = Column(String(50), nullable=True)
     entity_id = Column(Integer, nullable=True)
-    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
-    created_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     resolved_at = Column(DateTime, nullable=True)
     resolution_notes = Column(Text, nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -312,8 +299,8 @@ class FraudCaseAssignment(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey("security.fraud_cases.id", ondelete='CASCADE'), nullable=False)
-    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    assigned_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    assigned_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     role_at_assignment = Column(String(50), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -335,12 +322,12 @@ class DLPViolation(Base):
     id = Column(Integer, primary_key=True, index=True)
     violation_type = Column(String(50), nullable=False)
     severity = Column(String(20), default="medium")
-    sender_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     recipient_email = Column(String(255), nullable=True)
     detected_content = Column(Text, nullable=True)
     action_taken = Column(String(50), default="blocked")
     status_code = Column(String(20), default="pending")
-    reviewed_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    reviewed_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -382,7 +369,7 @@ class MeetingActionItem(Base):
     action = Column(String(255), nullable=False)
     metadata_json = Column(JSON, nullable=True)
     status_code = Column(String(20), default="pending")
-    assigned_to_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     due_date = Column(DateTime, nullable=True)
@@ -390,4 +377,4 @@ class MeetingActionItem(Base):
     meeting = relationship("MeetingTranscript", backref="items")
     assignee = relationship("User")
 
-
+

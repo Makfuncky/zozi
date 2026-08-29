@@ -13,7 +13,7 @@ from fastapi import Body, Depends, HTTPException, Query, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from domains.governance.models.admin import CouponUsage
+from domains.promotions.models.coupon_usage import CouponUsage
 from domains.promotions.models.promotions import Coupon
 from domains.accounts.ports import get_current_user
 from domains.governance.ports import create_address

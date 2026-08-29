@@ -1,22 +1,13 @@
-"""Legacy cart service — kept for backward compatibility."""
-from __future__ import annotations
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from typing import Optional
+"""Broker re-exporting the legacy cart service surface.
 
-
-class CartShippingQuoteRequest(BaseModel):
-    """Request model for cart shipping quote."""
-    customer_id: int
-    address_id: int
-    items: list
-
-
-def get_cart_legacy(customer_id: int, db: Session) -> dict:
-    """Legacy cart retrieval — returns empty cart."""
-    return {"customer_id": customer_id, "items": [], "total": 0.0}
-
-
-def get_cart_shipping_quote(customer_id: int, address_id: int, db: Session) -> dict:
-    """Get shipping quote for cart."""
-    return {"customer_id": customer_id, "address_id": address_id, "quotes": []}
+``cart_legacy_service`` was merged into ``domains.orders.services.cart.service``
+(see that module's header: "Merged from: cart_service.py, cart_legacy_service.py,
+cart_write_service.py"). This thin module preserves the original import path
+``domains.orders.services.cart_legacy_service`` so historical callers keep working
+(Law 3 sanctioned re-export).
+"""
+from domains.orders.services.cart.service import *  # noqa: F401,F403
+from domains.orders.services.cart.service import (  # noqa: F401
+    CartShippingQuoteRequest,
+    get_cart_shipping_quote,
+)

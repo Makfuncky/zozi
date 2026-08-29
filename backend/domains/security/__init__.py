@@ -17,7 +17,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "FraudService": ("domains.security.services.fraud.fraud_service", "FraudService"),
     "IAMService": ("domains.security.services.iam.iam_service", "IAMService"),
     "PublicSecurityDetectionService": ("domains.security.services.detection.public_security_detection_service", "PublicSecurityDetectionService"),
-    "PublicSecurityRegistrationService": ("domains.security.services.registration.public_security_registration_service", "PublicSecurityRegistrationService"),
     # models
     "Fraud": ("domains.security.models.fraud", "Fraud"),
     "SecuritySchema": ("domains.security.models.security_schema_models", "SecuritySchema"),

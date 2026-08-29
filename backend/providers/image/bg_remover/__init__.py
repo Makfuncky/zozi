@@ -19,7 +19,6 @@ from .strategy_config import *  # noqa: F401,F403
 from .removal_strategy_runners import *  # noqa: F401,F403
 from .public_api import *  # noqa: F401,F403
 from .br_05__clean_edge_refiner import *  # noqa: F401,F403
-from .br_05___br_06__background_remover_legacy import *  # noqa: F401,F403
 from .br_06__precision_geometry_classes import *  # noqa: F401,F403
 from .br_08__production_pipeline_classes import *  # noqa: F401,F403
 from .br_11_12_13__ultimate_pipeline_classes import *  # noqa: F401,F403

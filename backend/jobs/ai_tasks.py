@@ -226,6 +226,7 @@ def nlp_extract_task(
         try:
             content = asyncio.run(_ollama_chat(_OLLAMA_TEXT_MODEL, en_prompt, num_predict=400, temperature=0.2))
         except Exception:
+            logger.warning("Ollama chat failed for transcript processing", exc_info=True)
             content = None
             
         parsed = _extract_json(content) if content else None

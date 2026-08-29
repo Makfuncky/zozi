@@ -113,7 +113,7 @@ __all__ = [
 # Cross-domain consumers import these from ports instead of reaching
 # into the services tree directly.
 _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
-    "require_roles": ("domains.security.services.iam.security_dependencies", "require_roles"),
+    "require_roles": ("domains.accounts.services.auth.security_dependencies", "require_roles"),
 }
 import importlib
 

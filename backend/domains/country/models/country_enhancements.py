@@ -7,7 +7,7 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, Nu
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
-__all__ = ['SupplierKYCRequirement', 'LogisticsPartnerKYCRequirement', 'CountryCommissionRate', 'CountryConfigVersion', 'CountryFeatureFlag', 'CountryStaffAssignment', 'CrossCountryCustomerSession', 'OmanDeliveryZone', 'CountryCity', 'CountryCategoryTaxRate', 'CountryGatewayConfig', 'CountryCommunicationThread', 'CountryCommissionRateHistory', 'CountryLogisticsZone', 'CountryPayoutRule', 'CountryHolidayCalendar', 'CountryLegalContract', 'CountryLocalization', 'CountryPaymentAlias']
+__all__ = ['SupplierKYCRequirement', 'LogisticsPartnerKYCRequirement', 'CountryCommissionRate', 'CountryConfigVersion', 'CountryFeatureFlag', 'CountryStaffAssignment', 'OmanDeliveryZone', 'CountryCity', 'CountryCategoryTaxRate', 'CountryGatewayConfig', 'CountryCommunicationThread', 'CountryCommissionRateHistory', 'CountryLogisticsZone', 'CountryPayoutRule', 'CountryHolidayCalendar', 'CountryLegalContract', 'CountryLocalization', 'CountryPaymentAlias']
 
 class CountryFeatureFlag(Base):
     __tablename__ = 'country_feature_flags'
@@ -55,31 +55,6 @@ class CountryStaffAssignment(Base):
     user = relationship('User', primaryjoin='foreign(CountryStaffAssignment.user_id) == User.id')
     country = relationship('CountryConfig', primaryjoin='foreign(CountryStaffAssignment.country_code) == CountryConfig.code')
     assigned_by_user = relationship('User', primaryjoin='foreign(CountryStaffAssignment.assigned_by) == User.id')
-
-class CrossCountryCustomerSession(Base):
-    __tablename__ = 'cross_country_customer_sessions'
-    __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_cross_country_user', 'user_id'), {'schema': 'country'})
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False)
-    source_country_code = Column(String(2), nullable=False)
-    target_country_code = Column(String(2), nullable=False)
-    session_data = Column(Text, nullable=True)
-    conversion = Column(Boolean, default=False)
-    order_id = Column(Integer, nullable=True)
-    ip_address = Column(String(45), nullable=True)
-    user_agent = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=utcnow)
-    user = relationship('User', primaryjoin='foreign(CrossCountryCustomerSession.user_id) == User.id')
-    order = relationship('Order', primaryjoin='foreign(CrossCountryCustomerSession.order_id) == Order.id')
 
 class OmanDeliveryZone(Base):
     __tablename__ = 'oman_delivery_zones'
@@ -461,3 +436,20 @@ class CountryPayoutRule(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utcnow)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryPayoutRule.country_code) == CountryConfig.code')
+
+# Backwards-compatible re-export shims for models whose canonical home moved.
+def __getattr__(name: str):
+    _MAP = {
+        "CrossCountryCustomerSession": ("domains.customers.models.cross_country_session", "CrossCountryCustomerSession"),
+        "DataResidencyRecord": ("domains.country.models.country_control", "DataResidencyRecord"),
+        "LogisticsPartnerLocation": ("domains.country.models.country_control", "LogisticsPartnerLocation"),
+        "ParcelLocationTracker": ("domains.country.models.country_control", "ParcelLocationTracker"),
+    }
+    if name in _MAP:
+        import importlib
+        module_path, attr_name = _MAP[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, attr_name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

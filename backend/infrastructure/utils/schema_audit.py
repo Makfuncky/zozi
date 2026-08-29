@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
+import logging
 import re
 import sys
 import os
@@ -42,6 +43,17 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+def _setup_cli_logging() -> None:
+    """Ensure logger output reaches stdout for CLI usage."""
+    if not logger.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
 
 # ── Ensure project root is importable ─────────────────────────────────────
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -855,6 +867,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _setup_cli_logging()
     args = _parse_args(argv)
 
     report = audit_schema(
@@ -898,17 +911,17 @@ def main(argv: list[str] | None = None) -> int:
                 for i in report.issues
             ],
         }
-        print(json.dumps(data, indent=2))
+        logger.info(json.dumps(data, indent=2))
         return 0 if report.healthy else 1
 
     # ── Print summary ──────────────────────────────────────────────────
-    print("=" * 72)
-    print("  SCHEMA AUDIT REPORT")
-    print("=" * 72)
+    logger.info("=" * 72)
+    logger.info("  SCHEMA AUDIT REPORT")
+    logger.info("=" * 72)
     for line in report.summary_lines():
-        print(f"  {line}")
-    print(f"  Elapsed: {report.elapsed_seconds:.2f}s")
-    print()
+        logger.info(f"  {line}")
+    logger.info(f"  Elapsed: {report.elapsed_seconds:.2f}s")
+    logger.info("")
 
     if args.summary:
         return 0 if report.healthy else 1
@@ -920,41 +933,41 @@ def main(argv: list[str] | None = None) -> int:
         if priority < args.min_priority:
             continue
         issues = groups[kind]
-        print(f"── [{kind.value}] ({len(issues)}) ─────────────────────")
+        logger.info(f"── [{kind.value}] ({len(issues)}) ─────────────────────")
         for issue in sorted(issues, key=lambda i: f"{i.table}.{i.column or ''}"):
-            print(f"    {issue}")
-        print()
+            logger.info(f"    {issue}")
+        logger.info("")
 
     # ── Fix SQL ────────────────────────────────────────────────────────
     if args.fix:
         sql = report.fix_sql()
         if sql:
-            print("── FIX SQL (dry-run) ────────────────────────────────")
-            print("  ⚠ SQLite limitations: only ADD COLUMN and CREATE INDEX supported.")
-            print("  ⚠ Use Alembic migrations for NOT NULL changes, column drops, or FK changes.")
-            print()
+            logger.info("── FIX SQL (dry-run) ────────────────────────────────")
+            logger.info("  ⚠ SQLite limitations: only ADD COLUMN and CREATE INDEX supported.")
+            logger.info("  ⚠ Use Alembic migrations for NOT NULL changes, column drops, or FK changes.")
+            logger.info("")
             for stmt in sql:
-                print(f"  {stmt}")
-            print()
+                logger.info(f"  {stmt}")
+            logger.info("")
             if args.apply:
                 from infrastructure.database.database import engine
                 from sqlalchemy import text
-                print("  Applying fixes...")
+                logger.info("  Applying fixes...")
                 with engine.connect() as conn:
                     for stmt in sql:
                         try:
                             conn.execute(text(stmt))
-                            print(f"  ✓ {stmt[:60]}...")
+                            logger.info(f"  ✓ {stmt[:60]}...")
                         except Exception as exc:
-                            print(f"  ✗ {stmt[:60]}...  {exc}")
+                            logger.warning(f"  ✗ {stmt[:60]}...  {exc}")
                     conn.commit()
-                print("  Done.")
+                logger.info("  Done.")
         else:
-            print("  No fix SQL generated — all schema issues require Alembic migrations.")
-        print()
+            logger.info("  No fix SQL generated — all schema issues require Alembic migrations.")
+        logger.info("")
 
     final = "✅ SCHEMA IS HEALTHY" if report.healthy else f"❌ {len(report.issues)} ISSUES FOUND"
-    print(final)
+    logger.info(final)
     return 0 if report.healthy else 1
 
 

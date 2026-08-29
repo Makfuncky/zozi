@@ -36,7 +36,7 @@ class Coupon(Base):
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    deleted_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -55,7 +55,7 @@ class Banner(Base):
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    deleted_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     sort_order = Column(Integer, default=0)
     bg_color = Column(String(10), nullable=True)
     text_color = Column(String(10), nullable=True)
@@ -70,7 +70,7 @@ class Banner(Base):
     cta_url = Column(String(500), nullable=True)
     starts_at = Column(DateTime, nullable=True)
     ends_at = Column(DateTime, nullable=True)
-    created_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -103,7 +103,7 @@ class BOGOPromotion(Base):
 class FlashSale(Base):
     """Time-limited promotional sale."""
     __tablename__ = "flash_sales"
-    __table_args__ = {"schema": "promotions"}
+    __table_args__ = ({"schema": "promotions", "extend_existing": True},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
@@ -118,3 +118,4 @@ class FlashSale(Base):
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
+    items = relationship("FlashSaleItem", back_populates="flash_sale", cascade="all, delete-orphan")

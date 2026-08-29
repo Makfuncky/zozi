@@ -244,6 +244,10 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "serialize_pricing_profile": ("domains.logistics.services.partners.service", "serialize_pricing_profile"),
     "serialize_service_area": ("domains.logistics.services.partners.service", "serialize_service_area"),
     "serialize_vehicle_rule": ("domains.logistics.services.partners.service", "serialize_vehicle_rule"),
+    "approve_partner": ("domains.logistics.services.core.admin_logistics_service", "approve_partner"),
+    "list_partners": ("domains.logistics.services.core.admin_logistics_service", "list_partners"),
+    "reject_partner": ("domains.logistics.services.core.admin_logistics_service", "reject_partner"),
+    "toggle_partner_active": ("domains.logistics.services.core.admin_logistics_service", "toggle_partner_active"),
 }
 
 import importlib

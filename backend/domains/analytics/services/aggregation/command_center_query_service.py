@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any, Optional
 
 from sqlalchemy import text
@@ -27,12 +28,40 @@ def _validate_table_name(table_name: str) -> str:
     return normalized
 
 
+_BLOCKED_KEYWORDS = frozenset({
+    "union", "select", "insert", "update", "delete", "drop", "create",
+    "alter", "truncate", "grant", "revoke", "exec", "execute", "xp_",
+})
+_KEYWORD_PATTERN = re.compile(
+    r'\b(?:' + '|'.join(re.escape(k) for k in _BLOCKED_KEYWORDS) + r')\b',
+    re.IGNORECASE,
+)
+
+
 def _validate_where_clause(where: str) -> str:
+    """Validate WHERE clause using allowlist of safe characters and structural checks."""
+    if where.count("'") % 2 != 0:
+        raise ValueError("WHERE clause contains unbalanced single quotes")
+    depth = 0
+    for c in where:
+        if c == '(':
+            depth += 1
+        elif c == ')':
+            depth -= 1
+        if depth < 0:
+            raise ValueError("WHERE clause contains unbalanced parentheses")
+    if depth != 0:
+        raise ValueError("WHERE clause contains unbalanced parentheses")
     allowed_chars = set(
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ =<>!()',:/.%+-*"
     )
     if not all(c in allowed_chars for c in where):
-        raise ValueError("Unsafe characters in WHERE clause")
+        raise ValueError("WHERE clause contains unsafe characters")
+    if "--" in where or "/*" in where:
+        raise ValueError("WHERE clause contains comments")
+    match = _KEYWORD_PATTERN.search(where)
+    if match:
+        raise ValueError(f"WHERE clause contains disallowed keyword: '{match.group()}'")
     return where
 
 

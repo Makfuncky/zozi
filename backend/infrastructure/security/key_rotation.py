@@ -103,14 +103,17 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
             pk_col = "id"
             if pk_col not in _VALID_PK_COLS:
                 raise ValueError(f"Primary key column '{pk_col}' not in allowlist")
-            select_cols_sql = ", ".join([pk_col] + list(columns))
-            update_cols_sql = ", ".join([f"{col} = :{col}" for col in columns])
+            from sqlalchemy.sql import quoted_name
+            safe_table = quoted_name(table_name, quote=True)
+            safe_pk = quoted_name(pk_col, quote=True)
+            safe_cols = [quoted_name(c, quote=True) for c in columns]
+            select_cols_sql = ", ".join([safe_pk] + safe_cols)
 
             while True:
                 rows = db.execute(
                     text(
-                        f"SELECT {select_cols_sql} FROM {table_name} "
-                        f"ORDER BY {pk_col} LIMIT :lim OFFSET :off"
+                        f"SELECT {select_cols_sql} FROM {safe_table} "
+                        f"ORDER BY {safe_pk} LIMIT :lim OFFSET :off"
                     ),
                     {"lim": BATCH_SIZE, "off": offset},
                 ).mappings().all()
@@ -141,9 +144,10 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
                             errors += 1
                     if changed:
                         updates[pk_col] = row.get(pk_col)
-                        set_clause = ", ".join([f"{c} = :{c}" for c in updates.keys() if c != pk_col])
+                        safe_update_cols = [quoted_name(c, quote=True) for c in updates.keys() if c != pk_col]
+                        set_clause = ", ".join([f"{c} = :{c}" for c in safe_update_cols])
                         db.execute(
-                            text(f"UPDATE {table_name} SET {set_clause} WHERE {pk_col} = :{pk_col}"),
+                            text(f"UPDATE {safe_table} SET {set_clause} WHERE {safe_pk} = :{pk_col}"),
                             updates,
                         )
                         rows_updated += 1

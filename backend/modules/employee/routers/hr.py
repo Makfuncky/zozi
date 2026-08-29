@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.security.dependencies import get_current_user
 from infrastructure.database.database import get_db
-from domains.country.utils.country_rls import enforce_country_access
+from infrastructure.utils.country_rls import enforce_country_access
 from domains.hr.services.hr_employee_service import get_hr_employee_service
 from domains.hr.services.hierarchy.hierarchy_service import (
     get_org_chart as get_hierarchy_org_chart,
@@ -941,7 +941,7 @@ def switch_country_scope(country_code: str = Query(..., min_length=2, max_length
 
 
 @router.get("/localization/{country_code}")
-def country_localization(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+def country_localization(country_code: str = Path(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
     _rf_gate: None = Depends(require_feature("hr.read"))
 ):
     normalized = country_code.upper()
@@ -1071,7 +1071,7 @@ def verify_bank_account_route(account_id: int, db: Session = Depends(get_db), cu
 
 
 @router.get("/payroll/status/{country_code}")
-def payroll_status_route(country_code: str = Query(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
+def payroll_status_route(country_code: str = Path(..., min_length=2, max_length=10), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user),
     _rf_gate: None = Depends(require_feature("hr.read"))
 ):
     return svc_payroll_status(country_code, db)
@@ -1166,12 +1166,6 @@ def coi_check_endpoint(
     current_user: dict = Depends(get_current_user),
     _rf_gate: None = Depends(require_feature("hr.read")),
 ):
-    try:
-        from domains.hr.models.employee_models import EmployeeRelation
-    except Exception as exc:
-        logger.warning("EmployeeRelation model not available: %s", exc)
-        return {"employee_id": employee_id, "has_conflicts": False, "conflicts": []}
-
     return get_hr_employee_service(db).coi_check(employee_id)
 
 

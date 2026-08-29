@@ -68,6 +68,12 @@ class User(Base):
     revoked_tokens = relationship(
         "RevokedToken", back_populates="user", lazy="selectin", cascade="all, delete-orphan"
     )
+    referrals_given = relationship("Referral", foreign_keys="[Referral.referrer_id]", back_populates="referrer", lazy="selectin")
+    referred_by = relationship("Referral", foreign_keys="[Referral.referred_id]", back_populates="referred", lazy="selectin", uselist=False)
+    products = relationship("Product", back_populates="supplier", lazy="selectin")
+    reviews = relationship("Review", back_populates="user", lazy="selectin")
+    wishlist_items = relationship("WishlistItem", back_populates="user", lazy="selectin")
+    wishlists = relationship("Wishlist", back_populates="user", lazy="selectin")
 
 
 class UserSession(Base):

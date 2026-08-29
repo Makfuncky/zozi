@@ -560,7 +560,7 @@ def mark_communication_read(comm_id: int, db: Session, current_user):
 
 def get_data_residency(country_code: str, db: Session, current_user):
     """Get data residency tier for a country."""
-from domains.governance.ports import DataResidencyService
+    from domains.governance.ports import DataResidencyService
     tier = DataResidencyService.get_data_residency_tier(country_code)
     requires_encryption = DataResidencyService.requires_local_encryption(country_code)
     return {

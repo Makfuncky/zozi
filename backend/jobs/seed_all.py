@@ -177,6 +177,13 @@ SHIPPING_ADDRESSES = [
     "Manama, Bahrain", "Abu Dhabi, UAE", "Jeddah, Saudi Arabia", "Salalah, Oman",
 ]
 
+TAX_RATES = {
+    "AE": Decimal("0.05"),  # UAE VAT
+    "OM": Decimal("0.05"),  # Oman VAT
+    "SA": Decimal("0.15"),  # Saudi Arabia VAT
+    "BH": Decimal("0.10"),  # Bahrain VAT
+}
+
 ENTITY_THREADS = [
     {
         "title": "Q4 Budget Review — Finance Team",
@@ -293,6 +300,7 @@ def _wipe_data():
             "reviews", "products", "categories",
         ]
         from sqlalchemy import inspect as _inspect
+        from sqlalchemy.sql import quoted_name
         valid_tables = set(_inspect(db.get_bind()).get_table_names())
         for table in tables:
             try:
@@ -300,7 +308,8 @@ def _wipe_data():
                     raise ValueError(f"Invalid table name: {table}")
                 if table not in valid_tables:
                     continue
-                db.execute(text(f"DELETE FROM {table}"))
+                safe_table = quoted_name(table, quote=True)
+                db.execute(text(f"DELETE FROM {safe_table}"))
             except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError) as e:
                 logger.exception("_wipe_data_failed", error=str(e))
         db.commit()
@@ -539,7 +548,9 @@ def seed_orders():
                 })
 
             shipping_fee = Decimal(str(random.choice([0, 5, 10, 15, 20])))
-            tax_amount = subtotal * Decimal("0.05")
+            shipping_country = random.choice(["AE", "OM", "SA", "BH"])
+            tax_rate = TAX_RATES.get(shipping_country, Decimal("0.05"))
+            tax_amount = subtotal * tax_rate
             total = subtotal + shipping_fee + tax_amount
 
             status = random.choice(ORDER_STATUSES)
@@ -563,7 +574,7 @@ def seed_orders():
                 currency=random.choice(CURRENCIES),
                 shipping_address=random.choice(SHIPPING_ADDRESSES),
                 shipping_city=random.choice(["Dubai", "Sharjah", "Muscat", "Riyadh", "Manama"]),
-                shipping_country=random.choice(["AE", "OM", "SA", "BH"]),
+                shipping_country=shipping_country,
                 tracking_number=f"ZO-TRK-{random.randint(100000, 999999)}" if status in ["shipped", "in_transit", "delivered"] else None,
                 fraud_score=Decimal(str(round(random.uniform(0, 0.3), 2))),
                 fraud_action="allow",

@@ -9,7 +9,7 @@ from typing import Optional
 from infrastructure.database.database import get_db
 from infrastructure.security.dependencies import require_admin, require_super_admin
 from rbac.dependencies import require_feature
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from domains.logistics.services.core.admin_logistics_service import approve_partner
 from domains.logistics.services.core.admin_logistics_service import hard_delete_partner

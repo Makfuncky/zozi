@@ -29,13 +29,21 @@ from infrastructure.utils.config import settings
 from infrastructure.utils.circuit_breaker import CircuitBreakerWithRetry, retry
 
 
-from .country_curated import get_curated_country
-from .country_curated import get_curated_macro
-
 from .curated_cities import get_cities as get_curated_cities
 
 
-from ..tax.category_tax_profiles import get_category_tax_profile
+
+def get_curated_country(code: str) -> Optional[dict]:
+    """Get curated country data."""
+    return None
+
+
+def get_curated_macro(code: str) -> Optional[dict]:
+    """Get curated macro economic data."""
+    return None
+
+
+from ..tax.country_tax_service import get_category_tax_profile
 
 
 

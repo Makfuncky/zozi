@@ -29,6 +29,7 @@ import {
   MapPin,
   ExternalLink,
   Play,
+  Truck,
 } from "@/lib/icons";
 import { apiFetch } from "@/lib/api";
 import { Product, Review, SupplierPublicProfile } from "@/lib/types";
@@ -41,6 +42,7 @@ import { useToastStore } from "@/lib/toastStore";
 import { useAuth } from "@/lib/useAuth";
 import { useCurrencyStore } from "@/lib/currencyStore";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Recommendations from "@/components/Recommendations";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
@@ -406,7 +408,39 @@ export default function ProductDetailPage() {
 
   return (
     <main className="min-h-screen" dir={isRtl ? "rtl" : "ltr"}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      {/* Structured Data for SEO */}
+      {product && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Product",
+              name: product.name,
+              description: product.description,
+              image: product.image_url,
+              sku: product.id,
+              brand: { "@type": "Brand", name: "ZOZI" },
+              offers: {
+                "@type": "Offer",
+                price: product.price,
+                priceCurrency: "USD",
+                availability: product.stock_quantity && product.stock_quantity > 0
+                  ? "https://schema.org/InStock"
+                  : "https://schema.org/OutOfStock",
+              },
+              ...(product.rating && {
+                aggregateRating: {
+                  "@type": "AggregateRating",
+                  ratingValue: product.rating,
+                  reviewCount: reviews.length || 1,
+                },
+              }),
+            }),
+          }}
+        />
+      )}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           {/* Back */}
         <button
           onClick={() => router.back()}
@@ -416,6 +450,15 @@ export default function ProductDetailPage() {
           <ArrowRight className="w-4 h-4 hidden rtl:block" />
           {tr("back")}
         </button>
+
+        {/* Breadcrumbs */}
+        <Breadcrumbs
+          items={[
+            { label: "Products", href: "/products" },
+            { label: product.name },
+          ]}
+          className="mb-4"
+        />
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,38vw)_minmax(0,1fr)_minmax(0,260px)] gap-5 xl:grid-cols-[minmax(0,40vw)_minmax(0,1fr)_minmax(0,300px)] xl:gap-6">
           {/* Image gallery */}
@@ -829,6 +872,8 @@ export default function ProductDetailPage() {
                 const returnWindowDays = Math.max(10, Number(product.return_window_days ?? 10) || 10);
                 return [
                   { icon: RotateCcw, label: `${returnWindowDays}-day returns after delivery` },
+                  { icon: Truck, label: "Free shipping on orders over $50" },
+                  { icon: Shield, label: "Secure checkout" },
                 ];
               })().map((badge) => (
                 <span

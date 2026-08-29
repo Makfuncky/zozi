@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import math
+from typing import Optional
 
 from fastapi import Depends, Path, Query
 
@@ -27,13 +28,13 @@ from infrastructure.database.schemas import (
 from domains.accounts.models.user import User
 from domains.orders.models.orders import Order
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 
 from infrastructure.database.rls_interceptor import set_rls_context
 
-def list_all_orders(country_code: str, page: int, size: int, status: str, include_deleted: bool, _: User, db: Session):
+def list_all_orders(country_code: str, page: int, size: int, status: str, include_deleted: bool, _: User, db: Session, cursor: Optional[int] = None):
     if country_code == "*":
         set_rls_context(None, is_restricted=False)
     else:
@@ -46,7 +47,11 @@ def list_all_orders(country_code: str, page: int, size: int, status: str, includ
         if not include_deleted:
             q = q.filter(Order.is_deleted == False)
         total = q.count()
-        items = q.order_by(Order.created_at.desc()).offset((page - 1) * size).limit(size).all()
+        if cursor is not None:
+            q = q.filter(Order.id < cursor)
+        else:
+            q = q.offset((page - 1) * size)
+        items = q.order_by(Order.created_at.desc()).limit(size).all()
         return {"items": items, "total": total, "page": page, "pages": math.ceil(total / size) if total else 1}
     finally:
         from infrastructure.database.rls_interceptor import clear_rls_context
@@ -187,6 +192,7 @@ def list_orders_paginated(
     size: int,
     status: str | None = None,
     include_deleted: bool = False,
+    cursor: Optional[int] = None,
 ) -> dict:
     """Paginated admin order list (country scoping applied via RLS in the router)."""
     q = db.query(Order)
@@ -195,7 +201,11 @@ def list_orders_paginated(
     if not include_deleted:
         q = q.filter(Order.is_deleted == False)
     total = q.count()
-    items = q.order_by(Order.created_at.desc()).offset((page - 1) * size).limit(size).all()
+    if cursor is not None:
+        q = q.filter(Order.id < cursor)
+    else:
+        q = q.offset((page - 1) * size)
+    items = q.order_by(Order.created_at.desc()).limit(size).all()
     return {
         "items": items,
         "total": total,

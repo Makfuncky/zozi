@@ -20,6 +20,9 @@ from infrastructure.utils.redis_client import redis_client
 
 logger = logging.getLogger(__name__)
 
+# Disable rate limiting in development/test mode
+_RATE_LIMIT_ENABLED = str(os.getenv("RATE_LIMIT_ENABLED", "false")).lower() in ("true", "1", "yes")
+
 PATH_LIMITS: list[tuple[str, int, int]] = [
     ("/auth/register", 5, 60),
     ("/auth/login", 10, 60),

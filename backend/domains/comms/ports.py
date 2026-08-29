@@ -46,7 +46,9 @@ from domains.comms.models.communication_schema_models import (
 )
 from domains.comms.models.news import NewsArticle
 from domains.comms.models.communication import Announcement, ChatAttachment, ChatReadReceipt, CommunicationAuditTrail, EmailFolder, EmployeeCommunicationThread, ExternalContactMasking, FAQ, HelpCategory, InternalChannel, InternalChannelMember, InternalEmail, InternalMessage, MaskedMessage, Notification, ProxyCallLog, ProxyChannel, ProxyMessage, ProxySession, TicketMessage
-from domains.comms.models.marketing import CampaignRecipient, EmailCampaign, EmailCampaignLog, EmailDeliveryEvent, EmailRuntimeConfig, EmailSuppression, EmailTemplate, FlashSale, FlashSaleItem, NewsletterSubscriber, PointsTransaction, UserPoints
+from domains.comms.models.marketing import CampaignRecipient, EmailCampaign, EmailCampaignLog, EmailDeliveryEvent, EmailRuntimeConfig, EmailSuppression, EmailTemplate, FlashSaleItem, NewsletterSubscriber
+from domains.promotions.models.promotions import FlashSale
+from domains.promotions.models.loyalty_points import UserPoints, PointsTransaction
 from domains.comms.models.chat import (
     DirectChatRoom, DirectChatMessage, EntityChatThread, EntityChatMessage,
     EscalationSLALog, GroupChatMember, GroupChatRoom, GroupChatMessage,
@@ -660,14 +662,16 @@ _LAZY_COMMS_EXPORTS: dict[str, tuple[str, str]] = {
     "auto_process_image": ("domains.comms.services.free_image_tools", "auto_process_image"),
     "save_product_media": ("domains.comms.services.media_service", "save_product_media"),
     "save_supplier_media": ("domains.comms.services.media_service", "save_supplier_media"),
-    "notify_logistics_partners_of_payout": ("domains.comms.services.payout_notification_service", "notify_logistics_partners_of_payout"),
-    "notify_suppliers_of_payout": ("domains.comms.services.payout_notification_service", "notify_suppliers_of_payout"),
+    "notify_logistics_partners_of_payout": ("domains.comms.services.shared.notification.notification_engine", "notify_logistics_partners_of_payout"),
+    "notify_suppliers_of_payout": ("domains.comms.services.shared.notification.notification_engine", "notify_suppliers_of_payout"),
     "NotificationEngine": ("domains.comms.services.shared.notification.notification_engine", "NotificationEngine"),
+    "NotificationChannel": ("domains.comms.services.shared.notification.notification_models", "NotificationChannel"),
+    "NotificationPriority": ("domains.comms.services.shared.notification.notification_models", "NotificationPriority"),
     "create_notification": ("domains.comms.services.tickets.tickets_service", "create_notification"),
     "enqueue_invoice_email": ("domains.comms.services.transactional_email_service", "enqueue_invoice_email"),
     "enqueue_payment_confirmed_email": ("domains.comms.services.transactional_email_service", "enqueue_payment_confirmed_email"),
     "enqueue_payment_failed_email": ("domains.comms.services.transactional_email_service", "enqueue_payment_failed_email"),
-    "enqueue_supplier_approval_email": ("domains.comms.services.transactional_email_service", "enqueue_supplier_approval_email"),
+    "enqueue_supplier_approval_email": ("domains.comms.services.shared.notification.notification_engine", "enqueue_supplier_approval_email"),
     "enqueue_shipment_status_email": ("domains.comms.services.transactional_email_service", "enqueue_shipment_status_email"),
     "enqueue_order_status_email": ("domains.comms.services.transactional_email_service", "enqueue_order_status_email"),
     "enqueue_return_created_email": ("domains.comms.services.transactional_email_service", "enqueue_return_created_email"),

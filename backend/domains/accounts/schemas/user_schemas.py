@@ -80,3 +80,12 @@ class UserOut(OrmBase):
 
 
 TokenResponse.model_rebuild()
+
+
+class OtpRequest(BaseModel):
+    """Start or verify an OTP challenge."""
+
+    purpose: str  # "login" | "register" | "password_reset" | "device_trust"
+    channel: str = "sms"  # "sms" | "email"
+    destination: Optional[str] = None  # phone or email; defaults to user's on file
+    code: Optional[str] = None  # provided only on the verify step

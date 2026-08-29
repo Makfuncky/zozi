@@ -108,7 +108,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
                 token = auth_header.split(" ", 1)[1]
                 try:
                     from infrastructure.utils.auth import decode_token
-                    payload = decode_token(token)
+                    payload = decode_token(token, expected_type="access")
                     role = str(payload.get("role", "") or "").lower()
                     user_id = payload.get("sub")
                 except Exception:

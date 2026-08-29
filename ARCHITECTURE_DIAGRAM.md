@@ -77,7 +77,7 @@ registration + configuration**. The three axes map to three different mechanisms
 | Axis | What it is | Where it lives | Mechanism |
 |---|---|---|---|
 | **Module** (customer, supplier, logistics, admin, employee) | *Who* is acting — login, session, route prefix, UI shell | `modules/{module}/` | Separate auth + thin API surface |
-| **Domain** (finance, accounts, catalog, orders, payments, logistics, suppliers, customers, hr, comms, media, country, governance, …) | *What* the business does — logic + data | `domains/{domain}/` | Services, models, schemas, policies, events |
+| **Domain** (finance, accounts, catalog, orders, logistics, suppliers, customers, hr, comms, country, governance, analytics, audit, security, promotions) | *What* the business does — logic + data | `domains/{domain}/` | Services, models, schemas, policies, events |
 | **Feature** (`finance.ledger`, `finance.reporting`, …) | *What may be done* — permission atoms | `rbac/` + `domains/*/features.py` | Data/config, enforced by `require_feature()` |
 
 **The rule that makes it coherent:** Modules compose. Domains own. Features gate.
@@ -728,7 +728,7 @@ sequenceDiagram
 | 147 | Infrastructure | Utils infra | Pure technical helpers: pagination, datetime, config, caching, HTTP. | Business primitives belong in kernel/, not here. |
 | 148 | Infrastructure | Canonical Base | infrastructure.database.base.Base is THE base. Others FORBIDDEN. | Multiple bases cause MetaData conflicts and migration failures. |
 | 149 | Infrastructure | Session lifecycle | Sessions via FastAPI Depends(get_db) only. | Ensures sessions are closed even on exceptions. |
-| 150 | Domain | Domain structure | services/, models/, schemas/, events.py, subscribers.py, ports.py, features.py, read_models/, policies/. | Standardized structure across all 16 domains. |
+| 150 | Domain | Domain structure | services/, models/, schemas/, events.py, subscribers.py, ports.py, features.py, read_models/, policies/. | Standardized structure across all 15 domains. |
 | 151 | Domain | Service patterns | Services take primitives, own DB access and transactions. | Services are the entry point for business logic. |
 | 152 | Domain | Model patterns | __tablename__ + __table_args__ = {schema: <domain>}. Canonical Base. | Every model knows its schema and inherits from one base. |
 | 153 | Domain | Schema patterns | Pydantic models for validation. Used by routers (in) and serializers (out). | Schemas are NOT ORM models — different purposes. |

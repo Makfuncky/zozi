@@ -19,7 +19,7 @@ from infrastructure.database.database import get_db
 from domains.accounts.models.user import User
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
-from domains.governance.models.admin import SupplierBankAccount
+from domains.accounts.models.banking import SupplierBankAccount
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.finance.models.payments import Payout

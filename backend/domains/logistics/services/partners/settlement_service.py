@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsSettlement
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.logistics.models.logistics import Shipment

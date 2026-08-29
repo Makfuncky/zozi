@@ -82,7 +82,7 @@ def update_flight_risk_score(employee_id: int, metric: str, score: float, db: Se
     Delegates the DB write to ``services.security.risk_write_service`` (rule **W1** —
     controllers must not own transactions).
     """
-from domains.governance.ports import update_flight_risk_score
+    from domains.governance.ports import update_flight_risk_score
 
     return _svc(employee_id=employee_id, metric=metric, score=score, db=db)
 

@@ -83,7 +83,7 @@ import {
   Diamond,
   type LucideIcon,
 } from "lucide-react";
-import "./banner-effects.css";
+import styles from "./banner-effects.module.css";
 
 /* ──────────────────────────────────────────────────────────────────────────
    Advanced Banner Canvas Editor
@@ -495,7 +495,7 @@ function BannerEffectLayer({ effect }: { effect: CanvasEffect }) {
     return (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {BALLOONS.map((b, i) => (
-          <span key={i} className="bcu-balloon" style={{ left: `${b.left}%`, background: b.color, animationDelay: `${b.delay}s`, animationDuration: "7s" }} />
+          <span key={i} className={styles["bcu-balloon"]} style={{ left: `${b.left}%`, background: b.color, animationDelay: `${b.delay}s`, animationDuration: "7s" }} />
         ))}
       </div>
     );
@@ -508,10 +508,10 @@ function BannerEffectLayer({ effect }: { effect: CanvasEffect }) {
           <span key={i} className={effect === "poppers" ? "bcu-confetti" : "bcu-spark"} style={{ left: `${c.left}%`, width: c.size, height: effect === "poppers" ? c.size * 0.6 : c.size, background: c.color, animationDelay: `${c.delay}s`, animationDuration: effect === "poppers" ? `${c.dur}s` : `${2 + (c.delay % 2)}s` }} />
         ))}
         {effect === "ramadan" &&
-          LANTERNS.map((l, i) => <span key={`l${i}`} className="bcu-lantern" style={{ left: `${l.left}%`, animationDelay: `${l.delay}s` }} />)}
-        {effect === "ramadan" && <span className="bcu-crescent" style={{ right: "8%", top: "12%", width: 54, height: 54 }} />}
-        {effect === "eid" && <span className="bcu-crescent" style={{ left: "8%", top: "14%", width: 50, height: 50 }} />}
-        {effect === "diwali" && <span className="bcu-crescent" style={{ right: "10%", top: "14%", width: 30, height: 30, opacity: 0.6 }} />}
+          LANTERNS.map((l, i) => <span key={`l${i}`} className={styles["bcu-lantern"]} style={{ left: `${l.left}%`, animationDelay: `${l.delay}s` }} />)}
+        {effect === "ramadan" && <span className={styles["bcu-crescent"]} style={{ right: "8%", top: "12%", width: 54, height: 54 }} />}
+        {effect === "eid" && <span className={styles["bcu-crescent"]} style={{ left: "8%", top: "14%", width: 50, height: 50 }} />}
+        {effect === "diwali" && <span className={styles["bcu-crescent"]} style={{ right: "10%", top: "14%", width: 30, height: 30, opacity: 0.6 }} />}
       </div>
     );
   }
@@ -519,7 +519,7 @@ function BannerEffectLayer({ effect }: { effect: CanvasEffect }) {
     return (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {SNOW.map((c, i) => (
-          <span key={i} className="bcu-snow" style={{ left: `${c.left}%`, width: c.size, height: c.size, background: c.color, animationDelay: `${c.delay}s`, animationDuration: `${c.dur + 1.5}s` }} />
+          <span key={i} className={styles["bcu-snow"]} style={{ left: `${c.left}%`, width: c.size, height: c.size, background: c.color, animationDelay: `${c.delay}s`, animationDuration: `${c.dur + 1.5}s` }} />
         ))}
       </div>
     );
@@ -528,10 +528,10 @@ function BannerEffectLayer({ effect }: { effect: CanvasEffect }) {
     return (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {FIREWORKS.map((f, i) => (
-          <span key={i} className="bcu-fw" style={{ left: `${f.left}%`, top: `${f.top}%`, width: 90, height: 90, background: `radial-gradient(circle, ${f.color} 0%, transparent 60%)`, animationDelay: `${f.delay}s`, animationDuration: "3s" }} />
+          <span key={i} className={styles["bcu-fw"]} style={{ left: `${f.left}%`, top: `${f.top}%`, width: 90, height: 90, background: `radial-gradient(circle, ${f.color} 0%, transparent 60%)`, animationDelay: `${f.delay}s`, animationDuration: "3s" }} />
         ))}
         {SPARKLES.slice(0, 18).map((c, i) => (
-          <span key={`s${i}`} className="bcu-spark" style={{ left: `${c.left}%`, top: `${c.delay * 12}%`, width: c.size, height: c.size, background: c.color, animationDelay: `${c.delay}s` }} />
+          <span key={`s${i}`} className={styles["bcu-spark"]} style={{ left: `${c.left}%`, top: `${c.delay * 12}%`, width: c.size, height: c.size, background: c.color, animationDelay: `${c.delay}s` }} />
         ))}
       </div>
     );
@@ -539,9 +539,9 @@ function BannerEffectLayer({ effect }: { effect: CanvasEffect }) {
   if (effect === "aurora") {
     return (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <span className="bcu-aurora" style={{ left: "0%", background: "linear-gradient(90deg,#22d3ee,#34d399)", animationDuration: "9s" }} />
-        <span className="bcu-aurora" style={{ left: "30%", background: "linear-gradient(90deg,#a78bfa,#60a5fa)", animationDuration: "11s", animationDelay: "1s" }} />
-        <span className="bcu-aurora" style={{ left: "55%", background: "linear-gradient(90deg,#f472b6,#f59e0b)", animationDuration: "13s", animationDelay: "2s" }} />
+        <span className={styles["bcu-aurora"]} style={{ left: "0%", background: "linear-gradient(90deg,#22d3ee,#34d399)", animationDuration: "9s" }} />
+        <span className={styles["bcu-aurora"]} style={{ left: "30%", background: "linear-gradient(90deg,#a78bfa,#60a5fa)", animationDuration: "11s", animationDelay: "1s" }} />
+        <span className={styles["bcu-aurora"]} style={{ left: "55%", background: "linear-gradient(90deg,#f472b6,#f59e0b)", animationDuration: "13s", animationDelay: "2s" }} />
       </div>
     );
   }
@@ -1768,3 +1768,4 @@ function SelectField({ label, value, options, onChange }: { label: string; value
     </div>
   );
 }
+

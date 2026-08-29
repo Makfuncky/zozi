@@ -1015,7 +1015,7 @@ __all__ = [
 # Cross-domain consumers import these from ports instead of reaching
 # into the services tree directly.
 _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
-    "get_current_user": ("domains.accounts.services.auth.auth_service", "get_current_user"),
+    "get_current_user": ("domains.accounts.services.auth.security_dependencies", "get_current_user"),
     "start_otp": ("domains.accounts.services.auth.auth_service", "start_otp"),
     "verify_otp": ("domains.accounts.services.auth.auth_service", "verify_otp"),
     "RBACService": ("domains.accounts.services.permissions.permission_service", "RBACService"),

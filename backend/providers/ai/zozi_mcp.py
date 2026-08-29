@@ -89,7 +89,6 @@ async def app_lifespan(server: FastMCP):
                 _token = data.get("access_token")
             except (RuntimeError, ValueError, TypeError, KeyError) as exc:  # pragma: no cover - best-effort startup
                 logger.exception("auto-login failed", error=str(exc))
-                print(f"[zozi_mcp] auto-login failed: {exc}", file=sys.stderr)
         yield
     _client = None
     _token = None

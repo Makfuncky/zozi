@@ -5092,7 +5092,11 @@ Here are the **project rules and decisions** we've established:
 - Perform the complete investigation and inspection of `backend\domains\**`, `backend\modules\{m}\router{d}`
 - Perform the complete investigation and inspection of `backend\domains\**`, `backend\modules\**`, `backend\infrastructure\**`, `backend\modules\{m}\router{d}`.
 
-- Perform the complete investigation and inspection of `backend`.
+
+**Target**: 
+- have to keep everything in the boarder of architecure and run the `backend` and `frontend` and make system product ready. 
+
+- Perform the complete investigation and inspection of `backend`, `frontend`
 - Identify all problems, violations, and risks compared to `ARCHITECTURE_DIAGRAM.md` Law and architecture which is $Benchmark$ 
 - `ARCHITECTURE_DIAGRAM.md` must be read top to bottom becasue it is $Benchmark$.  
 - Do the detail investigation and findout the problems of the `backend` according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
@@ -5112,8 +5116,43 @@ Here are the **project rules and decisions** we've established:
 - **Testing & Validation** : Missing unit/integration tests, Broken test coverage, No validation against architecture rules, Outdated mocks/stubs
 
 ---------------------------------------------------------------
+
+- Perform the complete investigation and inspection of `backend`.
+- Identify all problems, violations, and risks compared to `ARCHITECTURE_DIAGRAM.md` Law and architecture which is $Benchmark$ 
+- `ARCHITECTURE_DIAGRAM.md` must be read top to bottom becasue it is $Benchmark$.  
+- Do the detail investigation and findout the problems of the `backend` according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
+- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.  
+- Use maximum sub-agent at a time to identify the problem *accurately* and *faster* and give them clear instructions to identify problem correctly.
+- Our target is to achieve architecture clean and production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality and etc.
+
+**Categories of Problems to Investigate**
+- **Architecture & Wiring** : Violations of `ARCHITECTURE_DIAGRAM.md`, Cross‑domain imports breaking modular boundaries, Wrong layering (domain vs infrastructure vs modules), Misplaced files or functions
+- **Code Quality & Logic** : Broken functions, Wrong or outdated logic, Duplication of code, Hardcoding values, Poor error handling, Missing concurrency handling, Inefficient algorithms for scale (100k+ users)
+- **Domain & Module Structure**	: Incorrect domain boundaries, Module connection problems, Models not aligned with domains, Providers/tools miswired, RBAC misconfigured or missing
+- **Database & Data Layer** : Database connection problems, Table misalignment with architecture, Wrong schema design,  Head of table issues, Missing migrations or broken ORM logic, Security gaps in queries
+- **Security** : RBAC violations, Hardcoded secrets, Insecure imports or dependencies, Missing validation/sanitization, Improper error exposure, Weak authentication/authorization flows
+- **Infrastructure & Connections**: Broken infrastructure wiring, Wrong provider connections, Misconfigured external tools, API gateway or service mesh misalignment, Faulty dependency injection
+- **Performance & Scalability**: Inefficient handling of concurrent requests,  Poor caching strategy, Memory leaks, Slow database queries, No load balancing or failover logic
+- **Error & Exception Handling** : Missing try/catch or fallback logic, Improper logging, Silent failures, Wrong error propagation
+- **Testing & Validation** : Missing unit/integration tests, Broken test coverage, No validation against architecture rules, Outdated mocks/stubs
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------
 > COMPLETE FULL CODEBASE `SOLVER` PROMPT: 
 ---------------------------------------------------------------
+**Target**: 
+- have to keep everything in the boarder of architecure and run the `backend` and `frontend` and make system product ready. 
 
 **Objective**: 
 - Resolve all the problems mentioned into `docs/action/BACKEND_COMPLETE_DIAGNOSIS.md`.
@@ -5147,7 +5186,6 @@ Here are the **project rules and decisions** we've established:
 - I am sure there a range of logics damges available which needs to be align.
 
 
-
 **Categories of Problems to Investigate**
 - **Architecture & Wiring** : Violations of `ARCHITECTURE_DIAGRAM.md`, Cross‑domain imports breaking modular boundaries, Wrong layering (domain vs infrastructure vs modules), Misplaced files or functions
 - **Code Quality & Logic** : Broken functions, Wrong or outdated logic, Duplication of code, Hardcoding values, Poor error handling, Missing concurrency handling, Inefficient algorithms for scale (100k+ users)
@@ -5160,7 +5198,7 @@ Here are the **project rules and decisions** we've established:
 - **Testing & Validation** : Missing unit/integration tests, Broken test coverage, No validation against architecture rules, Outdated mocks/stubs
  
 
-
+`skeptical mind`
 
 ------------------------------------------------------------------------------------------
 > comms domain is architecturally clean but not production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality.
@@ -5317,21 +5355,18 @@ Get-ChildItem -Recurse -Filter "__pycache__" -Path "D:\Projects\10- E-COMMERCE W
 
 
 
+**Target**: 
+- run the `backend` and `frontend` and make system product ready but without breaking the $Law$ of `ARCHITECTURE_DIAGRAM.md` which is architecture $Benchmark$
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+**Process**
+- `ARCHITECTURE_DIAGRAM.md` must be read top to bottom becasue it is $Benchmark$.  
+- Perform the complete investigation and inspection of `backend`, `frontend` to under the *problem* to be resolve.
+- Make a pipeline in file to file and line to line to resolve the *problem* which discovered and make the design the solution according to the $Benchmark$ of `ARCHITECTURE_DIAGRAM.md`.
+- Start implemetation of above designed solution to resolve the problem to achieve the target to run the appication.
+- > Do the test and verification at each step after completion, to avoid drifting of Agent and keep aware of the alignment and correction (it is essential).
+- > Do the browser test properly to confrim everything is working 100% correctly.
+- If the taget is not acheived and application is not running successfully then repeat the process.
+- You must have to follow `ARCHITECTURE_DIAGRAM.md` and run the application and resolve all the error and problems.
 
 
 

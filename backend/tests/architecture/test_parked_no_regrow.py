@@ -48,7 +48,6 @@ _KNOWN_PARKED = frozenset({
     "categories_service.py",
     "commerce_coupons_read_service.py",
     "commerce_coupons_write_service.py",
-    "coupons_legacy_write_service.py",
     "customer_coupons_create_service.py",
     "customer_coupons_mgmt_service.py",
     "flash_sale_service.py",

@@ -1,7 +1,7 @@
 """PromotionLedgerEntry model for promotions domain."""
 from __future__ import annotations
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, func
 
 from infrastructure.database.base import Base
 

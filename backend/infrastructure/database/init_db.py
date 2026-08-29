@@ -61,15 +61,15 @@ def main() -> None:
 
     if args.reset:
         if _reset_sqlite_database():
-            print("Reset local SQLite database file.")
+            logger.info("Reset local SQLite database file.")
         else:
-            print("--reset skipped: configured database is not SQLite.")
+            logger.info("--reset skipped: configured database is not SQLite.")
 
     _create_tables()
 
     if args.seed:
         seed_data(SessionLocal)
-        print("Database seed completed successfully.")
+        logger.info("Database seed completed successfully.")
 
 
 if __name__ == "__main__":

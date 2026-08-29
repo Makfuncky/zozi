@@ -151,7 +151,7 @@ def seed_chart_of_accounts(db: Session) -> None:
                 currency=acc.get("currency", "USD"),
                 country_code="OM",
                 is_active=True,
-                display_order=len(db.query(Account).filter(Account.group_id == group.id).all()) + 1,
+                display_order=len(db.query(Account).filter(Account.group_id == group.id).limit(1000).all()) + 1,
             )
             db.add(account)
             logger.info("Created account: %s - %s", acc["code"], acc["name"])

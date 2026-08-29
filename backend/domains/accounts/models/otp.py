@@ -17,7 +17,7 @@ class OtpCode(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     # TODO(migration): governance.users is a cross-domain FK (Law 3). After the User
     # model is migrated into the accounts domain, this must become ``accounts.users.id``.
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     purpose = Column(String(32), nullable=False)  # login | register | password_reset | device_trust
     channel = Column(String(16), nullable=False, default="email")  # email | sms
     # destination is the address the OTP was delivered to — required to deliver/verify.

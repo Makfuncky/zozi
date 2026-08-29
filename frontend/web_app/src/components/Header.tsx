@@ -505,7 +505,7 @@ export default React.memo(function Header() {
     : selectedCountry
     ? `Detected ${selectedCountry}`
     : "Auto detected";
-  const nav: { href: string; labelKey: TranslationKey }[] = [];
+  const nav = isLoggedIn ? CUSTOMER_NAV : GUEST_NAV;
 
   // Panel routes render their own chrome (PanelShell); suppress the global
   // storefront header so it doesn't stack over and block the sidebar.

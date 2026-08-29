@@ -78,3 +78,12 @@ class PredictiveSimulation(Base):
     updated_by_id = Column(Integer, nullable=True, index=True)
     deleted_at = Column(DateTime, nullable=True, index=True)
     deleted_by_id = Column(Integer, nullable=True)
+
+# Backwards-compatible re-export shim: FinancialReport now lives in
+# domains.finance.models.general_ledger (Law 6: one schema per domain).
+def __getattr__(name: str):
+    if name == "FinancialReport":
+        from domains.finance.models.general_ledger import FinancialReport
+        globals()["FinancialReport"] = FinancialReport
+        return FinancialReport
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

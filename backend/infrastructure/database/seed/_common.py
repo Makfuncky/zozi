@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import re
-import warnings
+import secrets
 from decimal import Decimal
 from typing import Any, Callable
 
@@ -35,13 +35,16 @@ def _utcnow():
 def _seed_password(env_key: str) -> str:
     value = os.getenv(env_key)
     if not value:
-        default = "DevSeed123!"
-        warnings.warn(
-            f"Seed password environment variable {env_key} is not set. "
-            f"Using default dev password '{default}'. "
-            "Set it before running seed in production."
+        generated = secrets.token_urlsafe(16)
+        logger.warning(
+            "Seed password environment variable %s is not set. "
+            "Generated a random password: %s . "
+            "Set %s to use a deterministic password.",
+            env_key,
+            generated,
+            env_key,
         )
-        return default
+        return generated
     return value
 
 
@@ -107,7 +110,17 @@ def _filter_model_payload(model: Any, payload: dict[str, object]) -> dict[str, o
 
 
 def _prepare_database_for_seed() -> None:
-    pass
+    """Prepare the database for bulk seed operations.
+
+    For SQLite backends this disables foreign-key enforcement so seed data
+    can be inserted in any order without triggering constraint violations.
+    PostgreSQL handles this via DEFERRABLE constraints in migrations, so
+    this is a no-op there.
+    """
+    if _IS_SQLITE:
+        with engine.connect() as conn:
+            conn.execute(text("PRAGMA foreign_keys=OFF"))
+            logger.info("SQLite foreign keys disabled for seed")
 
 
 def _ensure_demo_supplier_profile(
@@ -323,7 +336,7 @@ def _ensure_demo_pickup_ready_shipment(
     logistics_partner,
     service_area,
 ) -> None:
-    from domains.logistics.ports import quote_shipping_for_destination
+    from infrastructure.database.seed.logistics import quote_shipping_for_destination
     Product = get_model("Product")
     Shipment = get_model("Shipment")
     Order = get_model("Order")
@@ -625,7 +638,7 @@ def _seed_employee_data(db: Session) -> None:
     Office = get_model("Office")
     from infrastructure.utils.auth import get_password_hash
 
-    countries = db.query(CountryConfig).all()
+    countries = db.query(CountryConfig).limit(1000).all()
     if not countries:
         logger.warning("No countries found, skipping employee seeding")
         return

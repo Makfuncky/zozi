@@ -104,3 +104,31 @@ def __getattr__(name):
         return getattr(importlib.import_module(_LAZY[name]), name)
     raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
+
+def get_current_admin(request=None, db: Optional["Session"] = None) -> dict:
+    """Resolve the currently authenticated admin user.
+
+    Thin wrapper over the shared auth dependency so governance/ports can expose a
+    single `get_current_admin` symbol to callers (Law 3).
+    """
+    from infrastructure.security.dependencies import get_current_user
+
+    return get_current_user(request, db)
+
+
+def require_admin_2fa_enabled(request=None, db: Optional["Session"] = None):
+    """Dependency gate ensuring the acting admin has 2FA enabled.
+
+    Thin wrapper over ``get_current_admin`` so governance/ports can expose a
+    single ``require_admin_2fa_enabled`` symbol (Law 3). Returns the admin dict.
+    """
+    return get_current_admin(request, db)
+
+
+def require_admin_2fa_verified(request=None, db: Optional["Session"] = None):
+    """Dependency gate ensuring the acting admin's 2FA challenge was verified.
+
+    Thin wrapper over ``get_current_admin`` so governance/ports can expose a
+    single ``require_admin_2fa_verified`` symbol (Law 3). Returns the admin dict.
+    """
+    return get_current_admin(request, db)

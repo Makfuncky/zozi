@@ -20,7 +20,7 @@ from domains.catalog.services.products.products_service import _bump_product_cac
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
 from domains.catalog.models.products import Product
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 from infrastructure.utils.pagination import paginated_response
 from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context

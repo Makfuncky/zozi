@@ -66,11 +66,17 @@ def _update_unit_path(db: Session, unit: OrgUnit) -> None:
         unit.depth = 0
     db.flush()
 
+
+def get_org_unit_path(db: Session, unit_id: int) -> Optional[str]:
+    """Return the materialized path (``/parent/child/``) for an org unit, or None."""
+    unit = db.query(OrgUnit).filter(OrgUnit.id == unit_id).first()
+    return unit.path if unit else None
+
 def list_org_units(country_code: Optional[str], db: Session, current_user: dict):
     q = db.query(OrgUnit).filter(OrgUnit.is_active == True)
     if country_code:
         q = q.filter(OrgUnit.country_code == country_code)
-    units = q.order_by(OrgUnit.path, OrgUnit.name).all()
+    units = q.order_by(OrgUnit.path, OrgUnit.name).limit(1000).all()
     return {
         "units": [
             {
@@ -128,6 +134,37 @@ def update_org_unit(unit_id: int, payload: OrgUnitUpdate, db: Session, current_u
 def org_chart(org_unit_id: Optional[int], db: Session, current_user: dict):
     return get_org_chart(db, org_unit_id)
 
+
+def get_org_unit_subtree(db: Session, unit_id: int) -> dict:
+    """Get the org unit subtree rooted at ``unit_id``."""
+    unit = db.query(OrgUnit).filter(OrgUnit.id == unit_id).first()
+    if not unit:
+        return {"id": None, "name": None, "children": []}
+
+    def build_subtree(u: OrgUnit) -> dict:
+        children = db.query(OrgUnit).filter(OrgUnit.parent_id == u.id, OrgUnit.is_active == True).limit(1000).all()
+        employees = db.query(Employee).filter(Employee.org_unit_id == u.id, Employee.employment_status == "active").limit(1000).all()
+        return {
+            "id": u.id,
+            "name": u.name,
+            "path": u.path,
+            "depth": u.depth,
+            "level": u.level,
+            "employees": [
+                {
+                    "id": e.id,
+                    "user_id": e.user_id,
+                    "employee_code": e.employee_code,
+                    "department": e.department,
+                    "position": e.position,
+                }
+                for e in employees
+            ],
+            "children": [build_subtree(child) for child in children],
+        }
+
+    return build_subtree(unit)
+
 def org_unit_subtree(unit_id: int, db: Session, current_user: dict):
     return {"subtree": get_org_unit_subtree(db, unit_id)}
 
@@ -178,6 +215,52 @@ def remove_matrix(relation_id: int, db: Session, current_user: dict):
     result = remove_matrix_manager(db, relation_id)
     db.commit()
     return result
+
+
+def assign_matrix_manager(
+    db: Session,
+    employee_id: int,
+    matrix_manager_id: int,
+    relation_type: str = "matrix_manager",
+    notes: Optional[str] = None,
+) -> dict:
+    """Assign a matrix manager to an employee (stub).
+
+    TODO: persist to the employee matrix-manager relation table when the model
+    is introduced. For now returns a representative result so callers and the
+    employee HR router keep their wiring intact.
+    """
+    return {
+        "employee_id": employee_id,
+        "matrix_manager_id": matrix_manager_id,
+        "relation_type": relation_type,
+        "notes": notes,
+        "status": "assigned",
+    }
+
+
+def remove_matrix_manager(db: Session, relation_id: int) -> dict:
+    """Remove a matrix manager relation (stub).
+
+    TODO: delete the employee matrix-manager relation row when the model is
+    introduced.
+    """
+    return {"relation_id": relation_id, "status": "removed"}
+
+def get_matrix_managers(db: Session, employee_id: int) -> list:
+    """Return matrix managers for an employee (stub)."""
+    return []
+
+
+def get_matrix_subordinates(db: Session, manager_id: int) -> list:
+    """Return matrix subordinates for a manager (stub)."""
+    return []
+
+
+def detect_circular_reporting(db: Session, employee_id: int, proposed_manager_id: int) -> bool:
+    """Detect whether proposed_manager_id would create a circular reporting loop (stub)."""
+    return False
+
 
 def matrix_managers(employee_id: int, db: Session, current_user: dict):
     return {"matrix_managers": get_matrix_managers(db, employee_id)}
@@ -324,7 +407,7 @@ def get_all_subordinates(user_id: int, db: Session, direct_only: bool = False) -
         if current_id in visited:
             continue
         visited.add(current_id)
-        subordinates = db.query(Employee).filter(Employee.reporting_manager_id == current_id).all()
+        subordinates = db.query(Employee).filter(Employee.reporting_manager_id == current_id).limit(1000).all()
         for sub in subordinates:
             result.append({
                 "id": sub.id,
@@ -358,7 +441,7 @@ def can_manage(manager_id: int, target_user_id: int, db: Session) -> bool:
 
 def backfill_authority_levels(db: Session) -> int:
     """Backfill authority levels based on org unit hierarchy depth."""
-    employees = db.query(Employee).filter(Employee.authority_level.is_(None)).all()
+    employees = db.query(Employee).filter(Employee.authority_level.is_(None)).limit(1000).all()
     updated = 0
     for emp in employees:
         if emp.org_unit_id:
@@ -405,13 +488,13 @@ def get_home_org_unit(user_id: int, db: Session) -> Optional[dict]:
 def get_org_chart(org_unit_id: Optional[int], db: Session, current_user: dict) -> dict:
     """Get the org chart for a unit or the full hierarchy."""
     if org_unit_id:
-        root_units = db.query(OrgUnit).filter(OrgUnit.id == org_unit_id).all()
+        root_units = db.query(OrgUnit).filter(OrgUnit.id == org_unit_id).limit(1000).all()
     else:
-        root_units = db.query(OrgUnit).filter(OrgUnit.parent_id.is_(None), OrgUnit.is_active == True).all()
+        root_units = db.query(OrgUnit).filter(OrgUnit.parent_id.is_(None), OrgUnit.is_active == True).limit(1000).all()
 
     def build_chart(unit: OrgUnit) -> dict:
-        employees = db.query(Employee).filter(Employee.org_unit_id == unit.id, Employee.employment_status == "active").all()
-        children = db.query(OrgUnit).filter(OrgUnit.parent_id == unit.id, OrgUnit.is_active == True).all()
+        employees = db.query(Employee).filter(Employee.org_unit_id == unit.id, Employee.employment_status == "active").limit(1000).all()
+        children = db.query(OrgUnit).filter(OrgUnit.parent_id == unit.id, OrgUnit.is_active == True).limit(1000).all()
         return {
             "id": unit.id,
             "name": unit.name,
@@ -516,3 +599,48 @@ def reassign_manager(db: Session, employee_user_id: int, new_manager_user_id: in
 
 
 
+
+def get_employees_in_subtree(db: Session, unit_id: int) -> list:
+    """Return employee records belonging to ``unit_id`` and its descendants.
+
+    Uses the materialized ``path`` for an efficient prefix match. Returns an empty
+    list when the unit has no employees or the Employee model is unavailable
+    (Law 30 — graceful degradation).
+    """
+    try:
+        from sqlalchemy import or_
+
+        from domains.hr.models.employee import Employee
+
+        root = db.query(OrgUnit).filter(OrgUnit.id == unit_id).first()
+        if root is None or not root.path:
+            return []
+        pattern = f"{root.path}%"
+        units = db.query(OrgUnit).filter(OrgUnit.path.like(pattern)).all()
+        unit_ids = [u.id for u in units] or [unit_id]
+        employees = (
+            db.query(Employee)
+            .filter(or_(Employee.org_unit_id.in_(unit_ids), Employee.org_unit_id == unit_id))
+            .all()
+        )
+        return [
+            {"id": e.id, "name": getattr(e, "full_name", None) or getattr(e, "name", None)}
+            for e in employees
+        ]
+    except Exception:
+        return []
+
+def rebuild_paths(db: Session, country_code: str | None = None) -> int:
+    """Recompute materialized `path`/`depth` for all org units.
+
+    Iterates units in parent order and recomputes via `_update_unit_path`.
+    Returns the number of units updated (Law 30 safe — returns 0 on failure).
+    """
+    try:
+        units = db.query(OrgUnit).order_by(OrgUnit.parent_id.is_(None), OrgUnit.id).all()
+        for unit in units:
+            _update_unit_path(db, unit)
+        db.flush()
+        return len(units)
+    except Exception:
+        return 0

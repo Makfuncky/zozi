@@ -59,7 +59,7 @@ def _get_model(name: str):
 
 def list_categories(db: Session) -> list[dict]:
     PermissionCategory = _get_model("PermissionCategory")
-    categories = db.query(PermissionCategory).order_by(PermissionCategory.sort_order).all()
+    categories = db.query(PermissionCategory).order_by(PermissionCategory.sort_order).limit(1000).all()
     return [
         {
             "id": c.id,
@@ -136,7 +136,7 @@ def list_permissions(db: Session, category_id: Optional[int] = None) -> list[dic
     q = db.query(Permission)
     if category_id:
         q = q.filter(Permission.category_id == category_id)
-    permissions = q.order_by(Permission.id).all()
+    permissions = q.order_by(Permission.id).limit(1000).all()
     return [
         {
             "id": p.id,

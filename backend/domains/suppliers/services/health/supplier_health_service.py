@@ -35,7 +35,7 @@ def list_supplier_health_for_admin(db: Session, current_user: dict, country_code
     """Admin-only enumeration of supplier health/trust scores."""
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    profiles = db.query(SupplierProfile).all()
+    profiles = db.query(SupplierProfile).limit(1000).all()
     results = []
     for p in profiles:
         engine = _get_health_engine(db)

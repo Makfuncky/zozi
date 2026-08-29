@@ -12,6 +12,7 @@ import math
 from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 
+import cachetools
 from redis.exceptions import ConnectionError, ResponseError
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
@@ -26,7 +27,7 @@ from domains.security.models.fraud import IPReputation
 from domains.security.models.fraud import DeviceFingerprint
 from domains.security.models.fraud import CreditCardBin
 from domains.security.models.fraud import ReturnAbusePattern
-from domains.security.models.fraud import SupplierFraudIndicator
+from domains.suppliers.models.fraud_indicators import SupplierFraudIndicator
 from domains.security.models.fraud import LogisticsFraudIndicator
 from domains.security.models.fraud import FraudAlert
 from domains.security.models.fraud import IPAccountLinkage
@@ -72,8 +73,8 @@ class IPIntelligenceService:
     def __init__(self, db: Session, redis_client: Optional[Any] = None):
         self.db = db
         self.redis = redis_client or get_redis()
-        self._asn_cache: dict[str, dict[str, Any]] = {}
-        self._geo_cache: dict[str, dict[str, Any]] = {}
+        self._asn_cache: dict[str, dict[str, Any]] = cachetools.TTLCache(maxsize=1000, ttl=300)
+        self._geo_cache: dict[str, dict[str, Any]] = cachetools.TTLCache(maxsize=1000, ttl=300)
     
     def check_ip_reputation(self, ip_address: str) -> dict[str, Any]:
         """Check if IP is in threat feeds or known proxy/VPN ranges."""

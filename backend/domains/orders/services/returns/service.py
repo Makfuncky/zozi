@@ -583,7 +583,7 @@ def list_supplier_return_requests(
         query = query.offset(offset)
     if limit is not None:
         query = query.limit(limit)
-    requests = query.all()
+    requests = query.limit(1000).all()
     queue_items: list[dict[str, Any]] = []
     for req in requests:
         serialized = _serialize_supplier_return_request(req, supplier_id)

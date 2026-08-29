@@ -109,6 +109,18 @@ def publish_ai_upload_job(db: Session, job_id: int) -> dict[str, Any]:
         .filter(AIStagingProduct.job_id == job_id)
         .all()
     )
+    # Batch-load all variants outside the loop to avoid N+1 queries
+    staging_ids = [row.id for row in staging]
+    variants_by_product: dict[int, list[AIStagingVariant]] = {}
+    if staging_ids:
+        all_variants = (
+            db.query(AIStagingVariant)
+            .filter(AIStagingVariant.staging_product_id.in_(staging_ids))
+            .all()
+        )
+        for v in all_variants:
+            variants_by_product.setdefault(v.staging_product_id, []).append(v)
+
     promoted = 0
     for row in staging:
         product = Product(
@@ -123,7 +135,7 @@ def publish_ai_upload_job(db: Session, job_id: int) -> dict[str, Any]:
         )
         db.add(product)
         db.flush()
-        for v in db.query(AIStagingVariant).filter(AIStagingVariant.staging_product_id == row.id).all():
+        for v in variants_by_product.get(row.id, []):
             db.add(ProductVariant(
                 product_id=product.id,
                 sku=v.sku,

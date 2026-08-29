@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
-from domains.governance.models.admin import CouponUsage
+from domains.promotions.models.coupon_usage import CouponUsage
 from domains.promotions.models.promotions import Coupon
 from domains.catalog.models.products import Product
 from domains.audit.ports import AuditAction, audit_log

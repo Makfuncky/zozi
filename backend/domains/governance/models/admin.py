@@ -8,19 +8,27 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
+# Supplier/LP bank accounts relocated to the accounts domain
+# (domains/accounts/models/banking.py). Re-exported here so governance.ports
+# import sites remain unchanged (Law 3 sanctioned re-export).
+from domains.accounts.models.banking import (  # noqa: E402,F401
+    SupplierBankAccount,
+    LogisticsPartnerBankAccount,
+)
+
 __all__ = [
     "AdminAnalyticsSnapshot", "RolePermissionSetting", "SystemAlert", "AdminChangeAuditLog",
     "AdminActivityLog", "SystemSetting", "APIKey",
     "BadgeBillingRecord", "BadgeTransaction", "BadgeTier",
     "CommissionBadgeTier", "CommissionGlobalConfig",
-    "TicketReply", "CouponUsage", "PaymentProviderConfig",
+    "TicketReply", "PaymentProviderConfig",
     "EmailProviderConfig", "ShippingCarrier", "ShippingZone", "FinanceBankAccount",
-    "PromotionEngineConfig", "PromotionLedgerEntry", "PromotionOrderTier",
-    "LogisticsCODRemittanceReceipt", "LogisticsPartnerBankAccount",
+    "PromotionOrderTier",
+    "LogisticsCODRemittanceReceipt",
     "LogisticsPartnerDocument", "LogisticsSettlement", "ShipmentConfirmation",
     "ChatbotQueryEvent", "PushNotificationToken",
-    "ProductVerification", "SupplierBankAccount",
-    "ProcessedWebhookEvent", "NormalizedWebhookEvent", "SupplierDispute", "SupplierCountryCommission",
+    "ProductVerification",
+    "ProcessedWebhookEvent", "NormalizedWebhookEvent", "SupplierCountryCommission",
     "EmployeeExpense", "RetentionJobRun"
 ]
 
@@ -63,7 +71,7 @@ class SystemAlert(Base):
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
     is_acknowledged = Column(Boolean, default=False)
-    acknowledged_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    acknowledged_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
@@ -75,7 +83,7 @@ class AdminChangeAuditLog(Base):
     __tablename__ = "admin_change_audit_logs"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    admin_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
+    admin_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     action = Column(String(255), nullable=False)
     entity = Column(String(255), nullable=False)
     entity_key = Column(String(255), nullable=True)
@@ -94,7 +102,7 @@ class AdminActivityLog(Base):
     __tablename__ = "admin_activity_logs"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    admin_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
+    admin_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     action = Column(String(255), nullable=False)
     details = Column(JSON, nullable=True)
     ip_address = Column(String(255), nullable=True)
@@ -127,7 +135,7 @@ class APIKey(Base):
     permissions = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
     expires_at = Column(DateTime, nullable=True)
-    created_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -138,8 +146,8 @@ class BadgeBillingRecord(Base):
     __tablename__ = "badge_billing_records"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     billing_reference = Column(String(255), unique=True, nullable=True)
     badge_level = Column(String(50), nullable=True)
     charge_type = Column(String(255), nullable=True)
@@ -162,13 +170,14 @@ class BadgeBillingRecord(Base):
     country_code = Column(String(2), nullable=True, index=True)
     supplier = relationship("User", foreign_keys=[supplier_id], backref="badge_billing_records")
     bank_transaction = relationship("BankTransaction", backref="badge_billing_records")
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
 
 
 class BadgeTransaction(Base):
     __tablename__ = "badge_transactions"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     transaction_type = Column(String(255), nullable=False)
     reference_id = Column(String(255), nullable=True)
@@ -206,7 +215,8 @@ class CommissionBadgeTier(Base):
     min_monthly_revenue = Column(Numeric(15, 2), nullable=True)
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -222,7 +232,8 @@ class CommissionGlobalConfig(Base):
     fixed_cap_enabled = Column(Boolean, default=True)
     margin_protection_enabled = Column(Boolean, default=False)
     margin_threshold = Column(Numeric(5, 4), default=Decimal("0.10"))
-    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
@@ -232,29 +243,13 @@ class TicketReply(Base):
     __tablename__ = "ticket_replies"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    ticket_id = Column(Integer, ForeignKey("governance.support_tickets.id", ondelete="SET NULL"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
+    ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id", ondelete="SET NULL"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     message = Column(Text, nullable=False)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
-
-
-class CouponUsage(Base):
-    __tablename__ = "coupon_usages"
-    __table_args__ = ({"schema": "governance"},)
-    id = Column(Integer, primary_key=True, index=True)
-    coupon_id = Column(Integer, ForeignKey("commerce.coupons.id", ondelete="SET NULL"), nullable=False)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="SET NULL"), nullable=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True, index=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-
-    coupon = relationship("Coupon", backref="usages")
-    user = relationship("User", foreign_keys=[user_id], backref="coupon_usages")
-    order = relationship("Order", foreign_keys=[order_id], backref="coupon_usages")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
 
 
 class PaymentProviderConfig(Base):
@@ -264,7 +259,8 @@ class PaymentProviderConfig(Base):
     provider_name = Column(String(255), nullable=False)
     config = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -276,7 +272,7 @@ class EmailProviderConfig(Base):
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
-    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     email_from_default = Column(String(255), nullable=True)
@@ -296,6 +292,7 @@ class EmailProviderConfig(Base):
     smtp_use_tls = Column(Boolean, default=True)
     smtp_use_ssl = Column(Boolean, default=False)
     smtp_timeout_seconds = Column(Integer, default=10)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
 
 
@@ -303,10 +300,11 @@ class ShippingCarrier(Base):
     __tablename__ = "shipping_carriers"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     code = Column(String(255), unique=True, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -316,10 +314,11 @@ class ShippingZone(Base):
     __tablename__ = "shipping_zones"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     countries = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -344,53 +343,9 @@ class FinanceBankAccount(Base):
     instructions = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     scope = Column(String(255), nullable=True, default="zozi_primary")
-    created_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(2), nullable=True, index=True)
-
-
-class PromotionEngineConfig(Base):
-    __tablename__ = "promotion_engine_configs"
-    __table_args__ = ({"schema": "governance"},)
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True, index=True)
-    engine_enabled = Column(Boolean, default=False)
-    allow_product_coupons = Column(Boolean, default=True)
-    allow_category_coupons = Column(Boolean, default=True)
-    allow_order_tier_discounts = Column(Boolean, default=True)
-    allow_referral_rewards = Column(Boolean, default=True)
-    allow_supplier_promotions = Column(Boolean, default=True)
-    allow_global_coupons = Column(Boolean, default=True)
-    stacking_mode = Column(String(255), default="best_only")
-    max_combined_discount_percent = Column(Numeric(5, 2), default=Decimal("50.00"))
-    max_combined_discount_amount = Column(Numeric(12, 3), default=Decimal("0.000"))
-    show_savings_line_item = Column(Boolean, default=True)
-    tier_discount_visible = Column(Boolean, default=True)
-    points_per_omr = Column(Integer, default=1000)
-    referral_referrer_points = Column(Integer, default=100)
-    referral_referee_points = Column(Integer, default=100)
-    points_expiry_months = Column(Integer, default=12)
-    referral_monthly_cap = Column(Integer, default=20)
-    referral_verification_delay_days = Column(Integer, default=7)
-    min_points_redeem = Column(Integer, default=1000)
-    allow_partial_points_redemption = Column(Boolean, default=True)
-    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-
-    country = relationship("CountryConfig", foreign_keys=[country_code])
-
-
-class PromotionLedgerEntry(Base):
-    __tablename__ = "promotion_ledger_entries"
-    __table_args__ = ({"schema": "governance"},)
-    id = Column(Integer, primary_key=True, index=True)
-    promotion_id = Column(Integer, nullable=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    amount = Column(Numeric(12, 2), nullable=False)
-    entry_type = Column(String(255), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -410,7 +365,8 @@ class PromotionOrderTier(Base):
     stacking_allowed = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, nullable=True)
-    updated_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -422,17 +378,18 @@ class LogisticsCODRemittanceReceipt(Base):
     __tablename__ = "logistics_cod_remittance_receipts"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    partner_id = Column(Integer, ForeignKey("governance.logistics_partners.id", ondelete="SET NULL"), nullable=True)
-    shipment_id = Column(Integer, ForeignKey("governance.shipments.id", ondelete="SET NULL"), nullable=True)
+    partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete="SET NULL"), nullable=True)
+    shipment_id = Column(Integer, ForeignKey("logistics.shipments.id", ondelete="SET NULL"), nullable=True)
     settlement_id = Column(Integer, ForeignKey("governance.logistics_settlements.id", ondelete="SET NULL"), nullable=True)
     amount = Column(Numeric(12, 2), nullable=False)
     bank_reference = Column(String(255), nullable=True)
     receipt_file_url = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
     review_note = Column(Text, nullable=True)
-    reviewed_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     status = Column(String(255), default="pending")
     currency = Column(String(3), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -440,44 +397,17 @@ class LogisticsCODRemittanceReceipt(Base):
     partner = relationship("LogisticsPartner", foreign_keys=[partner_id])
 
 
-class LogisticsPartnerBankAccount(Base):
-    __tablename__ = "logistics_partner_bank_accounts"
-    __table_args__ = ({"schema": "governance"},)
-    id = Column(Integer, primary_key=True, index=True)
-    partner_id = Column(Integer, ForeignKey("governance.logistics_partners.id", ondelete="SET NULL"), nullable=False)
-    account_number = Column(String(255), nullable=True)
-    bank_name = Column(String(255), nullable=False)
-    beneficiary_name = Column(String(255), nullable=True)
-    branch_name = Column(String(255), nullable=True)
-    iban = Column(String(255), nullable=True)
-    swift_code = Column(String(255), nullable=True)
-    routing_number = Column(String(255), nullable=True)
-    currency = Column(String(3), nullable=True)
-    bank_country = Column(String(3), nullable=True)
-    verification_status = Column(String(255), default="pending")
-    verification_note = Column(Text, nullable=True)
-    provider = Column(String(255), nullable=True)
-    provider_recipient_id = Column(String(255), nullable=True)
-    provider_status = Column(String(255), nullable=True)
-    provider_last_synced_at = Column(DateTime, nullable=True)
-    verified_at = Column(DateTime, nullable=True)
-    verified_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(2), nullable=True, index=True)
-
-
 class LogisticsPartnerDocument(Base):
     __tablename__ = "logistics_partner_documents"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    partner_id = Column(Integer, ForeignKey("governance.logistics_partners.id", ondelete="SET NULL"), nullable=False)
+    partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete="SET NULL"), nullable=False)
     doc_type = Column(String(255), nullable=False)
     file_url = Column(String(255), nullable=False)
-    reviewed_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     is_verified = Column(Boolean, default=False)
     verified_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -487,10 +417,10 @@ class LogisticsSettlement(Base):
     __tablename__ = "logistics_settlements"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    partner_id = Column(Integer, ForeignKey("governance.logistics_partners.id", ondelete="SET NULL"), nullable=False)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="SET NULL"), nullable=True)
+    partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete="SET NULL"), nullable=False)
+    order_id = Column(Integer, ForeignKey("orders.orders.id", ondelete="SET NULL"), nullable=True)
     ledger_id = Column(Integer, nullable=True)
-    shipment_id = Column(Integer, ForeignKey("governance.shipments.id", ondelete="SET NULL"), nullable=True)
+    shipment_id = Column(Integer, ForeignKey("logistics.shipments.id", ondelete="SET NULL"), nullable=True)
     amount = Column(Numeric(12, 2), nullable=True)
     pickup_charge = Column(Numeric(12, 2), nullable=True)
     dropoff_charge = Column(Numeric(12, 2), nullable=True)
@@ -502,7 +432,8 @@ class LogisticsSettlement(Base):
     eligible_at = Column(DateTime, nullable=True)
     status = Column(String(255), default="pending")
     currency = Column(String(3), nullable=True)
-    payout_id = Column(Integer, ForeignKey("treasury.payouts.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    payout_id = Column(Integer, ForeignKey("finance.payouts.id", ondelete="SET NULL"), nullable=True)
     bank_transaction_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -513,12 +444,12 @@ class ShipmentConfirmation(Base):
     __tablename__ = "shipment_confirmations"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey("governance.shipments.id", ondelete="SET NULL"), nullable=False)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="SET NULL"), nullable=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    requester_user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    shipment_id = Column(Integer, ForeignKey("logistics.shipments.id", ondelete="SET NULL"), nullable=False)
+    order_id = Column(Integer, ForeignKey("orders.orders.id", ondelete="SET NULL"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    requester_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     requester_role = Column(String(255), nullable=True)
-    target_user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    target_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     target_role = Column(String(255), nullable=True)
     confirmation_type = Column(String(255), nullable=True)
     status = Column(String(255), default="pending")
@@ -534,6 +465,7 @@ class ShipmentConfirmation(Base):
     delivery_signature_data_url = Column(String(255), nullable=True)
     delivery_signature_captured_at = Column(DateTime, nullable=True)
     response_notes = Column(Text, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -553,7 +485,7 @@ class ChatbotQueryEvent(Base):
         Index("ix_chatbot_events_session_id", "session_id"), {"schema": "governance"})
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     session_id = Column(String(64), nullable=False)
     event_type = Column(String(30), nullable=False, server_default="query")
     message = Column(Text, nullable=True)
@@ -562,7 +494,7 @@ class ChatbotQueryEvent(Base):
     filters_json = Column(Text, nullable=True)
     result_count = Column(Integer, nullable=False, server_default="0")
     product_ids_json = Column(Text, nullable=True)
-    clicked_product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete="SET NULL"), nullable=True)
+    clicked_product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete="SET NULL"), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -577,7 +509,7 @@ class PushNotificationToken(Base):
     __tablename__ = "push_notification_tokens"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     token = Column(String(255), nullable=False)
     device_type = Column(String(255), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -590,10 +522,10 @@ class ProductVerification(Base):
     __tablename__ = "product_verifications"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete="SET NULL"), nullable=False)
+    product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete="SET NULL"), nullable=False)
     status = Column(String(255), default="pending")
-    verified_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    shipment_id = Column(Integer, ForeignKey("governance.shipments.id", ondelete="SET NULL"), nullable=True)
+    verified_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    shipment_id = Column(Integer, ForeignKey("logistics.shipments.id", ondelete="SET NULL"), nullable=True)
     verification_type = Column(String(255), nullable=True)
     result = Column(String(255), nullable=True)
     expected_specs = Column(Text, nullable=True)
@@ -604,36 +536,8 @@ class ProductVerification(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="SET NULL"), nullable=True)
+    order_id = Column(Integer, ForeignKey("orders.orders.id", ondelete="SET NULL"), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), nullable=True, index=True)
-
-
-class SupplierBankAccount(Base):
-    __tablename__ = "supplier_bank_accounts"
-    __table_args__ = ({"schema": "governance"},)
-    id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
-    account_number = Column(String(255), nullable=True)
-    bank_name = Column(String(255), nullable=False)
-    beneficiary_name = Column(String(255), nullable=True)
-    branch_name = Column(String(255), nullable=True)
-    iban = Column(String(255), nullable=True)
-    swift_code = Column(String(255), nullable=True)
-    routing_number = Column(String(255), nullable=True)
-    currency = Column(String(3), nullable=True)
-    bank_country = Column(String(3), nullable=True)
-    verification_status = Column(String(255), default="pending")
-    verification_note = Column(Text, nullable=True)
-    provider = Column(String(255), nullable=True)
-    provider_recipient_id = Column(String(255), nullable=True)
-    provider_status = Column(String(255), nullable=True)
-    provider_last_synced_at = Column(DateTime, nullable=True)
-    verified_at = Column(DateTime, nullable=True)
-    verified_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
 
 
@@ -692,12 +596,12 @@ class EmployeeExpense(Base):
     __tablename__ = "employee_expenses"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("governance.employees.id", ondelete="SET NULL"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="SET NULL"), nullable=False, index=True)
     expense_type = Column(String(50), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(20), default="pending")
-    approved_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
+    approved_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     receipt_url = Column(String(500), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -708,46 +612,17 @@ class EmployeeExpense(Base):
     approver = relationship("User", foreign_keys=[approved_by_id], backref="employee_expense_approvals")
 
 
-class SupplierDispute(Base):
-    __tablename__ = "supplier_disputes"
-    __table_args__ = ({"schema": "governance"},)
-    id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="SET NULL"), nullable=True)
-    dispute_type = Column(String(40), default="other")
-    priority = Column(String(20), default="medium")
-    title = Column(String(200), nullable=True)
-    description = Column(Text, nullable=True)
-    return_request_id = Column(Integer, ForeignKey("commerce.return_requests.id", ondelete="SET NULL"), nullable=True)
-    verification_id = Column(Integer, nullable=True)
-    invoice_id = Column(Integer, nullable=True)
-    related_order_id = Column(Integer, nullable=True)
-    evidence_urls = Column(JSON, nullable=True)
-    metadata_json = Column(JSON, nullable=True)
-    supplier_notes = Column(Text, nullable=True)
-    admin_notes = Column(Text, nullable=True)
-    created_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    reason = Column(Text, nullable=True)
-    status = Column(String(255), default="open")
-    resolved_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
-    resolved_at = Column(DateTime, nullable=True)
-    resolution_notes = Column(Text, nullable=True)
-    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(2), nullable=True, index=True)
-
-
 class SupplierCountryCommission(Base):
     __tablename__ = "supplier_country_commissions"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     country_code = Column(String(2), nullable=False)
     commission_rate = Column(Numeric(5, 2), nullable=False)
     category_slug = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 

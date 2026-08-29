@@ -225,7 +225,7 @@ def get_order_by_payment_intent_or_id(
 
 def get_order_items_by_order_id(db: Session, order_id: int) -> List[OrderItem]:
     """Return every OrderItem belonging to ``order_id``."""
-    return db.query(OrderItem).filter(OrderItem.order_id == order_id).all()
+    return db.query(OrderItem).filter(OrderItem.order_id == order_id).limit(1000).all()
 
 
 def get_order_item_by_order_id(db: Session, order_id: int) -> Optional[OrderItem]:
@@ -237,7 +237,7 @@ def get_return_requests_by_order_id(
     db: Session, order_id: int
 ) -> List[ReturnRequest]:
     """Return every ReturnRequest belonging to ``order_id``."""
-    return db.query(ReturnRequest).filter(ReturnRequest.order_id == order_id).all()
+    return db.query(ReturnRequest).filter(ReturnRequest.order_id == order_id).limit(1000).all()
 
 
 def count_orders(
@@ -309,6 +309,7 @@ def list_orders_by_supplier(db: Session, supplier_id: object) -> List[Order]:
         .join(OrderItem)
         .filter(OrderItem.supplier_id == supplier_id)
         .distinct()
+        .limit(1000)
         .all()
     )
 
@@ -321,6 +322,7 @@ def list_supplier_order_ids(db: Session, supplier_id: object) -> List[int]:
         .join(OrderItem)
         .filter(OrderItem.supplier_id == supplier_id)
         .distinct()
+        .limit(1000)
         .all()
     ]
 
@@ -345,6 +347,7 @@ def get_supplier_order_items(
     return (
         db.query(OrderItem)
         .filter(OrderItem.order_id == order_id, OrderItem.supplier_id == supplier_id)
+        .limit(1000)
         .all()
     )
 
@@ -374,6 +377,7 @@ def get_supplier_order_items_for_verify(
             OrderItem.order_id == order_id,
             OrderItem.product.has(supplier_id=user_id),
         )
+        .limit(1000)
         .all()
     )
 
@@ -385,7 +389,8 @@ def count_orders_by_supplier(db: Session, supplier_id: object) -> int:
         .join(OrderItem)
         .filter(OrderItem.supplier_id == supplier_id)
         .distinct()
-        .count()
+        .limit(1000)
+        .all()
     )
 
 
@@ -428,6 +433,7 @@ def get_supplier_order_summaries(
         .join(OrderItem)
         .filter(OrderItem.supplier_id == supplier_id)
         .distinct()
+        .limit(1000)
         .all()
     )
 
@@ -476,6 +482,7 @@ def get_orders_eager_by_ids(db: Session, order_ids: List[int]) -> List[Order]:
         db.query(Order)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.id.in_(order_ids))
+        .limit(1000)
         .all()
     )
 
@@ -531,7 +538,7 @@ def supplier_revenue_by_date(
     )
     if end is not None:
         q = q.filter(Order.created_at < end)
-    return q.group_by(func.date(Order.created_at)).all()
+    return q.group_by(func.date(Order.created_at)).limit(1000).all()
 
 
 def get_top_selling_products_for_supplier(
@@ -553,7 +560,7 @@ def get_top_selling_products_for_supplier(
         .filter(Product.supplier_id == supplier_id, Order.created_at >= start)
         .group_by(Product.id, Product.name, Product.image_url)
         .order_by(func.sum(OrderItem.price * OrderItem.quantity).desc())
-        .limit(limit)
+        .limit(min(limit, 1000))
         .all()
     )
 
@@ -614,7 +621,7 @@ def revenue_by_date_for_products(
     )
     if statuses:
         q = q.filter(Order.status.in_(statuses))
-    return q.group_by(func.date(Order.created_at)).order_by(func.date(Order.created_at)).all()
+    return q.group_by(func.date(Order.created_at)).order_by(func.date(Order.created_at)).limit(1000).all()
 
 
 def count_distinct_customers_for_products(
@@ -660,7 +667,7 @@ def top_products_for_supplier_reports(
     return (
         q.group_by(Product.id, Product.name, Product.image_url)
         .order_by(func.sum(OrderItem.price * OrderItem.quantity).desc())
-        .limit(limit)
+        .limit(min(limit, 1000))
         .all()
     )
 
@@ -732,6 +739,7 @@ def order_item_sales_by_products(db: Session, product_ids: List[int]) -> List:
         )
         .filter(OrderItem.product_id.in_(product_ids))
         .group_by(OrderItem.product_id)
+        .limit(1000)
         .all()
     )
 
@@ -788,7 +796,7 @@ def list_orders_for_ids_in_range(
     )
     if country_code:
         q = q.filter(Order.shipping_country == country_code)
-    return q.all()
+    return q.limit(1000).all()
 
 
 def count_returns_for_order_ids(db: Session, order_ids: List[int]) -> int:
@@ -879,6 +887,8 @@ def list_orders_by_user(
         q = q.order_by(Order.created_at.desc())
     if limit is not None:
         q = q.limit(limit)
+    else:
+        q = q.limit(1000)
     return q.all()
 
 
@@ -914,7 +924,7 @@ def list_return_requests_by_user(
         q = q.filter(ReturnRequest.created_at >= created_ge)
     if created_le is not None:
         q = q.filter(ReturnRequest.created_at <= created_le)
-    return q.all()
+    return q.limit(1000).all()
 
 
 def count_return_requests_for_user(db: Session, user_id: object) -> int:
@@ -928,7 +938,7 @@ def list_return_requests_by_order_ids(
     """Return ReturnRequests whose ``order_id`` is in ``order_ids``."""
     if not order_ids:
         return []
-    return db.query(ReturnRequest).filter(ReturnRequest.order_id.in_(order_ids)).all()
+    return db.query(ReturnRequest).filter(ReturnRequest.order_id.in_(order_ids)).limit(1000).all()
 
 
 def get_order_by_id_eager_items(db: Session, id_: int) -> Optional[Order]:
@@ -975,7 +985,7 @@ def list_orders_by_ids(
         q = q.options(*opts)
     if ordered_by_id:
         q = q.order_by(Order.id)
-    return q.all()
+    return q.limit(1000).all()
 
 
 def list_all_orders_ordered_by_id(
@@ -990,6 +1000,8 @@ def list_all_orders_ordered_by_id(
         q = q.filter(Order.country_code == country_code)
     if limit is not None:
         q = q.limit(limit)
+    else:
+        q = q.limit(1000)
     return q.all()
 
 
@@ -1013,7 +1025,7 @@ def list_orders_for_product(
         q = q.filter(Order.status.in_(list(statuses)))
     if eager_items:
         q = q.options(selectinload(Order.items).selectinload(OrderItem.product))
-    return q.distinct().all()
+    return q.distinct().limit(1000).all()
 
 
 def list_order_logistics_allocations_by_order_id(
@@ -1023,6 +1035,7 @@ def list_order_logistics_allocations_by_order_id(
     return (
         db.query(OrderLogisticsAllocation)
         .filter(OrderLogisticsAllocation.order_id == order_id)
+        .limit(1000)
         .all()
     )
 
@@ -1036,6 +1049,7 @@ def list_order_logistics_allocations_for_order_ids(
     return (
         db.query(OrderLogisticsAllocation)
         .filter(OrderLogisticsAllocation.order_id.in_(order_ids))
+        .limit(1000)
         .all()
     )
 
@@ -1043,6 +1057,7 @@ def list_order_logistics_allocations_for_order_ids(
 def order_logistics_allocations_query(db: Session, **filters: object) -> object:
     """Return a base ``OrderLogisticsAllocation`` query, optionally equality-filtered.
 
+    .limit(1000)
     Callers chain their own ``.order_by()`` / ``.first()`` / ``.all()`` so behaviour
     stays identical to the previous inline ``db.query(OrderLogisticsAllocation)``.
     """
@@ -1093,6 +1108,7 @@ def list_user_purchased_product_ids(db: Session, user_id: object) -> List[int]:
         .join(Order, Order.id == OrderItem.order_id)
         .filter(Order.user_id == user_id)
         .distinct()
+        .limit(1000)
         .all()
     ]
 
@@ -1112,6 +1128,7 @@ def user_category_purchase_units(db: Session, user_id: object) -> List:
         .filter(Order.user_id == user_id)
         .group_by(Product.category)
         .order_by(desc(func.sum(OrderItem.quantity)))
+        .limit(1000)
         .all()
     )
 
@@ -1159,7 +1176,7 @@ def user_collaborative_category_boosts(
             Product.is_approved == True,  # noqa: E712
         )
         .group_by(Product.category)
-        .limit(rows_limit)
+        .limit(min(rows_limit, 1000))
         .all()
     )
 
@@ -1300,6 +1317,8 @@ def list_recent_orders_for_user(
     q = db.query(Order).filter(Order.user_id == user_id, Order.created_at >= since)
     if limit is not None:
         q = q.limit(limit)
+    else:
+        q = q.limit(1000)
     return q.all()
 
 
@@ -1314,6 +1333,7 @@ def list_recent_payout_orders_for_user(
             Order.payment_method == "payout",
             Order.created_at >= since,
         )
+        .limit(1000)
         .all()
     )
 
@@ -1329,6 +1349,7 @@ def list_order_item_order_ids_for_products(
         for row in db.query(OrderItem.order_id)
         .filter(OrderItem.product_id.in_(product_ids))
         .distinct()
+        .limit(1000)
         .all()
     ]
 
@@ -1375,6 +1396,7 @@ def list_orders_for_shipping(
         for row in db.query(Order.id)
         .filter(Order.id.in_(order_ids), Order.status.in_(list(statuses)))
         .order_by(Order.created_at)
+        .limit(1000)
         .all()
     ]
     if exclude_ids:
@@ -1388,6 +1410,7 @@ def list_orders_for_shipping(
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.id.in_(chunk))
         .order_by(Order.created_at)
+        .limit(1000)
         .all()
     )
 
@@ -1409,7 +1432,7 @@ def list_orders_by_payment_status_invoice(
         q = q.filter(Order.invoice_id.is_(None))
     if country_code:
         q = q.filter(Order.country_code == country_code)
-    return q.all()
+    return q.limit(1000).all()
 
 
 def has_verified_purchase(db: Session, user_id: object, product_id: object) -> bool:
@@ -1435,6 +1458,7 @@ def list_orders_affected_by_product(
         db.query(Order)
         .join(OrderItem, OrderItem.order_id == Order.id)
         .filter(OrderItem.product_id == product_id, Order.status.in_(list(statuses)))
+        .limit(1000)
         .all()
     )
 
@@ -1447,7 +1471,7 @@ def list_orders_cod_delivered(db: Session, *, country_code: object = None) -> Li
     )
     if country_code:
         q = q.filter(Order.country_code == country_code)
-    return q.all()
+    return q.limit(1000).all()
 
 
 # ---------------------------------------------------------------------------
@@ -1477,6 +1501,7 @@ def aggregate_supplier_revenue_order_count(
         .join(OrderItem, OrderItem.product_id == Product.id)
         .filter(Product.supplier_id.in_(supplier_ids), Product.is_deleted == False)
         .group_by(Product.supplier_id)
+        .limit(1000)
         .all()
     )
 
@@ -1505,7 +1530,7 @@ def aggregate_supplier_revenue_window(
     )
     if until is not None:
         q = q.filter(Order.created_at < until)
-    return q.all()
+    return q.limit(1000).all()
 
 
 def sum_supplier_total_revenue(db: Session) -> float:
@@ -1543,6 +1568,19 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "derive_order_financials": ("domains.orders.services.tracking.service", "derive_order_financials"),
     "ensure_shipment_identifiers": ("domains.orders.services.tracking.service", "ensure_shipment_identifiers"),
     "reconcile_order_status": ("domains.orders.services.tracking.service", "reconcile_order_status"),
+    "get_promotion_config": ("domains.promotions.services.admin_promotion_service", "get_promotion_config"),
+    "update_promotion_config": ("domains.promotions.services.admin_promotion_service", "update_promotion_config"),
+    "list_promotion_tiers": ("domains.promotions.services.admin_promotion_service", "list_promotion_tiers"),
+    "create_promotion_tier": ("domains.promotions.services.engine.promotion_service", "create_promotion_tier"),
+    "update_promotion_tier": ("domains.promotions.services.engine.promotion_service", "update_promotion_tier"),
+    "delete_promotion_tier": ("domains.promotions.services.engine.promotion_service", "delete_promotion_tier"),
+    "PromotionEngineConfig": ("domains.promotions.models.promotion_config", "PromotionEngineConfig"),
+    "PromotionLedgerEntry": ("domains.promotions.models.promotion_ledger", "PromotionLedgerEntry"),
+    "PromotionOrderTier": ("domains.governance.models.admin", "PromotionOrderTier"),
+    "preview_order_tier_discount": ("domains.promotions.services.engine.promotion_service", "preview_order_tier_discount"),
+    "get_all_flash_sales": ("domains.promotions.services.admin_promotion_service", "list_flash_sales"),
+    "create_flash_sale": ("domains.promotions.services.admin_promotion_service", "create_flash_sale"),
+    "update_flash_sale": ("domains.promotions.services.admin_promotion_service", "update_flash_sale"),
 }
 import importlib
 
@@ -1554,4 +1592,16 @@ def __getattr__(name: str):
         globals()[name] = value
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# Direct exports for functions that need to be importable with `from module import name`
+# These are aliases for functions in other domains
+try:
+    from domains.promotions.services.admin_promotion_service import (
+        list_flash_sales as get_all_flash_sales,
+        create_flash_sale,
+        update_flash_sale,
+    )
+except ImportError:
+    pass
 

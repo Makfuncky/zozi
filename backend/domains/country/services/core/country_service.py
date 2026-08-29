@@ -743,7 +743,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
         if zones is None:
             zones = payload.get("oman_zones")
         if isinstance(zones, list) and country.logistics_model == "zone":
-            existing = {zone.zone_code: zone for zone in db.query(OmanDeliveryZone).all()}
+            existing = {zone.zone_code: zone for zone in db.query(OmanDeliveryZone).limit(1000).all()}
             for zone_payload in zones:
                 if not isinstance(zone_payload, dict):
                     continue
@@ -1786,10 +1786,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from datetime import datetime, timezone
 from domains.country.models.countries import CountryCommunication
-from domains.country.models.country_control import LegalContractTemplate
+from domains.governance.models.legal_contract_template import LegalContractTemplate
 from domains.country.models.country_control import ShopWarehouseLocation
 from domains.country.models.country_control import LogisticsPartnerLocation
-from domains.country.models.country_enhancements import CrossCountryCustomerSession
+from domains.customers.models.cross_country_session import CrossCountryCustomerSession
 import structlog
 logger = structlog.get_logger(__name__)
 

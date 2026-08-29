@@ -41,16 +41,13 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         if request.method not in STATEFUL_METHODS:
-            return await call_next(request)
+            response = await call_next(request)
+            # Ensure CSRF cookie is set on GET requests so clients have it ready for POST
+            if not self._is_csrf_cookie_set(request):
+                self._set_csrf_cookie(response, generate_csrf_token())
+            return response
 
         if any(request.url.path.startswith(w) for w in WEBHOOK_PATHS):
-            return await call_next(request)
-
-        app_env = str(getattr(settings, "app_env", "development")).lower()
-        if app_env in ("test", "development"):
-            # Per AGENTS.md, CSRF is bypassed (not merely warned) in dev/test so the
-            # frontend can be exercised without token plumbing. Production always enforces.
-            logger.info("CSRF validation bypassed in %s environment.", app_env)
             return await call_next(request)
 
         client_token = request.headers.get(CSRF_HEADER_NAME)
@@ -78,18 +75,21 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         if not self._is_csrf_cookie_set(request):
-            is_production = str(getattr(settings, "app_env", "development")).lower() == "production"
-            response.set_cookie(
-                key=CSRF_COOKIE_NAME,
-                value=client_token,
-                httponly=False,
-                secure=is_production,
-                samesite="lax",
-                max_age=3600,
-                path="/",
-            )
+            self._set_csrf_cookie(response, client_token)
 
         return response
+
+    def _set_csrf_cookie(self, response, token: str) -> None:
+        is_production = str(getattr(settings, "app_env", "development")).lower() == "production"
+        response.set_cookie(
+            key=CSRF_COOKIE_NAME,
+            value=token,
+            httponly=False,
+            secure=is_production,
+            samesite="lax",
+            max_age=3600,
+            path="/",
+        )
 
     def _constant_time_compare(self, a: str, b: str) -> bool:
         """Constant-time string comparison to prevent timing attacks."""

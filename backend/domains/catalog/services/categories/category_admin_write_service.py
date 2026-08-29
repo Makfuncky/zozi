@@ -14,7 +14,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.catalog.models.products import Category
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from domains.catalog.services.categories.category_service import rebuild_category_paths
 

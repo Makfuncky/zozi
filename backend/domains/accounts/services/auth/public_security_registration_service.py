@@ -158,7 +158,7 @@ def refresh(payload: RefreshRequest | None=None, request: Request=None, db: Sess
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='No refresh token provided')
     try:
-        decoded = decode_token(token)
+        decoded = decode_token(token, expected_type="refresh")
     except HTTPException:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid refresh token')
     if decoded.get('type') != 'refresh':

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import cachetools
 from sqlalchemy import (
     Boolean,
     Column,
@@ -57,7 +58,7 @@ class Address(Base):
     # TODO(migration): governance.users is a cross-domain FK (Law 3: cross-domain writes
     # via events; cross-domain reads via ports). After the User model is migrated into
     # the accounts domain, this FK must become ``accounts.users.id``.
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     label = Column(String(255), nullable=True)
     full_name = Column(String(255), nullable=False)
     phone = Column(String(50), nullable=True)
@@ -82,7 +83,7 @@ class Cart(Base):
     id = Column(Integer, primary_key=True, index=True)
     # TODO(migration): governance.users is a cross-domain FK — see Address.user_id.
     # After User migration, this must become ``accounts.users.id``.
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
     # Law #5: country is the orthogonal scope axis — must be non-null on every row.
@@ -101,11 +102,11 @@ class CartItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     # TODO(migration): governance.users is a cross-domain FK — see Address.user_id.
     # After User migration, this must become ``accounts.users.id``.
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     # TODO(migration): ``commerce.products`` is a cross-domain FK. The catalog domain
     # owns products; this FK should become ``catalog.products.id`` once catalog owns
     # the canonical products table. Law 3: cross-domain writes go through events.
-    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete='CASCADE'), nullable=False, index=True)
     quantity = Column(Integer, default=1)
     selected_size = Column(String(50), default="", nullable=False)
     selected_color = Column(String(50), default="", nullable=False)
@@ -164,9 +165,10 @@ _USER_RE_EXPORTS = {
     "PasswordResetToken": ("domains.accounts.models.user", "PasswordResetToken"),
     "EmailVerificationToken": ("domains.accounts.models.user", "EmailVerificationToken"),
     "RevokedToken": ("domains.accounts.models.user", "RevokedToken"),
-    # governance domain (SystemHealthEvent, UserSession defined in governance/core.py)
+    # governance domain (SystemHealthEvent defined in governance/core.py)
     "SystemHealthEvent": ("domains.governance.models.core", "SystemHealthEvent"),
-    "UserSession": ("domains.governance.models.core", "UserSession"),
+    # UserSession canonical home is accounts/models/user.py (defined inline there).
+    "UserSession": ("domains.accounts.models.user", "UserSession"),
     "UserBrowsingHistory": ("domains.governance.models.core", "UserBrowsingHistory"),
     # Referral / ReferralPointEvent: canonical home is customers (Law 3 cross-domain
     # read surface). accounts.ports re-exports them via lazy __getattr__.
@@ -174,7 +176,7 @@ _USER_RE_EXPORTS = {
     "ReferralPointEvent": ("domains.customers.models.customer_schema_models", "ReferralPointEvent"),
 }
 
-_USER_CACHE: dict[str, object] = {}
+_USER_CACHE = cachetools.TTLCache(maxsize=1000, ttl=300)
 
 
 def __getattr__(name: str):

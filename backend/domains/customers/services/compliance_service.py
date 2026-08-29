@@ -65,7 +65,7 @@ class ComplianceService:
                 "country": a.country,
                 "is_default": a.is_default,
             }
-            for a in self.db.query(Address).filter(Address.user_id == int(user_id)).all()
+            for a in self.db.query(Address).filter(Address.user_id == int(user_id)).limit(1000).all()
         ]
         orders: List[Dict[str, Any]] = [
             {
@@ -77,7 +77,7 @@ class ComplianceService:
                 "currency": o.currency,
                 "created_at": o.created_at,
             }
-            for o in self.db.query(Order).filter(Order.user_id == int(user_id)).all()
+            for o in self.db.query(Order).filter(Order.user_id == int(user_id)).limit(1000).all()
         ]
         preferences = (
             self.db.query(CustomerPreference)
@@ -150,7 +150,7 @@ class ComplianceService:
             CustomerTag.user_id == int(user_id)
         ).update({CustomerTag.is_deleted: True})
 
-        for addr in self.db.query(Address).filter(Address.user_id == int(user_id)).all():
+        for addr in self.db.query(Address).filter(Address.user_id == int(user_id)).limit(1000).all():
             addr.address_line1 = "[redacted]"
             addr.address_line2 = None
             addr.city = None

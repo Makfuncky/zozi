@@ -17,7 +17,6 @@ Merged from:
   - domains/customers/services/coupons_write_service.py
   - domains/_parked/commerce_coupons_read_service.py
   - domains/_parked/commerce_coupons_write_service.py
-  - domains/_parked/coupons_legacy_write_service.py
   - domains/_parked/customer_coupons_create_service.py
   - domains/_parked/customer_coupons_mgmt_service.py
 
@@ -44,7 +43,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from domains.promotions.models.promotions import Coupon
-from domains.governance.models.admin import CouponUsage
+from domains.promotions.models.coupon_usage import CouponUsage
 from domains.catalog.models.products import Product
 from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.cache import get_redis_client

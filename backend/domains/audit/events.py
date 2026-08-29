@@ -43,3 +43,80 @@ __all__ = [
     "publish_compliance_check_run",
     "publish_data_residency_violation",
 ]
+
+# imports merged from services/
+import logging
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+from uuid import uuid4
+
+# constants merged from services/
+EVENT_ANOMALY_DETECTED = "audit.anomaly.detected"
+EVENT_AUDIT_LOGGED = "audit.logged"
+EVENT_COMPLIANCE_VIOLATION = "audit.compliance.violation"
+
+# base classes merged from services/
+class AuditEvent:
+    """Base class for all audit-domain events."""
+
+    event_type: str = field(init=False)
+    event_id: str = field(default_factory=lambda: str(uuid4()), init=False)
+    occurred_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), init=False
+    )
+
+    def serialize(self) -> Dict[str, Any]:
+        """Plain-dict form for the event bus."""
+        d = asdict(self)
+        d["occurred_at"] = self.occurred_at.isoformat()
+        return d
+
+# derived classes merged from services/
+class AnomalyDetected(AuditEvent):
+    anomaly_type: str = ""
+    severity: str = ""
+    target_domain: str = ""
+    target_id: Optional[int] = None
+    description: str = ""
+    event_type: str = field(default=EVENT_ANOMALY_DETECTED, init=False)
+class AuditLogged(AuditEvent):
+    audit_id: int = 0
+    action: str = ""
+    entity_type: str = ""
+    entity_id: Optional[int] = None
+    user_id: Optional[int] = None
+    event_type: str = field(default=EVENT_AUDIT_LOGGED, init=False)
+class ComplianceViolation(AuditEvent):
+    violation_type: str = ""
+    regulation: str = ""
+    entity_type: str = ""
+    entity_id: Optional[int] = None
+    severity: str = ""
+    event_type: str = field(default=EVENT_COMPLIANCE_VIOLATION, init=False)
+
+# functions merged from services/
+def publish_anomaly_detected(anomaly_type: str, severity: str, target_domain: str, target_id: Optional[int] = None, description: str = "") -> None:
+    """Publish an AnomalyDetected event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = AnomalyDetected(anomaly_type=anomaly_type, severity=severity, target_domain=target_domain, target_id=target_id, description=description)
+        publish(EVENT_ANOMALY_DETECTED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish AnomalyDetected event: %s", exc)
+def publish_audit_logged(audit_id: int, action: str, entity_type: str, entity_id: Optional[int] = None, user_id: Optional[int] = None) -> None:
+    """Publish an AuditLogged event to the canonical event bus."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = AuditLogged(audit_id=audit_id, action=action, entity_type=entity_type, entity_id=entity_id, user_id=user_id)
+        publish(EVENT_AUDIT_LOGGED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish AuditLogged event: %s", exc)
+def publish_compliance_violation(violation_type: str, regulation: str, entity_type: str, entity_id: Optional[int] = None, severity: str = "") -> None:
+    """Publish a ComplianceViolation event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = ComplianceViolation(violation_type=violation_type, regulation=regulation, entity_type=entity_type, entity_id=entity_id, severity=severity)
+        publish(EVENT_COMPLIANCE_VIOLATION, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish ComplianceViolation event: %s", exc)

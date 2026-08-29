@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 import { Product } from "@/lib/types";
 import LimitedTimeOffer from "@/components/LimitedTimeOffer";
+import Hero from "@/components/Hero";
 import BannerCarousel from "@/components/BannerCarousel";
 import HomeProductShowcase from "@/components/HomeProductShowcase";
 import RecentlyViewed from "@/components/RecentlyViewed";
-import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -76,6 +76,31 @@ export default function HomeClient({ products, categories, trending }: Props) {
     <div className="min-h-screen bg-background">
       {/* Limited-time offer banner */}
       <LimitedTimeOffer />
+
+      {/* Hero Section */}
+      <Hero
+        backgroundImage="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80"
+        title={
+          <span>
+            Discover
+            <br />
+            <span className="text-primary">Amazing</span> Products
+          </span>
+        }
+        subtitle={
+          <span>
+            Shop from thousands of verified suppliers. Best prices, fast delivery, and quality guaranteed.
+          </span>
+        }
+        pillTag={
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            Free Shipping on First Order
+          </span>
+        }
+        primaryCta={{ href: "/products", label: "Shop Now" }}
+        secondaryCta={{ href: "/suppliers", label: "Become a Supplier" }}
+      />
 
       <main className="max-w-11xl mx-auto px-4 sm:px-6 pb-20">
         {/* ── Hero section ─────────────────────────────────────────────── */}
@@ -290,8 +315,6 @@ export default function HomeClient({ products, categories, trending }: Props) {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }

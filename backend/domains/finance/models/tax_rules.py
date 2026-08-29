@@ -20,7 +20,7 @@ __all__ = ["PayoutRule", "TaxRule", "PayoutRuleCategory", "PayoutRuleProduct"]
 
 class PayoutRule(Base):
     __tablename__ = 'payout_rules'
-    __table_args__ = {"schema": "finance"}
+    __table_args__ = (Index('ix_payout_rules_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -29,15 +29,15 @@ class PayoutRule(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_payout_rules_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), nullable=False)
+    country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=False)
     min_amount = Column(Numeric(12, 2), nullable=True)
     max_amount = Column(Numeric(12, 2), nullable=True)
     fixed_fee = Column(Numeric(12, 2), default=0)
     percent_fee = Column(Numeric(5, 4), default=0)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utcnow)
+    country = relationship('CountryConfig', back_populates='payout_rules')
 
 
 class TaxRule(Base):
@@ -58,6 +58,7 @@ class TaxRule(Base):
     tax_rate = Column(Numeric(5, 4), nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utcnow)
+    country = relationship('CountryConfig', back_populates='tax_rules')
 
 
 class PayoutRuleCategory(Base):

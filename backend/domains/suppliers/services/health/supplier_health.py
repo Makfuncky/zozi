@@ -49,7 +49,7 @@ def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict
     ).join(OrderItem, OrderItem.order_id == Order.id).join(Product, Product.id == OrderItem.product_id).filter(
         Product.supplier_id == sid,
         Order.created_at >= start_date,
-    ).group_by(func.date(Order.created_at)).all()
+    ).group_by(func.date(Order.created_at)).limit(1000).all()
     revenue_by_date = {str(row.date): float(row.revenue) for row in daily_rows}
     daily_revenue = [
         {
@@ -131,7 +131,7 @@ def get_supplier_inventory(current_user: dict, db: Session) -> list:
     products = db.query(Product).filter(
         Product.supplier_id == current_user["id"],
         Product.is_deleted == False,  # noqa: E712
-    ).all()
+    ).limit(1000).all()
     result = []
     for product in products:
         thirty_days_ago = utcnow() - timedelta(days=30)
@@ -209,7 +209,7 @@ def get_inventory_alerts(current_user: dict, db: Session) -> dict:
     products = db.query(Product).filter(
         Product.supplier_id == current_user["id"],
         Product.is_deleted == False,  # noqa: E712
-    ).all()
+    ).limit(1000).all()
     alerts = []
     for product in products:
         thirty_days_ago = utcnow() - timedelta(days=30)
@@ -366,6 +366,7 @@ def get_payout_history(current_user: dict, db: Session) -> list:
         db.query(Payout)
         .filter(Payout.supplier_id == current_user["id"])
         .order_by(Payout.created_at.desc())
+        .limit(1000)
         .all()
     )
     return [
@@ -390,6 +391,7 @@ def get_supplier_shipments(current_user: dict, db: Session) -> list:
         db.query(Shipment)
         .filter(Shipment.supplier_id == supplier_id)
         .order_by(Shipment.created_at.desc())
+        .limit(1000)
         .all()
     )
     return [
@@ -476,7 +478,7 @@ def execute_bulk_operation(operation: dict, current_user: dict, db: Session) -> 
     products = db.query(Product).filter(
         Product.id.in_(product_ids),
         Product.supplier_id == current_user["id"],
-    ).all()
+    ).limit(1000).all()
     if len(products) != len(product_ids):
         raise HTTPException(status_code=404, detail="Some products not found or don't belong to this supplier")
 
@@ -564,7 +566,7 @@ def bulk_inventory_adjust(adjustments: list, current_user: dict, db: Session) ->
             Product.id.in_(product_ids),
             Product.supplier_id == current_user["id"],
             Product.is_deleted == False,  # noqa: E712
-        ).all()
+        ).limit(1000).all()
     }
 
     updated: list[dict] = []
@@ -633,7 +635,7 @@ def export_products_csv(current_user: dict, db: Session) -> StreamingResponse:
     products = db.query(Product).filter(
         Product.supplier_id == current_user["id"],
         Product.is_deleted == False,  # noqa: E712
-    ).all()
+    ).limit(1000).all()
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Name", "Description", "Price", "Stock Quantity", "Category", "Status", "Image URL", "Created At"])
@@ -728,7 +730,7 @@ def get_supplier_reports(period: str, current_user: dict, db: Session) -> dict:
     days = day_map.get(period, 30)
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=days)
 
-    supplier_products = db.query(Product).filter(Product.supplier_id == current_user["id"]).all()
+    supplier_products = db.query(Product).filter(Product.supplier_id == current_user["id"]).limit(1000).all()
     product_ids = [p.id for p in supplier_products]
 
     total_revenue = db.query(
@@ -1448,6 +1450,7 @@ def _load_active_badge_tiers(db: Session) -> list[CommissionBadgeTier]:
         db.query(CommissionBadgeTier)
         .filter(CommissionBadgeTier.is_active == True)  # noqa: E712
         .order_by(CommissionBadgeTier.sort_order.asc(), CommissionBadgeTier.id.asc())
+        .limit(1000)
         .all()
     )
     if rows:
@@ -1460,6 +1463,7 @@ def _load_active_badge_tiers(db: Session) -> list[CommissionBadgeTier]:
         db.query(CommissionBadgeTier)
         .filter(CommissionBadgeTier.is_active == True)  # noqa: E712
         .order_by(CommissionBadgeTier.sort_order.asc(), CommissionBadgeTier.id.asc())
+        .limit(1000)
         .all()
     )
 
@@ -2041,7 +2045,7 @@ def refresh_supplier_badge(supplier_id: int, db: Session) -> dict:
 
 
 def run_badge_recalculation_cycle(db: Session) -> dict[str, Any]:
-    supplier_ids = [supplier_id for supplier_id, in db.query(User.id).filter(User.role == "supplier").all()]
+    supplier_ids = [supplier_id for supplier_id, in db.query(User.id).filter(User.role == "supplier").limit(1000).all()]
     changed = 0
     invoiced = 0
     recurring = 0
@@ -2154,7 +2158,6 @@ def get_supplier_analytics_timeseries(
         )
         .group_by(func.date(Order.created_at))
         .order_by(func.date(Order.created_at))
-        .all()
     )
 
     return {
@@ -2244,6 +2247,7 @@ def _get_public_supplier_aggregates(supplier_ids: list[int], db: Session) -> dic
             Product.is_active == True,  # noqa: E712
         )
         .group_by(Product.supplier_id)
+        .limit(1000)
         .all()
     )
 
@@ -2265,6 +2269,7 @@ def _get_public_supplier_aggregates(supplier_ids: list[int], db: Session) -> dic
             ReviewModel.is_deleted == False,  # noqa: E712
         )
         .group_by(Product.supplier_id)
+        .limit(1000)
         .all()
     )
 
@@ -2388,7 +2393,7 @@ def list_public_suppliers(
                 )
             )
 
-    profiles = base_query.order_by(User.created_at.desc(), User.id.desc()).all()
+    profiles = base_query.order_by(User.created_at.desc(), User.id.desc()).limit(1000).all()
 
     if region_code:
         profiles = [
@@ -2438,7 +2443,7 @@ def resolve_public_supplier_slug(slug: str, db: Session) -> dict:
     ).first()
 
     if not row:
-        for user, profile in base_query.all():
+        for user, profile in base_query.limit(1000).all():
             if _normalize_supplier_lookup_token(user.username) == normalized_slug:
                 row = (user, profile)
                 break

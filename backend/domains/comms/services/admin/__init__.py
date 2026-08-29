@@ -1,9 +1,8 @@
 """Admin comms services."""
+from sqlalchemy.orm import Session
 
-__all__ = ['AssetTrackingService', 'get_communication_audit_service']
 
-
-def get_communication_audit_service(db=None):
-    """Stub for communication audit service."""
+def get_communication_audit_service(db: Session):
+    """Return communication audit service. Not yet implemented - returns None."""
     return None
 

@@ -41,7 +41,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
             try:
-                payload = decode_token(token)
+                payload = decode_token(token, expected_type="access")
                 if payload:
                     user_id = payload.get("sub")
                     if user_id:

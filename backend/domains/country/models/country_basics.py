@@ -1,7 +1,7 @@
 from __future__ import annotations
 from uuid import uuid4
 from sqlalchemy import func, UUID
-from sqlalchemy import Boolean, Column, DateTime, Index, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import relationship
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from . import Base
@@ -47,4 +47,4 @@ class CountryBasics(Base):
     mobile_subs_per_100 = Column(Numeric(5, 2), nullable=True)
     public_holidays_json = Column(Text, nullable=True)
     macro_indicators_json = Column(Text, nullable=True)
-    country = relationship('CountryConfig', back_populates='basics')
+    country = relationship('CountryConfig', foreign_keys=[country_code], back_populates='basics')

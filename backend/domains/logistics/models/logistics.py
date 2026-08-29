@@ -30,3 +30,18 @@ from domains.logistics.models.logistics_entities import (  # noqa: F401
     ShipmentEvent,
 )
 
+
+# Backwards-compatible re-export shims for models whose canonical home moved.
+def __getattr__(name: str):
+    _MAP = {
+        "LogisticsPartnerLocation": ("domains.country.models.country_control", "LogisticsPartnerLocation"),
+        "ParcelLocationTracker": ("domains.country.models.country_control", "ParcelLocationTracker"),
+    }
+    if name in _MAP:
+        import importlib
+        module_path, attr_name = _MAP[name]
+        mod = importlib.import_module(module_path)
+        value = getattr(mod, attr_name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

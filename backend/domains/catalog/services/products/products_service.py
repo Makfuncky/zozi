@@ -622,7 +622,7 @@ def get_country_product(db: Session, product_id: int, country_code: str) -> Prod
 
 def _scoped_product(db: Session, country_code: str, product_id: int) -> Product:
     code = country_code.upper()
-    from domains.country.utils.country_rls import get_country_or_404
+    from infrastructure.utils.country_rls import get_country_or_404
     get_country_or_404(code, db)
     product = db.query(Product).filter(Product.id == product_id, Product.country_code == code).first()
     if not product:
@@ -877,3 +877,32 @@ def _bump_product_cache_version() -> None:
     from infrastructure.utils.cache import bump_product_cache_version
 
     bump_product_cache_version()
+
+def resolve_product_variant(db: Session, product_id: int, size: str | None = None, color: str | None = None) -> dict | None:
+    """Resolve a concrete product variant by product + optional size/color axes.
+
+    Returns a normalized dict (or None when the product does not exist). Used by
+    order/cart routers to pin a sellable variant.
+    """
+    from domains.catalog.models.products import Product, ProductVariant
+
+    product = db.query(Product).filter(Product.id == product_id, Product.is_deleted == False).first()
+    if not product:
+        return None
+    q = db.query(ProductVariant).filter(
+        ProductVariant.product_id == product_id, ProductVariant.is_deleted == False
+    )
+    if size is not None:
+        q = q.filter(ProductVariant.size == size)
+    if color is not None:
+        q = q.filter(ProductVariant.color == color)
+    variant = q.first()
+    return {
+        "product_id": product.id,
+        "variant_id": variant.id if variant else None,
+        "size": size,
+        "color": color,
+        "price": float(variant.price) if variant and variant.price is not None else float(product.price),
+        "stock": variant.stock if variant else product.stock,
+        "sku": variant.sku if variant else product.sku,
+    }

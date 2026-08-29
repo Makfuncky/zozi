@@ -88,6 +88,7 @@ def _get_redis_client():
         from infrastructure.utils.auth import _get_redis
         return _get_redis()
     except Exception:
+        logger.debug("Failed to get Redis client for background jobs", exc_info=True)
         return None
 
 

@@ -6,7 +6,6 @@ discriminator, a UTC ``occurred_at`` timestamp, and a ``serialize()``
 method so the event bus can emit them to subscribers.
 """
 
-from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field, asdict
@@ -172,3 +171,77 @@ __all__ = [
     "publish_email_campaign_sent",
     "publish_escalation_triggered",
 ]
+
+# imports merged from services/
+import logging
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
+from typing import Any, Dict
+from uuid import uuid4
+
+# constants merged from services/
+EVENT_MESSAGE_SENT = "comms.message.sent"
+EVENT_NOTIFICATION_SENT = "comms.notification.sent"
+EVENT_TICKET_CREATED = "comms.ticket.created"
+
+# base classes merged from services/
+class CommsServiceEvent:
+    """Base class for all comms-domain service-level events."""
+
+    event_type: str = field(init=False)
+    event_id: str = field(default_factory=lambda: str(uuid4()), init=False)
+    occurred_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), init=False
+    )
+
+    def serialize(self) -> Dict[str, Any]:
+        """Plain-dict form for the event bus."""
+        d = asdict(self)
+        d["occurred_at"] = self.occurred_at.isoformat()
+        return d
+
+# derived classes merged from services/
+class MessageSent(CommsServiceEvent):
+    message_id: int = 0
+    sender_id: int = 0
+    room_id: int = 0
+    room_type: str = ""
+    event_type: str = field(default=EVENT_MESSAGE_SENT, init=False)
+class NotificationSent(CommsServiceEvent):
+    notification_id: int = 0
+    user_id: int = 0
+    channel: str = "in_app"
+    type: str = ""
+    event_type: str = field(default=EVENT_NOTIFICATION_SENT, init=False)
+class TicketCreated(CommsServiceEvent):
+    ticket_id: int = 0
+    created_by: int = 0
+    category: str = ""
+    priority: str = "medium"
+    event_type: str = field(default=EVENT_TICKET_CREATED, init=False)
+
+# functions merged from services/
+def publish_message_sent(message_id: int, sender_id: int, room_id: int, room_type: str) -> None:
+    """Publish a MessageSent event to the canonical event bus."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = MessageSent(message_id=message_id, sender_id=sender_id, room_id=room_id, room_type=room_type)
+        publish(EVENT_MESSAGE_SENT, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish MessageSent event: %s", exc)
+def publish_notification_sent(notification_id: int, user_id: int, channel: str, type_: str) -> None:
+    """Publish a NotificationSent event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = NotificationSent(notification_id=notification_id, user_id=user_id, channel=channel, type=type_)
+        publish(EVENT_NOTIFICATION_SENT, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish NotificationSent event: %s", exc)
+def publish_ticket_created(ticket_id: int, created_by: int, category: str, priority: str = "medium") -> None:
+    """Publish a TicketCreated event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = TicketCreated(ticket_id=ticket_id, created_by=created_by, category=category, priority=priority)
+        publish(EVENT_TICKET_CREATED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish TicketCreated event: %s", exc)

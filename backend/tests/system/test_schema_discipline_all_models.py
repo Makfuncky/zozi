@@ -10,9 +10,13 @@ Failures are real violations — report them, do not weaken the test.
 """
 from __future__ import annotations
 
+import logging
+
 import pytest
 
 from tests._support import laws
+
+logger = logging.getLogger(__name__)
 
 
 # All 16 domains' model packages (Law 12).
@@ -28,6 +32,7 @@ def _import_all_models():
         try:
             laws.import_module(pkg)
         except Exception:
+            logger.warning("Failed to import model package: %s", pkg, exc_info=True)
             pass  # domain may have no models package; individual tests below catch gaps
 
 

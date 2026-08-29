@@ -1,82 +1,48 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { logFrontendError } from "@shared/errorLogging";
+import Link from "next/link";
+import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 
-interface Props {
-  children?: ReactNode;
+interface ErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
-interface State {
-  hasError: boolean;
-  error?: Error;
-  errorId: string;
-}
-
-function generateErrorId(): string {
-  return `err_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-export default class RootErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, errorId: "" };
-  }
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, errorId: generateErrorId() };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logFrontendError(error, "react-error-boundary", {
-      componentStack: errorInfo.componentStack,
-      errorId: this.state.errorId,
-    });
-    try {
-      const body = JSON.stringify({
-        errors: [{
-          message: error.message,
-          source: "react-error-boundary",
-          stack: error.stack,
-          context: { componentStack: errorInfo.componentStack, errorId: this.state.errorId },
-          timestamp: new Date().toISOString(),
-        }],
-        user_agent: navigator.userAgent,
-        url: window.location.href,
-      });
-      if (typeof window !== "undefined" && navigator.sendBeacon) {
-        navigator.sendBeacon("/api/frontend-errors", body);
-      }
-    } catch {
-      // best-effort reporting
-    }
-  }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorId: "" });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-          <div className="max-w-md rounded-2xl border border-danger/40 bg-danger/10 p-8 text-center">
-            <h2 className="text-xl font-bold text-danger">Something went wrong</h2>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {this.state.error?.message || "An unexpected error occurred. Please try again."}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground/60">Error ID: {this.state.errorId}</p>
-            <button
-              onClick={this.handleReset}
-              className="mt-6 rounded-xl theme-btn-primary px-6 py-2.5 text-sm font-semibold"
-            >
-              Try again
-            </button>
-          </div>
+export default function Error({ error, reset }: ErrorProps) {
+  return (
+    <div className="min-h-screen bg-surface-0 flex items-center justify-center px-4">
+      <div className="text-center max-w-md">
+        <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-6">
+          <AlertTriangle className="w-10 h-10 text-error" />
         </div>
-      );
-    }
-
-    return this.props.children;
-  }
+        <h1 className="text-2xl font-display font-bold text-text-primary mb-3">
+          Something went wrong
+        </h1>
+        <p className="text-text-secondary mb-2">
+          We apologize for the inconvenience. Please try again.
+        </p>
+        {error?.message && (
+          <p className="text-xs text-text-faint mb-6 font-mono bg-surface-1 rounded-lg p-3">
+            {error.message}
+          </p>
+        )}
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={reset}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary-dark transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Try Again
+          </button>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-text-primary font-medium hover:bg-surface-1 transition-colors"
+          >
+            <Home className="w-4 h-4" />
+            Go Home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }

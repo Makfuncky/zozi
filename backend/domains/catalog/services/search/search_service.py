@@ -1,13 +1,16 @@
 """
 Search Controller — natural-language query parsing and smart product search logic.
 """
+import cachetools
 import hashlib
 import json
 import re
-from collections import OrderedDict
 from datetime import datetime, timezone
 from difflib import SequenceMatcher, get_close_matches
 from typing import Any, Dict, Optional, List, cast
+
+# In-memory search index used by load_search_catalog (dev/test fallback).
+_SEARCH_INDEX: Dict[str, Dict[str, dict]] = {}
 
 from fastapi.responses import Response
 from sqlalchemy import desc, func, or_, and_, text, cast as sql_cast, String
@@ -865,16 +868,11 @@ from domains.catalog.models.products import ProductVideo, ProductFilterMetadata,
 
 class AdvancedFilterService:
     _cache_ttl = 300
-    _cache_max_size = 500
 
     def __init__(self, db: Session):
         self.db = db
         self._cache_version = 0
-        self._cache: Dict[str, Dict[str, Any]] = OrderedDict()
-
-    def _ensure_cache_bound(self):
-        while len(self._cache) > self._cache_max_size:
-            self._cache.popitem(last=False)
+        self._cache: Dict[str, Dict[str, Any]] = cachetools.TTLCache(maxsize=500, ttl=300)
 
     def _get_cache_key(self, category_id: Optional[int], search_query: Optional[str], filters: Optional[Dict] = None) -> str:
         key_data = json.dumps({
@@ -907,7 +905,6 @@ class AdvancedFilterService:
         discount_count = self._get_discount_count(base_query)
         result = {"price_range": price_stats, "brands": brands, "ratings": ratings, "attributes": attributes, "video_count": video_count, "discount": discount_count}
         self._cache[cache_key] = result
-        self._ensure_cache_bound()
         return result
 
     def get_active_filters_summary(self, category_id: Optional[int] = None, search_query: Optional[str] = None) -> Dict[str, Any]:
@@ -964,7 +961,6 @@ class AdvancedFilterService:
         products = query.order_by(Product.id.desc()).limit(limit).all()
         result = {"products": [self._serialize_product(p) for p in products], "total": total, "limit": limit, "offset": offset}
         self._cache[cache_key] = result
-        self._ensure_cache_bound()
         return result
 
     def _serialize_product(self, product: Product) -> Dict[str, Any]:
@@ -1155,3 +1151,46 @@ def fetch_visually_similar_products(db: Any, limit: int = 10) -> list[dict]:
     except Exception as exc:
         logger.warning("Visual search DB query failed: %s", exc)
         return []
+def search_products(db: Session, query: str, *, country_code: str | None = None, limit: int = 50, offset: int = 0) -> list[dict]:
+    """Free-text product search across name/description/sku (case-insensitive).
+
+    Returns a lightweight list of product dicts. Degrades to an empty list when
+    the query is blank or no matches are found (Law 30).
+    """
+    from domains.catalog.models.products import Product
+
+    if not query or not query.strip():
+        return []
+    pattern = f"%{query.strip()}%"
+    q = db.query(Product).filter(
+        Product.is_deleted == False,
+        Product.is_active == True,
+        (Product.name.ilike(pattern) | Product.description.ilike(pattern) | Product.sku.ilike(pattern)),
+    )
+    if country_code:
+        q = q.filter(Product.country_code == country_code)
+    rows = q.order_by(Product.created_at.desc()).limit(limit).offset(offset).all()
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "sku": p.sku,
+            "price": float(p.price) if p.price is not None else None,
+            "image_url": p.image_url,
+            "country_code": p.country_code,
+        }
+        for p in rows
+    ]
+
+def load_search_catalog(products: list[dict]) -> int:
+    """Index a batch of products into the search catalog.
+
+    Degrades gracefully (Law 30): returns the count accepted without raising when
+    the search backend is unavailable.
+    """
+    try:
+        for p in products:
+            _SEARCH_INDEX.setdefault(p.get("country_code", "_all"), {})[str(p.get("id"))] = p
+        return len(products)
+    except Exception:
+        return 0

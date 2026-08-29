@@ -19,6 +19,7 @@ import type { ReactNode } from "react";
 import type { TranslationKey } from "@/lib/i18n";
 import { resolveImage, supplierStorefrontPath } from "@/lib/utils";
 import ProductCard from "@/components/ProductCard";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import AdvancedFilter from "@/components/AdvancedFilter";
 import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import BrandLoading from "@/components/BrandLoading";
@@ -210,7 +211,7 @@ function ProductsContent() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, category, sort, minPrice, maxPrice, brand, color, minRating, inStock, selectedTag, effectiveSupplierFilter, deals, hasVideo, hasDiscount, attributes, visibleCount, products.length]);
+  }, [debouncedSearch, category, sort, minPrice, maxPrice, brand, color, minRating, inStock, selectedTag, effectiveSupplierFilter, deals, hasVideo, hasDiscount, attributes, visibleCount]);
 
   useEffect(() => {
     fetchProducts(true);
@@ -577,6 +578,9 @@ function ProductsContent() {
         
         {/* Promotional banner — after header, before the search engine bar */}
         <BannerCarousel position="promotional" className="mb-6" />
+
+        {/* Breadcrumbs */}
+        <Breadcrumbs items={[{ label: "Products" }]} className="mb-4" />
 
         {/* ═══════════════════════════════════════════════════════
             QUICK FILTER PILLS — search bar is in the header

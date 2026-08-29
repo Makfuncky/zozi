@@ -11,7 +11,7 @@ from domains.accounts.models.user import User
 
 from infrastructure.utils.dependencies import require_admin
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 

@@ -1658,7 +1658,7 @@ from domains.country.models.countries import CountryConfig
 from domains.country.models.country_control import LogisticsPartnerLocation
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsPartnerDocument
 from domains.governance.models.admin import LogisticsSettlement
 from domains.governance.models.admin import ShipmentConfirmation
@@ -2076,12 +2076,16 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
-def list_partners(db: Session, country_code: str, include_deleted: bool, page: int, page_size: int) -> dict:
+def list_partners(db: Session, country_code: str, include_deleted: bool, page: int, page_size: int, cursor: Optional[int] = None) -> dict:
     q = db.query(LogisticsPartner).filter(LogisticsPartner.country_code == country_code.upper())
     if not include_deleted:
         q = q.filter(LogisticsPartner.is_deleted == False)  # noqa: E712
     total = q.count()
-    rows = q.offset((page - 1) * page_size).limit(page_size).all()
+    if cursor is not None:
+        q = q.filter(LogisticsPartner.id < cursor)
+    else:
+        q = q.offset((page - 1) * page_size)
+    rows = q.order_by(LogisticsPartner.id.desc()).limit(page_size).all()
     return {"data": rows, "total": total, "page": page, "page_size": page_size}
 
 
@@ -2134,7 +2138,7 @@ from sqlalchemy.orm import Session
 
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsSettlement
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order

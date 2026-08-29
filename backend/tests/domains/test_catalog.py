@@ -86,12 +86,12 @@ class TestCategoryTree:
     """Tests for category tree operations."""
 
     def test_category_tree_compute_path(self):
-        from domains.catalog.utils.category_tree import compute_category_path
+        from infrastructure.utils.category_tree import compute_category_path
 
         assert callable(compute_category_path)
 
     def test_category_tree_chain_for(self):
-        from domains.catalog.utils.category_tree import _chain_for
+        from infrastructure.utils.category_tree import _chain_for
 
         assert callable(_chain_for)
 

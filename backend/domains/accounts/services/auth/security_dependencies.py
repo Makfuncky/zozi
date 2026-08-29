@@ -102,6 +102,11 @@ def require_supplier(current_user: User = Depends(get_current_user)) -> User:
     return _require_role(current_user, "supplier")
 
 
+def require_customer(current_user: User = Depends(get_current_user)) -> User:
+    from domains.accounts.models.user import User
+    return _require_role(current_user, "customer")
+
+
 def require_logistics(current_user: User = Depends(get_current_user)) -> User:
     from domains.accounts.models.user import User
     return _require_role(current_user, "logistics_partner")

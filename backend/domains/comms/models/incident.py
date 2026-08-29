@@ -24,6 +24,7 @@ class IncidentWarRoom(Base):
     threads = relationship("IncidentThread", back_populates="war_room", cascade="all, delete-orphan")
     action_items = relationship("IncidentActionItem", back_populates="war_room", cascade="all, delete-orphan")
     creator = relationship("User", backref="incident_war_rooms")
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
@@ -36,6 +37,7 @@ class IncidentThread(Base):
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     war_room = relationship("IncidentWarRoom", back_populates="threads")
     participant = relationship("User")
 
@@ -54,6 +56,7 @@ class IncidentActionItem(Base):
     created_at = Column(DateTime, server_default=func.now())
     completed_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     war_room = relationship("IncidentWarRoom", back_populates="action_items")
     assignee = relationship("User")
 
@@ -66,4 +69,5 @@ class WarRoomTemplate(Base):
     severity = Column(String(50), nullable=False)
     auto_assign = Column(Boolean, default=False)
     template_data = Column(JSON, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now())

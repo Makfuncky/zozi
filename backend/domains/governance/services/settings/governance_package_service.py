@@ -18,13 +18,13 @@ from domains.governance.models.admin import EmployeeExpense
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeLeaveLedger
 # from domains.comms.services.admin.asset_tracking import AssetTrackingService  # unused
-from domains.governance.services.audit.compliance_engine import GCCComplianceEngine
-from domains.governance.services.audit.compliance_engine import get_compliance_engine
+from domains.governance.services.audit import GCCComplianceEngine
+from domains.governance.services.audit import get_compliance_engine
 # TODO: Module not yet created
 # from domains.finance.ports import ExpenseProcessingService
 # TODO: Module not yet created
 # from domains.hr.ports import LeaveAccrualEngine
-from domains.country.utils.country_rls import get_current_country_scope as get_country_scope
+from infrastructure.utils.country_rls import get_current_country_scope as get_country_scope
 logger = logging.getLogger(__name__)
 
 class LeaveBalanceResponse(BaseModel):

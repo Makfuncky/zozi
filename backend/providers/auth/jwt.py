@@ -21,8 +21,7 @@ def decode_unverified_claims(token: str) -> dict:
     return jwt.get_unverified_claims(token)
 
 
-def decode_token(token: str, secret: str, algorithms) -> dict:
-    """Verify and decode a signed JWT with the given secret/algorithms."""
-    if not HAS_JOSE:
-        raise RuntimeError("python-jose is not installed")
-    return jwt.decode(token, secret, algorithms=algorithms)
+# Re-export canonical decode_token from infrastructure/utils/auth.py
+# to avoid duplicate definitions. The infrastructure version adds
+# blacklist checking and expected_type validation.
+from infrastructure.utils.auth import decode_token  # noqa: F401

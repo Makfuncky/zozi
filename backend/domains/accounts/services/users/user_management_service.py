@@ -83,7 +83,7 @@ from domains.logistics.ports import (
 from domains.orders.ports import Order, OrderItem, OrderLogisticsAllocation, ReturnRequest
 from domains.suppliers.ports import SupplierDocument, SupplierProfile
 
-from domains.catalog.ports import Banner
+from domains.promotions.models.promotions import Banner
 from domains.finance.ports import Payout, PaymentGatewayConnection
 
 from infrastructure.database.schemas import CreateStaffAccount, UpdateStaffAccount
@@ -212,39 +212,39 @@ NULLABLE_USER_REFERENCE_UPDATES: list[tuple[Any, Any, str]] = [
     (ShippingCarrier, ShippingCarrier.supplier_id, "supplier_id"),
     (Shipment, Shipment.packaged_by_user_id, "packaged_by_user_id"),
     (ShipmentEvent, ShipmentEvent.actor_user_id, "actor_user_id"),
-    (Banner, Banner.created_by, "created_by"),
+    (Banner, Banner.created_by_id, "created_by"),
     (SupplierDocument, SupplierDocument.reviewed_by, "reviewed_by"),
-    (ProductVerification, ProductVerification.verified_by, "verified_by"),
+    (ProductVerification, ProductVerification.verified_by_id, "verified_by"),
     (LogisticsPartner, LogisticsPartner.user_id, "user_id"),
     (LogisticsPartner, LogisticsPartner.verified_by, "verified_by"),
-    (LogisticsPartnerDocument, LogisticsPartnerDocument.reviewed_by, "reviewed_by"),
-    (LogisticsPartnerServiceArea, LogisticsPartnerServiceArea.reviewed_by, "reviewed_by"),
-    (LogisticsPricingProfile, LogisticsPricingProfile.reviewed_by, "reviewed_by"),
-    (LogisticsCategoryPricingRule, LogisticsCategoryPricingRule.reviewed_by, "reviewed_by"),
-    (LogisticsVehicleRule, LogisticsVehicleRule.reviewed_by, "reviewed_by"),
+    (LogisticsPartnerDocument, LogisticsPartnerDocument.reviewed_by_id, "reviewed_by"),
+    (LogisticsPartnerServiceArea, LogisticsPartnerServiceArea.reviewed_by_id, "reviewed_by"),
+    (LogisticsPricingProfile, LogisticsPricingProfile.reviewed_by_id, "reviewed_by"),
+    (LogisticsCategoryPricingRule, LogisticsCategoryPricingRule.reviewed_by_id, "reviewed_by"),
+    (LogisticsVehicleRule, LogisticsVehicleRule.reviewed_by_id, "reviewed_by"),
     (PromotionEngineConfig, PromotionEngineConfig.updated_by, "updated_by"),
-    (PromotionOrderTier, PromotionOrderTier.updated_by, "updated_by"),
+    (PromotionOrderTier, PromotionOrderTier.updated_by_id, "updated_by"),
     (PromotionLedgerEntry, PromotionLedgerEntry.user_id, "user_id"),
     (PaymentGatewayConnection, PaymentGatewayConnection.gateway_name, "gateway_name"),
-    (PaymentProviderConfig, PaymentProviderConfig.updated_by, "updated_by"),
-    (EmailProviderConfig, EmailProviderConfig.updated_by, "updated_by"),
-    (LogisticsCODRemittanceReceipt, LogisticsCODRemittanceReceipt.reviewed_by, "reviewed_by"),
+    (PaymentProviderConfig, PaymentProviderConfig.updated_by_id, "updated_by"),
+    (EmailProviderConfig, EmailProviderConfig.updated_by_id, "updated_by"),
+    (LogisticsCODRemittanceReceipt, LogisticsCODRemittanceReceipt.reviewed_by_id, "reviewed_by"),
     (BankTransaction, BankTransaction.linked_supplier_id, "linked_supplier_id"),
-    (BankTransaction, BankTransaction.reconciled_by, "reconciled_by"),
-    (VATRemittance, VATRemittance.remitted_by, "remitted_by"),
-    (SupplierBankAccount, SupplierBankAccount.verified_by, "verified_by"),
-    (LogisticsPartnerBankAccount, LogisticsPartnerBankAccount.verified_by, "verified_by"),
-    (FinanceBankAccount, FinanceBankAccount.created_by, "created_by"),
-    (FinanceBankAccount, FinanceBankAccount.updated_by, "updated_by"),
+    (BankTransaction, BankTransaction.reconciled_by_id, "reconciled_by"),
+    (VATRemittance, VATRemittance.remitted_by_id, "remitted_by"),
+    (SupplierBankAccount, SupplierBankAccount.verified_by_id, "verified_by"),
+    (LogisticsPartnerBankAccount, LogisticsPartnerBankAccount.verified_by_id, "verified_by"),
+    (FinanceBankAccount, FinanceBankAccount.created_by_id, "created_by"),
+    (FinanceBankAccount, FinanceBankAccount.updated_by_id, "updated_by"),
     (RolePermissionSetting, RolePermissionSetting.role, "role"),
     (TicketReply, TicketReply.sender_id, "sender_id"),
     (SupportTicket, SupportTicket.user_id, "user_id"),
     (CommissionAgreement, CommissionAgreement.set_by_admin_id, "set_by_admin_id"),
     (ProductCommissionOverride, ProductCommissionOverride.set_by_admin_id, "set_by_admin_id"),
-    (CommissionGlobalConfig, CommissionGlobalConfig.updated_by, "updated_by"),
+    (CommissionGlobalConfig, CommissionGlobalConfig.updated_by_id, "updated_by"),
     (CommissionCategoryRate, CommissionCategoryRate.category_id, "category_id"),
     (CommissionBadgeTier, CommissionBadgeTier.name, "name"),
-    (CommissionLedgerEntry, CommissionLedgerEntry.adjusted_by, "adjusted_by"),
+    (CommissionLedgerEntry, CommissionLedgerEntry.adjusted_by_id, "adjusted_by"),
     (BadgeBillingRecord, BadgeBillingRecord.user_id, "user_id"),
 ]
 
@@ -331,7 +331,7 @@ def get_all_users(db: Session, limit: Optional[int] = None, offset: int = 0) -> 
     user_ids = [cast(int, getattr(user, "id")) for user in users]
     profiles = {
         cast(int, getattr(profile, "user_id")): profile
-        for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(user_ids)).all()
+        for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(user_ids)).limit(1000).all()
     }
 
     items = []
@@ -672,7 +672,7 @@ def bulk_update_users_role(
 
     users_by_id: dict[int, User] = {}
     if candidate_ids:
-        fetched = db.query(User).filter(User.id.in_(candidate_ids)).all()
+        fetched = db.query(User).filter(User.id.in_(candidate_ids)).limit(1000).all()
         users_by_id = {cast(int, getattr(u, "id")): u for u in fetched}
 
     for uid in unique_ids:
@@ -745,7 +745,7 @@ def bulk_toggle_users_active(
     candidate_ids = [uid for uid in user_ids if uid != acting_user["id"]]
     users_by_id: dict[int, User] = {}
     if candidate_ids:
-        fetched = db.query(User).filter(User.id.in_(candidate_ids)).all()
+        fetched = db.query(User).filter(User.id.in_(candidate_ids)).limit(1000).all()
         users_by_id = {cast(int, getattr(u, "id")): u for u in fetched}
 
     to_update_ids: list[int] = []
@@ -806,6 +806,7 @@ def bulk_update_staff_accounts(user_ids: List[int], updates: UpdateStaffAccount,
     staff_users = (
         db.query(User)
         .filter(User.id.in_(user_ids), User.role.in_(tuple(STAFF_ROLES)))
+        .limit(1000)
         .all()
     )
 
@@ -951,7 +952,7 @@ def build_user_delete_blocker(
     user_orders = db.query(Order).options(
         selectinload(Order.items).selectinload(OrderItem.product),
         selectinload(Order.shipments)
-    ).filter(Order.user_id == user.id).order_by(Order.created_at.desc()).all()
+    ).filter(Order.user_id == user.id).order_by(Order.created_at.desc()).limit(1000).all()
 
     if user_orders and not delete_orders:
         return (409, f"User has {len(user_orders)} order(s). Set delete_orders=true to delete orders along with user.")
@@ -988,7 +989,7 @@ def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_order
     user_orders = db.query(Order).options(
         selectinload(Order.items).selectinload(OrderItem.product),
         selectinload(Order.shipments),
-    ).filter(Order.user_id == user_id).order_by(Order.created_at.desc()).all()
+    ).filter(Order.user_id == user_id).order_by(Order.created_at.desc()).limit(1000).all()
     blocker = build_user_delete_blocker(
         user,
         acting_user,

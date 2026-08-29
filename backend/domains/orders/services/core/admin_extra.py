@@ -21,9 +21,9 @@ from domains.catalog.models.products import Category
 
 from domains.catalog.ports import create_category, delete_category, reorder_categories, update_category
 
-from domains.catalog.utils.category_tree import rebuild_category_paths
+from infrastructure.utils.category_tree import rebuild_category_paths
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin
 
@@ -147,7 +147,7 @@ from domains.comms.models.marketing import CampaignRecipient
 from domains.comms.models.marketing import EmailCampaign
 from domains.comms.models.marketing import NewsletterSubscriber
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 
 

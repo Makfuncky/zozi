@@ -5,7 +5,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from domains.accounts.models.user import User
-from domains.governance.models.admin import SupplierBankAccount, LogisticsPartnerBankAccount
+from domains.accounts.models.banking import SupplierBankAccount, LogisticsPartnerBankAccount
 from domains.suppliers.models.suppliers import SupplierProfile
 from domains.logistics.models.logistics_entities import LogisticsPartner
 from domains.governance.ports import FinanceBankAccount

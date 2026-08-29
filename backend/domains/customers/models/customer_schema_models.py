@@ -28,8 +28,8 @@ class Referral(Base):
         {"schema": "customers"},
     )
     id = Column(Integer, primary_key=True, index=True)
-    referrer_id = Column(Integer, ForeignKey("customers.users.id", ondelete='SET NULL'), nullable=False)
-    referred_id = Column(Integer, ForeignKey("customers.users.id", ondelete='SET NULL'), nullable=False, unique=True)
+    referrer_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    referred_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, unique=True)
     referral_code = Column(String(64), unique=True, nullable=True)
     status = Column(String, default="pending")
     is_deleted = Column(Boolean, default=False)
@@ -49,10 +49,10 @@ class ReferralPointEvent(Base):
         {"schema": "customers"},
     )
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("customers.users.id", ondelete='SET NULL'), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     event_type = Column(String(40), nullable=False)
     points = Column(Integer, nullable=False)
-    referred_user_id = Column(Integer, ForeignKey("customers.users.id", ondelete='SET NULL'), nullable=True)
+    referred_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     is_deleted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

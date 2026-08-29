@@ -161,8 +161,11 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
                     try:
                         decrypted = old_vault.decrypt(val)
                         new_encrypted = new_vault.encrypt(decrypted)
+                        from sqlalchemy.sql import quoted_name
+                        safe_field = quoted_name(field, quote=True)
+                        safe_table = quoted_name(_VAULT_TABLE, quote=True)
                         db.execute(
-                            _text(f"UPDATE {_VAULT_TABLE} SET {field} = :val WHERE id = :id"),
+                            _text(f"UPDATE {safe_table} SET {safe_field} = :val WHERE id = :id"),
                             {"val": new_encrypted, "id": conn_id},
                         )
                         reencrypted_count += 1

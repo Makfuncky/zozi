@@ -24,6 +24,7 @@ class EntityChatThread(Base):
     entity_id = Column(Integer, nullable=False)
     title = Column(String(200), nullable=True)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("EntityChatMessage", back_populates="thread", cascade="all, delete-orphan")
@@ -51,6 +52,7 @@ class VideoRoom(Base):
     ended_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     participants = relationship("VideoRoomParticipant", back_populates="room", cascade="all, delete-orphan")
     recordings = relationship("VideoRoomRecording", back_populates="room", cascade="all, delete-orphan")
     creator = relationship("User", foreign_keys=[created_by_id])
@@ -66,6 +68,7 @@ class VideoRoomParticipant(Base):
     role = Column(String(20), default="participant")
     joined_at = Column(DateTime, default=_utcnow)
     left_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     room = relationship("VideoRoom", back_populates="participants")
     user = relationship("User")
 
@@ -80,6 +83,7 @@ class DirectChatRoom(Base):
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
     is_masked = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("DirectChatMessage", back_populates="room", cascade="all, delete-orphan")
@@ -94,6 +98,7 @@ class GroupChatMember(Base):
     user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     role = Column(String(20), default="member")
     joined_at = Column(DateTime, default=_utcnow)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     room = relationship("GroupChatRoom", back_populates="members")
     user = relationship("User")
 
@@ -114,6 +119,7 @@ class EscalationSLALog(Base):
     status = Column(String(20), default="pending")
     escalated_at = Column(DateTime, nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -126,6 +132,7 @@ class EntityChatMessage(Base):
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     thread = relationship("EntityChatThread", back_populates="messages")
     sender = relationship("User")
@@ -142,6 +149,7 @@ class VideoRoomRecording(Base):
     status = Column(String(20), default="recording")
     started_at = Column(DateTime, default=_utcnow)
     ended_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     room = relationship("VideoRoom", back_populates="recordings")
     starter = relationship("User", foreign_keys=[started_by_id])
 
@@ -155,6 +163,7 @@ class DirectChatMessage(Base):
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     room = relationship("DirectChatRoom", back_populates="messages")
     sender = relationship("User", foreign_keys=[sender_id])
@@ -172,6 +181,7 @@ class GroupChatRoom(Base):
     created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     members = relationship("GroupChatMember", back_populates="room", cascade="all, delete-orphan")
     messages = relationship("GroupChatMessage", back_populates="room", cascade="all, delete-orphan")
 
@@ -185,6 +195,7 @@ class GroupChatMessage(Base):
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     room = relationship("GroupChatRoom", back_populates="messages")
     sender = relationship("User", foreign_keys=[sender_id])

@@ -9,4 +9,6 @@ from domains.catalog.services.search.search_service import (  # noqa: F401
     AdvancedFilterService,
     AdvancedSearchEngine,
     fetch_visually_similar_products,
+    search_products,
+    load_search_catalog,
 )

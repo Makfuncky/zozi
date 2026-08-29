@@ -20,7 +20,7 @@ class SocialIdentity(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     # TODO(migration): governance.users is a cross-domain FK (Law 3). After the User
     # model is migrated into the accounts domain, this must become ``accounts.users.id``.
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     provider = Column(String(32), nullable=False)  # google | apple | facebook
     provider_user_id = Column(String(255), nullable=False)
     # Every supported provider (google | apple | facebook) returns an email — make

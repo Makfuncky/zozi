@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierNotificationPreference
-from domains.governance.models.admin import SupplierDispute
+from domains.suppliers.models.suppliers import SupplierDispute
 import structlog
 
 logger = structlog.get_logger(__name__)

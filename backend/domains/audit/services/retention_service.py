@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from domains.governance.ports import ChatbotQueryEvent, RetentionJobRun
 from domains.comms.ports import CampaignRecipient
 from domains.logistics.ports import ShipmentEvent
+from domains.audit.models.audit_schema_models import AuditLog
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 

@@ -20,7 +20,7 @@ from domains.governance.ports import User
 from domains.accounts.ports import get_user_by_id
 # TODO: Module not yet created
 # from domains.accounts.services.users.user_management_service import update_user_role, toggle_user_active
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from infrastructure.utils.pagination import cursor_paginate_asc, paginated_response
 

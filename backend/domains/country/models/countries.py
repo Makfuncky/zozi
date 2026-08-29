@@ -6,7 +6,20 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
-__all__ = ['CountryConfig', 'CountryCommunication', 'CountryGatewayCredentials', 'PayoutRule', 'TaxRule', 'ShippingRule', 'Message', 'PayoutRuleCategory', 'PayoutRuleProduct']
+
+# Lazy imports for cross-domain relationships (avoid circular imports)
+from domains.logistics.models.shipping_rules import ShippingRule  # noqa: F401
+from domains.finance.models.tax_rules import PayoutRule, TaxRule  # noqa: F401
+from domains.country.models.country_basics import CountryBasics  # noqa: F401
+from domains.country.models.country_economics import CountryEconomics  # noqa: F401
+from domains.country.models.country_legal import CountryLegal  # noqa: F401
+from domains.country.models.country_tax import CountryTax  # noqa: F401
+from domains.country.models.country_enhancements import (  # noqa: F401
+    CountryCategoryTaxRate, CountryFeatureFlag, CountryCommissionRate,
+    CountryStaffAssignment, CountryConfigVersion, SupplierKYCRequirement,
+    LogisticsPartnerKYCRequirement, CountryCity
+)
+__all__ = ['CountryConfig', 'CountryCommunication', 'CountryGatewayCredentials', 'ShippingRule']
 
 class CountryConfig(Base):
     __tablename__ = 'country_configs'
@@ -118,7 +131,7 @@ class CountryConfig(Base):
     kyc_requirements = relationship('SupplierKYCRequirement', back_populates='country', uselist=False)
     logistics_kyc_requirements = relationship('LogisticsPartnerKYCRequirement', back_populates='country', uselist=False)
     cities = relationship('CountryCity', back_populates='country')
-    basics = relationship('CountryBasics', back_populates='country', uselist=False)
+    basics = relationship('CountryBasics', back_populates='country', uselist=False, primaryjoin='CountryConfig.code == foreign(CountryBasics.country_code)')
     economics = relationship('CountryEconomics', back_populates='country', uselist=False)
     legal = relationship('CountryLegal', back_populates='country', uselist=False)
     tax = relationship('CountryTax', back_populates='country', uselist=False)
@@ -174,142 +187,4 @@ class CountryGatewayCredentials(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     country = relationship('CountryConfig', back_populates='gateway_credentials')
-
-class PayoutRule(Base):
-    __tablename__ = 'payout_rules'
-    __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_payout_rules_country_created', 'country_code', 'created_at'), {'schema': 'country'})
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), nullable=False)
-    min_amount = Column(Numeric(12, 2), nullable=True)
-    max_amount = Column(Numeric(12, 2), nullable=True)
-    fixed_fee = Column(Numeric(12, 2), default=0)
-    percent_fee = Column(Numeric(5, 4), default=0)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
-    country = relationship('CountryConfig', back_populates='payout_rules', primaryjoin='foreign(PayoutRule.country_code) == CountryConfig.code')
-
-class TaxRule(Base):
-    __tablename__ = 'tax_rules'
-    __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_tax_rules_country_created', 'country_code', 'created_at'), {'schema': 'country'})
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=False, index=True)
-    tax_name = Column(String(100), nullable=False)
-    tax_rate = Column(Numeric(5, 4), nullable=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
-    country = relationship('CountryConfig', back_populates='tax_rules')
-
-class ShippingRule(Base):
-    __tablename__ = 'shipping_rules'
-    __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_shipping_rules_country_created', 'country_code', 'created_at'), {'schema': 'country'})
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), nullable=False)
-    method = Column(String, nullable=False)
-    base_rate = Column(Numeric(10, 2), nullable=False)
-    per_kg_rate = Column(Numeric(10, 2), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
-    country = relationship('CountryConfig', back_populates='shipping_rules', primaryjoin='foreign(ShippingRule.country_code) == CountryConfig.code')
-
-class Message(Base):
-    __tablename__ = 'messages'
-    __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_message_recipient', 'to_user_id', 'created_at'), Index('ix_message_sender', 'from_user_id', 'created_at'), Index('ix_messages_country_created', 'country_code', 'created_at'), {'schema': 'country'})
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=True, index=True)
-    from_user_id = Column(Integer, nullable=False)
-    to_user_id = Column(Integer, nullable=False)
-    subject = Column(String(200), nullable=False)
-    body = Column(Text, nullable=True)
-    entity_type = Column(String(50), nullable=True)
-    entity_id = Column(Integer, nullable=True)
-    priority = Column(String(20), default='normal')
-    category = Column(String(50), nullable=True)
-    status = Column(String(20), default='sent')
-    read_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
-    country = relationship('CountryConfig')
-    from_user = relationship('User', primaryjoin='foreign(Message.from_user_id) == User.id')
-    to_user = relationship('User', primaryjoin='foreign(Message.to_user_id) == User.id')
-
-class PayoutRuleCategory(Base):
-    __tablename__ = 'payout_rule_categories'
-    __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (UniqueConstraint('country_code', 'category_slug', name='uq_payout_rule_category'), Index('ix_payout_rule_categories_country_created', 'country_code', 'created_at'), {'schema': 'country'})
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=False, index=True)
-    category_slug = Column(String, nullable=False)
-    payout_rate = Column(Numeric(5, 4), nullable=False)
-    min_amount = Column(Numeric(12, 2), nullable=True)
-    max_amount = Column(Numeric(12, 2), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
-    country = relationship('CountryConfig')
-
-class PayoutRuleProduct(Base):
-    __tablename__ = 'payout_rule_products'
-    __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (UniqueConstraint('country_code', 'product_id', name='uq_payout_rule_product'), Index('ix_payout_rule_products_country_created', 'country_code', 'created_at'), {'schema': 'country'})
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=False, index=True)
-    product_id = Column(Integer, nullable=False)
-    payout_rate = Column(Numeric(5, 4), nullable=False)
-    min_amount = Column(Numeric(12, 2), nullable=True)
-    max_amount = Column(Numeric(12, 2), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
-    country = relationship('CountryConfig')
-    product = relationship('Product', primaryjoin='foreign(PayoutRuleProduct.product_id) == Product.id')
-Index('ix_country_gateway_credentials_credentials', text('(credentials::jsonb)'))
 

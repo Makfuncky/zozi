@@ -29,6 +29,11 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
 
 
 def __getattr__(name: str) -> Any:
+    # Handle subpackage imports (e.g., services, models, ports)
+    import os
+    if os.path.isdir(os.path.join(os.path.dirname(__file__), name)):
+        import importlib
+        return importlib.import_module(f"domains.promotions.{name}")
     module_path, attr_name = _LAZY_EXPORTS.get(name, (None, None))
     if module_path is None:
         raise AttributeError(f"module 'domains.promotions' has no attribute {name!r}")

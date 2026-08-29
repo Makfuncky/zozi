@@ -11,7 +11,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from domains.governance.models.admin import RolePermissionSetting
-from domains.governance.models.admin import SupplierDispute
+from domains.suppliers.models.suppliers import SupplierDispute
 from domains.promotions.models.promotions import Banner
 
 from infrastructure.database.seed import _ensure_demo_user, _seed_password

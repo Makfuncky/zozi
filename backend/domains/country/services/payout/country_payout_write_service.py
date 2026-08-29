@@ -12,8 +12,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from domains.country.models.countries import PayoutRuleCategory
-from domains.country.models.countries import PayoutRuleProduct
+from domains.finance.models.tax_rules import PayoutRuleCategory
+from domains.finance.models.tax_rules import PayoutRuleProduct
 import structlog
 logger = structlog.get_logger(__name__)
 

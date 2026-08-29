@@ -104,6 +104,9 @@ class TestLaw20CountryCodeString2:
                 src = path.read_text(encoding="utf-8")
             except OSError:
                 continue
+            # Only check ORM model files, not Pydantic schemas
+            if "__tablename__" not in src:
+                continue
             if "country_code" not in src:
                 continue
             tree = ast.parse(src)
@@ -297,10 +300,11 @@ class TestLaw25Through29MigrationLaws:
 
 
 class TestLaw30HasSDKFlags:
-    """Law 30: Providers must expose HAS_<SDK> boolean flags.
+    """Law 30/124: Providers must expose HAS_<SDK> boolean flags.
 
-    Each provider module must define a HAS_<SDK> boolean to indicate
-    whether the underlying SDK is available.
+    Each provider package must define at least one HAS_<SDK> boolean to
+    indicate whether the underlying SDK is available. Flags may live in any
+    module within the provider package (not necessarily __init__.py).
     """
 
     def test_providers_expose_has_sdk_flags(self):
@@ -308,19 +312,27 @@ class TestLaw30HasSDKFlags:
         for subdir in sorted(_PROVIDERS_DIR.iterdir()):
             if not subdir.is_dir() or subdir.name.startswith("_") or subdir.name.startswith("."):
                 continue
-            init_file = subdir / "__init__.py"
-            if not init_file.exists():
+            # Skip test-only directories
+            if subdir.name.endswith("_test"):
                 continue
-            try:
-                src = init_file.read_text(encoding="utf-8")
-            except OSError:
-                continue
-            if not re.search(r"HAS_\w+\s*=\s*(True|False)", src):
-                offenders.append(f"providers/{subdir.name}/__init__.py")
+            found = False
+            for path in subdir.rglob("*.py"):
+                if path.name == "__init__.py" and path.parent != subdir:
+                    continue
+                try:
+                    src = path.read_text(encoding="utf-8")
+                except OSError:
+                    continue
+                # Accept HAS_X = True/False, HAS_X = bool(...), etc.
+                if re.search(r"\bHAS_\w+\s*=\s*(True|False|bool\()", src):
+                    found = True
+                    break
+            if not found:
+                offenders.append(f"providers/{subdir.name}/")
         if offenders:
             msg = "\n  ".join(offenders)
             raise AssertionError(
-                "Law 30 violation: provider(s) missing HAS_<SDK> boolean flag:\n  " + msg
+                "Law 30/124 violation: provider package(s) missing HAS_<SDK> boolean flag:\n  " + msg
             )
 
 

@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsSettlement
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.order_entities import Order, OrderLogisticsAllocation

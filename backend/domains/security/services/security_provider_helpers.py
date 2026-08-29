@@ -11,7 +11,7 @@ import hashlib
 import os
 
 from infrastructure.utils.config import settings
-from providers.auth.jwt import decode_token
+from infrastructure.utils.auth import decode_token
 from providers.auth.totp import generate_secret, provisioning_uri, verify as verify_totp
 from providers.security.encryption import PBKDF2HMAC, Fernet, hashes
 from providers.security.watchlist import WatchlistProviderError, screen_watchlist
@@ -58,7 +58,7 @@ def decrypt_pii(ciphertext: str) -> str:
 
 def verify_user_token(token: str):
     """Decode and verify a JWT using the auth provider."""
-    return decode_token(token, secret=settings.secret_key, algorithms=[settings.jwt_algorithm])
+    return decode_token(token, expected_type="access")
 
 
 def setup_2fa_for_user(user_email: str):

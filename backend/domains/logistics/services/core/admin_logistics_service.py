@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from domains.logistics.models.logistics import LogisticsPartner
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 from infrastructure.utils.pagination import keyset_paginate
 

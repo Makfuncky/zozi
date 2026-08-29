@@ -9,8 +9,11 @@ on it.
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 import sys
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     # Standalone execution: the backend root must be on sys.path so the
@@ -23,4 +26,4 @@ from infrastructure.utils.migrations import upgrade_database_to_head
 
 if __name__ == "__main__":
     upgrade_database_to_head()
-    print("Database migrations applied successfully.")
+    logger.info("Database migrations applied successfully.")

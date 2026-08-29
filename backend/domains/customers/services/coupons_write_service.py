@@ -13,7 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from domains.governance.models.admin import CouponUsage
+from domains.promotions.models.coupon_usage import CouponUsage
 from domains.promotions.models.promotions import Coupon
 from infrastructure.utils.datetime_utils import utcnow
 import structlog

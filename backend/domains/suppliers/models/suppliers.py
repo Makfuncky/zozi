@@ -156,7 +156,7 @@ class SupplierBadge(Base):
     updated_by = Column(Integer, nullable=True, index=True)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
-    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalog.id', ondelete='RESTRICT'), nullable=True, index=True)
+    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalogs.id', ondelete='RESTRICT'), nullable=True, index=True)
     badge_name = Column(String(100), nullable=False)
     badge_level = Column(String(30), nullable=False, default='bronze')
     status = Column(String(20), nullable=False, default='active')
@@ -197,7 +197,7 @@ class SupplierBadgeBillingHistory(Base):
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
     badge_id = Column(Integer, ForeignKey('suppliers.supplier_badges.id', ondelete='RESTRICT'), nullable=True, index=True)
-    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalog.id', ondelete='RESTRICT'), nullable=True, index=True)
+    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalogs.id', ondelete='RESTRICT'), nullable=True, index=True)
     billing_reference = Column(String(120), unique=True, nullable=True)
     charge_type = Column(String(30), nullable=True)
     amount = Column(Numeric(12, 2), nullable=False, default=Decimal('0'))
@@ -221,3 +221,52 @@ class SupplierBadgeBillingHistory(Base):
         {'schema': 'suppliers'},
     )
 
+
+def __getattr__(name: str):
+    """Lazy re-export of governance-owned models used by supplier routers.
+
+    Law 3: cross-domain model references are brokered here rather than imported
+    directly at module top-level (avoids import cycles while keeping the
+    supplier package the single import site for callers).
+    """
+    from domains.governance import models as _gov_models
+
+    _MAP = {
+        "SupplierBankAccount": "SupplierBankAccount",
+        "LogisticsPartnerBankAccount": "LogisticsPartnerBankAccount",
+        "SupplierDispute": "SupplierDispute",
+    }
+    if name in _MAP and hasattr(_gov_models, _MAP[name]):
+        return getattr(_gov_models, _MAP[name])
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+# Supplier/LP bank accounts now live in the accounts domain
+# (domains.accounts.models.banking). Re-export them here so the historical
+# ``from domains.suppliers.models.suppliers import SupplierBankAccount`` sites keep
+# working (Law 3 sanctioned broker).
+def __getattr__(name: str):
+    from domains.accounts.models.banking import (
+        LogisticsPartnerBankAccount,
+        SupplierBankAccount,
+    )
+
+    _ACCOUNTS = {
+        "SupplierBankAccount": SupplierBankAccount,
+        "LogisticsPartnerBankAccount": LogisticsPartnerBankAccount,
+    }
+    if name in _ACCOUNTS:
+        return _ACCOUNTS[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+class SupplierDispute(Base):
+    __tablename__ = "supplier_disputes"
+    __table_args__ = {"schema": "suppliers"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True, index=True)
+    order_id = Column(Integer, nullable=True, index=True)
+    reason = Column(Text, nullable=True)
+    status = Column(String(32), default="open")
+    country_code = Column(String(2), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now())

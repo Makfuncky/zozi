@@ -52,20 +52,3 @@ def __getattr__(name: str):
 
 
 # ── ShiftHandoverTask (also defined in employee_models.py) ───────────────────
-class ShiftHandoverTask(Base):
-    __tablename__ = "shift_handover_tasks"
-    __table_args__ = ({"extend_existing": True, "schema": "hr"},)
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("customer.shift_handover_sessions.id", ondelete="SET NULL"), nullable=False)
-    description = Column(Text, nullable=False)
-    priority = Column(String(20), default="normal")
-    status_code = Column(String(20), default="open")
-    assigned_to_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
-    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
-    session = relationship("ShiftHandoverSession", back_populates="tasks")
-
-
-__all__ = ["ShiftHandoverTask", "OnboardingPipeline", "OnboardingStep"]

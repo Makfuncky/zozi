@@ -281,6 +281,15 @@ def verify_webhook(
     return _verify_tap_signature(raw_body, hashstring_header, webhook_secret)
 
 
+def refund_tap_charge(
+    charge_id: str,
+    amount: Optional[Decimal] = None,
+    tap_key: Optional[str] = None,
+) -> dict[str, Any]:
+    """Refund a Tap charge (convenience wrapper around refund_charge)."""
+    return refund_charge(charge_id, amount=amount)
+
+
 __all__ = [
     "HAS_TAP",
     "TapError",
@@ -291,5 +300,6 @@ __all__ = [
     "create_charge",
     "get_charge",
     "refund_charge",
+    "refund_tap_charge",
     "verify_webhook",
 ]

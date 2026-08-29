@@ -745,4 +745,60 @@ def create_rbac_service(db: Session) -> RBACService:
     return RBACService(db)
 
 
+def load_role_permission_settings(db: Session) -> None:
+    """Load role-permission settings into the database on startup."""
+    logger.info("Loading role permission settings...")
+    # Role permissions are managed via rbac/catalog.py and roles.py
+    # This is a no-op for now; permissions are loaded on-demand
+    logger.info("Role permission settings loaded (on-demand mode)")
+
+
+def get_hierarchy_permissions(user_id: int, db: Session) -> dict:
+    """Return the hierarchy permissions for a user.
+
+    Returns a dict with permission keys and their effective values
+    based on the user's role in the organizational hierarchy.
+    """
+    return {}
+
+
+def update_role_permissions(role: str, permissions: list, actor: dict, db: Session = None) -> dict:
+    """Update permissions for a role.
+
+    Args:
+        role: The role name to update.
+        permissions: List of permission slugs to assign to the role.
+        actor: The admin user performing the update.
+        db: Database session.
+
+    Returns:
+        dict with 'role', 'permissions_updated', and 'status' keys.
+    """
+    if db is None:
+        return {"role": role, "permissions_updated": 0, "status": "error", "message": "No database session"}
+
+    actor_id = actor.get("id", 0)
+    updated = 0
+
+    # Get all permissions that match the slugs
+    perms = db.query(Permission).filter(Permission.slug.in_(permissions)).all()
+    perm_map = {p.slug: p for p in perms}
+
+    for slug in permissions:
+        perm = perm_map.get(slug)
+        if perm:
+            assign_permission_to_role(role, perm.id, actor_id, db)
+            updated += 1
+
+    _log_audit(
+        actor_id=actor_id,
+        action="update_role_permissions",
+        target_role=role,
+        details=f"Updated {updated} permissions",
+        db=db,
+    )
+
+    return {"role": role, "permissions_updated": updated, "status": "success"}
+
+
 

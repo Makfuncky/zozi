@@ -11,6 +11,5 @@ from domains.customers.services.search_service import *
 from domains.customers.services.user_read_service import *
 from domains.customers.services.coins import *
 from domains.customers.services.recommendations import *
-from domains.customers.services.events import *
 
 __all__: list[str] = []

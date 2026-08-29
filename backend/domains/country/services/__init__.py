@@ -10,6 +10,5 @@ from domains.country.services.localization import *
 from domains.country.services.payout import *
 from domains.country.services.restriction import *
 from domains.country.services.research import *
-from domains.country.services.events import *
 
 __all__: list[str] = []

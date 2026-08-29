@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
@@ -12,50 +11,11 @@ from sqlalchemy.orm import Session
 
 from domains.suppliers.models.suppliers import SupplierProfile
 from domains.finance.ports import SupplierSettlement
+from providers.finance.fx_rates import get_rate
 
 logger = logging.getLogger(__name__)
 
-# Static fallback exchange rates (relative to USD). Production must use
-# a live FX provider via providers/exchange/.
-_FX_RATES: dict[str, Decimal] = {
-    "USD": Decimal("1.0"),
-    "SAR": Decimal("3.75"),
-    "AED": Decimal("3.6725"),
-    "EGP": Decimal("48.5"),
-    "KWD": Decimal("0.308"),
-    "QAR": Decimal("3.64"),
-    "BHD": Decimal("0.376"),
-    "OMR": Decimal("0.385"),
-    "JOD": Decimal("0.709"),
-    "EUR": Decimal("0.92"),
-    "GBP": Decimal("0.79"),
-    "TRY": Decimal("32.5"),
-    "PKR": Decimal("278.5"),
-    "INR": Decimal("83.5"),
-    "PHP": Decimal("56.5"),
-    "MYR": Decimal("4.75"),
-    "IDR": Decimal("15500"),
-    "THB": Decimal("35.5"),
-}
-
 _FX_PRECISION = Decimal("0.0001")
-
-# Rate freshness: static rates older than this (seconds) trigger a warning.
-# Production should set _FX_LAST_UPDATED via a live FX provider refresh.
-_FX_MAX_AGE_SECONDS = 86400  # 24 hours
-_FX_LAST_UPDATED: float = time.monotonic()
-
-
-def _check_fx_freshness() -> None:
-    """Warn if static FX rates have not been refreshed within the max age."""
-    age = time.monotonic() - _FX_LAST_UPDATED
-    if age > _FX_MAX_AGE_SECONDS:
-        logger.warning(
-            "Static FX rates are stale (age %.0f hours > %d hours). "
-            "Production must wire a live FX provider via providers/exchange/.",
-            age / 3600,
-            _FX_MAX_AGE_SECONDS // 3600,
-        )
 
 
 def convert_currency(
@@ -63,18 +23,17 @@ def convert_currency(
     from_currency: str,
     to_currency: str,
 ) -> Decimal:
-    """Convert an amount from one currency to another using static FX rates.
+    """Convert an amount from one currency to another using FX rates.
 
-    Falls back to identity conversion if either currency is unknown.
-    Production deployments should wire a live FX provider.
+    Tries live rates from providers/finance/fx_rates.py first; falls back to
+    hardcoded values if no external source is available. Falls back to identity
+    conversion if either currency is unknown.
     """
     if from_currency == to_currency:
         return Decimal(str(amount)).quantize(_FX_PRECISION, rounding=ROUND_HALF_UP)
 
-    _check_fx_freshness()
-
-    from_rate = _FX_RATES.get(from_currency.upper())
-    to_rate = _FX_RATES.get(to_currency.upper())
+    from_rate = get_rate(from_currency)
+    to_rate = get_rate(to_currency)
 
     if from_rate is None or to_rate is None:
         logger.warning(

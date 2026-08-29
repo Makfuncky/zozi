@@ -205,14 +205,14 @@ class TestSecurityJwtTypeClaim:
         from infrastructure.utils.auth import create_access_token, decode_token
 
         token = create_access_token(data={"sub": "1"})
-        payload = decode_token(token, check_blacklist=False)
+        payload = decode_token(token, expected_type="access", check_blacklist=False)
         assert payload.get("type") == "access"
 
     def test_refresh_token_has_type_claim(self):
         from infrastructure.utils.auth import create_refresh_token, decode_token
 
         token = create_refresh_token(data={"sub": "1"})
-        payload = decode_token(token, check_blacklist=False)
+        payload = decode_token(token, expected_type="refresh", check_blacklist=False)
         assert payload.get("type") == "refresh"
 
     def test_verify_token_rejects_wrong_type(self):

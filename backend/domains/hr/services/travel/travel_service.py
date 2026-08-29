@@ -6,6 +6,7 @@ Features: Trip requests, per diem calculation, multi-currency reconciliation, ge
 import json
 import logging
 from datetime import datetime, timezone, timedelta
+from decimal import Decimal
 from math import radians, sin, cos, sqrt, atan2
 from typing import Optional, List, Dict, Any
 
@@ -16,39 +17,51 @@ from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import GeoFenceLog
 from domains.country.models.countries import CountryConfig
 from infrastructure.database.database import get_service_session
+from providers.finance.fx_rates import get_rate
 
 logger = logging.getLogger("zozi.travel")
 
 
 class PerDiemCalculator:
     """Calculates daily per diem allowances based on destination."""
-    
+
     BASE_PER_DIEM_USD = 150
-    
-    LOCAL_CURRENCY_RATES = {
-        "USD": 1.0, "OMR": 0.38, "AED": 0.27, "SAR": 0.27,
-        "KWD": 0.0009, "BHD": 0.26, "QAR": 0.27, "EUR": 1.07, "GBP": 1.27
-    }
-    
+
     ECONOMY_TIER_MULTIPLIERS = {
         "US": 1.0, "EU": 1.0, "UK": 1.0,
         "AE": 0.7, "SA": 0.7, "OM": 0.7, "QA": 0.7,
         "KW": 1.0, "BH": 1.0,
         "tier_1": 1.0, "tier_2": 0.7, "tier_3": 0.5, "tier_4": 0.3
     }
-    
+
+    @classmethod
+    def _get_exchange_rate(cls, currency: str) -> float:
+        """Return the USD-based exchange rate for a currency.
+
+        Tries the live FX provider first; falls back to hardcoded rates
+        if the upstream is unavailable.
+        """
+        rate = get_rate(currency)
+        if rate is not None:
+            return float(rate)
+        fallback = {
+            "USD": 1.0, "OMR": 0.38, "AED": 0.27, "SAR": 0.27,
+            "KWD": 0.0009, "BHD": 0.26, "QAR": 0.27, "EUR": 1.07, "GBP": 1.27,
+        }
+        return fallback.get(currency, 1.0)
+
     @classmethod
     def calculate_per_diem(cls, country_code: str, cost_of_living_index: float = 100.0) -> Dict[str, Any]:
         """Calculate per diem for a country."""
         multiplier = cls.ECONOMY_TIER_MULTIPLIERS.get(country_code, 0.5)
         adjusted_cost_index = min(cost_of_living_index / 100.0, 2.0)
-        
+
         daily_allowance_usd = cls.BASE_PER_DIEM_USD * multiplier * adjusted_cost_index
-        
+
         local_currency = cls._get_local_currency(country_code)
-        exchange_rate = cls.LOCAL_CURRENCY_RATES.get(local_currency, 1.0)
-        daily_allowance_local = daily_allowance_usd / exchange_rate
-        
+        exchange_rate = cls._get_exchange_rate(local_currency)
+        daily_allowance_local = daily_allowance_usd / exchange_rate if exchange_rate else daily_allowance_usd
+
         return {
             "daily_allowance_usd": round(daily_allowance_usd, 2),
             "daily_allowance_local": round(daily_allowance_local, 2),

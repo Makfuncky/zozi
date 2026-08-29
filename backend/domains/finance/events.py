@@ -7,7 +7,6 @@ events). Events are plain dataclass-like objects; the bus is
 listeners by event *type*).
 """
 
-from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
@@ -161,3 +160,79 @@ class CommissionAccrued(FinanceEvent):
     applied_rate: Decimal = Decimal("0")
     currency: str = "USD"
     country_code: str = ""
+
+# imports merged from services/
+import logging
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+from uuid import uuid4
+
+# constants merged from services/
+EVENT_COMMISSION_CALCULATED = "finance.commission.calculated"
+EVENT_INVOICE_ISSUED = "finance.invoice.issued"
+EVENT_PAYMENT_PROCESSED = "finance.payment.processed"
+EVENT_PAYOUT_COMPLETED = "finance.payout.completed"
+
+# base classes merged from services/
+class CommissionCalculated(FinanceEvent):
+    commission_id: int = 0
+    order_id: Optional[int] = None
+    supplier_id: Optional[int] = None
+    amount: str = ""
+    currency: str = ""
+    event_type: str = field(default=EVENT_COMMISSION_CALCULATED, init=False)
+class InvoiceIssued(FinanceEvent):
+    invoice_id: int = 0
+    order_id: Optional[int] = None
+    amount: str = ""
+    currency: str = ""
+    event_type: str = field(default=EVENT_INVOICE_ISSUED, init=False)
+class PaymentProcessed(FinanceEvent):
+    payment_id: int = 0
+    order_id: Optional[int] = None
+    amount: str = ""
+    currency: str = ""
+    gateway: str = ""
+    event_type: str = field(default=EVENT_PAYMENT_PROCESSED, init=False)
+class PayoutCompleted(FinanceEvent):
+    payout_id: int = 0
+    recipient_type: str = ""
+    recipient_id: Optional[int] = None
+    amount: str = ""
+    currency: str = ""
+    event_type: str = field(default=EVENT_PAYOUT_COMPLETED, init=False)
+
+# functions merged from services/
+def publish_commission_calculated(commission_id: int, amount: str, currency: str, order_id: Optional[int] = None, supplier_id: Optional[int] = None) -> None:
+    """Publish a CommissionCalculated event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = CommissionCalculated(commission_id=commission_id, order_id=order_id, supplier_id=supplier_id, amount=amount, currency=currency)
+        publish(EVENT_COMMISSION_CALCULATED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish CommissionCalculated event: %s", exc)
+def publish_invoice_issued(invoice_id: int, amount: str, currency: str, order_id: Optional[int] = None) -> None:
+    """Publish an InvoiceIssued event to the canonical event bus."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = InvoiceIssued(invoice_id=invoice_id, order_id=order_id, amount=amount, currency=currency)
+        publish(EVENT_INVOICE_ISSUED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish InvoiceIssued event: %s", exc)
+def publish_payment_processed(payment_id: int, amount: str, currency: str, gateway: str, order_id: Optional[int] = None) -> None:
+    """Publish a PaymentProcessed event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = PaymentProcessed(payment_id=payment_id, order_id=order_id, amount=amount, currency=currency, gateway=gateway)
+        publish(EVENT_PAYMENT_PROCESSED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish PaymentProcessed event: %s", exc)
+def publish_payout_completed(payout_id: int, recipient_type: str, amount: str, currency: str, recipient_id: Optional[int] = None) -> None:
+    """Publish a PayoutCompleted event."""
+    try:
+        from infrastructure.messaging.events.event_bus import publish
+        event = PayoutCompleted(payout_id=payout_id, recipient_type=recipient_type, recipient_id=recipient_id, amount=amount, currency=currency)
+        publish(EVENT_PAYOUT_COMPLETED, event.serialize())
+    except Exception as exc:
+        logger.warning("Failed to publish PayoutCompleted event: %s", exc)

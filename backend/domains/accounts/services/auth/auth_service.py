@@ -28,6 +28,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional, Tuple
 
+import cachetools
 import jwt
 import requests
 
@@ -71,7 +72,9 @@ _SSO_JWKS_URLS = {
     "apple": "https://appleid.apple.com/auth/keys",
     "microsoft": "https://login.microsoftonline.com/common/discovery/v2.0/keys",
 }
-_JWKS_CACHE: dict = {}
+_JWKS_CACHE = cachetools.TTLCache(maxsize=1000, ttl=3600)
+_JWKS_FETCH_TIMEOUT_SECONDS = 10
+_TOKEN_JTI_FALLBACK_SUFFIX_LENGTH = 16
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Shared Helpers
@@ -929,12 +932,14 @@ def authenticate_kiosk_qr(
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def _verify_sso_token(provider: str, id_token: str) -> dict:
+async def _verify_sso_token(provider: str, id_token: str) -> dict:
     """Verify an SSO ID token and return the userinfo claims.
 
     Supports Google, Apple, and Microsoft. Validates the token signature,
     expiry, and audience (client_id) via the provider's public JWKS endpoint.
     """
+    import asyncio
+
     from infrastructure.utils.config import settings
     from cryptography.x509 import load_pem_x509_certificate
 
@@ -950,7 +955,7 @@ def _verify_sso_token(provider: str, id_token: str) -> dict:
     try:
         jwks = _JWKS_CACHE.get(provider)
         if not jwks:
-            resp = requests.get(jwks_url, timeout=10)
+            resp = await asyncio.to_thread(requests.get, jwks_url, timeout=_JWKS_FETCH_TIMEOUT_SECONDS)
             resp.raise_for_status()
             jwks = resp.json()
             _JWKS_CACHE[provider] = jwks
@@ -1018,7 +1023,7 @@ def _verify_sso_token(provider: str, id_token: str) -> dict:
         )
 
 
-def authenticate_sso(
+async def authenticate_sso(
     provider: str,
     id_token: str,
     request: Optional[Request] = None,
@@ -1037,7 +1042,7 @@ def authenticate_sso(
     else:
         close_db = False
     try:
-        claims = _verify_sso_token(provider, id_token)
+        claims = await _verify_sso_token(provider, id_token)
         email = claims.get("email", "")
         sso_sub = claims.get("sub", "")
 
@@ -1276,7 +1281,7 @@ def logout(access_token: str, db: Session | None = None) -> dict:
         db = SessionLocal()
         close_db = True
     try:
-        payload = decode_token(access_token)
+        payload = decode_token(access_token, expected_type="access")
         jti = payload.get("jti", "")
         exp = payload.get("exp", 3600)
         ttl = max(exp - int(time.time()), 60)
@@ -1514,7 +1519,7 @@ from domains.accounts.models.user import UserDevice
 from domains.accounts.models.user import UserLoginHistory
 from domains.accounts.models.user import PasswordResetToken
 from domains.accounts.models.user import EmailVerificationToken
-from domains.accounts.models.user import ReferralPointEvent
+from domains.customers.models.customer_schema_models import ReferralPointEvent
 from domains.comms.ports import SupplierProfile
 from domains.logistics.ports import LogisticsPartner
 from infrastructure.database.schemas import (
@@ -1849,49 +1854,6 @@ def _user_public_payload(user: User | UserSchema) -> dict[str, Any]:
     }
     if _user_role(user) in STAFF_ROLES:
         payload.update(_user_staff_payload(user))
-    return payload
-
-
-# ── Dependency ────────────────────────────────────────────────────────────────
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-):
-    """FastAPI dependency — resolves the current authenticated user from the JWT."""
-    subject = verify_token(token)
-    cache_key = f"auth:user:{subject}"
-    cached = cache_get_json(cache_key)
-    if isinstance(cached, dict):
-        return cached
-    user = _resolve_user_from_subject(subject, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    payload = {
-        "id": _user_id(user),
-        "username": _user_username(user),
-        "email": _user_email(user),
-        "role": _user_role(user),
-        "is_active": bool(cast(Any, getattr(user, "is_active"))),
-        "phone": _user_phone(user),
-        "profile_image": _user_profile_image(user),
-        "preferred_language": cast(str | None, getattr(user, "preferred_language")) or DEFAULT_LANGUAGE,
-        "preferred_currency": cast(str | None, getattr(user, "preferred_currency")) or DEFAULT_CURRENCY,
-        "preferred_country": cast(str | None, getattr(user, "preferred_country")) or DEFAULT_COUNTRY,
-        "country_code": cast(str | None, getattr(user, "country_code")) or cast(str | None, getattr(user, "preferred_country")) or DEFAULT_COUNTRY,
-        "referral_code": cast(str | None, getattr(user, "referral_code", None)),
-        "referral_points": int(cast(int | None, getattr(user, "referral_points", 0)) or 0),
-        "sharing_points": int(cast(int | None, getattr(user, "sharing_points", 0)) or 0),
-        "total_points": _total_referral_points(user),
-        "email_verified": user.email_verified,
-        "full_name": cast(str | None, getattr(user, "full_name", None)),
-        "address_book": getattr(user, "address_book", None),
-        "created_at": cast(datetime, getattr(user, "created_at")),
-        "_token": token,
-    }
-    if _user_role(user) in STAFF_ROLES:
-        payload.update(_user_staff_payload(user))
-    cache_set_json(cache_key, payload, _USER_CACHE_TTL_SECONDS)
     return payload
 
 
@@ -2803,7 +2765,7 @@ def refresh_access_token(request: Request, response: Response, db: Session, body
 
     # Decode the old refresh token to extract family_id and jti before validation
     try:
-        old_payload = decode_token(refresh_token)
+        old_payload = decode_token(refresh_token, expected_type="refresh")
     except HTTPException:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -3012,7 +2974,7 @@ def claim_share_points(body: ReferralShareRequest, current_user: dict, db: Sessi
 # ── Logout ────────────────────────────────────────────────────────────────────
 
 def logout_user(request: Request, response: Response, body_refresh_token: str | None = None) -> dict:
-    from providers.auth import jwt as _jwt  # local import to avoid top-level circular deps
+    from infrastructure.utils.auth import decode_token  # local import to avoid top-level circular deps
 
     # Blacklist the access token
     token = None
@@ -3023,10 +2985,8 @@ def logout_user(request: Request, response: Response, body_refresh_token: str | 
     try:
         if not token:
             raise ValueError("missing bearer token")
-        payload = _jwt.decode_token(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
-        jti = payload.get("jti") or token[-16:]
+        payload = decode_token(token, expected_type="access")
+        jti = payload.get("jti") or token[-_TOKEN_JTI_FALLBACK_SUFFIX_LENGTH:]
         exp = payload.get("exp", 0)
         ttl = max(int(exp - datetime.now(timezone.utc).timestamp()), 1)
         blacklist_token(jti, ttl)
@@ -3037,9 +2997,7 @@ def logout_user(request: Request, response: Response, body_refresh_token: str | 
     refresh_token = request.cookies.get(settings.refresh_token_cookie_name) or body_refresh_token
     if refresh_token:
         try:
-            rt_payload = _jwt.decode_token(
-                refresh_token, settings.secret_key, algorithms=[settings.algorithm]
-            )
+            rt_payload = decode_token(refresh_token, expected_type="refresh")
             rt_jti = rt_payload.get("jti") or refresh_token[-16:]
             rt_exp = rt_payload.get("exp", 0)
             rt_ttl = max(int(rt_exp - datetime.now(timezone.utc).timestamp()), 1)
@@ -3883,7 +3841,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import SessionLocal
 from domains.accounts.models.user import EmailVerificationToken
 from domains.accounts.models.user import PasswordResetToken
-from domains.accounts.models.user import ReferralPointEvent
+from domains.customers.models.customer_schema_models import ReferralPointEvent
 from domains.accounts.models.user import User
 from domains.accounts.models.user import UserDevice
 from domains.accounts.models.user import UserLoginHistory

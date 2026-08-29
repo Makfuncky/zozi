@@ -80,24 +80,6 @@ class SupplierOnboardingSync(Base):
     supplier = relationship("User")
 
 
-class LegalContractTemplate(Base):
-    __tablename__ = "legal_contract_templates"
-    __table_args__ = (
-        UniqueConstraint("country_code", "template_type", name="uq_lct_country_type"),
-        Index("ix_lct_type", "template_type"), {"schema": "country"})
-
-    id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=False, index=True)
-    template_type = Column(String(50), nullable=False)
-    version = Column(String(20), default="1.0")
-    content = Column(Text, nullable=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-
-    country = relationship("CountryConfig")
-
-
 class DataResidencyRecord(Base):
     __tablename__ = "data_residency_records"
     __table_args__ = (

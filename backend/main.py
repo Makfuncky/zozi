@@ -197,7 +197,7 @@ async def websocket_background_jobs(websocket: WebSocket, token: str = None):
         await websocket.close(code=4001, reason="Missing token")
         return
     try:
-        payload = decode_token(token)
+        payload = decode_token(token, expected_type="access")
     except Exception:
         await websocket.close(code=4001, reason="Invalid token")
         return
@@ -260,24 +260,7 @@ def _load_routers():
             except Exception as e:  # noqa: BLE001
                 logger.error("Skipping public router in %s: %s", _module, e)
 
-    # Alias the logistics-partner router under the plural form used by the mobile
-    # app so both web ('/logistics-partner') and mobile ('/logistics-partners')
-    # clients can reach shipments/scan/status endpoints.
-    try:
-        _lp = importlib.import_module("modules.logistics.routers.logistics_partner_verify")
-        if hasattr(_lp, "router"):
-            app.include_router(_lp.router, prefix="/logistics-partners")
-    except Exception as e:  # noqa: BLE001
-        logger.warning("Could not register plural logistics-partner router: %s", e)
 
-    # Expose the country control-plane under BOTH /countries/admin and
-    # /admin/countries.
-    try:
-        _cc = importlib.import_module("modules.admin.routers.core_countries_routes")
-        if hasattr(_cc, "router"):
-            app.include_router(_cc.router, prefix="/admin/countries")
-    except Exception as e:  # noqa: BLE001
-        logger.warning("Could not register /admin/countries alias: %s", e)
 
 
 _load_routers()

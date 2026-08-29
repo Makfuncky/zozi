@@ -42,3 +42,45 @@ __all__ = [
     "publish_promotion_activated",
     "publish_promotion_expired",
 ]
+
+# imports merged from services/
+import logging
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+from uuid import uuid4
+
+# base classes merged from services/
+class PromotionsEvent:
+    """Base class for all promotions-domain events."""
+
+    event_type: str = field(init=False)
+    event_id: str = field(default_factory=lambda: str(uuid4()), init=False)
+    occurred_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), init=False
+    )
+
+    def serialize(self) -> Dict[str, Any]:
+        """Plain-dict form for the event bus."""
+        d = asdict(self)
+        d["occurred_at"] = self.occurred_at.isoformat()
+        return d
+
+# derived classes merged from services/
+class CouponApplied(PromotionsEvent):
+    coupon_id: int = 0
+    code: str = ""
+    order_id: Optional[int] = None
+    user_id: Optional[int] = None
+    discount_amount: str = ""
+    event_type: str = field(default=EVENT_COUPON_APPLIED, init=False)
+class PromotionActivated(PromotionsEvent):
+    promotion_id: int = 0
+    name: str = ""
+    country_code: str = ""
+    event_type: str = field(default=EVENT_PROMOTION_ACTIVATED, init=False)
+class PromotionExpired(PromotionsEvent):
+    promotion_id: int = 0
+    name: str = ""
+    country_code: str = ""
+    event_type: str = field(default=EVENT_PROMOTION_EXPIRED, init=False)

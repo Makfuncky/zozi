@@ -8,7 +8,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from domains.comms.models.suppliers import SupplierProfile
-from domains.governance.models.admin import SupplierDispute
+from domains.suppliers.models.suppliers import SupplierDispute
 from domains.governance.models.admin import SupplierCountryCommission
 from domains.orders.models.orders import Order
 
@@ -88,14 +88,14 @@ class SupplierHealthEngine:
         )
         if country_code:
             query = query.filter(Order.shipping_country == country_code)
-        return query.all()
+        return query.limit(1000).all()
     
     def _get_disputes(self, supplier_id: int, start: datetime, end: datetime):
         return self.db.query(SupplierDispute).filter(
             SupplierDispute.supplier_id == supplier_id,
             SupplierDispute.created_at >= start,
             SupplierDispute.created_at <= end,
-        ).all()
+        ).limit(1000).all()
     
     def _calculate_response_time_score(self, orders) -> float:
         if not orders:

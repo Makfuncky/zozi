@@ -20,7 +20,7 @@ from domains.promotions.services.admin_promotion_service import (
     delete_banner as delete_banner_controller,
     update_banner as update_banner_controller,
 )
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
 router = APIRouter(prefix="/api/v1/admin/promotions", tags=["admin", "promotions"])

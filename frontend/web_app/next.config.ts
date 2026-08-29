@@ -3,16 +3,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  experimental: {},
   devIndicators: false,
-  webpack: (config, { dev }) => {
+  webpack: (config) => {
     config.resolve = config.resolve || {};
+    const cwd = process.cwd();
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      '@': path.resolve(__dirname, './src'),
-      '@shared': path.resolve(__dirname, '../shared/src'),
+      '@': path.resolve(cwd, './src'),
+      '@shared': path.resolve(cwd, '../shared/src'),
       'react-native$': 'react-native-web',
-      'react-native-web': path.resolve(__dirname, "node_modules/react-native-web"),
+      'react-native-web': path.resolve(cwd, "node_modules/react-native-web"),
     };
     config.resolve.extensions = [
       '.web.tsx',
@@ -28,26 +28,10 @@ const nextConfig: NextConfig = {
 
     config.resolve.modules = [
       ...(config.resolve.modules || []),
-      path.resolve(__dirname, 'node_modules'),
+      path.resolve(process.cwd(), 'node_modules'),
     ];
 
     return config;
-  },
-  turbopack: {
-    resolveAlias: {
-      '@': path.resolve(__dirname, './src'),
-      '@shared': path.resolve(__dirname, '../shared/src'),
-      'react-native$': 'react-native-web',
-      'react-native-web': path.resolve(__dirname, "node_modules/react-native-web"),
-    },
-    resolveExtensions: [
-      '.web.tsx',
-      '.web.ts',
-      '.web.js',
-      '.tsx',
-      '.ts',
-      '.js',
-    ],
   },
   images: {
     remotePatterns: [
@@ -87,7 +71,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/__api/:path*',
-        destination: `${apiUrl}/api/:path*`,
+        destination: `${apiUrl}/api/v1/customer/catalog/:path*`,
       },
       {
         source: '/uploads/:path*',

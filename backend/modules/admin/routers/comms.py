@@ -10,7 +10,7 @@ from infrastructure.security.dependencies import require_admin
 from infrastructure.messaging.ws_manager import manager
 from rbac.dependencies import require_feature
 from domains.comms.services.email.email_management import EmailManagementService
-from domains.comms.services.admin.communication_audit import get_communication_audit_service
+from domains.comms.services.admin import get_communication_audit_service
 
 
 """Admin comms router — thin HTTP layer delegating to comms domain services."""

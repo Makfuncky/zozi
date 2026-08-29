@@ -13,8 +13,8 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.comms.models.marketing import FlashSale
-from domains.governance.models.admin import PromotionEngineConfig
+from domains.promotions.models.promotions import FlashSale
+from domains.promotions.models.promotion_config import PromotionEngineConfig
 from domains.governance.models.admin import PromotionOrderTier
 from domains.promotions.models.promotions import Banner
 from domains.promotions.models.promotions import Coupon
@@ -315,7 +315,7 @@ def list_coupons(
         q = q.filter(Coupon.is_deleted == False)  # noqa: E712
     if country and country != "*":
         q = q.filter(Coupon.country_code == country.upper())
-    return q.all()
+    return q.limit(1000).all()
 
 
 def list_flash_sales(
@@ -329,7 +329,7 @@ def list_flash_sales(
         q = q.filter(FlashSale.is_deleted == False)  # noqa: E712
     if country and country != "*":
         q = q.filter(FlashSale.country_code == country.upper())
-    return q.all()
+    return q.limit(1000).all()
 
 
 def list_banners_paginated(

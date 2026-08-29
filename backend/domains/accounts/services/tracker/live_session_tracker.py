@@ -16,7 +16,7 @@ from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import UserSession
+from domains.accounts.models.user import UserSession
 from domains.accounts.models.user import User, UserDevice, UserLoginHistory
 
 logger = logging.getLogger(__name__)

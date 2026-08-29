@@ -83,6 +83,7 @@ def main():
                     import json
                     job = json.loads(raw)
                 except Exception:
+                    logger.warning("Failed to parse job JSON from Redis key %s", key, exc_info=True)
                     continue
 
                 if job.get("status") == "queued" and job.get("kind") == "ml":

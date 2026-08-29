@@ -14,7 +14,7 @@ from domains.governance.models.core import GroupChatRoom
 from domains.governance.models.core import GroupChatMessage
 from domains.governance.models.core import EntityChatThread
 from domains.governance.models.core import EntityChatMessage
-from domains.governance.models.core import SupportTicket
+from domains.comms.models.communication_schema_models import SupportTicket
 from domains.accounts.models.user import User
 from domains.comms.models.communication import Notification
 from domains.governance.models.admin import TicketReply

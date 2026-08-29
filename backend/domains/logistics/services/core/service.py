@@ -721,7 +721,7 @@ from sqlalchemy.orm import Session
 
 from domains.logistics.models.logistics import LogisticsPartner
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 
 
@@ -919,7 +919,7 @@ from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
@@ -1107,7 +1107,7 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.constants import MAX_BULK_ITEMS
 from infrastructure.database.database import get_db, Base
 from infrastructure.database.schemas import User as UserSchema, Product as ProductSchema, Order as OrderSchema, CouponSchema, ListPage, AuditLogSchema, AuditLogPage, CreateStaffAccount, UpdateStaffAccount, BulkUpdateStaffBody
-from domains.accounts.ports import get_current_user, get_hierarchy_permissions, get_staff_permission_catalog, update_role_permissions
+from domains.accounts.ports import get_current_user, get_hierarchy_permissions, update_role_permissions
 from infrastructure.utils.dependencies import require_admin
 # TODO: Module not yet created
 # from domains.governance.services.permissions.effective_permissions import require_permission
@@ -1171,7 +1171,6 @@ from domains.governance.ports import reject_product
 # from domains.governance.services.products.products_service import toggle_product_badge
 from domains.governance.ports import list_coupons
 from domains.governance.ports import create_coupon
-from domains.orders.ports import update_coupon
 from domains.governance.ports import delete_coupon
 # TODO: Module not yet created
 # from domains.comms.services.ticket.tickets_service import list_tickets
@@ -1252,13 +1251,11 @@ from domains.orders.ports import create_promotion_tier
 from domains.orders.ports import update_promotion_tier
 from domains.orders.ports import delete_promotion_tier
 from domains.orders.ports import preview_order_tier_discount
-from domains.orders.ports import disputes_controller
 from infrastructure.utils.backup import get_backup_manager
 from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
 from domains.orders.ports import get_all_flash_sales
 from domains.orders.ports import create_flash_sale
 from domains.orders.ports import update_flash_sale
-from domains.orders.ports import delete_flash_sale
 
 class BulkDeleteUsersBody(BaseModel):
     user_ids: List[int]
@@ -1806,7 +1803,7 @@ from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
@@ -2049,7 +2046,7 @@ from domains.promotions.ports import create_promotion_tier, delete_promotion_tie
 # from domains.governance.services.users_service import list_pending_bank_accounts
 # TODO: Module not yet created
 # from domains.governance.services.users_service import delete_bank_account_record
-from domains.hr.payroll_service import verify_bank_account
+from domains.hr.services.payroll.payroll_service import verify_bank_account
 # TODO: Module not yet created
 # from domains.governance.services.database_service import get_database_overview
 from domains.hr.ports import backfill_authority_levels, can_manage, get_all_subordinates, get_authority_level, get_home_org_unit, get_org_chart, get_team_members, get_user_chain, is_in_chain, reassign_manager
@@ -2077,7 +2074,6 @@ from domains.hr.ports import backfill_authority_levels, can_manage, get_all_subo
 # from domains.catalog.services.banners.banner_service import BannerCreate
 # TODO: Module not yet created
 # from domains.catalog.services.banners.banner_service import BannerUpdate
-from domains.orders.models.orders import disputes_controller
 from infrastructure.utils.backup import get_backup_manager
 from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
 # TODO: Module not yet created
@@ -2507,10 +2503,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from datetime import datetime, timezone
 from domains.country.models.countries import CountryCommunication
-from domains.country.models.country_control import LegalContractTemplate
+from domains.governance.models.legal_contract_template import LegalContractTemplate
 from domains.country.models.country_control import ShopWarehouseLocation
 from domains.country.models.country_control import LogisticsPartnerLocation
-from domains.country.models.country_enhancements import CrossCountryCustomerSession
+from domains.customers.models.cross_country_session import CrossCountryCustomerSession
 from domains.logistics.models.logistics import LogisticsPartner
 import structlog
 logger = structlog.get_logger(__name__)
@@ -2961,7 +2957,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from .geo_resolver import resolve_ip_location, reverse_geocode
+from providers.geography.geo import resolve_ip_location, reverse_geocode
 from infrastructure.utils.auth import decode_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 

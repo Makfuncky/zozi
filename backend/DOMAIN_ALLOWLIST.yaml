@@ -1,15 +1,7 @@
-﻿# DOMAIN_ALLOWLIST.yaml
+# DOMAIN_ALLOWLIST.yaml
 # Strangler-debt tracker (spec Phase 1). Lists temporary cross-domain imports
 # still permitted. This list MUST only shrink over time.
 cross_domain_imports:
-  # core.users is the canonical identity table (accounts domain owns it).
-  # Finance models reference it for audit trails, ownership, FK relationships.
-  # Per Law 8, core/platform/identity are forbidden for domain-owned tables,
-  # but cross-domain FK references to the shared identity table are sanctioned.
-  - domains.finance.models.general_ledger -> core.users (49 FK references)
-  - domains.finance.models.commission -> core.users (6 FK references)
-  - domains.finance.models.erp -> core.users (5 FK references)
-
   # Cross-domain service imports (temporary — should be routed through ports.py)
   # These are utilities and shared services used by finance that will eventually
   # be moved to infrastructure/ or exposed via the owning domain's ports.py.
@@ -17,8 +9,6 @@ cross_domain_imports:
   - domains.finance.services.* -> domains.governance.services.treasury.* (payout operations)
   - domains.finance.services.* -> domains.logistics.services.logistics_partner_pricing (pricing functions)
   - domains.finance.services.* -> domains.suppliers.services.suppliers_write_service (create_payout)
-  - domains.finance.services.payments.payment_engine -> domains.payments.services.* (same-domain, OK)
-  - domains.finance.services.shared.automation_scheduler -> domains.payments.services.gateway_reconciliation_service
 
   # Cross-domain model imports for read-only query building (same session).
   # These will be routed through the owning domain's ports.py in a future migration.
@@ -50,27 +40,13 @@ cross_domain_imports:
   - domains.finance.services.commission.commission_geography_service -> OFFSET pagination
   - domains.finance.services.payments.payout_approval_read_service -> OFFSET pagination
 
-  # Payout model lives in payments domain but is a finance business concept.
-  # 79 files import it. Moving to finance.models would be a large migration.
-  # Sanctioned as shared cross-domain model reference.
-  - domains.finance.services.payouts.* -> domains.payments.models.payments (Payout, LogisticsPartnerPayout)
-  - domains.finance.services.reporting.* -> domains.payments.models.payments (Payout, LogisticsPartnerPayout)
-  - domains.finance.services.shared.* -> domains.payments.models.payments (Payout)
-  - domains.finance.services.treasury.* -> domains.payments.models.payments (Payout, LogisticsPartnerPayout)
-  - domains.finance.services.ledger.* -> domains.payments.models.payments (Payout)
-  - domains.finance.services.commission.supplier_finance_service -> domains.payments.models.payments (Payout)
-
-  # Payment gateway base classes used by finance payout engine.
-  # Will be routed through payments.ports.py in a future migration.
-  - domains.finance.services.payouts.payment_engine -> domains.payments.services.base (BasePaymentGateway)
-  - domains.finance.services.payouts.payment_engine -> domains.payments.services.base_models (PaymentResult, RefundResult, ConnectionTestResult)
-  - domains.finance.services.payouts.payment_engine -> domains.payments.services.registry (PaymentGatewayRegistry)
+  # Cross-domain model re-exports (governance fraud models re-exported from security + comms)
+  - domains.governance.models.fraud -> domains.security.models.fraud (CreditCardBin, DLPViolation, DeviceFingerprint, FraudAlert, FraudBlacklist, FraudCase, FraudCaseAssignment, FraudEvent, FraudRule, FraudScoringLog, IPAccountLinkage, IPReputation, LogisticsFraudIndicator, ManualReviewQueue, MeetingActionItem, MeetingTranscript, ReturnAbusePattern, SupplierFraudIndicator, VelocityCounter)
+  - domains.governance.models.fraud -> domains.comms.models.fraud (MeetingRecording)
 
 notes: >
   Populated as domains are migrated. Starts empty; entries are added only for
   legacy cross-domain reads not yet routed through domains/<d>/ports.py.
-  core.users references are sanctioned because the User model is the canonical
-  identity table shared across all domains.
   Cross-domain service imports are temporary debt that will be resolved by:
   1. Moving utility functions (db_read, write_helpers) to infrastructure/
   2. Adding proper port functions to governance.ports, logistics.ports, suppliers.ports

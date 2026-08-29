@@ -7,12 +7,8 @@ from __future__ import annotations
 import math
 from typing import Any, Optional
 import structlog
+
 logger = structlog.get_logger(__name__)
-
-
-def geocode(address: str, **kwargs: Any) -> Optional[dict]:
-    """Return a coarse geocode result, or ``None`` if unavailable."""
-    return None
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -26,4 +22,4 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     return 2 * r * math.asin(math.sqrt(a))
 
 
-__all__ = ["geocode", "haversine_distance"]
+__all__ = ["haversine_distance"]

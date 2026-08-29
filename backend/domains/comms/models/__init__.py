@@ -37,7 +37,6 @@ from domains.comms.models.communication import (  # noqa: F401
     MaskedMessage,
 )
 from domains.comms.models.marketing import (  # noqa: F401
-    FlashSale,
     FlashSaleItem,
     EmailCampaign,
     EmailTemplate,
@@ -47,8 +46,6 @@ from domains.comms.models.marketing import (  # noqa: F401
     EmailDeliveryEvent,
     EmailSuppression,
     EmailRuntimeConfig,
-    PointsTransaction,
-    UserPoints,
 )
 from domains.comms.models.news import NewsArticle  # noqa: F401
 from domains.comms.models.communication_schema_models import (  # noqa: F401
@@ -101,7 +98,6 @@ __all__ = [
     "EmailFolder",
     "MaskedMessage",
     # marketing
-    "FlashSale",
     "FlashSaleItem",
     "EmailCampaign",
     "EmailTemplate",
@@ -111,8 +107,6 @@ __all__ = [
     "EmailDeliveryEvent",
     "EmailSuppression",
     "EmailRuntimeConfig",
-    "PointsTransaction",
-    "UserPoints",
     # news
     "NewsArticle",
     # schema models

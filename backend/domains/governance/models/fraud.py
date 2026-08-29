@@ -1,4 +1,4 @@
-"""Governance fraud models — re-exported from security domain (canonical source)."""
+"""Governance fraud models — re-exported from security and suppliers domains (canonical sources)."""
 from __future__ import annotations
 
 from domains.security.models.fraud import (
@@ -19,9 +19,9 @@ from domains.security.models.fraud import (
     MeetingActionItem,
     MeetingTranscript,
     ReturnAbusePattern,
-    SupplierFraudIndicator,
     VelocityCounter,
 )
+from domains.suppliers.models.fraud_indicators import SupplierFraudIndicator
 from domains.comms.models.fraud import MeetingRecording
 
 __all__ = [

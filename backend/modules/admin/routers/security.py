@@ -19,7 +19,7 @@ from domains.security.services.health.flat_risk_service import (
     get_team_health_radar,
     update_flight_risk_score,
 )
-from domains.security.services.iam.security_dependencies import start_otp, verify_otp
+from domains.accounts.services.auth.security_dependencies import start_otp, verify_otp
 from domains.governance.ports import User
 from domains.security.services.core.security_service import (
     add_to_blacklist,

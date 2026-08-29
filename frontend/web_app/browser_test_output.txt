@@ -1,0 +1,69 @@
+﻿=====BROWSER_TEST_RESULT=====
+{
+  "homepage": {
+    "status": 200,
+    "title": "ZOZI - Trust Delivered",
+    "bodySample": "Skip to main contentZoziAll ProductsPriceRatingSupplierSearchOMRAuto detectedAUTOENLoading...ZOZITrust delivered through verified suppliers, exceptional products, and global reach.Become a SupplierBecome Logistics PartnerThe ZOZI DispatchStay in StyleGet exclusive access to new arrivals, special offers, and fashion tips.Subscribe© 2026 ZOZI. All rights reserved.TermsPrivacyCookiesrequestAnimationF",
+    "hasZoziText": true,
+    "apiCalls": []
+  },
+  "login": {
+    "responseStatus": 403,
+    "responseBody": {
+      "type": "https://zozi.com/errors/http-403",
+      "title": "Request Error",
+      "status": 403,
+      "detail": "CSRF token missing. Include X-CSRF-Token header.",
+      "instance": "/auth/login",
+      "request_id": "9bddcc33-628c-42f4-9def-4f39762e7d59",
+      "timestamp": "2026-08-28T23:06:57.888189+00:00",
+      "error_category": "authorization_error"
+    },
+    "visibleError": "CSRF token missing. Include X-CSRF-Token header.",
+    "stillOnLogin": true,
+    "apiCalls": []
+  },
+  "summary": {
+    "consoleErrors": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "error",
+        "text": "[API] Fetch failed for /api/geo: Failed to fetch"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      }
+    ],
+    "consoleWarnings": [],
+    "pageErrors": [],
+    "totalApiCalls": 0
+  }
+}

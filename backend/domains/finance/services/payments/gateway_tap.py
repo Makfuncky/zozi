@@ -1,5 +1,26 @@
 """Gateway module — imports shared code from payment_engine."""
 
+import hashlib
+import hmac
+import httpx
+import json
+from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Any, Optional, cast
+from urllib.parse import parse_qs
+
+from fastapi import HTTPException, Request
+from sqlalchemy.orm import Session
+
+from infrastructure.utils.context import (
+    get_correlation_id,
+    log_service_error,
+    request_context,
+)
+from domains.finance.services.payments.money_utils import (
+    convert_from_aed,
+    money_to_minor_units_for_currency,
+)
 from domains.finance.services.payments.payment_engine import (  # noqa: F401
     TapChargeRequest,
     ConfirmTapPaymentRequest,
@@ -54,24 +75,7 @@ from domains.finance.services.payments.payment_engine import (  # noqa: F401
     DEFAULT_PAYTABS_REQUEST_PATH,
     DEFAULT_PAYTABS_QUERY_PATH,
     logger,
-    HTTPException,
-    Request,
-    Session,
-    Optional,
-    dict,
-    Any,
-    cast,
-    Decimal,
     Order,
-    OrderItem,
-    convert_from_aed,
-    hmac,
-    hashlib,
-    httpx,
-    json,
-    parse_qs,
-    datetime,
-    timezone,
 )
 
 async def create_tap_charge(body: TapChargeRequest, current_user: dict, db: Session) -> dict:
@@ -1619,9 +1623,7 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
 
 
 
-class ConfirmThawaniPaymentRequest(BaseModel):
 
-    order_id: int
 
 
 

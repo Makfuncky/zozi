@@ -10,7 +10,7 @@ from infrastructure.database.schemas import (
 from domains.finance.models.commission import CommissionCategoryRate
 from domains.governance.models.admin import CommissionBadgeTier
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 
 
@@ -43,7 +43,7 @@ def list_rates(country_code: str, page: int, page_size: int, db: Session) -> dic
     try:
         q = db.query(CommissionCategoryRate).filter(CommissionCategoryRate.country_code == country_code.upper())
         total = q.count()
-        rows = q * page_size).limit(page_size).all()
+        rows = q.offset((page - 1) * page_size).limit(page_size).all()
         return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
@@ -85,7 +85,7 @@ def list_badge_tiers(country_code: str, page: int, page_size: int, db: Session) 
     try:
         q = db.query(CommissionBadgeTier).filter(CommissionBadgeTier.country_code == country_code.upper())
         total = q.count()
-        rows = q * page_size).limit(page_size).all()
+        rows = q.offset((page - 1) * page_size).limit(page_size).all()
         return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()

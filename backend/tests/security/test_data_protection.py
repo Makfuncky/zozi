@@ -290,7 +290,7 @@ class TestGDPRRightToErasure:
 
         token = create_access_token(data={"sub": "999", "role": "customer"})
         from infrastructure.utils.auth import decode_token
-        payload = decode_token(token)
+        payload = decode_token(token, expected_type="access")
 
         blacklist_token(payload["jti"], 3600)
         assert is_token_blacklisted(payload["jti"]) is True

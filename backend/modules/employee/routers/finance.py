@@ -1,7 +1,8 @@
 """Employee finance router — consolidated from 11 source files."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
-from rbac.dependencies import require_feature
+from rbac.dependencies import require_admin, require_feature
+from infrastructure.database.database import get_db
 
 
 router = APIRouter(prefix="/api/v1/employee/finance", tags=["employee", "finance"])
@@ -17,27 +18,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from domains.finance.ports import (
-    accounting_controller,
-    controller_get_ap_summary,
-    controller_get_ar_summary,
-    controller_post_ap_payable,
-    controller_post_ap_payment,
-    controller_post_ar_invoice,
-    controller_post_ar_payment,
-    FinancialReportingService,
-)
-from infrastructure.security.dependencies import require_admin
-from infrastructure.database.database import get_db
-from domains.audit.ports import AuditAction, audit_log
-from domains.finance.services.treasury.cash_management_service import (
-    generate_forecast as generate_cash_forecast,
-    commit_db,
-    set_rls_context_service,
-)
+from domains.finance import ports as finance_ports
 from domains.finance.services.ledger.general_ledger_service import (
     reverse_journal_entry,
-    close_period,
     get_current_fiscal_period,
     get_or_create_fiscal_period,
     list_periods,
@@ -64,7 +47,7 @@ def seed_chart_of_accounts(
     _admin: dict = Depends(require_admin),
     _rf_gate: None = Depends(require_feature("finance.ledger.read")),
 ):
-    return accounting_controller.seed_chart_of_accounts(
+    return finance_ports.accounting_controller.seed_chart_of_accounts(
         db,
         audit_user_id=_admin.get("id"),
         audit_username=_admin.get("username"),
@@ -81,7 +64,7 @@ def list_accounts(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        return accounting_controller.list_accounts(db)
+        return finance_ports.accounting_controller.list_accounts(db)
     finally:
         cleanup()
 
@@ -96,19 +79,19 @@ def get_account(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        return accounting_controller.get_account(db, code)
+        return finance_ports.accounting_controller.get_account(db, code)
     finally:
         cleanup()
 
 
 @router.post("/journal-entries", summary="Create a journal entry")
 def create_journal_entry(
-    body: accounting_controller.JournalEntryBody,
+    body: finance_ports.accounting_controller.JournalEntryBody,
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
     _rf_gate: None = Depends(require_feature("finance.ledger.write")),
 ):
-    return accounting_controller.create_journal_entry(db, body, current_user)
+    return finance_ports.accounting_controller.create_journal_entry(db, body, current_user)
 
 
 @router.get("/journal-entries", summary="List journal entries")
@@ -123,7 +106,7 @@ def list_journal_entries(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        return accounting_controller.list_journal_entries(
+        return finance_ports.accounting_controller.list_journal_entries(
             db, reference_type=reference_type, reference_id=reference_id, country_code=country_code, limit=limit
         )
     finally:
@@ -140,7 +123,7 @@ def get_journal_entry(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        return accounting_controller.get_journal_entry(db, entry_id)
+        return finance_ports.accounting_controller.get_journal_entry(db, entry_id)
     finally:
         cleanup()
 
@@ -156,7 +139,7 @@ def get_balance(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        return accounting_controller.get_account_balance(db, account_code, currency)
+        return finance_ports.accounting_controller.get_account_balance(db, account_code, currency)
     finally:
         cleanup()
 
@@ -172,7 +155,7 @@ def trial_balance(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        return accounting_controller.get_trial_balance(
+        return finance_ports.accounting_controller.get_trial_balance(
             db, as_of_date=as_of_date, currency=currency, country_code=country_code
         )
     finally:
@@ -191,7 +174,7 @@ def income_statement(
 ):
     cleanup = _with_rls(body.country_code, db)
     try:
-        svc = FinancialReportingService(db)
+        svc = finance_ports.FinancialReportingService(db)
         result = svc.generate_income_statement(
             body.period_start, body.period_end, body.currency, persist=body.persist, country_code=body.country_code
         )
@@ -221,7 +204,7 @@ def balance_sheet(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        svc = FinancialReportingService(db)
+        svc = finance_ports.FinancialReportingService(db)
         result = svc.generate_balance_sheet(as_of_date, currency, persist=persist, country_code=country_code)
         audit_log(
             db=db,
@@ -246,7 +229,7 @@ def cash_flow(
 ):
     cleanup = _with_rls(body.country_code, db)
     try:
-        svc = FinancialReportingService(db)
+        svc = finance_ports.FinancialReportingService(db)
         result = svc.generate_cash_flow(
             body.period_start, body.period_end, body.currency, persist=body.persist, country_code=body.country_code
         )
@@ -275,7 +258,7 @@ def list_reports(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        svc = FinancialReportingService(db)
+        svc = finance_ports.FinancialReportingService(db)
         return svc.list_reports(report_type=report_type, country_code=country_code, limit=limit)
     finally:
         cleanup()
@@ -346,7 +329,7 @@ def close_fiscal_period(
     _admin: dict = Depends(require_admin),
     _rf_gate: None = Depends(require_feature("finance.period.manage")),
 ):
-    result = close_period(
+    result = finance_ports.close_period(
         db,
         period_id=body.period_id,
         closed_by=_admin.get("id"),
@@ -473,7 +456,7 @@ def get_ar(
 ):
     cleanup = _with_rls(country_code, db)
     try:
-        return controller_get_ar_summary(db, customer_id=customer_id, status=status, country_code=country_code, limit=limit)
+        return finance_ports.controller_get_ar_summary(db, customer_id=customer_id, status=status, country_code=country_code, limit=limit)
     finally:
         cleanup()
 
@@ -572,7 +555,7 @@ def post_ap_payable_route(body: APPayableBody, db: Session = Depends(get_db), _a
 ):
     cleanup = _with_rls(body.country_code, db)
     try:
-        return controller_post_ap_payable(db, **body.model_dump(), admin_user=_admin)
+        return finance_ports.controller_post_ap_payable(db, **body.model_dump(), admin_user=_admin)
     finally:
         cleanup()
 
@@ -1408,7 +1391,7 @@ def get_cash_flow(
     db: Session = Depends(get_db),
     _rf_gate: None = Depends(require_feature("finance.audit.read")),
 ):
-    service = FinancialReportingService(db)
+    service = finance_ports.FinancialReportingService(db)
     result = service.get_cash_flow_forecast(days)
     audit_log(
         db=db,
@@ -1428,7 +1411,7 @@ def get_profitability(
     db: Session = Depends(get_db),
     _rf_gate: None = Depends(require_feature("finance.audit.read")),
 ):
-    service = FinancialReportingService(db)
+    service = finance_ports.FinancialReportingService(db)
     result = service.get_profitability_by_country()
     audit_log(
         db=db,

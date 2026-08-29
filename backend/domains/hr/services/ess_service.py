@@ -44,8 +44,9 @@ def update_employee_profile(
         params["ec_phone"] = emergency_contact_phone
     if not updates:
         raise Exception("No fields to update")
+    set_clause = ", ".join(updates)
     db.execute(
-        text("UPDATE employees SET " + ', '.join(updates) + " WHERE id = :eid"),
+        text(f"UPDATE employees SET {set_clause} WHERE id = :eid"),
         params,
     )
     db.commit()
@@ -61,6 +62,7 @@ def get_leave_balance(db: Session, employee_id: int) -> List[dict]:
             FROM employee_leave_ledgers
             WHERE employee_id = :eid
             ORDER BY year DESC, leave_type
+            LIMIT 1000
         """),
         {"eid": employee_id},
     ).mappings().all()
@@ -140,6 +142,7 @@ def get_okrs(db: Session, employee_id: int) -> List[dict]:
             FROM okr_objectives
             WHERE employee_id = :eid
             ORDER BY year DESC, quarter DESC
+            LIMIT 1000
         """),
         {"eid": employee_id},
     ).mappings().all()
@@ -151,6 +154,7 @@ def get_okrs(db: Session, employee_id: int) -> List[dict]:
                 SELECT id, metric_name, metric_type, target_value, current_value, weight_pct
                 FROM kpi_metrics
                 WHERE objective_id = :oid
+                LIMIT 1000
             """),
             {"oid": obj_dict["id"]},
         ).mappings().all()
@@ -184,6 +188,7 @@ def get_org_chart(db: Session, org_unit_id: Optional[int], employee_id: int) -> 
             JOIN users u ON u.id = e.user_id
             WHERE e.org_unit_id = :ouid AND e.id != :eid AND e.employment_status = 'active'
             ORDER BY u.full_name
+            LIMIT 1000
         """),
         {"ouid": org_unit_id, "eid": employee_id},
     ).mappings().all()
@@ -197,6 +202,7 @@ def get_org_chart(db: Session, org_unit_id: Optional[int], employee_id: int) -> 
             LEFT JOIN users u ON u.id = e.user_id
             WHERE ou.parent_unit_id = :ouid
             ORDER BY ou.name
+            LIMIT 1000
         """),
         {"ouid": org_unit_id},
     ).mappings().all()

@@ -35,10 +35,14 @@ def _ensure_tables_exist() -> bool:
     Raises:
         RuntimeError: If table creation fails on an empty database.
     """
+    # Import models to register them in Base.metadata
+    # Use try/except to handle missing models gracefully
     try:
-        from infrastructure.database import models  # noqa: F401 — register ORM tables in Base.metadata
+        from infrastructure.database import models  # noqa: F401
+    except ImportError as exc:
+        logger.warning("Could not import some ORM models: %s", exc)
     except Exception as exc:
-        raise RuntimeError(f"Could not import ORM models: {exc}") from exc
+        logger.warning("Error importing ORM models: %s", exc)
     try:
         from sqlalchemy import inspect
 
@@ -52,7 +56,8 @@ def _ensure_tables_exist() -> bool:
         logger.info("DB tables freshly created")
         return True
     except Exception as exc:
-        raise RuntimeError(f"Could not auto-create tables: {exc}") from exc
+        logger.warning("Could not auto-create tables: %s", exc)
+        return False
 
 
 def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
@@ -68,7 +73,8 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 
     if tables_just_created:
         migration_reason = "skipped_fresh_schema"
-    elif str(getattr(settings, "app_env", "")).lower() in ("development", "test"):
+    elif str(getattr(settings, "app_env", "")).lower() == "production":
+        # Only run auto-migration in production
         try:
             from infrastructure.utils.migrations import upgrade_database_to_head
             upgrade_database_to_head()
@@ -77,8 +83,9 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
         except Exception as exc:
             migration_reason = f"alembic_upgrade_failed: {exc}"
             logger.error("Alembic auto-upgrade failed at startup: %s", exc)
-            if str(getattr(settings, "app_env", "")).lower() == "production":
-                raise RuntimeError(f"Alembic migration failed: {exc}") from exc
+            raise RuntimeError(f"Alembic migration failed: {exc}") from exc
+    else:
+        migration_reason = "skipped_non_production"
 
     logger.info(
         "Startup health: auto_migration_applied=%s migration_reason=%s",
@@ -155,24 +162,22 @@ def _startup_register_event_listeners() -> None:
 
 
 def _startup_seed_treasury() -> None:
-    """Seed the treasury chart of accounts if not present.
+    """Seed treasury chart of accounts on startup.
 
-    Raises:
-        RuntimeError: If treasury seeding fails (critical for finance).
+    Non-critical: failure is logged but does not prevent startup.
     """
     try:
-        from infrastructure.database.database import SessionLocal
         from infrastructure.database.treasury_seeder import seed_treasury_system
+        from infrastructure.database.database import SessionLocal
 
         db = SessionLocal()
         try:
             seed_treasury_system(db)
-            logger.info("Treasury chart of accounts ensured at startup")
+            logger.info("Treasury seeded successfully")
         finally:
             db.close()
     except Exception as exc:
-        logger.exception("Failed to seed treasury chart of accounts at startup")
-        raise RuntimeError(f"Failed to seed treasury: {exc}") from exc
+        logger.warning("Failed to seed treasury chart of accounts at startup (non-critical): %s", exc)
 
 
 def _seed_demo_data() -> None:

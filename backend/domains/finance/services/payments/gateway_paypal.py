@@ -1,5 +1,22 @@
 """Gateway module — imports shared code from payment_engine."""
 
+from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Any, Optional, cast
+
+from fastapi import HTTPException, Request
+from sqlalchemy.orm import Session
+
+from infrastructure.utils.context import (
+    get_correlation_id,
+    log_service_error,
+    request_context,
+)
+from infrastructure.utils.encryption import decrypt_secret
+from domains.finance.services.payments.money_utils import (
+    convert_from_aed,
+    money_to_minor_units_for_currency,
+)
 from domains.finance.services.payments.payment_engine import (  # noqa: F401
     PayPalOrderRequest,
     PayPalCaptureRequest,
@@ -16,17 +33,7 @@ from domains.finance.services.payments.payment_engine import (  # noqa: F401
     _store_payment_idempotency_result,
     INVENTORY_RELEASE_STATUSES,
     logger,
-    HTTPException,
-    Request,
-    Session,
-    Optional,
-    cast,
-    Any,
-    Decimal,
     Order,
-    decrypt_secret,
-    datetime,
-    timezone,
 )
 
 async def create_paypal_order(body: PayPalOrderRequest, current_user: dict, db: Session) -> dict:

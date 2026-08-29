@@ -4,14 +4,14 @@ from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from domains.accounts.models.user import User
-from domains.comms.models.marketing import FlashSale
-from domains.governance.models.admin import PromotionEngineConfig
+from domains.promotions.models.promotions import FlashSale
+from domains.promotions.models.promotion_config import PromotionEngineConfig
 from domains.governance.models.admin import PromotionOrderTier
 from domains.promotions.models.promotions import Banner
 from domains.promotions.models.promotions import Coupon
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from infrastructure.utils.dependencies import require_admin
-from domains.country.utils.country_rls import enforce_country_access
+from infrastructure.utils.country_rls import enforce_country_access
 from domains.governance.ports import archive_entity, hard_delete_entity, restore_entity
 from domains.catalog.ports import bulk_archive_entities
 from domains.catalog.ports import bulk_restore_entities
@@ -42,7 +42,7 @@ def list_coupons(include_deleted: bool=False, country: Optional[str]=Query(None,
         q = q.filter(Coupon.is_deleted == False)
     if country and country != '*':
         q = q.filter(Coupon.country_code == country.upper())
-    return q.all()
+    return q.limit(1000).all()
 
 def create_coupon(code: str, discount_type: str='percentage', discount_value: float=0, minimum_order: Optional[float]=None, maximum_discount: Optional[float]=None, usage_limit: Optional[int]=None, starts_at: Optional[str]=None, expires_at: Optional[str]=None, is_active: bool=True, country_code: Optional[str]=None, _: User=Depends(require_admin), db: Session=Depends(get_db)):
     """Create a coupon (optionally scoped to a country)."""
@@ -64,7 +64,7 @@ def list_flash_sales(include_deleted: bool=False, country: Optional[str]=Query(N
         q = q.filter(FlashSale.is_deleted == False)
     if country and country != '*':
         q = q.filter(FlashSale.country_code == country.upper())
-    return q.all()
+    return q.limit(1000).all()
 
 def create_flash_sale(title: str, discount_pct: float, starts_at: str, ends_at: str, description: Optional[str]=None, is_active: bool=True, country_code: Optional[str]=None, _: User=Depends(require_admin), db: Session=Depends(get_db)):
     """Create a flash sale (optionally scoped to a country)."""
@@ -204,7 +204,7 @@ def list_coupons_by_country(code: str=Path(..., description="ISO country code or
         q = q.filter(Coupon.is_deleted == False)
     if code != '*':
         q = q.filter(Coupon.country_code == code.upper())
-    return q.all()
+    return q.limit(1000).all()
 
 def create_coupon_by_country(code: str=Path(...), coupon_code: str=Query(..., alias='code'), discount_type: str='percentage', discount_value: float=0, minimum_order: Optional[float]=None, maximum_discount: Optional[float]=None, usage_limit: Optional[int]=None, starts_at: Optional[str]=None, expires_at: Optional[str]=None, is_active: bool=True, _: User=Depends(require_admin), db: Session=Depends(get_db)):
     enforce_country_access(code, db=db)
@@ -226,7 +226,7 @@ def list_flash_sales_by_country(code: str=Path(...), include_deleted: bool=False
         q = q.filter(FlashSale.is_deleted == False)
     if code != '*':
         q = q.filter(FlashSale.country_code == code.upper())
-    return q.all()
+    return q.limit(1000).all()
 
 def list_banners_by_country(code: str=Path(...), include_deleted: bool=False, page: int=Query(1, ge=1), page_size: int=Query(50, ge=1, le=200), _: User=Depends(require_admin), db: Session=Depends(get_db)):
     enforce_country_access(code, db=db)

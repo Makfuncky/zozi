@@ -7,7 +7,7 @@ This module is the single source of truth for cart data access. It performs no
 router/controller imports; variant resolution is a local pure helper so the
 service layer stays free of cross-controller dependencies (avoids W4/DG cycles).
 
-Merged from: cart_service.py, cart_legacy_service.py, cart_write_service.py
+Merged from: cart_service.py, cart_write_service.py
 """
 from __future__ import annotations
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone, timedelta
 from typing import Any, List, Optional
 
@@ -12,8 +13,8 @@ from sqlalchemy import func, text
 from domains.governance.models.core import ExecutiveNews
 from domains.governance.models.core import CommandCenterView
 from domains.governance.models.core import SystemHealthEvent
-from domains.governance.models.core import UserSession
-from domains.governance.models.core import SupportTicket
+from domains.accounts.models.user import UserSession
+from domains.comms.models.communication_schema_models import SupportTicket
 from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.country.models.countries import CountryConfig
@@ -42,6 +43,43 @@ def _validate_table_name(table_name: str) -> str:
     return normalized
 
 
+_BLOCKED_KEYWORDS = frozenset({
+    "union", "select", "insert", "update", "delete", "drop", "create",
+    "alter", "truncate", "grant", "revoke", "exec", "execute", "xp_",
+})
+_KEYWORD_PATTERN = re.compile(
+    r'\b(?:' + '|'.join(re.escape(k) for k in _BLOCKED_KEYWORDS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def _validate_where_clause(where: str) -> str:
+    """Validate WHERE clause using allowlist of safe characters and structural checks."""
+    if where.count("'") % 2 != 0:
+        raise ValueError("WHERE clause contains unbalanced single quotes")
+    depth = 0
+    for c in where:
+        if c == '(':
+            depth += 1
+        elif c == ')':
+            depth -= 1
+        if depth < 0:
+            raise ValueError("WHERE clause contains unbalanced parentheses")
+    if depth != 0:
+        raise ValueError("WHERE clause contains unbalanced parentheses")
+    allowed_chars = set(
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ =<>!()',:/.%+-*"
+    )
+    if not all(c in allowed_chars for c in where):
+        raise ValueError("WHERE clause contains unsafe characters")
+    if "--" in where or "/*" in where:
+        raise ValueError("WHERE clause contains comments")
+    match = _KEYWORD_PATTERN.search(where)
+    if match:
+        raise ValueError(f"WHERE clause contains disallowed keyword: '{match.group()}'")
+    return where
+
+
 def safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
     try:
         return db.execute(text(sql), params or {}).scalar() or 0
@@ -59,7 +97,8 @@ def safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool =
 
 def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
     validated_table = _validate_table_name(table)
-    return safe_fetch(db, f"SELECT COUNT(*) FROM {validated_table} WHERE {where}", params, scalar=True)
+    validated_where = _validate_where_clause(where)
+    return safe_fetch(db, f"SELECT COUNT(*) FROM {validated_table} WHERE {validated_where}", params, scalar=True)
 
 
 def get_command_center_heartbeat(db: Session) -> dict:

@@ -27,7 +27,7 @@ from domains.accounts.models.user import (
     UserDevice,
     UserLoginHistory,
 )
-from domains.accounts.models.core import UserSession
+from domains.accounts.models.user import UserSession
 
 logger = logging.getLogger(__name__)
 

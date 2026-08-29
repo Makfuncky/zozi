@@ -9,7 +9,6 @@ god-module hub used to own, so cross-domain readers resolve them via this
 sanctioned ports surface (Law 3) instead of ``domains.governance.models``.
 """
 
-from __future__ import annotations
 
 from typing import Any
 
@@ -49,3 +48,53 @@ __all__ = [
     "audit_log",
 ]
 
+# imports merged from services/
+from typing import Optional
+from sqlalchemy import select
+from .events import AuditEvent  # noqa: F401 — re-export for type hints
+
+# functions merged from services/
+def _get_models():
+    from domains.audit.models.audit_schema_models import AuditLog, CommandCenterView
+    return AuditLog, CommandCenterView
+def get_audit_log_by_id(db, id_: int):
+    """Return AuditLog by primary key (or None)."""
+    AuditLog, _ = _get_models()
+    return db.get(AuditLog, id_)
+def get_command_center_view_by_id(db, id_: int):
+    """Return CommandCenterView by primary key (or None)."""
+    _, CommandCenterView = _get_models()
+    return db.get(CommandCenterView, id_)
+def list_audit_logs(db, limit: int = 100) -> list:
+    """Return up to ``limit`` AuditLog rows, most-recent first."""
+    AuditLog, _ = _get_models()
+    stmt = (
+        select(AuditLog)
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+    )
+    return db.execute(stmt).scalars().all()
+def list_audit_logs_by_entity(db, entity_type: str, entity_id: int) -> list:
+    """Return all audit logs for a specific entity."""
+    AuditLog, _ = _get_models()
+    stmt = (
+        select(AuditLog)
+        .where(AuditLog.entity_type == entity_type, AuditLog.entity_id == entity_id)
+        .order_by(AuditLog.created_at.desc())
+    )
+    return db.execute(stmt).scalars().all()
+def list_audit_logs_by_user(db, user_id: int, limit: int = 100) -> list:
+    """Return audit logs for a specific user."""
+    AuditLog, _ = _get_models()
+    stmt = (
+        select(AuditLog)
+        .where(AuditLog.user_id == user_id)
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+    )
+    return db.execute(stmt).scalars().all()
+def list_command_center_views_by_user(db, user_id: int) -> list:
+    """Return all CommandCenterView rows for a user."""
+    _, CommandCenterView = _get_models()
+    stmt = select(CommandCenterView).where(CommandCenterView.user_id == user_id)
+    return db.execute(stmt).scalars().all()

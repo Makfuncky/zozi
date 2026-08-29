@@ -24,7 +24,7 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "CountryControl": ("domains.country.models.country_control", "CountryControl"),
     "CountryBasics": ("domains.country.models.country_basics", "CountryBasics"),
     # functions
-    "get_country_or_404": ("domains.country.utils.country_rls", "get_country_or_404"),
+    "get_country_or_404": ("infrastructure.utils.country_rls", "get_country_or_404"),
 }
 
 

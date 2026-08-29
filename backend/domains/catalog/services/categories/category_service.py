@@ -25,7 +25,7 @@ from sqlalchemy.orm import Query, Session
 
 from domains.catalog.models.products import Category
 from infrastructure.utils.slug import generate_slug
-from domains.catalog.utils.category_tree import (
+from infrastructure.utils.category_tree import (
     _chain_for,
     compute_category_path,
     rebuild_category_paths,
@@ -392,7 +392,7 @@ def reorder_categories(db: Session, order: Mapping[int, int]) -> int:
 # Category depth is shallow (<=5) and changes rarely; a materialized path
 # (path="/1/15/42/", depth=2) enables O(1) sub-tree queries via LIKE instead
 # of recursive CTEs. Nested-set would force a full renumber on every insert.
-# These helpers are imported from domains.catalog.utils.category_tree.
+# These helpers are imported from infrastructure.utils.category_tree.
 
 
 def category_subtree_ids_inclusive(category_id: int, db: Session) -> list[int]:

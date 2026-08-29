@@ -12,7 +12,7 @@ import io
 import logging
 from pathlib import Path
 from uuid import uuid4
-from typing import Any, Callable, Generator, Iterable
+from typing import Any, Callable, Generator, Iterable, Optional
 
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import func
@@ -584,12 +584,16 @@ def _validate_ticket_input(payload: dict) -> tuple[str, str, str]:
 
     return subject, message, priority
 
-def list_tickets(current_user: User, db: Session, page: int, page_size: int):
+def list_tickets(current_user: User, db: Session, page: int, page_size: int, cursor: Optional[int] = None):
     q = db.query(SupportTicket)
     if current_user.role == "customer":
         q = q.filter(SupportTicket.user_id == current_user.id)
     total = q.count()
-    tickets = q.order_by(SupportTicket.created_at.desc()).options(selectinload(SupportTicket.messages)).offset((page - 1) * page_size).limit(page_size).all()
+    if cursor is not None:
+        q = q.filter(SupportTicket.id < cursor)
+    else:
+        q = q.offset((page - 1) * page_size)
+    tickets = q.order_by(SupportTicket.created_at.desc()).options(selectinload(SupportTicket.messages)).limit(page_size).all()
     return {"data": [_ticket_payload(t) for t in tickets], "total": total, "page": page, "page_size": page_size}
 
 def create_ticket(payload: dict, current_user: User, db: Session):

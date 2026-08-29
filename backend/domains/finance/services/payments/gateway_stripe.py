@@ -1,5 +1,21 @@
 """Gateway module — imports shared code from payment_engine."""
 
+from decimal import Decimal
+from typing import Optional, cast
+
+from fastapi import HTTPException, Request
+from sqlalchemy.orm import Session
+
+from infrastructure.utils.context import (
+    get_correlation_id,
+    log_service_error,
+    request_context,
+)
+from domains.finance.services.payments.money_utils import (
+    convert_from_aed,
+    money_to_minor_units_for_currency,
+)
+
 from domains.finance.services.payments.payment_engine import (  # noqa: F401
     PaymentIntentRequest,
     StripeCheckoutSessionRequest,
@@ -24,23 +40,8 @@ from domains.finance.services.payments.payment_engine import (  # noqa: F401
     INVENTORY_RELEASE_STATUSES,
     REUSABLE_STRIPE_INTENT_STATUSES,
     logger,
-    request_context,
-    get_correlation_id,
-    log_service_error,
     stripe,
-    HTTPException,
-    Request,
-    Session,
-    cast,
-    Optional,
-    dict,
-    str,
-    int,
-    Decimal,
     Order,
-    OrderItem,
-    convert_from_aed,
-    money_to_minor_units_for_currency,
 )
 
 def create_payment_intent(body: PaymentIntentRequest, current_user: dict, db: Session) -> dict:

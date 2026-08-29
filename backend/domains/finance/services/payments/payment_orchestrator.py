@@ -1,5 +1,14 @@
 """Payment orchestrator — gateway wizard, generic gateway, reconciliation, auto-enable, badge billing."""
 
+from typing import Any, Optional
+
+from fastapi import Request
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from domains.orders.models.order_entities import Order
+from domains.finance.models.finance import GatewaySettlementSchedule
+
 from domains.finance.services.payments.payment_engine import (
     _normalize_gateway_code,
     _optional_text,
@@ -1411,7 +1420,7 @@ def _find_orders_for_settlement(db: Session, settlement: GatewaySettlementSchedu
         Order.created_at >= window_start,
         Order.created_at <= window_end,
         Order.country_code == settlement.country_code,
-    ).all()
+    ).limit(1000).all()
 
 
 def _auto_post_gateway_settlement(
@@ -1501,7 +1510,7 @@ def run_gateway_3way_reconciliation(db: Session, country_code: str = None) -> di
     if country_code:
         q = q.filter(GatewaySettlementSchedule.country_code == country_code)
 
-    for settlement in q.all():
+    for settlement in q.limit(1000).all():
         results["processed"] += 1
         try:
             result = match_gateway_settlement(db, settlement.id, country_code)
@@ -1533,7 +1542,7 @@ def reconcile_all_cod_deposits(db: Session, country_code: str = None) -> dict:
 
     results["processed"] = orders.count()
 
-    for order in orders.all():
+    for order in orders.limit(1000).all():
         try:
             expected = Decimal(str(order.total or 0))
             entry_data = JournalEntryCreate(
@@ -1717,6 +1726,7 @@ class GatewayAutoEnableService:
                 CountryGatewayCredentials.country_code == country_code.upper(),
                 CountryGatewayCredentials.is_active == True,
             )
+            .limit(1000)
             .all()
         )
 

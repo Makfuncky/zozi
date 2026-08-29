@@ -28,10 +28,17 @@ def set_current_user(user):
     _current_user_ctx.set(user)
 
 
+# Features granted to unauthenticated (public) users
+_PUBLIC_FEATURES: set = {
+    "catalog.list",
+    "catalog.read",
+}
+
+
 def _resolve_effective_features(user) -> set:
     """Resolve the effective feature set for a user based on role and overrides."""
     if user is None:
-        return set()
+        return set(_PUBLIC_FEATURES)
     if isinstance(user, dict):
         role = user.get("role", None) or ""
         user_overrides = user.get("feature_overrides", []) or []
@@ -76,7 +83,7 @@ _ROLE_FEATURES: dict = {
         "orders.read", "orders.list",
     ],
     "customer": [
-        "catalog.read", "orders.read", "orders.list",
+        "catalog.list", "catalog.read", "orders.read", "orders.list",
         "customers.profile.read", "customers.profile.write",
     ],
 }

@@ -2255,6 +2255,7 @@ def get_customer_checkout_gateways(db: Session, country_code: Optional[str] = No
 
         )
 
+        .limit(1000)
         .all()
 
     )
@@ -3065,7 +3066,7 @@ def list_payment_gateway_connections(db: Session) -> list[PaymentGatewayConnecti
 
         _normalize_gateway_code(cast(str, record.provider_code)): record
 
-        for record in db.query(PaymentGatewayConnection).filter(PaymentGatewayConnection.provider_code.in_(list(BUILT_IN_GATEWAY_CODES))).all()
+        for record in db.query(PaymentGatewayConnection).filter(PaymentGatewayConnection.provider_code.in_(list(BUILT_IN_GATEWAY_CODES))).limit(1000).all()
 
     }
 
@@ -3083,6 +3084,7 @@ def list_payment_gateway_connections(db: Session) -> list[PaymentGatewayConnecti
 
         .order_by(PaymentGatewayConnection.display_name.asc())
 
+        .limit(1000)
         .all()
 
     )
@@ -4097,6 +4099,7 @@ def _increment_sales_counts(order: Order, db: Session) -> None:
 
         .filter(OrderItem.order_id == order.id)
 
+        .limit(1000)
         .all()
 
     )
@@ -4113,6 +4116,7 @@ def _increment_sales_counts(order: Order, db: Session) -> None:
 
         cast(int, p.id): p
 
+        .limit(1000)
         for p in db.query(Product).filter(Product.id.in_(product_ids)).all()
 
     }
@@ -4143,6 +4147,7 @@ def _finalize_inventory_for_paid_order(order: Order, db: Session) -> list[str]:
 
         .filter(OrderItem.order_id == order.id)
 
+        .limit(1000)
         .all()
 
     )
@@ -4173,6 +4178,7 @@ def _finalize_inventory_for_paid_order(order: Order, db: Session) -> list[str]:
 
         cast(int, p.id): p
 
+        .limit(1000)
         for p in db.query(Product).filter(Product.id.in_(list(requested_quantities.keys()))).all()
 
     } if requested_quantities else {}
@@ -4325,6 +4331,7 @@ def _restore_inventory_for_order(order: Order, db: Session) -> None:
 
         .filter(OrderItem.order_id == order.id)
 
+        .limit(1000)
         .all()
 
     )
@@ -4337,6 +4344,7 @@ def _restore_inventory_for_order(order: Order, db: Session) -> None:
 
         p.id: p
 
+        .limit(1000)
         for p in db.query(Product).filter(Product.id.in_(product_ids)).all()
 
     } if product_ids else {}
@@ -4673,3 +4681,10 @@ def list_payments(db: Session, page: int = 1, page_size: int = 50, status: Optio
 
 
 
+
+class ConfirmThawaniPaymentRequest(BaseModel):
+    """Confirmation payload for a Thawani checkout session."""
+    session_id: str
+    order_id: int
+    payment_id: str | None = None
+    status: str | None = None

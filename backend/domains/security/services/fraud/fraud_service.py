@@ -15,7 +15,7 @@ from domains.security.models.fraud import IPReputation
 from domains.security.models.fraud import DeviceFingerprint
 from domains.security.models.fraud import CreditCardBin
 from domains.security.models.fraud import ReturnAbusePattern
-from domains.security.models.fraud import SupplierFraudIndicator
+from domains.suppliers.models.fraud_indicators import SupplierFraudIndicator
 from domains.security.models.fraud import LogisticsFraudIndicator
 from domains.security.models.fraud import FraudAlert
 from domains.security.models.fraud import IPAccountLinkage

@@ -267,6 +267,7 @@ def list_promotion_tiers(db: Session) -> list[dict[str, Any]]:
     rows = (
         db.query(PromotionOrderTier)
         .order_by(PromotionOrderTier.sort_order.asc(), PromotionOrderTier.min_order_amount.asc())
+        .limit(1000)
         .all()
     )
     return [_serialize_tier(row) for row in rows]
@@ -423,6 +424,7 @@ def _find_matching_tier(order_value: Decimal, db: Session) -> Optional[Promotion
         db.query(PromotionOrderTier)
         .filter(PromotionOrderTier.is_active.is_(True))
         .order_by(PromotionOrderTier.sort_order.asc(), PromotionOrderTier.min_order_amount.asc())
+        .limit(1000)
         .all()
     )
     for row in rows:

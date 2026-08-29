@@ -241,6 +241,14 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "resolve_product_variant": ("domains.catalog.services.products.products_service", "resolve_product_variant"),
     "get_supplier_profile": ("domains.catalog.services.products.products_service", "get_supplier_profile"),
     "_bump_product_cache_version": ("domains.catalog.services.products.products_service", "_bump_product_cache_version"),
+    "get_banners": ("domains.promotions.services.banners.banner_service", "get_banners"),
+    "get_banner_by_id": ("domains.promotions.services.banners.banner_service", "get_banner_by_id"),
+    "create_banner": ("domains.promotions.services.banners.banner_service", "create_banner"),
+    "update_banner": ("domains.promotions.services.banners.banner_service", "update_banner"),
+    "delete_banner": ("domains.promotions.services.banners.banner_service", "delete_banner"),
+    "list_banners": ("domains.promotions.services.banners.banner_service", "list_banners"),
+    "BannerCreate": ("domains.promotions.services.banners.banner_service", "BannerCreate"),
+    "BannerUpdate": ("domains.promotions.services.banners.banner_service", "BannerUpdate"),
 }
 import importlib
 

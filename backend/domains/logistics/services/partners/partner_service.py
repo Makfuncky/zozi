@@ -11,7 +11,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 
-from domains.governance.models.admin import LogisticsCODRemittanceReceipt, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsSettlement
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt, LogisticsPartnerDocument, LogisticsSettlement
 from domains.accounts.models.user import User
 from domains.logistics.models.logistics import (
     LogisticsPartner,

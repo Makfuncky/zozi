@@ -1,4 +1,5 @@
 from __future__ import annotations
+import cachetools
 import json
 import re
 from datetime import datetime, timezone
@@ -68,8 +69,8 @@ def seed_chart_of_accounts(db: Session) -> list[Account]:
     missing accounts (e.g. new EPR-level accounts added in later releases) are
     appended. This allows the COA to grow without wiping prior data.
     """
-    existing_accounts = {a.code for a in db.query(Account.code).all()}
-    existing_groups = {g.code for g in db.query(AccountGroup.code).all()}
+    existing_accounts = {a.code for a in db.query(Account.code).limit(1000).all()}
+    existing_groups = {g.code for g in db.query(AccountGroup.code).limit(1000).all()}
 
     # GCC Tenant Configuration Groups
     groups = {
@@ -167,7 +168,7 @@ def seed_chart_of_accounts(db: Session) -> list[Account]:
     ]
 
     # Resolve group ids by code (works for both newly-added and pre-existing groups).
-    group_by_code = {g.code: g.id for g in db.query(AccountGroup).all()}
+    group_by_code = {g.code: g.id for g in db.query(AccountGroup).limit(1000).all()}
 
     accounts = []
     for code, name, group, normal_side in accounts_data:
@@ -194,7 +195,7 @@ def seed_chart_of_accounts(db: Session) -> list[Account]:
         db.add(balance)
 
     db.commit()
-    return db.query(Account).all()
+    return db.query(Account).limit(1000).all()
 
 
 def repair_chart_of_accounts(db: Session) -> dict:
@@ -214,7 +215,7 @@ def repair_chart_of_accounts(db: Session) -> dict:
     group_codes = list(group_fixes.keys())
     grp_by_code = {}
     if group_codes:
-        grp_rows = db.query(AccountGroup).filter(AccountGroup.code.in_(group_codes)).all()
+        grp_rows = db.query(AccountGroup).filter(AccountGroup.code.in_(group_codes)).limit(1000).all()
         for g in grp_rows:
             grp_by_code[g.code] = g
     for code, (acct_type, normal_side) in group_fixes.items():
@@ -250,7 +251,7 @@ def repair_chart_of_accounts(db: Session) -> dict:
     equity_codes = [c[0] for c in equity_accounts]
     acct_by_code = {}
     if equity_codes:
-        acct_rows = db.query(Account).filter(Account.code.in_(equity_codes)).all()
+        acct_rows = db.query(Account).filter(Account.code.in_(equity_codes)).limit(1000).all()
         for a in acct_rows:
             acct_by_code[a.code] = a
     for code, name, normal_side in equity_accounts:
@@ -366,7 +367,7 @@ def create_journal_entry(
     # session. Otherwise a missing account raises after `entry` has already been
     # added/flushed, leaving a half-built object pending in the unit of work that
     # re-raises on the next commit (turning a recoverable error into a 500).
-    account_cache: dict[str, "Account"] = {}
+    account_cache: dict[str, "Account"] = cachetools.TTLCache(maxsize=1000, ttl=300)
     for line in entry_data.lines:
         acct = get_account_by_code(db, line.account_code)
         if not acct:
@@ -497,7 +498,7 @@ def list_journal_entries(
         q = q.filter(JournalEntry.reference_id == reference_id)
     if country_code:
         q = q.filter(JournalEntry.country_code == country_code)
-    entries = q.order_by(JournalEntry.id.desc()).limit(limit).all()
+    entries = q.order_by(JournalEntry.id.desc()).limit(min(limit, 1000)).all()
     if not entries:
         return []
 
@@ -1082,7 +1083,7 @@ def get_trial_balance(
     )
     if country_code:
         bal_q = bal_q.filter(AccountBalance.country_code == country_code)
-    balance_map = {b.account_id: b.balance for b in bal_q.all()}
+    balance_map = {b.account_id: b.balance for b in bal_q.limit(1000).all()}
 
     accounts_out = []
     total_debit = Decimal("0.00")
@@ -1431,7 +1432,7 @@ def list_periods(
         q = q.filter(FiscalPeriod.country_code == country_code)
     if status:
         q = q.filter(FiscalPeriod.status == status)
-    return q.limit(limit).all()
+    return q.limit(min(limit, 1000)).all()
 
 # === MERGED from finance_transfer_service.py ===
 
@@ -1440,9 +1441,9 @@ from sqlalchemy.orm import Session
 
 from domains.country.models.countries import CountryConfig
 from domains.governance.models.admin import FinanceBankAccount
-from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.accounts.models.banking import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsSettlement
-from domains.governance.models.admin import SupplierBankAccount
+from domains.accounts.models.banking import SupplierBankAccount
 from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.models.payments import Payout
 from infrastructure.utils.config import settings
@@ -2130,9 +2131,9 @@ def _mark_dispatch_submitted(
     note_line = f"Dispatched via {provider_key} batch {provider_batch_id}"
 
     if export_type == "supplier-payout-transfers":
-        rows = db.query(Payout).filter(Payout.id.in_(payout_ids)).all()
+        rows = db.query(Payout).filter(Payout.id.in_(payout_ids)).limit(1000).all()
     else:
-        rows = db.query(LogisticsPartnerPayout).filter(LogisticsPartnerPayout.id.in_(payout_ids)).all()
+        rows = db.query(LogisticsPartnerPayout).filter(LogisticsPartnerPayout.id.in_(payout_ids)).limit(1000).all()
 
     for row in rows:
         row.provider = provider_key
@@ -2509,7 +2510,7 @@ def get_country_payout_settings(country_code: str, db: Session) -> dict[str, Any
 
     Returns default values if the country or its settings are not configured.
     """
-from domains.logistics.ports import normalize_country_code
+    from domains.logistics.ports import normalize_country_code
 
     code = normalize_country_code(country_code)
     if not code:
@@ -2577,7 +2578,7 @@ def _get_finance_ports():
 # Lazy import: controller_post_ap_payable
 # Lazy import: controller_post_ap_payment
 from domains.audit.ports import AuditAction, audit_log
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
 class ReportPeriod(BaseModel):
@@ -2768,7 +2769,7 @@ def get_ar_summary(
     if country_code:
         q = q.filter(ARLedgerEntry.country_code == country_code)
 
-    entries = q.order_by(ARLedgerEntry.created_at.desc()).limit(limit).all()
+    entries = q.order_by(ARLedgerEntry.created_at.desc()).limit(min(limit, 1000)).all()
 
     total_outstanding = db.query(
         func.coalesce(func.sum(ARLedgerEntry.amount).filter(ARLedgerEntry.status.in_(["open", "partially_paid"])), 0)
@@ -2934,7 +2935,7 @@ def get_ap_summary(
     if country_code:
         q = q.filter(APLedger.country_code == country_code)
 
-    entries = q.order_by(APLedger.created_at.desc()).limit(limit).all()
+    entries = q.order_by(APLedger.created_at.desc()).limit(min(limit, 1000)).all()
 
     total_outstanding = db.query(
         func.coalesce(func.sum(APLedger.amount).filter(APLedger.status.in_(["open", "partially_paid"])), 0)
@@ -3355,7 +3356,7 @@ def list_product_commission_overrides(
             (Product.category.ilike(term))
         )
 
-    rows = q.limit(limit).all()
+    rows = q.limit(min(limit, 1000)).all()
     return [
         {
             **cast(dict[str, Any], _serialize_override(override)),
@@ -3383,7 +3384,7 @@ def list_all_supplier_commissions(
     total = query.count()
     suppliers = (
         query.order_by(User.full_name, User.username, User.id)
-        .limit(resolved_limit)
+        .limit(min(resolved_limit, 1000))
         .all()
     )
     supplier_ids = [cast(int, getattr(supplier, "id")) for supplier in suppliers]
@@ -4377,7 +4378,7 @@ from sqlalchemy.orm import Session
 
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
-from domains.governance.models.admin import SupplierBankAccount
+from domains.accounts.models.banking import SupplierBankAccount
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.finance.models.payments import Payout
@@ -5131,7 +5132,7 @@ from infrastructure.database.schemas import CommissionCategoryRateCreate, Commis
 
 from infrastructure.utils.dependencies import require_admin
 
-from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.country_rls import get_country_or_404
 
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
@@ -7429,8 +7430,10 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
         raise HTTPException(status_code=404, detail="No items found for this supplier in the order")
 
     subtotal = sum(float(i.price) * i.quantity for i in supplier_items)
-    tax_rate = 0.05  # 5% VAT
-    tax_amount = round(subtotal * tax_rate, 2)
+    country_code = order.country_code or "SA"
+    tax_result = calculate_tax(Decimal(str(subtotal)), country_code, db)
+    tax_rate = float(tax_result["tax_rate"])
+    tax_amount = float(tax_result["tax_amount"])
     shipping_amount = float(order.shipping_amount or 0)
     discount_amount = float(order.discount_amount or 0)
     total_amount = subtotal + tax_amount + shipping_amount - discount_amount
@@ -7481,7 +7484,7 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
     )
     # Email the invoice to the customer — enqueued async, failure is non-blocking
     try:
-from domains.comms.ports import enqueue_invoice_email
+        from domains.comms.ports import enqueue_invoice_email
         enqueue_invoice_email(cast(int, inv.id))
     except Exception:
         logger.warning("Failed to enqueue invoice email for invoice %s", inv.id)
@@ -8872,3 +8875,10 @@ def create_fixed_asset(db: Session, body: Any, created_by: Optional[int] = None)
     db.commit()
     db.refresh(asset)
     return {"id": asset.id, "name": asset.name, "status": asset.status}
+
+
+# Re-export from the journal-reversal service so historical callers/routers that
+# imported ``reverse_journal_entry`` from this module keep working (Law 3).
+from domains.finance.services.ledger.je_reversal_service import (  # noqa: E402,F401
+    reverse_journal_entry,
+)
