@@ -129,7 +129,7 @@ export default function LogisticsPartnerRoutesPage() {
                     {area.city}, {area.country_code}
                   </span>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded border ${
+                    className={`text-xs px-2 py-0.5 rounded border ${
                       area.is_active
                         ? "text-success bg-success/10 border-success/20"
                         : "text-warning bg-warning/10 border-warning/20"

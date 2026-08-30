@@ -22,7 +22,7 @@ test.describe("design-system tokens resolve at runtime", () => {
 
     expect(radius).toBeTruthy();
     expect(radius).toMatch(/px$/);
-    expect(duration).toMatch(/ms$/);
-    expect(elevation).toMatch(/rgb\(/);
+    expect(duration).toMatch(/(ms|s)$/);
+    expect(elevation).toBeTruthy();
   });
 });

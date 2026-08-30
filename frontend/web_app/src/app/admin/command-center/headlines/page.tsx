@@ -93,7 +93,7 @@ export default function CommandCenterHeadlinesPage() {
         : priority === "normal"
         ? "bg-info/10 text-info border-info/20"
         : "bg-surface-2 text-text-muted border-border";
-    return <span className={`text-[10px] px-2 py-0.5 rounded border ${style}`}>{priority}</span>;
+    return <span className={`text-xs px-2 py-0.5 rounded border ${style}`}>{priority}</span>;
   };
 
   return (
@@ -139,14 +139,14 @@ export default function CommandCenterHeadlinesPage() {
                 className="theme-card rounded-xl border p-4 flex flex-col"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className={`text-[10px] px-2 py-0.5 rounded border ${sentimentColor(headline.ai_sentiment)}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded border ${sentimentColor(headline.ai_sentiment)}`}>
                     {headline.ai_sentiment}
                   </span>
                   {priorityBadge(headline.priority)}
                 </div>
                 <h3 className="text-sm font-semibold text-text line-clamp-2">{headline.title}</h3>
                 <p className="mt-1 text-[11px] text-text-muted line-clamp-3 flex-1">{headline.summary}</p>
-                <div className="mt-3 flex items-center justify-between text-[10px] text-text-faint">
+                <div className="mt-3 flex items-center justify-between text-xs text-text-faint">
                   <span className="flex items-center gap-1">
                     <Tag className="h-3 w-3" />
                     {headline.category}
@@ -159,11 +159,11 @@ export default function CommandCenterHeadlinesPage() {
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => router.push(`/admin/command-center/headlines/create?id=${headline.id}`)}
-                    className="theme-btn-secondary rounded-md px-2 py-1 text-[10px] font-semibold flex-1"
+                    className="theme-btn-secondary rounded-md px-2 py-1 text-xs font-semibold flex-1"
                   >
                     Edit
                   </button>
-                  <Button variant="danger" className="theme-btn-secondary rounded-md px-2 py-1 text-[10px] font-semibold text-danger border-danger/20 flex items-center justify-center gap-1" onClick={() => handleDelete(headline.id)}
+                  <Button variant="danger" className="theme-btn-secondary rounded-md px-2 py-1 text-xs font-semibold text-danger border-danger/20 flex items-center justify-center gap-1" onClick={() => handleDelete(headline.id)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

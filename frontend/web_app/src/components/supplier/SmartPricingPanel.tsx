@@ -30,7 +30,7 @@ export default function SmartPricingPanel({
 
   const price = parseFloat(basePrice) || 0;
   const compare = parseFloat(comparePrice) || 0;
-  const discount = compare > price ? Math.round((1 - price / compare) * 100) : 0;
+  const discount = compare > price && price > 0 ? Math.round((1 - price / compare) * 100) : 0;
 
   return (
     <div className="space-y-5">

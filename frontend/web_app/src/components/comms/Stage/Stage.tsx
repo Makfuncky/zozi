@@ -36,7 +36,7 @@ function ThreadHeader({ thread }: { thread: ThreadSummary }) {
 
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div className="relative w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center shrink-0">
-          <span className="text-[10px] font-bold text-text-muted">
+          <span className="text-xs font-bold text-text-muted">
             {thread.title.charAt(0).toUpperCase()}
           </span>
           <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2 border-surface bg-emerald-500" />
@@ -44,7 +44,7 @@ function ThreadHeader({ thread }: { thread: ThreadSummary }) {
 
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-text truncate">{thread.title}</h2>
-          <p className="text-[10px] text-text-muted">
+          <p className="text-xs text-text-muted">
             {thread.transport === "chat" && "Direct message"}
             {thread.transport === "group" && `${thread.participants || 0} members`}
             {thread.transport === "email" && "Email thread"}
@@ -238,7 +238,7 @@ export default function CommStage() {
           {/* Recently dropped contacts */}
           {contactDrops.length > 0 && !canDropContact && (
             <div className="mt-6 space-y-1.5">
-              <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
                 Recent drops
               </p>
               {contactDrops.slice(0, 3).map((d) => (

@@ -149,9 +149,9 @@ export default function Recommendations({ currentCategory, excludeIds = [], comp
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-text truncate group-hover:text-primary transition-colors">{product.name}</p>
-                <p className="text-[10px] text-primary font-semibold mt-0.5">{formatPrice(Number(product.price ?? 0))}</p>
-                {product.supplier && <p className="text-[10px] text-text-faint truncate">{product.supplier}</p>}
+                <p className="text-xs font-bold text-text truncate group-hover:text-primary transition-colors">{product.name}</p>
+                <p className="text-xs text-primary font-semibold mt-0.5">{formatPrice(Number(product.price ?? 0))}</p>
+                {product.supplier && <p className="text-xs text-text-faint truncate">{product.supplier}</p>}
               </div>
             </motion.a>
           ))}

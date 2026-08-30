@@ -57,7 +57,7 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div>
-            <h5 className="mb-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-text-faint">
+            <h5 className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-text-faint">
               {tr("marketDispatch")}
             </h5>
             <NewsletterSignup variant="footer" />

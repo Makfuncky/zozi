@@ -110,7 +110,7 @@ export default function HomeClient({ products, categories, trending }: Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.3em] text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full mb-4">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.3em] text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full mb-4">
               <Sparkles className="w-3 h-3" />
               GCC&apos;s Premier Marketplace
             </span>
@@ -143,7 +143,7 @@ export default function HomeClient({ products, categories, trending }: Props) {
               </Link>
             </div>
 
-            <p className="text-[10px] text-text-faint uppercase tracking-widest">
+            <p className="text-xs text-text-faint uppercase tracking-widest">
               {products.length > 0 ? products.length.toLocaleString() : "8,000+"}+ curated products &middot; Free returns &middot; Secure checkout
             </p>
           </motion.div>
@@ -187,7 +187,7 @@ export default function HomeClient({ products, categories, trending }: Props) {
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[10px] font-semibold text-text-muted group-hover:text-text transition-colors text-center leading-tight">
+                    <span className="text-xs font-semibold text-text-muted group-hover:text-text transition-colors text-center leading-tight">
                       {cat.name}
                     </span>
                   </Link>
@@ -268,7 +268,7 @@ export default function HomeClient({ products, categories, trending }: Props) {
             <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-white/5 blur-2xl" />
             <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-accent/20 blur-2xl" />
             <div className="relative">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-accent bg-white/10 px-3 py-1 rounded-full mb-4">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] text-accent bg-white/10 px-3 py-1 rounded-full mb-4">
                 <Sparkles className="w-3 h-3" />
                 Become a Supplier
               </span>

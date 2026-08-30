@@ -236,7 +236,7 @@ export default function LogisticsPartnerDashboardPage() {
                           <td className="px-3 py-2.5 text-text-muted">{s.carrier_name || "—"}</td>
                           <td className="px-3 py-2.5 text-text-faint">{s.distribution_channel || "—"}</td>
                           <td className="px-3 py-2.5">
-                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${getStatusChip(s.status)}`}>{s.status}</span>
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusChip(s.status)}`}>{s.status}</span>
                           </td>
                           <td className="px-3 py-2.5 text-text-faint tabular-nums">
                             {s.estimated_delivery ? new Date(s.estimated_delivery).toLocaleDateString() : "—"}

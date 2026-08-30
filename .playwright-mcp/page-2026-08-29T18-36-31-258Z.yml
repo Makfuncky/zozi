@@ -1,0 +1,97 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - link "Go to home" [ref=e8] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e9]:
+              - img "Zozi logo" [ref=e11]
+              - generic [ref=e27]: Zozi
+          - generic [ref=e28]:
+            - generic [ref=e31]:
+              - button "All Products" [ref=e33]
+              - button "Price" [ref=e40]
+              - button "Rating" [ref=e47]
+              - button "Supplier" [ref=e53]
+              - textbox "Search products, brands, suppliers..." [ref=e64]
+              - button "Search by image" [ref=e65]
+              - button "Voice search" [disabled] [ref=e69]
+              - button "Search" [ref=e73]
+            - button "Choose File" [ref=e78]
+          - button "Choose File" [ref=e79]
+          - generic [ref=e80]:
+            - button "Toggle theme" [disabled] [ref=e81]
+            - generic [ref=e82]:
+              - generic [ref=e83]: OMRAuto detected
+              - button "Choose country" [ref=e85]: AUTO
+              - button "Choose language" [ref=e89]: EN
+            - link "Wishlist" [ref=e92] [cursor=pointer]:
+              - /url: /wishlist
+            - link "Cart" [ref=e95] [cursor=pointer]:
+              - /url: /cart
+            - button "Open sign in menu" [ref=e100]
+        - navigation [ref=e104]:
+          - generic [ref=e105]:
+            - link "Shop" [ref=e106] [cursor=pointer]:
+              - /url: /products
+            - link "Suppliers" [ref=e107] [cursor=pointer]:
+              - /url: /suppliers
+            - link "Offers" [ref=e108] [cursor=pointer]:
+              - /url: /offers
+            - link "Help" [ref=e109] [cursor=pointer]:
+              - /url: /help
+    - main [ref=e111]:
+      - main [ref=e112]:
+        - generic [ref=e113]:
+          - navigation "Breadcrumb" [ref=e114]:
+            - link "Home" [ref=e115] [cursor=pointer]:
+              - /url: /
+            - generic [ref=e119]: Products
+          - generic [ref=e122]:
+            - button "New Arrivals" [ref=e123]
+            - button "Trending" [ref=e127]
+            - button "Deals" [ref=e131]
+            - button "10%+" [ref=e136]
+            - button "20%+" [ref=e140]
+            - button "30%+" [ref=e144]
+            - button "50%+" [ref=e148]
+          - button "Choose File" [ref=e152]
+          - paragraph [ref=e154]: 0 results
+          - generic [ref=e156]:
+            - heading "No products found" [level=3] [ref=e161]
+            - paragraph [ref=e162]: Try adjusting your filters or search terms to discover more products.
+            - button "Clear All Filters" [ref=e163]
+    - contentinfo [ref=e165]:
+      - generic [ref=e167]:
+        - generic [ref=e168]:
+          - generic [ref=e169]: ZOZI
+          - paragraph [ref=e174]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=e175]:
+            - link "Become a Supplier" [ref=e176] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=e177] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=e178]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=e179]
+          - generic [ref=e180]:
+            - generic [ref=e181]:
+              - heading "Stay in Style" [level=3] [ref=e182]
+              - paragraph [ref=e183]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=e184]:
+              - textbox "First name (optional)" [ref=e186]
+              - textbox "Enter your email" [ref=e188]
+              - button "Subscribe" [disabled] [ref=e189]
+      - generic [ref=e194]:
+        - paragraph [ref=e195]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=e196]:
+          - link "Terms" [ref=e197] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=e198] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=e199] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=e200] [cursor=pointer]:
+            - /url: /admin/login

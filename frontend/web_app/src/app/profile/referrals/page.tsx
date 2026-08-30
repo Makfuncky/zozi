@@ -191,25 +191,25 @@ export default function ProfileReferralHistoryPage() {
                 <>
                   <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 text-center">
                     <div className="rounded-lg border border-border bg-surface-2/70 px-2 py-3">
-                      <p className="text-[10px] text-text-faint">Total</p>
+                      <p className="text-xs text-text-faint">Total</p>
                       <p className="mt-1 text-sm font-bold text-primary">{dashboard.total_points}</p>
                     </div>
                     <div className="rounded-lg border border-border bg-surface-2/70 px-2 py-3">
-                      <p className="text-[10px] text-text-faint">Referral</p>
+                      <p className="text-xs text-text-faint">Referral</p>
                       <p className="mt-1 text-sm font-bold text-text">{dashboard.referral_points}</p>
                     </div>
                     <div className="rounded-lg border border-border bg-surface-2/70 px-2 py-3">
-                      <p className="text-[10px] text-text-faint">Sharing</p>
+                      <p className="text-xs text-text-faint">Sharing</p>
                       <p className="mt-1 text-sm font-bold text-text">{dashboard.sharing_points}</p>
                     </div>
                     <div className="rounded-lg border border-border bg-surface-2/70 px-2 py-3">
-                      <p className="text-[10px] text-text-faint">Friends</p>
+                      <p className="text-xs text-text-faint">Friends</p>
                       <p className="mt-1 text-sm font-bold text-text">{dashboard.referred_count}</p>
                     </div>
                   </div>
 
                   <div className="mt-3 rounded-xl border border-border bg-surface-2/50 p-3">
-                    <p className="text-[10px] text-text-faint">Invite link</p>
+                    <p className="text-xs text-text-faint">Invite link</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <input
                         value={dashboard.referral_link}

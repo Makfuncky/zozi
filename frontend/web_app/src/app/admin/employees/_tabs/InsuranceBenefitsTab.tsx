@@ -113,7 +113,7 @@ export default function InsuranceBenefitsTab({ employees, addToast }: InsuranceB
               <Users className="h-4 w-4 text-primary" />
               Dependents
             </h4>
-            <Button variant="primary" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold shadow-sm transition-colors" onClick={() => {
+            <Button variant="primary" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm transition-colors" onClick={() => {
                 if (!selectedEmployeeId) {
                   addToast("Select an employee first", "error");
                   return;
@@ -157,7 +157,7 @@ export default function InsuranceBenefitsTab({ employees, addToast }: InsuranceB
                 <div key={d.id} className="rounded-lg bg-surface-2 border border-border p-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-text">{d.full_name}</p>
-                    <p className="text-[10px] text-text-faint mt-0.5 capitalize">{d.relationship}{d.date_of_birth ? ` · Born ${new Date(d.date_of_birth).toLocaleDateString()}` : ""}</p>
+                    <p className="text-xs text-text-faint mt-0.5 capitalize">{d.relationship}{d.date_of_birth ? ` · Born ${new Date(d.date_of_birth).toLocaleDateString()}` : ""}</p>
                   </div>
                 </div>
               ))}
@@ -178,12 +178,12 @@ export default function InsuranceBenefitsTab({ employees, addToast }: InsuranceB
                 <div key={l.id} className="rounded-lg bg-surface-2 border border-border p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-text">{l.employee_name ?? `#${l.employee_id}`}</p>
-                    <span className={`rounded-full text-[10px] font-semibold px-2 py-0.5 border ${l.status === "valid" ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"}`}>
+                    <span className={`rounded-full text-xs font-semibold px-2 py-0.5 border ${l.status === "valid" ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"}`}>
                       {l.status}
                     </span>
                   </div>
-                  <p className="text-[10px] text-text-faint mt-0.5 capitalize">{l.license_type} · Expires {new Date(l.expires_at).toLocaleDateString()}</p>
-                  {l.suspension_reason && <p className="text-[10px] text-danger mt-1">Reason: {l.suspension_reason}</p>}
+                  <p className="text-xs text-text-faint mt-0.5 capitalize">{l.license_type} · Expires {new Date(l.expires_at).toLocaleDateString()}</p>
+                  {l.suspension_reason && <p className="text-xs text-danger mt-1">Reason: {l.suspension_reason}</p>}
                 </div>
               ))}
             </div>

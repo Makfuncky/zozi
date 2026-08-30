@@ -105,7 +105,7 @@ const SOURCE_BADGES: Record<string, { label: string; color: string }> = {
 function SourceBadge({ source }: { source: string }) {
   const badge = SOURCE_BADGES[source] ?? { label: source, color: "bg-surface-3 text-text-muted border-border" };
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${badge.color}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-medium border ${badge.color}`}>
       {badge.label}
     </span>
   );
@@ -119,7 +119,7 @@ function EconomicTierBadge({ tier }: { tier?: string | null }) {
     emerging: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${colors[tier] ?? "bg-surface-3 text-text-muted border-border"}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${colors[tier] ?? "bg-surface-3 text-text-muted border-border"}`}>
       {tier.charAt(0).toUpperCase() + tier.slice(1)}
     </span>
   );
@@ -269,7 +269,7 @@ export default function CountryLedgerTable({
         <div className="flex items-center gap-2">
           <Globe className="h-4 w-4 text-primary" />
           <span className="text-sm font-semibold text-text">Country Control Plane</span>
-          <span className="ml-1 rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-semibold text-text-muted">
+          <span className="ml-1 rounded-full bg-surface-3 px-2 py-0.5 text-xs font-semibold text-text-muted">
             {countries.length} countries
           </span>
         </div>
@@ -338,7 +338,7 @@ export default function CountryLedgerTable({
                 <div>
                   <p className="font-bold text-text text-sm">{autoPopulateResult.name}</p>
                   {autoPopulateResult.official_name && (
-                    <p className="text-[10px] text-text-muted">{autoPopulateResult.official_name}</p>
+                    <p className="text-xs text-text-muted">{autoPopulateResult.official_name}</p>
                   )}
                 </div>
                 <div className="ml-auto flex items-center gap-2">
@@ -360,7 +360,7 @@ export default function CountryLedgerTable({
                   { label: "Fraud Risk", value: autoPopulateResult.fraud_risk_tier ?? "—", source: "algorithm" },
                 ].map(({ label, value, source }) => (
                   <div key={label} className="rounded-lg bg-surface-2 border border-border p-2">
-                    <p className="text-[9px] text-text-faint uppercase tracking-wide">{label}</p>
+                    <p className="text-3xs text-text-faint uppercase tracking-wide">{label}</p>
                     <p className="text-[11px] font-semibold text-text mt-0.5 truncate">{value}</p>
                     <SourceBadge source={source} />
                   </div>
@@ -370,15 +370,15 @@ export default function CountryLedgerTable({
               {/* Suggested gateways */}
               {(autoPopulateResult.suggested_gateways?.length ?? 0) > 0 && (
                 <div>
-                  <p className="text-[10px] text-text-faint uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                  <p className="text-xs text-text-faint uppercase tracking-wide mb-1.5 flex items-center gap-1">
                     <Zap className="h-3 w-3" /> Suggested Gateways
                     <SourceBadge source="algorithm" />
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {autoPopulateResult.suggested_gateways!.slice(0, 5).map((gw) => (
                       <div key={gw.gateway_id} className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-1">
-                        <span className="text-[10px] font-semibold text-text capitalize">{gw.gateway_id}</span>
-                        <span className="text-[9px] text-success font-mono">{gw.score}/100</span>
+                        <span className="text-xs font-semibold text-text capitalize">{gw.gateway_id}</span>
+                        <span className="text-3xs text-success font-mono">{gw.score}/100</span>
                       </div>
                     ))}
                   </div>
@@ -388,13 +388,13 @@ export default function CountryLedgerTable({
               {/* Cities preview */}
               {(autoPopulateResult.suggested_cities?.length ?? 0) > 0 && (
                 <div>
-                  <p className="text-[10px] text-text-faint uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                  <p className="text-xs text-text-faint uppercase tracking-wide mb-1.5 flex items-center gap-1">
                     <Database className="h-3 w-3" /> Top Cities
                     <SourceBadge source="geodb" />
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {autoPopulateResult.suggested_cities!.slice(0, 8).map((city) => (
-                      <span key={typeof city === "string" ? city : city.name} className="rounded bg-surface-3 border border-border px-2 py-0.5 text-[10px] text-text-muted">
+                      <span key={typeof city === "string" ? city : city.name} className="rounded bg-surface-3 border border-border px-2 py-0.5 text-xs text-text-muted">
                         {typeof city === "string" ? city : city.name}
                         {typeof city === "object" && city.is_capital && " 🏛️"}
                       </span>
@@ -405,7 +405,7 @@ export default function CountryLedgerTable({
 
               {/* Action buttons */}
               <div className="flex items-center justify-end gap-2 pt-1">
-                <span className="mr-auto text-[10px] text-text-faint italic">
+                <span className="mr-auto text-xs text-text-faint italic">
                   Will be saved as Draft — review before publishing
                 </span>
                 <button onClick={closeGhostRow} className="rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-text-muted hover:text-text transition-colors">
@@ -431,7 +431,7 @@ export default function CountryLedgerTable({
             <div className="px-4 py-6 text-center">
               <Loader2 className="h-5 w-5 mx-auto animate-spin text-primary mb-2" />
               <p className="text-[11px] text-text-muted">Fetching country data…</p>
-              <p className="text-[10px] text-text-faint mt-1">RestCountries · World Bank · GeoDB · Heuristic Engine</p>
+              <p className="text-xs text-text-faint mt-1">RestCountries · World Bank · GeoDB · Heuristic Engine</p>
             </div>
           )}
         </div>
@@ -440,7 +440,7 @@ export default function CountryLedgerTable({
       {/* Country ledger rows */}
       <div className="rounded-xl border border-border overflow-hidden">
         {/* Table header */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_auto_auto_auto] gap-2 px-4 py-2 bg-surface-2 border-b border-border text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+        <div className="grid grid-cols-[2fr_1fr_1fr_auto_auto_auto] gap-2 px-4 py-2 bg-surface-2 border-b border-border text-xs font-semibold text-text-muted uppercase tracking-wider">
           <span>Country</span>
           <span>Currency</span>
           <span>Tax</span>
@@ -487,9 +487,9 @@ export default function CountryLedgerTable({
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-text truncate">{country.name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[10px] font-mono text-text-faint">{country.code}</span>
+                      <span className="text-xs font-mono text-text-faint">{country.code}</span>
                       {country.region && (
-                        <span className="text-[9px] text-text-faint">· {country.region}</span>
+                        <span className="text-3xs text-text-faint">· {country.region}</span>
                       )}
                     </div>
                   </div>
@@ -508,7 +508,7 @@ export default function CountryLedgerTable({
                   <span className="text-sm text-text">
                     {country.tax_rate != null ? `${(country.tax_rate * 100).toFixed(1)}%` : "—"}
                   </span>
-                  <span className="ml-1 text-[10px] text-text-muted">{country.tax_name}</span>
+                  <span className="ml-1 text-xs text-text-muted">{country.tax_name}</span>
                 </div>
 
                 {/* Cities count */}
@@ -519,7 +519,7 @@ export default function CountryLedgerTable({
                 {/* Status */}
                 <div className="flex items-center justify-center">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                       country.is_active
                         ? "bg-success/10 text-success"
                         : "bg-surface-3 text-text-muted border border-border"

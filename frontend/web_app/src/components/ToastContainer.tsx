@@ -34,7 +34,7 @@ export default function ToastContainer() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 flex flex-col gap-1.5 z-200">
+    <div className="fixed top-4 right-4 flex flex-col gap-1.5 z-toast">
       <AnimatePresence>
         {toasts.map((t) => {
           const style = STYLES[t.type as keyof typeof STYLES] || STYLES.info;

@@ -1,0 +1,86 @@
+- generic [active] [ref=f20e1]:
+  - link "Skip to main content" [ref=f20e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f20e3]:
+    - banner [ref=f20e5]:
+      - generic [ref=f20e7]:
+        - link "Go to home" [ref=f20e8] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f20e9]:
+            - img "Zozi logo" [ref=f20e11]
+            - generic [ref=f20e27]: Zozi
+        - generic [ref=f20e28]:
+          - button "Switch to dark theme" [ref=f20e29] [cursor=pointer]: 🌙
+          - generic [ref=f20e30]:
+            - generic [ref=f20e31]:
+              - generic [ref=f20e32]: OMR
+              - generic [ref=f20e33]: Detected PK
+            - button "Choose country" [ref=f20e35] [cursor=pointer]:
+              - generic [ref=f20e36]: PK
+            - button "Choose language" [ref=f20e40] [cursor=pointer]:
+              - generic [ref=f20e41]: EN
+          - link "Wishlist" [ref=f20e44] [cursor=pointer]:
+            - /url: /wishlist
+          - link "Cart" [ref=f20e47] [cursor=pointer]:
+            - /url: /cart
+          - button "Open sign in menu" [ref=f20e52] [cursor=pointer]
+    - main [ref=f20e57]:
+      - main [ref=f20e58]:
+        - generic [ref=f20e59]:
+          - generic [ref=f20e60]:
+            - heading "Customer Sign In" [level=1] [ref=f20e65]
+            - paragraph [ref=f20e66]: Welcome back — sign in to your ZOZI account
+          - generic [ref=f20e67]:
+            - generic [ref=f20e68]:
+              - generic [ref=f20e69]: Email or Username
+              - textbox "you@email.com" [ref=f20e71]
+            - generic [ref=f20e72]:
+              - generic [ref=f20e73]: Password
+              - generic [ref=f20e74]:
+                - textbox "••••••••" [ref=f20e75]
+                - button "Show password" [ref=f20e76] [cursor=pointer]
+            - button "Sign In" [disabled] [ref=f20e80]
+          - paragraph [ref=f20e84]:
+            - text: New to ZOZI?
+            - link "Create an account" [ref=f20e85] [cursor=pointer]:
+              - /url: /register
+          - paragraph [ref=f20e86]:
+            - text: Are you a seller or logistics partner?
+            - link "Supplier" [ref=f20e87] [cursor=pointer]:
+              - /url: /supplier/login
+            - text: ·
+            - link "Logistics" [ref=f20e88] [cursor=pointer]:
+              - /url: /logistics-partner/login
+    - contentinfo [ref=f20e90]:
+      - generic [ref=f20e92]:
+        - generic [ref=f20e93]:
+          - generic [ref=f20e94]: ZOZI
+          - paragraph [ref=f20e100]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f20e101]:
+            - link "Become a Supplier" [ref=f20e102] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f20e103] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f20e104]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f20e105]
+          - generic [ref=f20e106]:
+            - generic [ref=f20e107]:
+              - heading "Stay in Style" [level=3] [ref=f20e108]
+              - paragraph [ref=f20e109]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f20e110]:
+              - textbox "First name (optional)" [ref=f20e112]
+              - textbox "Enter your email" [ref=f20e114]
+              - button "Subscribe" [disabled] [ref=f20e115]
+      - generic [ref=f20e120]:
+        - paragraph [ref=f20e121]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f20e122]:
+          - link "Terms" [ref=f20e123] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f20e124] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f20e125] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f20e126] [cursor=pointer]:
+            - /url: /admin/login
+    - button "Chat" [ref=f20e129] [cursor=pointer]
+  - alert [ref=f20e133]

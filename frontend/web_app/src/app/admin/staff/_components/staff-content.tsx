@@ -614,7 +614,7 @@ export function StaffContent() {
       render: (staffMember) => (
         <div className="space-y-1">
           <span
-            className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+            className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold ${
               staffMember.is_active ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
             }`}
           >
@@ -636,13 +636,13 @@ export function StaffContent() {
           {staffMember.permissions.slice(0, 4).map((permission) => (
             <span
               key={`${staffMember.id}-${permission}`}
-              className="rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-text-muted"
+              className="rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-xs font-semibold text-text-muted"
             >
               {permission}
             </span>
           ))}
           {staffMember.permissions.length > 4 && (
-            <span className="rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-text-muted">
+            <span className="rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-xs font-semibold text-text-muted">
               +{staffMember.permissions.length - 4} more
             </span>
           )}
@@ -707,7 +707,7 @@ export function StaffContent() {
                 <div key={card.label} className="rounded-xl border border-border bg-surface-1/80 px-3 py-2.5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-text-faint">{card.label}</p>
                   <p className="mt-1 text-lg font-bold text-text">{card.value}</p>
-                  <p className="mt-0.5 text-[10px] text-text-muted">{card.helper}</p>
+                  <p className="mt-0.5 text-xs text-text-muted">{card.helper}</p>
                 </div>
               ))}
             </div>

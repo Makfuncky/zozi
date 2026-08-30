@@ -157,7 +157,7 @@ function ApprovalMatrixInner() {
         key: "can_approve",
         label: "Eligible",
         render: (r) => (
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${r.can_approve ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${r.can_approve ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
             {r.can_approve ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
             {r.can_approve ? "Yes" : "No"}
           </span>
@@ -174,7 +174,7 @@ function ApprovalMatrixInner() {
     return [
       { key: "user_id", label: "User ID", width: "110px", sortable: true, sortValue: (r) => r.user_id, render: (r) => <span className="font-mono text-xs">{r.user_id}</span> },
       { key: "username", label: "Approver", width: "240px", sortable: true, sortValue: (r) => r.username.toLowerCase(), render: (r) => <span className="text-xs font-semibold text-text">{r.username}</span> },
-      { key: "role", label: "Role", width: "160px", sortable: true, sortValue: (r) => r.role, render: (r) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold capitalize">{r.role.replace("_", " ")}</span> },
+      { key: "role", label: "Role", width: "160px", sortable: true, sortValue: (r) => r.role, render: (r) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-xs font-semibold capitalize">{r.role.replace("_", " ")}</span> },
       { key: "authority_level", label: "Level", width: "100px", sortable: true, sortValue: (r) => r.authority_level, align: "right", render: (r) => <span className="font-mono text-xs">{r.authority_level}</span> },
       { key: "org_unit_name", label: "Org Unit", width: "180px", render: (r) => <span className="text-xs text-text-muted">{r.org_unit_name || "—"}</span> },
       { key: "department", label: "Department", width: "180px", render: (r) => <span className="text-xs text-text-muted">{r.department || "—"}</span> },
@@ -187,7 +187,7 @@ function ApprovalMatrixInner() {
     return [
       { key: "user_id", label: "User ID", width: "110px", render: (r) => <span className="font-mono text-xs">{r.user_id}</span> },
       { key: "username", label: "Approver", width: "240px", render: (r) => <span className="text-xs font-semibold text-text">{r.username}</span> },
-      { key: "role", label: "Role", width: "160px", render: (r) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold capitalize">{r.role.replace("_", " ")}</span> },
+      { key: "role", label: "Role", width: "160px", render: (r) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-xs font-semibold capitalize">{r.role.replace("_", " ")}</span> },
       { key: "authority_level", label: "Level", width: "100px", align: "right", render: (r) => <span className="font-mono text-xs">{r.authority_level}</span> },
       { key: "org_unit_name", label: "Org Unit", width: "180px", render: (r) => <span className="text-xs text-text-muted">{r.org_unit_name || "—"}</span> },
       { key: "distance", label: "Distance", width: "120px", align: "right", render: (r) => <span className="font-mono text-xs">{r.distance}</span> },
@@ -251,7 +251,7 @@ function ApprovalMatrixInner() {
                   <div key={key} className="rounded-xl border border-border bg-surface-2/60 p-4">
                     <div className="mb-2 flex items-center justify-between">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-text">{rule.label}</h3>
-                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold text-text-muted">{key}</span>
+                      <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-text-muted">{key}</span>
                     </div>
                     <div className="space-y-1.5 text-xs text-text-muted">
                       <p>Minimum authority level: <span className="font-mono font-semibold text-text">{rule.min_authority_level}</span></p>
@@ -367,14 +367,14 @@ function ApprovalMatrixInner() {
                 <div className="space-y-2">
                   {chain.chain.map((item, idx) => (
                     <div key={`${item.user_id}-${idx}`} className="flex items-center gap-3 rounded-xl border border-border bg-surface-2/60 p-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full theme-chip-brand text-[10px] font-bold text-white">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full theme-chip-brand text-xs font-bold text-white">
                         {item.distance}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-text">{item.username}</p>
                         <p className="text-[11px] text-text-muted capitalize">{item.role.replace("_", " ")} • Level {item.authority_level} • {item.org_unit_name || "—"}</p>
                       </div>
-                      <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold text-text-muted">
+                      <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-text-muted">
                         Step {idx + 1}
                       </span>
                     </div>

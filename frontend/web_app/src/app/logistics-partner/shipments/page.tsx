@@ -452,12 +452,12 @@ export default function LogisticsPartnerShipmentsPage() {
                         </td>
                         <td className="px-2 py-2 text-text">
                           #{s.order_id}
-                          <div className="font-mono text-[10px] text-text-faint">{s.scan_code || "—"}</div>
+                          <div className="font-mono text-xs text-text-faint">{s.scan_code || "—"}</div>
                         </td>
                         <td className="px-2 py-2 font-mono text-text-muted">{s.tracking_number || "—"}</td>
                         <td className="px-2 py-2 text-text-muted">{s.carrier_name || "—"}</td>
                         <td className="px-2 py-2">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusStyle(s.status)}`}>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyle(s.status)}`}>
                             {s.status}
                           </span>
                           {s.accepted_load_fit_label ? (
@@ -468,7 +468,7 @@ export default function LogisticsPartnerShipmentsPage() {
                           ) : null}
                           {s.active_confirmation_request?.confirmation_type === "pickup" &&
                           s.active_confirmation_request.status === "pending" ? (
-                            <span className="ml-2 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
+                            <span className="ml-2 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
                               Awaiting supplier pickup confirm
                             </span>
                           ) : null}

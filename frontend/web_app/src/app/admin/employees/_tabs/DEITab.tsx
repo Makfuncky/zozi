@@ -92,7 +92,7 @@ const loadData = useCallback(async () => {
               <span className="text-[11px] text-text-muted font-medium">{item.label}</span>
             </div>
             <p className="text-2xl font-bold text-text">{item.value}</p>
-            {item.sub && <p className="mt-1 text-[10px] text-text-faint">{item.sub}</p>}
+            {item.sub && <p className="mt-1 text-xs text-text-faint">{item.sub}</p>}
           </div>
         ))}
       </div>
@@ -130,12 +130,12 @@ const loadData = useCallback(async () => {
                   </td>
                   <td className="px-4 py-3">
                     {m.flagged ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 text-danger text-[10px] font-semibold px-2 py-0.5 border border-danger/20">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 text-danger text-xs font-semibold px-2 py-0.5 border border-danger/20">
                         <AlertTriangle className="h-3 w-3" />
                         Flagged
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success text-[10px] font-semibold px-2 py-0.5 border border-success/20">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success text-xs font-semibold px-2 py-0.5 border border-success/20">
                         <CheckCircle2 className="h-3 w-3" />
                         Compliant
                       </span>

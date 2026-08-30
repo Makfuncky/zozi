@@ -220,7 +220,7 @@ class Settings:
             if secret_key.lower() in {"change-me-in-production", "change-me", "changeme", "secret", "secret-key", "default"}:
                 raise ValueError(
                     "SECRET_KEY must not be a placeholder value in production. "
-                    "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+                    "Generate one, e.g. python -c \"import secrets; secrets.token_hex(32)\""
                 )
 
         cookie_secure = self._resolve("cookie_secure")

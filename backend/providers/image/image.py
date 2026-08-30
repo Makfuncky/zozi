@@ -6,6 +6,7 @@ Image Provider
 Image processing pipeline, delegates background removal to bg_remover.
 Test file: backend/tests/_test_provider/test_image.py
 """
+import asyncio
 import io
 import logging
 from typing import List, Dict, Any, Optional
@@ -89,6 +90,14 @@ def generate_angles(
     return results
 
 
+def _prepare_search_image(data: bytes):
+    img = Image.open(io.BytesIO(data))
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.thumbnail((512, 512), Image.LANCZOS)
+    return img
+
+
 async def process_image_search(
     image_bytes: bytes,
     similar_products: Optional[list] = None,
@@ -126,7 +135,7 @@ async def process_image_search(
             "Visual search requires CLIP model. Install with: pip install clip-by-openai"
         )
     try:
-        pil_image = Image.open(io.BytesIO(image_bytes))
+        pil_image = await asyncio.to_thread(_prepare_search_image, image_bytes)
         if pil_image.mode != "RGB":
             pil_image = pil_image.convert("RGB")
         pil_image.thumbnail((512, 512), Image.LANCZOS)

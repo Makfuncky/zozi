@@ -229,7 +229,7 @@ export default function FraudDetectionDashboard() {
             <div key={metric.label} className="theme-card rounded-xl border p-3">
               <div className="flex items-center gap-2">
                 <metric.icon className={`h-4 w-4 ${metric.tone || "text-primary"}`} />
-                <p className="text-[10px] font-semibold uppercase tracking text-text-faint">{metric.label}</p>
+                <p className="text-xs font-semibold uppercase tracking text-text-faint">{metric.label}</p>
               </div>
               <p className="mt-1 text-lg font-bold text-text">{metric.value}</p>
             </div>
@@ -378,7 +378,7 @@ export default function FraudDetectionDashboard() {
                       <td className="px-3 py-2 text-text">{rule.name}</td>
                       <td className="px-3 py-2">{rule.weight}</td>
                       <td className="px-3 py-2">
-                        <span className={`text-[10px] px-2 py-0.5 rounded ${
+                        <span className={`text-xs px-2 py-0.5 rounded ${
                           rule.is_active ? "bg-success/10 text-success" : "bg-surface-3 text-text-muted"
                         }`}>
                           {rule.is_active ? "Active" : "Inactive"}
@@ -438,7 +438,7 @@ export default function FraudDetectionDashboard() {
                         {entry.expires_at ? new Date(entry.expires_at).toLocaleDateString() : "Never"}
                       </td>
                       <td className="px-3 py-2">
-                        <span className={`text-[10px] px-2 py-0.5 rounded ${
+                        <span className={`text-xs px-2 py-0.5 rounded ${
                           entry.status === "active" ? "bg-danger/10 text-danger" : "bg-success/10 text-success"
                         }`}>
                           {entry.status}
@@ -480,7 +480,7 @@ export default function FraudDetectionDashboard() {
                   </div>
                   <p className="text-xs text-text-muted mb-3">Event ID: {review.fraud_event_id}</p>
                   <div className="flex gap-2">
-                    <button className="flex-1 rounded bg-surface border border-border px-2 py-1.5 text-[10px] font-semibold hover:bg-surface-2 transition">
+                    <button className="flex-1 rounded bg-surface border border-border px-2 py-1.5 text-xs font-semibold hover:bg-surface-2 transition">
                       Assign
                     </button>
                     <Button variant="primary">

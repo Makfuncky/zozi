@@ -1,38 +1,8 @@
-﻿import path from "path";
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
-  webpack: (config) => {
-    config.resolve = config.resolve || {};
-    const cwd = process.cwd();
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      '@': path.resolve(cwd, './src'),
-      '@shared': path.resolve(cwd, '../shared/src'),
-      'react-native$': 'react-native-web',
-      'react-native-web': path.resolve(cwd, "node_modules/react-native-web"),
-    };
-    config.resolve.extensions = [
-      '.web.tsx',
-      '.web.ts',
-      '.web.js',
-      '.tsx',
-      '.ts',
-      '.js',
-      ...((config.resolve.extensions as string[]) || []),
-    ];
-
-    config.resolve.mainFields = ['browser', 'module', 'main'];
-
-    config.resolve.modules = [
-      ...(config.resolve.modules || []),
-      path.resolve(process.cwd(), 'node_modules'),
-    ];
-
-    return config;
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'via.placeholder.com' },
@@ -50,16 +20,25 @@ const nextConfig: NextConfig = {
     "127.0.0.1",
     "172.19.240.1",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/products",
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
     return [
       {
-        source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
+        source: '/api/auth/:path*',
+        destination: `${apiUrl}/api/v1/auth/:path*`,
       },
       {
-        source: '/auth/:path*',
-        destination: `${apiUrl}/auth/:path*`,
+        source: '/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
       },
       {
         source: '/admin/:path*',
@@ -68,6 +47,18 @@ const nextConfig: NextConfig = {
       {
         source: '/hr/:path*',
         destination: `${apiUrl}/hr/:path*`,
+      },
+      {
+        source: '/__api/countries',
+        destination: `${apiUrl}/api/v1/customer/country/countries`,
+      },
+      {
+        source: '/__api/currency/:path*',
+        destination: `${apiUrl}/api/v1/customer/country/currency/:path*`,
+      },
+      {
+        source: '/__api/products/suppliers',
+        destination: `${apiUrl}/api/v1/customer/suppliers/products/suppliers`,
       },
       {
         source: '/__api/:path*',

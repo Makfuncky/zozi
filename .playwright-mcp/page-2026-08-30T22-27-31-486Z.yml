@@ -1,0 +1,83 @@
+- generic [ref=f28e1]:
+  - generic [ref=f28e2]:
+    - banner [ref=f28e4]:
+      - generic [ref=f28e6]:
+        - link "Go to home" [ref=f28e7] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f28e8]:
+            - img "Zozi logo" [ref=f28e10]
+            - generic [ref=f28e26]: Zozi
+        - generic [ref=f28e27]:
+          - button "Switch to dark theme" [ref=f28e132]: 🌙
+          - generic [ref=f28e29]:
+            - generic [ref=f28e30]:
+              - generic [ref=f28e31]: OMR
+              - generic [ref=f28e32]: Detected PK
+            - button "Choose country" [ref=f28e34]:
+              - generic [ref=f28e35]: PK
+            - button "Choose language" [ref=f28e39]:
+              - generic [ref=f28e40]: EN
+          - link "Wishlist" [ref=f28e43] [cursor=pointer]:
+            - /url: /wishlist
+          - link "Cart" [ref=f28e46] [cursor=pointer]:
+            - /url: /cart
+          - button "Open sign in menu" [ref=f28e51]
+    - main [ref=f28e57]:
+      - generic [ref=f28e58]:
+        - generic [ref=f28e59]:
+          - heading "Customer Sign In" [level=1] [ref=f28e64]
+          - paragraph [ref=f28e65]: Welcome back — sign in to your ZOZI account
+        - generic [ref=f28e66]:
+          - generic [ref=f28e67]:
+            - generic [ref=f28e68]: Email or Username
+            - textbox "you@email.com" [active] [ref=f28e70]: customer@zozi.com
+          - generic [ref=f28e71]:
+            - generic [ref=f28e72]: Password
+            - generic [ref=f28e73]:
+              - textbox "••••••••" [ref=f28e74]: customer123
+              - button "Show password" [ref=f28e75]
+          - button "Sign In" [ref=f28e79]
+        - paragraph [ref=f28e83]:
+          - text: New to ZOZI?
+          - link "Create an account" [ref=f28e84] [cursor=pointer]:
+            - /url: /register
+        - paragraph [ref=f28e85]:
+          - text: Are you a seller or logistics partner?
+          - link "Supplier" [ref=f28e86] [cursor=pointer]:
+            - /url: /supplier/login
+          - text: ·
+          - link "Logistics" [ref=f28e87] [cursor=pointer]:
+            - /url: /logistics-partner/login
+    - contentinfo [ref=f28e89]:
+      - generic [ref=f28e91]:
+        - generic [ref=f28e92]:
+          - generic [ref=f28e93]: ZOZI
+          - paragraph [ref=f28e99]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f28e100]:
+            - link "Become a Supplier" [ref=f28e101] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f28e102] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f28e103]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f28e104]
+          - generic [ref=f28e105]:
+            - generic [ref=f28e106]:
+              - heading "Stay in Style" [level=3] [ref=f28e107]
+              - paragraph [ref=f28e108]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f28e109]:
+              - textbox "First name (optional)" [ref=f28e111]
+              - textbox "Enter your email" [ref=f28e113]
+              - button "Subscribe" [disabled] [ref=f28e114]
+      - generic [ref=f28e119]:
+        - paragraph [ref=f28e120]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f28e121]:
+          - link "Terms" [ref=f28e122] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f28e123] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f28e124] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f28e125] [cursor=pointer]:
+            - /url: /admin/login
+    - button "Chat" [ref=f28e128]
+  - alert [ref=f28e133]

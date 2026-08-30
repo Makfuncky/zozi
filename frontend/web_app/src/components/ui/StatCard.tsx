@@ -1,12 +1,11 @@
 "use client";
-
 import React from "react";
 
 interface StatCardProps {
   label: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
-  color: string;
+  color?: string;
   trend?: { value: number; positive: boolean };
   sub?: string;
   className?: string;
@@ -14,11 +13,11 @@ interface StatCardProps {
 
 /**
  * Shared metric card used across Supplier/Admin/Logistics dashboards.
- * Keeps stat visuals consistent (surface, border, icon chip, trend).
+ * Uses glass-panel styling for modern look. Backward-compatible with original API.
  */
-export function StatCard({ label, value, icon: Icon, color, trend, sub, className }: StatCardProps) {
+export function StatCard({ label, value, icon: Icon, color = "bg-brand/10 text-brand", trend, sub, className }: StatCardProps) {
   return (
-    <div className={`rounded-xl border border-border bg-surface p-4 ${className ?? ""}`}>
+    <div className={`glass-panel rounded-xl border border-glass-border-mid p-4 transition-all hover:shadow-card-hover ${className ?? ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-text-muted">{label}</p>

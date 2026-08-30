@@ -151,7 +151,7 @@ export default function SupplierDashboardPage() {
                         <span className="w-5 text-xs font-bold text-text-faint tabular-nums">#{i + 1}</span>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium text-text truncate">{product.name}</p>
-                          <p className="text-[10px] text-text-muted">{product.sales} sales</p>
+                          <p className="text-xs text-text-muted">{product.sales} sales</p>
                         </div>
                         <span className="text-xs font-semibold text-text tabular-nums">{formatMoney(product.revenue)}</span>
                       </div>

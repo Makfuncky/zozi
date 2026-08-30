@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from infrastructure.database.base import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from domains.country.models.countries import CountryConfig  # noqa: F401
 
 
 class CouponUsage(Base):

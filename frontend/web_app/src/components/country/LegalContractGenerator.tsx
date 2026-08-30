@@ -190,7 +190,7 @@ export default function CountryLegalContractGenerator({ countryCode, legalRules 
                   <ShieldCheck className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium text-text">{template.name}</span>
                 </div>
-                <p className="text-[10px] text-text-faint mt-1">
+                <p className="text-xs text-text-faint mt-1">
                   {template.type.replace("_", " ").toUpperCase()}
                 </p>
               </button>

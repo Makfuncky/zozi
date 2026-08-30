@@ -380,7 +380,7 @@ export default function BackgroundJobsPage() {
             </h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="bg-surface-1 rounded-lg p-3">
-                <p className="text-[10px] text-text-faint uppercase tracking-wider">
+                <p className="text-xs text-text-faint uppercase tracking-wider">
                   Status
                 </p>
                 <div className="flex items-center gap-1.5 mt-1">
@@ -397,7 +397,7 @@ export default function BackgroundJobsPage() {
                 </div>
               </div>
               <div className="bg-surface-1 rounded-lg p-3">
-                <p className="text-[10px] text-text-faint uppercase tracking-wider">
+                <p className="text-xs text-text-faint uppercase tracking-wider">
                   Supplier Settlements
                 </p>
                 <p className="text-sm font-bold text-text mt-1">
@@ -405,7 +405,7 @@ export default function BackgroundJobsPage() {
                 </p>
               </div>
               <div className="bg-surface-1 rounded-lg p-3">
-                <p className="text-[10px] text-text-faint uppercase tracking-wider">
+                <p className="text-xs text-text-faint uppercase tracking-wider">
                   Logistics Settlements
                 </p>
                 <p className="text-sm font-bold text-text mt-1">
@@ -413,7 +413,7 @@ export default function BackgroundJobsPage() {
                 </p>
               </div>
               <div className="bg-surface-1 rounded-lg p-3">
-                <p className="text-[10px] text-text-faint uppercase tracking-wider">
+                <p className="text-xs text-text-faint uppercase tracking-wider">
                   Suppliers Paid
                 </p>
                 <p className="text-sm font-bold text-text mt-1">
@@ -437,7 +437,7 @@ export default function BackgroundJobsPage() {
             )}
 
             {s?.last_run_at && (
-              <p className="text-[10px] text-text-faint mt-2">
+              <p className="text-xs text-text-faint mt-2">
                 Last run: {new Date(s.last_run_at).toLocaleString()}
               </p>
             )}
@@ -461,7 +461,7 @@ export default function BackgroundJobsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-surface-1 text-text-faint text-[10px] uppercase tracking-wider">
+                  <tr className="bg-surface-1 text-text-faint text-xs uppercase tracking-wider">
                     <th className="text-left px-3 py-2 font-medium">Time</th>
                     <th className="text-left px-3 py-2 font-medium">Kind</th>
                     <th className="text-right px-3 py-2 font-medium">
@@ -490,7 +490,7 @@ export default function BackgroundJobsPage() {
                             {timeAgo(entry.created_at)}
                           </td>
                           <td className="px-3 py-2.5">
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-50 text-gray-700">
+                            <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-50 text-gray-700">
                               {entry.kind}
                             </span>
                           </td>
@@ -504,7 +504,7 @@ export default function BackgroundJobsPage() {
                             {String(entry.detail?.batch_number ?? "—")}
                           </td>
                           <td className="px-3 py-2.5 text-right">
-                            <span className="text-[10px] text-text-faint">
+                            <span className="text-xs text-text-faint">
                               —
                             </span>
                           </td>
@@ -525,7 +525,7 @@ export default function BackgroundJobsPage() {
                         </td>
                         <td className="px-3 py-2.5">
                           <span
-                            className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                            className={`text-xs font-medium px-1.5 py-0.5 rounded ${
                               entry.kind === "auto_payout"
                                 ? "bg-blue-50 text-blue-700"
                                 : "bg-purple-50 text-purple-700"
@@ -554,7 +554,7 @@ export default function BackgroundJobsPage() {
                               )
                             }
                             disabled={rowActionLoading}
-                            className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold flex items-center gap-1 ml-auto ${
+                            className={`rounded-lg px-2.5 py-1 text-xs font-semibold flex items-center gap-1 ml-auto ${
                               rowActionLoading
                                 ? "bg-surface-1 text-text-faint cursor-not-allowed"
                                 : sweepKind === "supplier"

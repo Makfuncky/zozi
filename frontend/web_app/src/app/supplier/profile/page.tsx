@@ -911,13 +911,13 @@ function SupplierProfilePageContent() {
     switch (biz.verification_status) {
       case "approved":
       case "verified":
-        return <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-1 text-[10px] font-semibold text-success"><CheckCircle className="h-3 w-3" /> Public storefront live</span>;
+        return <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-1 text-xs font-semibold text-success"><CheckCircle className="h-3 w-3" /> Public storefront live</span>;
       case "under_review":
-        return <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-1 text-[10px] font-semibold text-warning"><Clock className="h-3 w-3" /> Under review</span>;
+        return <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-1 text-xs font-semibold text-warning"><Clock className="h-3 w-3" /> Under review</span>;
       case "rejected":
-        return <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-2 py-1 text-[10px] font-semibold text-danger"><XCircle className="h-3 w-3" /> Rejected</span>;
+        return <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-2 py-1 text-xs font-semibold text-danger"><XCircle className="h-3 w-3" /> Rejected</span>;
       default:
-        return <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-1 text-[10px] font-semibold text-text-muted"><Clock className="h-3 w-3" /> Draft storefront</span>;
+        return <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-1 text-xs font-semibold text-text-muted"><Clock className="h-3 w-3" /> Draft storefront</span>;
     }
   };
 
@@ -1076,9 +1076,9 @@ function SupplierProfilePageContent() {
                 <div>
                   <p className="text-xs font-semibold text-text">Terms & Conditions</p>
                   {biz.is_terms_accepted ? (
-                    <p className="text-[10px] text-success">Accepted v{biz.terms_version} on {biz.terms_accepted_at ? new Date(biz.terms_accepted_at).toLocaleDateString() : "-"}</p>
+                    <p className="text-xs text-success">Accepted v{biz.terms_version} on {biz.terms_accepted_at ? new Date(biz.terms_accepted_at).toLocaleDateString() : "-"}</p>
                   ) : (
-                    <p className="text-[10px] text-warning">Not yet accepted</p>
+                    <p className="text-xs text-warning">Not yet accepted</p>
                   )}
                 </div>
                 {biz.is_terms_accepted ? <CheckCircle className="h-5 w-5 text-success" /> : <button type="button" onClick={() => setTab("terms")} className="text-[11px] font-semibold text-primary hover:underline">Review now</button>}
@@ -1124,7 +1124,7 @@ function SupplierProfilePageContent() {
                         <p className="mt-1 text-sm text-text-muted">{completedStorefrontItems} of {storefrontChecklist.length} customer-facing essentials completed.</p>
                       </div>
                       <div className="rounded-2xl bg-primary/10 px-3 py-2 text-center text-primary">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em]">Status</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Status</p>
                         <p className="mt-1 text-sm font-bold">{storefrontVisible ? "Live" : "Draft"}</p>
                       </div>
                     </div>
@@ -1407,7 +1407,7 @@ function SupplierProfilePageContent() {
                       Keep the destination account here. Payout status, settlement timing, and invoice records now live in the dedicated Payouts workspace.
                     </p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${bankAccount?.verification_status === "verified" ? "theme-chip-success" : bankAccount?.verification_status === "rejected" ? "theme-chip-danger" : "theme-chip-warning"}`}>
+                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${bankAccount?.verification_status === "verified" ? "theme-chip-success" : bankAccount?.verification_status === "rejected" ? "theme-chip-danger" : "theme-chip-warning"}`}>
                     {bankAccount?.verification_status || "pending review"}
                   </span>
                 </div>
@@ -1419,7 +1419,7 @@ function SupplierProfilePageContent() {
                       {bankAccount?.verification_status === "verified" ? <CheckCircle className="h-4 w-4 text-success" /> : bankAccount?.verification_status === "rejected" ? <XCircle className="h-4 w-4 text-danger" /> : <Clock className="h-4 w-4 text-warning" />}
                       {bankAccount?.verification_status === "verified" ? "Ready for payout batches" : bankAccount?.verification_status === "rejected" ? "Needs correction" : "Waiting for finance review"}
                     </div>
-                    <p className="mt-1 text-[10px] text-text-faint">Update the details below if finance asks for corrections.</p>
+                    <p className="mt-1 text-xs text-text-faint">Update the details below if finance asks for corrections.</p>
                   </div>
                   <div className="rounded-xl border border-border bg-surface-2 p-3">
                     <p className="text-xs text-text-faint">Need payout status?</p>
@@ -1592,8 +1592,8 @@ function SupplierProfilePageContent() {
                         <p className="text-[11px] text-text-faint">{group.countries.filter((country) => coverageDraft.operating_regions.includes(country)).length} / {group.countries.length} selected</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="primary" className="rounded-lg px-2.5 py-1 text-[10px] font-semibold text-success" type="button" onClick={() => updateCoverageGroup(group.countries, true)}>All</Button>
-                        {allSelected ? <Button variant="danger" className="rounded-lg px-2.5 py-1 text-[10px] font-semibold text-danger" type="button" onClick={() => updateCoverageGroup(group.countries, false)}>Clear</Button> : null}
+                        <Button variant="primary" className="rounded-lg px-2.5 py-1 text-xs font-semibold text-success" type="button" onClick={() => updateCoverageGroup(group.countries, true)}>All</Button>
+                        {allSelected ? <Button variant="danger" className="rounded-lg px-2.5 py-1 text-xs font-semibold text-danger" type="button" onClick={() => updateCoverageGroup(group.countries, false)}>Clear</Button> : null}
                       </div>
                     </div>
                   );
@@ -1616,7 +1616,7 @@ function SupplierProfilePageContent() {
               {coverageDraft.operating_regions.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {coverageDraft.operating_regions.slice().sort().map((country) => (
-                    <Button variant="primary" className="rounded-full border border-success/25 px-3 py-1 text-[10px] font-semibold text-success" key={country} type="button" onClick={() => toggleCoverageCountry(country)}>
+                    <Button variant="primary" className="rounded-full border border-success/25 px-3 py-1 text-xs font-semibold text-success" key={country} type="button" onClick={() => toggleCoverageCountry(country)}>
                       {country}
                     </Button>
                   ))}

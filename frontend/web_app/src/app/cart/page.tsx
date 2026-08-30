@@ -29,42 +29,45 @@ export default function CartPage() {
   const getItemCount = useCartStore((s) => s.getItemCount);
   const addToast = useToastStore((s) => s.addToast);
 
-  const [mounted, setMounted] = useState(false);
-  const [config, setConfig] = useState<{ vat_rate: number; shipping_flat_rate: number; free_shipping_threshold: number } | null>(null);
-
-  // ── Shipping quote state ────────────────────────────────────────────────────
-  const [showShippingForm, setShowShippingForm] = useState(false);
-  const [shipCountry, setShipCountry] = useState("");
-  const [shipCity, setShipCity] = useState("");
-  const [shipQuote, setShipQuote] = useState<{
-    shipping_amount: number;
-    currency: string;
-    partner_name?: string | null;
-    estimated_delivery_min?: number | null;
-    estimated_delivery_max?: number | null;
-    source?: string;
+  const [totals, setTotals] = useState<{
+    subtotal: number;
+    discount: number;
+    coupon_code: string | null;
+    shipping: number;
+    tax_amount: number;
+    tax_type: string;
+    total: number;
+    free_shipping_threshold: number;
+    free_shipping_applied: boolean;
   } | null>(null);
-  const [shipLoading, setShipLoading] = useState(false);
-
-  const locale = useLocaleStore((s) => s.locale);
-  const isRtl = isRtlLocale(locale);
-  const formatPrice = useCurrencyStore((s) => s.format);
-  const tr = useLocaleStore((s) => s.t);
 
   useEffect(() => {
     useCartStore.getState().initialize();
-    apiFetch("/admin/config/checkout").then((r) => (r.ok ? r.json() : null)).then((data) => { if (data) setConfig(data); }).catch(() => {});
   }, []);
 
-  useEffect(() => setMounted(true), []);
-
-  const subtotal = useMemo(() => items.reduce((sum, i) => sum + Number(i.price ?? 0) * i.quantity, 0), [items]);
-  const vatRate = config?.vat_rate ?? 0.05;
-  const shippingFlat = config?.shipping_flat_rate ?? 0;
-  const freeShippingThreshold = config?.free_shipping_threshold ?? 0;
-  const shippingAmount = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : shippingFlat;
-  const vatAmount = useMemo(() => Number((subtotal * vatRate).toFixed(2)), [subtotal, vatRate]);
-  const total = useMemo(() => Number((subtotal + vatAmount + shippingAmount).toFixed(2)), [subtotal, vatAmount, shippingAmount]);
+  // Fetch server-side totals (Law 14: business logic in backend)
+  useEffect(() => {
+    if (items.length === 0) {
+      setTotals(null);
+      return;
+    }
+    apiFetch("/cart/totals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((i) => ({
+          product_id: Number(i.id),
+          price: Number(i.price ?? 0),
+          quantity: i.quantity,
+        })),
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setTotals(data);
+      })
+      .catch(() => {});
+  }, [items]);
 
   const handleCalculateShipping = async () => {
     if (!shipCountry.trim() || items.length === 0) return;
@@ -109,7 +112,12 @@ export default function CartPage() {
     }
   };
 
-  if (!mounted) return null;
+  const displaySubtotal = totals?.subtotal ?? 0;
+  const displayDiscount = totals?.discount ?? 0;
+  const displayShipping = totals?.shipping ?? 0;
+  const displayTax = totals?.tax_amount ?? 0;
+  const displayTotal = totals?.total ?? 0;
+  const displayTaxType = totals?.tax_type ?? "VAT";
 
   return (
     <ErrorBoundary>
@@ -143,7 +151,7 @@ export default function CartPage() {
                             <h3 className="text-sm font-semibold text-text truncate"><TranslatedText text={item.name} /></h3>
                             <p className="text-xs text-text-faint">{formatPrice(Number(item.price ?? 0))}</p>
                             {(item.selected_size || item.selected_color) && (
-                              <p className="text-[10px] text-text-muted truncate">
+                              <p className="text-xs text-text-muted truncate">
                                 {item.selected_size && `Size: ${item.selected_size} `}{item.selected_color && `Color: ${item.selected_color}`}
                               </p>
                             )}
@@ -168,21 +176,24 @@ export default function CartPage() {
               <div className="theme-card rounded-xl border p-4">
                 <h2 className="text-sm font-semibold text-text mb-3">Order Summary</h2>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-text-faint">{getItemCount()} items</span><span>{formatPrice(subtotal)}</span></div>
-                  <div className="flex justify-between"><span className="text-text-faint">VAT ({(vatRate * 100).toFixed(0)}%)</span><span>{formatPrice(vatAmount)}</span></div>
+                  <div className="flex justify-between"><span className="text-text-faint">{getItemCount()} items</span><span>{formatPrice(displaySubtotal)}</span></div>
+                  {displayDiscount > 0 && (
+                    <div className="flex justify-between text-success"><span>Discount</span><span>−{formatPrice(displayDiscount)}</span></div>
+                  )}
+                  <div className="flex justify-between"><span className="text-text-faint">{displayTaxType}</span><span>{formatPrice(displayTax)}</span></div>
 
-                  {/* Flat-rate shipping (always shown) */}
+                  {/* Shipping (always shown) */}
                   <div className="flex justify-between items-center">
                     <span className="text-text-faint flex items-center gap-1">
                       <Truck className="w-3.5 h-3.5" /> Delivery
                     </span>
-                    <span>{shippingAmount === 0 ? <span className="text-success font-semibold">Free</span> : formatPrice(shippingAmount)}</span>
+                    <span>{displayShipping === 0 ? <span className="text-success font-semibold">Free</span> : formatPrice(displayShipping)}</span>
                   </div>
 
                   {/* Live quote result — shown as preview when calculated */}
                   {shipQuote && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 space-y-1 mt-1">
-                      <p className="text-[10px] font-semibold text-primary flex items-center gap-1">
+                      <p className="text-xs font-semibold text-primary flex items-center gap-1">
                         <Truck className="w-3 h-3" /> Live Quote Preview
                       </p>
                       <div className="flex justify-between text-[11px]">
@@ -205,16 +216,16 @@ export default function CartPage() {
                           </span>
                         </div>
                       )}
-                      <p className="text-[9px] text-text-faint pt-0.5">Final cost calculated at checkout.</p>
+                      <p className="text-3xs text-text-faint pt-0.5">Final cost calculated at checkout.</p>
                     </div>
                   )}
 
-                  {freeShippingThreshold > 0 && !shipQuote && (
-                    <p className="text-[10px] text-text-faint">Free shipping on orders over {formatPrice(freeShippingThreshold)}</p>
+                  {totals && totals.free_shipping_threshold > 0 && !shipQuote && (
+                    <p className="text-xs text-text-faint">Free shipping on orders over {formatPrice(totals.free_shipping_threshold)}</p>
                   )}
 
                   <div className="border-t border-border pt-2 mt-2">
-                    <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>
+                    <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatPrice(displayTotal)}</span></div>
                   </div>
                 </div>
 
@@ -236,7 +247,7 @@ export default function CartPage() {
                     >
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="mb-1 block text-[10px] font-semibold text-text-faint">Country</label>
+                          <label className="mb-1 block text-xs font-semibold text-text-faint">Country</label>
                           <input
                             value={shipCountry}
                             onChange={(e) => setShipCountry(e.target.value)}
@@ -245,7 +256,7 @@ export default function CartPage() {
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-[10px] font-semibold text-text-faint">City</label>
+                          <label className="mb-1 block text-xs font-semibold text-text-faint">City</label>
                           <input
                             value={shipCity}
                             onChange={(e) => setShipCity(e.target.value)}

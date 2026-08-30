@@ -311,7 +311,7 @@ export default function AdminPayoutApprovalPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-text">{batch.batch_number}</span>
-                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor(batch.status)}`}>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColor(batch.status)}`}>
                             {statusLabel(batch.status)}
                           </span>
                         </div>
@@ -338,7 +338,7 @@ export default function AdminPayoutApprovalPage() {
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
-                              <tr className="bg-surface-1 text-text-faint text-[10px] uppercase tracking-wider">
+                              <tr className="bg-surface-1 text-text-faint text-xs uppercase tracking-wider">
                                 <th className="text-left px-4 py-2 font-medium">Entity</th>
                                 <th className="text-left px-4 py-2 font-medium">Type</th>
                                 <th className="text-right px-4 py-2 font-medium">Amount</th>
@@ -351,7 +351,7 @@ export default function AdminPayoutApprovalPage() {
                                 <tr key={item.id} className="border-t border-border/50 hover:bg-surface-1/30">
                                   <td className="px-4 py-2.5 font-medium text-text">{item.entity_name || `#${item.entity_id}`}</td>
                                   <td className="px-4 py-2.5 text-text-muted">
-                                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
                                       item.entity_type === "supplier" ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"
                                     }`}>
                                       {item.entity_type}
@@ -359,7 +359,7 @@ export default function AdminPayoutApprovalPage() {
                                   </td>
                                   <td className="px-4 py-2.5 text-right font-semibold text-text">{formatCurrency(item.amount, item.currency)}</td>
                                   <td className="px-4 py-2.5">
-                                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor(item.status)}`}>
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${statusColor(item.status)}`}>
                                       {statusLabel(item.status)}
                                     </span>
                                   </td>
@@ -374,7 +374,7 @@ export default function AdminPayoutApprovalPage() {
                         <div className="flex items-center gap-2 p-3 border-t border-border bg-surface-1/50">
                           {batch.notes && (
                             <div className="flex-1 min-w-0">
-                              <p className="text-[10px] text-text-faint truncate">{batch.notes.split("\n").pop()}</p>
+                              <p className="text-xs text-text-faint truncate">{batch.notes.split("\n").pop()}</p>
                             </div>
                           )}
                           <div className="flex items-center gap-2 shrink-0">
@@ -430,7 +430,7 @@ export default function AdminPayoutApprovalPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-surface-1 text-text-faint text-[10px] uppercase tracking-wider">
+                      <tr className="bg-surface-1 text-text-faint text-xs uppercase tracking-wider">
                         <th className="text-left px-3 py-2 font-medium">ID</th>
                         <th className="text-left px-3 py-2 font-medium">Supplier</th>
                         <th className="text-right px-3 py-2 font-medium">Amount</th>
@@ -445,7 +445,7 @@ export default function AdminPayoutApprovalPage() {
                           <td className="px-3 py-2 text-text-muted">{p.supplier_name || `Supplier #${p.supplier_id}`}</td>
                           <td className="px-3 py-2 text-right font-semibold text-text">{formatCurrency(p.amount, p.currency)}</td>
                           <td className="px-3 py-2">
-                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor(p.status)}`}>
+                            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${statusColor(p.status)}`}>
                               {statusLabel(p.status)}
                             </span>
                           </td>
@@ -454,7 +454,7 @@ export default function AdminPayoutApprovalPage() {
                               <button
                                 onClick={() => approveSinglePayout(p.id)}
                                 disabled={p.status !== "pending" && p.status !== "draft"}
-                                className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold flex items-center gap-1 ${
+                                className={`rounded-lg px-2.5 py-1 text-xs font-semibold flex items-center gap-1 ${
                                   p.status === "pending" || p.status === "draft"
                                     ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                                     : "bg-surface-1 text-text-faint cursor-not-allowed"
@@ -465,7 +465,7 @@ export default function AdminPayoutApprovalPage() {
                               <button
                                 onClick={() => rejectSinglePayout(p.id)}
                                 disabled={p.status !== "pending" && p.status !== "draft"}
-                                className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold flex items-center gap-1 ${
+                                className={`rounded-lg px-2.5 py-1 text-xs font-semibold flex items-center gap-1 ${
                                   p.status === "pending" || p.status === "draft"
                                     ? "bg-red-50 text-red-700 hover:bg-red-100"
                                     : "bg-surface-1 text-text-faint cursor-not-allowed"
@@ -496,7 +496,7 @@ export default function AdminPayoutApprovalPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-surface-1 text-text-faint text-[10px] uppercase tracking-wider">
+                      <tr className="bg-surface-1 text-text-faint text-xs uppercase tracking-wider">
                         <th className="text-left px-3 py-2 font-medium">ID</th>
                         <th className="text-left px-3 py-2 font-medium">Partner</th>
                         <th className="text-right px-3 py-2 font-medium">Amount</th>
@@ -511,11 +511,11 @@ export default function AdminPayoutApprovalPage() {
                           <td className="px-3 py-2 text-text-muted">{lp.partner_name || `Partner #${lp.partner_id}`}</td>
                           <td className="px-3 py-2 text-right font-semibold text-text">{formatCurrency(lp.amount, lp.currency)}</td>
                           <td className="px-3 py-2">
-                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor(lp.status)}`}>
+                            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${statusColor(lp.status)}`}>
                               {statusLabel(lp.status)}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-center text-[10px] text-text-faint">
+                          <td className="px-3 py-2 text-center text-xs text-text-faint">
                             Manage via batch actions above
                           </td>
                         </tr>

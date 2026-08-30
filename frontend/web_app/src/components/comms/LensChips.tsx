@@ -20,7 +20,7 @@ export default function LensChips() {
           key={l.key}
           onClick={() => setLens(l.key)}
           data-active={lens === l.key}
-          className="relative px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors data-[active=true]:text-primary data-[active=true]:bg-primary/10 text-text-muted hover:text-text hover:bg-surface-2"
+          className="relative px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors data-[active=true]:text-primary data-[active=true]:bg-primary/10 text-text-muted hover:text-text hover:bg-surface-2"
         >
           {l.label}
           {lens === l.key && (

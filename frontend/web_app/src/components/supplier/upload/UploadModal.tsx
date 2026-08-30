@@ -149,7 +149,7 @@ export default function UploadModal({
 
         {/* Footer tip */}
         <div className="px-5 pb-5 -mt-2">
-          <p className="text-[10px] text-text-faint text-center leading-relaxed">
+          <p className="text-xs text-text-faint text-center leading-relaxed">
             Upload a photo and AI will auto-fill product details.{' '}
             <strong>Voice</strong> describes variants,{' '}
             <strong>Magic Edit</strong> refines the image.

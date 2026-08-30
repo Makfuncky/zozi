@@ -4,6 +4,7 @@ from typing import Optional, TYPE_CHECKING
 from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint, Time, func
 from sqlalchemy.orm import relationship
 from . import Base
+from domains.country.models.countries import CountryConfig  # noqa: F401
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 if TYPE_CHECKING:
@@ -25,7 +26,6 @@ class Office(Base):
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
-    country_code = Column(String(2), nullable=False)
     city = Column(String(100), nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
@@ -443,7 +443,7 @@ class TravelRequest(Base):
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="SET NULL"), nullable=False)
-    destination_country = Column(String(10), nullable=False)
+    destination_country = Column(String(2), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     purpose = Column(String(200), nullable=True)
@@ -572,7 +572,7 @@ class EmployeeTraining(Base):
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey('hr.employees.id', ondelete="SET NULL"), nullable=False, index=True)
-    module_id = Column(String(36), ForeignKey('training_modules.module_id', ondelete="SET NULL"), nullable=False)
+    module_id = Column(String(36), ForeignKey('hr.training_modules.module_id', ondelete="SET NULL"), nullable=False)
     status = Column(String(20), default='assigned')
     score = Column(Float, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -637,7 +637,7 @@ class ShiftHandoverTask(Base):
         CheckConstraint("status IN ('open', 'in_progress', 'completed', 'cancelled', 'blocked')", name="chk_shift_handover_tasks_status_valid"),
         {"extend_existing": True, "schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("shift_handover_sessions.id", ondelete="SET NULL"), nullable=False)
+    session_id = Column(Integer, ForeignKey("hr.shift_handover_sessions.id", ondelete="SET NULL"), nullable=False)
     description = Column(Text, nullable=False)
     priority = Column(String(20), default="normal")
     status = Column(String(20), default="open")

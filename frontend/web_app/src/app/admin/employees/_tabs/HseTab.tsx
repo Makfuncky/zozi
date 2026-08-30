@@ -145,7 +145,7 @@ export default function HseTab({ employees, addToast }: HseTabProps) {
                   <td className="px-4 py-3 text-text">{incident.employee_name ?? `#${incident.employee_id}`}</td>
                   <td className="px-4 py-3 text-text-muted capitalize">{incident.incident_type.replace(/_/g, " ")}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full text-[10px] font-semibold px-2 py-0.5 border ${incident.severity === "critical" ? "bg-danger/10 text-danger border-danger/20" : incident.severity === "high" ? "bg-warning/10 text-warning border-warning/20" : "bg-surface-3 text-text-muted border-border"}`}>
+                    <span className={`rounded-full text-xs font-semibold px-2 py-0.5 border ${incident.severity === "critical" ? "bg-danger/10 text-danger border-danger/20" : incident.severity === "high" ? "bg-warning/10 text-warning border-warning/20" : "bg-surface-3 text-text-muted border-border"}`}>
                       {incident.severity}
                     </span>
                   </td>
@@ -153,7 +153,7 @@ export default function HseTab({ employees, addToast }: HseTabProps) {
                     {incident.date_occurred ? new Date(incident.date_occurred).toLocaleDateString() : "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full text-[10px] font-semibold px-2 py-0.5 border ${incident.status === "resolved" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
+                    <span className={`rounded-full text-xs font-semibold px-2 py-0.5 border ${incident.status === "resolved" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
                       {incident.status}
                     </span>
                   </td>

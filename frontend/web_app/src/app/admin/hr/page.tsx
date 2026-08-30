@@ -247,7 +247,7 @@ export default function HrDashboardPage() {
               <span
                 className={`h-2 w-2 rounded-full ${wsConnected ? "bg-success animate-pulse" : "bg-text-faint"}`}
               />
-              <span className="text-[10px] font-medium text-text-muted">
+              <span className="text-xs font-medium text-text-muted">
                 {wsConnected ? "Live" : "Offline"}
               </span>
             </div>
@@ -344,7 +344,7 @@ export default function HrDashboardPage() {
                     <UserPlus className="h-4 w-4 text-primary" />
                     <h2 className="text-sm font-semibold text-text">Onboarding Pipeline</h2>
                   </div>
-                  <div className="flex items-center gap-2 text-[10px]">
+                  <div className="flex items-center gap-2 text-xs">
                     <span className="rounded-full bg-success/10 px-2 py-0.5 text-success font-medium">
                       {data.onboarding.stats.completed} completed
                     </span>
@@ -359,7 +359,7 @@ export default function HrDashboardPage() {
                 {/* Pipeline progress bar */}
                 {data.onboarding.stats.active + data.onboarding.stats.completed > 0 && (
                   <div className="px-4 pt-3">
-                    <div className="flex items-center gap-2 text-[10px] text-text-muted mb-1">
+                    <div className="flex items-center gap-2 text-xs text-text-muted mb-1">
                       <span>Pipeline completion</span>
                       <span className="ml-auto tabular-nums">
                         {data.onboarding.stats.completed} / {data.onboarding.stats.active + data.onboarding.stats.completed}
@@ -391,7 +391,7 @@ export default function HrDashboardPage() {
                     <div className="flex flex-col items-center justify-center py-6 text-center">
                       <CheckCircle2 className="h-8 w-8 text-success/40 mb-2" />
                       <p className="text-xs text-text-muted">All pipelines on track</p>
-                      <p className="text-[10px] text-text-faint mt-0.5">
+                      <p className="text-xs text-text-faint mt-0.5">
                         {data.onboarding.stats.active} active · {data.onboarding.stats.completed} completed
                       </p>
                     </div>
@@ -405,12 +405,12 @@ export default function HrDashboardPage() {
                           <p className="text-xs font-medium text-text truncate">
                             {item.employee_code || `Employee #${item.employee_id}`}
                           </p>
-                          <p className="text-[10px] text-text-muted mt-0.5">
+                          <p className="text-xs text-text-muted mt-0.5">
                             {item.current_step?.replace(/_/g, " ") || "Starting"} · {item.completed_steps}/{item.total_steps} steps
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[9px] text-danger font-semibold whitespace-nowrap">
+                          <span className="text-3xs text-danger font-semibold whitespace-nowrap">
                             OVERDUE
                           </span>
                           <ArrowRight className="h-3 w-3 text-text-faint" />
@@ -457,7 +457,7 @@ export default function HrDashboardPage() {
                   </div>
 
                   {data.performance.stats.not_scored > 0 && (
-                    <p className="text-[10px] text-text-faint text-center">
+                    <p className="text-xs text-text-faint text-center">
                       {data.performance.stats.not_scored} employees not yet scored
                     </p>
                   )}
@@ -467,14 +467,14 @@ export default function HrDashboardPage() {
                     <div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <Award className="h-3 w-3 text-success" />
-                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Top Performers</span>
+                        <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Top Performers</span>
                       </div>
                       <div className="space-y-1">
                         {data.performance.top_performers.slice(0, 5).map((p) => (
                           <div key={p.id} className="flex items-center justify-between rounded-lg bg-surface-2 px-2.5 py-1.5">
                             <div className="min-w-0">
                               <p className="text-[11px] font-medium text-text truncate">{p.employee_code}</p>
-                              <p className="text-[9px] text-text-faint truncate">{p.department || p.position || "—"}</p>
+                              <p className="text-3xs text-text-faint truncate">{p.department || p.position || "—"}</p>
                             </div>
                             <span className={`text-[11px] font-bold font-mono ${getScoreColor(p.performance_score)}`}>
                               {p.performance_score?.toFixed(2)}
@@ -490,14 +490,14 @@ export default function HrDashboardPage() {
                     <div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <AlertCircle className="h-3 w-3 text-danger" />
-                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Needs Attention</span>
+                        <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Needs Attention</span>
                       </div>
                       <div className="space-y-1">
                         {data.performance.bottom_performers.map((p) => (
                           <div key={p.id} className="flex items-center justify-between rounded-lg bg-surface-2 px-2.5 py-1.5">
                             <div className="min-w-0">
                               <p className="text-[11px] font-medium text-text truncate">{p.employee_code}</p>
-                              <p className="text-[9px] text-text-faint truncate">{p.department || p.position || "—"}</p>
+                              <p className="text-3xs text-text-faint truncate">{p.department || p.position || "—"}</p>
                             </div>
                             <span className="text-[11px] font-bold font-mono text-danger">
                               {p.performance_score?.toFixed(2)}
@@ -512,7 +512,7 @@ export default function HrDashboardPage() {
                     <div className="flex flex-col items-center justify-center py-6 text-center">
                       <BarChart3 className="h-8 w-8 text-text-faint/40 mb-2" />
                       <p className="text-xs text-text-muted">No performance data yet</p>
-                      <p className="text-[10px] text-text-faint mt-0.5">
+                      <p className="text-xs text-text-faint mt-0.5">
                         Scores appear after 360° reviews are submitted
                       </p>
                     </div>
@@ -534,13 +534,13 @@ export default function HrDashboardPage() {
                     Recent Activity (7 days)
                   </h2>
                   {liveEvents.length > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 text-[9px] font-semibold text-info animate-pulse">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 text-3xs font-semibold text-info animate-pulse">
                       <Zap className="h-2.5 w-2.5" />
                       +{liveEvents.length} new
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-[10px]">
+                <div className="flex items-center gap-2 text-xs">
                   {Object.entries(data.activity.action_breakdown).slice(0, 4).map(([action, count]) => (
                     <span key={action} className="rounded-full bg-surface-2 px-2 py-0.5 text-text-muted font-medium">
                       {formatAction(action)} {count}
@@ -553,7 +553,7 @@ export default function HrDashboardPage() {
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <Activity className="h-8 w-8 text-text-faint/40 mb-2" />
                   <p className="text-xs text-text-muted">No recent activity</p>
-                  <p className="text-[10px] text-text-faint mt-0.5">Activity appears once employees log in and perform actions</p>
+                  <p className="text-xs text-text-faint mt-0.5">Activity appears once employees log in and perform actions</p>
                 </div>
               ) : (
                 <div className="max-h-[400px] overflow-y-auto">
@@ -577,7 +577,7 @@ export default function HrDashboardPage() {
                             )}
                           </p>
                         </div>
-                        <span className="text-[9px] text-text-faint tabular-nums shrink-0">
+                        <span className="text-3xs text-text-faint tabular-nums shrink-0">
                           {event.timestamp ? new Date(event.timestamp).toLocaleDateString("en-US", {
                             month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
                           }) : "—"}
@@ -603,7 +603,7 @@ function HealthBar({ label, count, total, color }: {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
     <div>
-      <div className="flex items-center justify-between text-[10px] mb-0.5">
+      <div className="flex items-center justify-between text-xs mb-0.5">
         <span className="font-medium text-text-muted">{label}</span>
         <span className="font-semibold tabular-nums text-text">{count}</span>
       </div>

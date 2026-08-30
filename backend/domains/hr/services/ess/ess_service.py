@@ -68,7 +68,7 @@ def ess_update_profile(phone: Optional[str], address: Optional[str], emergency_c
         raise HTTPException(status_code=400, detail="No fields to update")
     set_clause = ", ".join(updates)
     db.execute(
-        text(f"UPDATE employees SET {set_clause} WHERE id = :eid"),
+        text("UPDATE employees SET " + set_clause + " WHERE id = :eid"),
         params,
     )
     db.commit()

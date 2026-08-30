@@ -53,14 +53,14 @@ const STAR_POSITIONS = Array.from({ length: 48 }, (_, i) => ({
 
 /* 8 lanterns hanging from the top */
 const LANTERNS = [
-  { left: "4%", delay: "0s", color: "#d4af37" },
+  { left: "4%", delay: "0s", color: "var(--zozi-ext-d4af37)" },
   { left: "16%", delay: "0.8s", color: "var(--color-brand-light)" },
-  { left: "28%", delay: "1.6s", color: "#f472b6" },
-  { left: "40%", delay: "0.4s", color: "#2dd4bf" },
-  { left: "60%", delay: "1.2s", color: "#d4af37" },
+  { left: "28%", delay: "1.6s", color: "var(--zozi-ext-f472b6)" },
+  { left: "40%", delay: "0.4s", color: "var(--zozi-ext-2dd4bf)" },
+  { left: "60%", delay: "1.2s", color: "var(--zozi-ext-d4af37)" },
   { left: "72%", delay: "0s", color: "var(--color-accent)" },
-  { left: "84%", delay: "0.9s", color: "#f472b6" },
-  { left: "96%", delay: "1.7s", color: "#d4af37" },
+  { left: "84%", delay: "0.9s", color: "var(--zozi-ext-f472b6)" },
+  { left: "96%", delay: "1.7s", color: "var(--zozi-ext-d4af37)" },
 ];
 
 const EID_ORBS = Array.from({ length: 12 }, (_, i) => ({
@@ -399,10 +399,10 @@ export default function BackgroundEffect() {
             />
           ))}
           {[
-            { color: "#c0392b", top: "15%", left: "5%", size: 220, dur: "14s" },
-            { color: "#2ecc71", top: "55%", left: "78%", size: 180, dur: "18s" },
-            { color: "#c0392b", top: "75%", left: "30%", size: 240, dur: "12s" },
-            { color: "#2ecc71", top: "10%", left: "72%", size: 160, dur: "16s" },
+            { color: "var(--zozi-ext-c0392b)", top: "15%", left: "5%", size: 220, dur: "14s" },
+            { color: "var(--zozi-ext-2ecc71)", top: "55%", left: "78%", size: 180, dur: "18s" },
+            { color: "var(--zozi-ext-c0392b)", top: "75%", left: "30%", size: 240, dur: "12s" },
+            { color: "var(--zozi-ext-2ecc71)", top: "10%", left: "72%", size: 160, dur: "16s" },
           ].map((o, i) => (
             <div
               key={i}
@@ -462,9 +462,9 @@ export default function BackgroundEffect() {
             </div>
           ))}
           {[
-            { top: "0%", left: "0%", size: 320, color: "#ff6b35" },
+            { top: "0%", left: "0%", size: 320, color: "var(--zozi-ext-ff6b35)" },
             { top: "50%", left: "100%", size: 260, color: "var(--color-accent)" },
-            { top: "100%", left: "50%", size: 300, color: "#ff4500" },
+            { top: "100%", left: "50%", size: 300, color: "var(--zozi-ext-ff4500)" },
           ].map((o, i) => (
             <div
               key={i}
@@ -506,7 +506,7 @@ export default function BackgroundEffect() {
             />
           ))}
           {[
-            { color: "#d4af37", top: "5%", left: "15%", size: 300, dur: "10s" },
+            { color: "var(--zozi-ext-d4af37)", top: "5%", left: "15%", size: 300, dur: "10s" },
             { color: "var(--color-accent)", top: "5%", left: "75%", size: 260, dur: "13s" },
             { color: "var(--color-brand-light)", top: "70%", left: "5%", size: 220, dur: "11s" },
             { color: "var(--color-teal)", top: "70%", left: "80%", size: 240, dur: "15s" },

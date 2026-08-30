@@ -69,13 +69,13 @@ export default function VerifyPublishModal({
               <p className="text-xs text-text-muted mt-0.5">{category || 'Uncategorized'}</p>
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {colors.slice(0, 4).map(c => (
-                  <span key={c} className="inline-flex items-center gap-1 px-2 py-0.5 bg-surface-2 text-text-muted text-[10px] rounded-full border border-border/50">
+                  <span key={c} className="inline-flex items-center gap-1 px-2 py-0.5 bg-surface-2 text-text-muted text-xs rounded-full border border-border/50">
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.toLowerCase() }} />
                     {c}
                   </span>
                 ))}
                 {colorCount > 4 && (
-                  <span className="px-2 py-0.5 bg-surface-2 text-text-faint text-[10px] rounded-full">+{colorCount - 4}</span>
+                  <span className="px-2 py-0.5 bg-surface-2 text-text-faint text-xs rounded-full">+{colorCount - 4}</span>
                 )}
               </div>
             </div>
@@ -119,7 +119,7 @@ export default function VerifyPublishModal({
               <p className="text-xs font-medium text-text-faint mb-1.5">Tags</p>
               <div className="flex flex-wrap gap-1.5">
                 {tags.map(t => (
-                  <span key={t} className="px-2 py-0.5 bg-accent/5 text-accent text-[10px] rounded-full border border-accent/20">{t}</span>
+                  <span key={t} className="px-2 py-0.5 bg-accent/5 text-accent text-xs rounded-full border border-accent/20">{t}</span>
                 ))}
               </div>
             </div>
@@ -145,7 +145,7 @@ export default function VerifyPublishModal({
                   style={{ width: `${Math.min(100, 40 + (productName ? 15 : 0) + (description ? 10 : 0) + (category ? 10 : 0) + (tags.length > 0 ? 5 : 0) + (colors.length > 0 ? 5 : 0) + (previewSrc ? 10 : 0) + (price ? 5 : 0))}%` }}
                 />
               </div>
-              <span className="text-[10px] font-bold text-text">
+              <span className="text-xs font-bold text-text">
                 {Math.min(100, 40 + (productName ? 15 : 0) + (description ? 10 : 0) + (category ? 10 : 0) + (tags.length > 0 ? 5 : 0) + (colors.length > 0 ? 5 : 0) + (previewSrc ? 10 : 0) + (price ? 5 : 0))}/100
               </span>
             </div>

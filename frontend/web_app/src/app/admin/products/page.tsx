@@ -180,13 +180,13 @@ function AdminProductsInner() {
     } finally { setBulkLoading(false); }
   };
 
-  const bodyText = dc(density, "text-[10px]", "text-xs", "text-sm");
+  const bodyText = dc(density, "text-xs", "text-xs", "text-sm");
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const statusBadge = (p: AdminProduct) => {
-    if (p.is_deleted) return <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-semibold text-danger">Deleted</span>;
-    if (p.is_approved) return <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">Approved</span>;
-    return <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">Pending</span>;
+    if (p.is_deleted) return <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">Deleted</span>;
+    if (p.is_approved) return <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">Approved</span>;
+    return <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">Pending</span>;
   };
 
   const columns: Array<EnterpriseColumn<AdminProduct>> = [
@@ -224,9 +224,9 @@ function AdminProductsInner() {
       key: "is_featured", label: "Flags", width: "110px",
       render: (p) => (
         <div className="flex flex-wrap gap-1">
-          {p.is_featured ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">Featured</span> : null}
-          {p.is_verified ? <span className="rounded-full bg-info/10 px-2 py-0.5 text-[10px] font-semibold text-info">Verified</span> : null}
-          {!p.is_active ? <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">Inactive</span> : null}
+          {p.is_featured ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Featured</span> : null}
+          {p.is_verified ? <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-semibold text-info">Verified</span> : null}
+          {!p.is_active ? <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">Inactive</span> : null}
         </div>
       ),
     },
@@ -278,19 +278,19 @@ function AdminProductsInner() {
 
           <div className="grid gap-3 sm:grid-cols-4">
             <div className="theme-card rounded-xl border p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Showing</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Showing</p>
               <p className="mt-1.5 text-2xl font-bold text-text tabular-nums">{stats.total}</p>
             </div>
             <div className="theme-card rounded-xl border p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Approved</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Approved</p>
               <p className="mt-1.5 text-2xl font-bold text-success tabular-nums">{stats.approved}</p>
             </div>
             <div className="theme-card rounded-xl border p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Pending</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Pending</p>
               <p className="mt-1.5 text-2xl font-bold text-warning tabular-nums">{stats.pending}</p>
             </div>
             <div className="theme-card rounded-xl border p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Deleted</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Deleted</p>
               <p className="mt-1.5 text-2xl font-bold text-danger tabular-nums">{stats.deleted}</p>
             </div>
           </div>

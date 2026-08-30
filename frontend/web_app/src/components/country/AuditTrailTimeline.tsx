@@ -74,7 +74,7 @@ export default function AuditTrailTimeline({ countryCode }: AuditTrailTimelinePr
                   </div>
                   <p className="text-text-muted mb-1">{event.action.replace(/_/g, " ")}</p>
                   {event.reason && (
-                    <p className="text-warning bg-warning/10 px-2 py-1 rounded text-[10px] mt-1">
+                    <p className="text-warning bg-warning/10 px-2 py-1 rounded text-xs mt-1">
                       Reason: {event.reason}
                     </p>
                   )}

@@ -25,7 +25,7 @@ def get_supplier_orders(
         order_id_query = order_id_query.outerjoin(User, User.id == Order.user_id).filter(
             or_(
                 func.cast(Order.id, String).ilike(term),
-                User.username.ilike(term),
+                User.email.ilike(term),
                 User.email.ilike(term),
             )
         )

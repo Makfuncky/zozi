@@ -31,7 +31,7 @@ export default function TestimonialsWidget() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative z-10">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-4 bg-indigo-500/10 border border-indigo-500/20">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest text-indigo-400 mb-4 bg-indigo-500/10 border border-indigo-500/20">
             <Star className="w-3 h-3 fill-current" /> 50,000+ Happy Customers
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-3">
@@ -58,7 +58,7 @@ export default function TestimonialsWidget() {
                 {Array(5).fill(0).map((_, si) => (
                   <Star key={si} className={`w-3.5 h-3.5 ${si < Math.floor(t.rating) ? "text-amber-400 fill-current" : "text-slate-600"}`} />
                 ))}
-                <span className="text-[10px] font-bold text-slate-500 ml-1.5">{t.rating}</span>
+                <span className="text-xs font-bold text-slate-500 ml-1.5">{t.rating}</span>
               </div>
 
               <p className="text-sm leading-relaxed mb-7 italic text-slate-400">
@@ -71,7 +71,7 @@ export default function TestimonialsWidget() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white tracking-tight">{t.name}</h4>
-                  <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{t.role}</p>
+                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t.role}</p>
                 </div>
               </div>
             </motion.div>

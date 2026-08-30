@@ -88,25 +88,31 @@ search_path = None
 if _IS_POSTGRES:
     search_path = os.getenv("DB_SEARCH_PATH", "public,analytics,audit,commerce,configuration,country,customer,finance,hr,logistics,media,security,supplier")
 
+# On SQLite, Postgres per-domain schemas ("catalog", "orders", ...) are not
+# supported, so the Alembic migrations create flat, schema-less tables
+# (e.g. `products`). At query time we therefore translate every domain schema
+# to None so ORM queries like `catalog.products` resolve to the migrated
+# `products` table. This MUST list every schema actually declared by the
+# domain models' __table_args__ = {"schema": ...} -- keeping it in sync with
+# the models is what prevents "no such table: <schema>.<table>" 500s in dev.
 _SCHEMA_TRANSLATE_MAP = None
 if _IS_SQLITE:
     _SCHEMA_TRANSLATE_MAP = {
-        "core": None,
-        "commerce": None,
-        "supplier": None,
-        "customer": None,
-        "logistics": None,
-        "finance": None,
-        "treasury": None,
-        "hr": None,
-        "country": None,
-        "media": None,
-        "ai": None,
-        "communication": None,
-        "audit": None,
-        "security": None,
+        "accounts": None,
         "analytics": None,
-        "configuration": None,
+        "audit": None,
+        "catalog": None,
+        "comms": None,
+        "country": None,
+        "customers": None,
+        "finance": None,
+        "governance": None,
+        "hr": None,
+        "logistics": None,
+        "orders": None,
+        "promotions": None,
+        "security": None,
+        "suppliers": None,
     }
 
 _engine_kwargs = {
@@ -212,6 +218,8 @@ async def _get_async_engine():
             async_url,
             connect_args=async_connect_args,
             echo=getattr(settings, "debug", False),
+            **({"execution_options": {"schema_translate_map": _SCHEMA_TRANSLATE_MAP}}
+               if _SCHEMA_TRANSLATE_MAP is not None else {}),
             **async_pool_kwargs,
         )
         _AsyncSessionLocal = async_sessionmaker(
@@ -331,7 +339,12 @@ def _get_replica_engine():
         **replica_pool_kwargs,
     }
 
-    _replica_engine = create_engine(replica_url, **replica_engine_kwargs)
+    _replica_engine = create_engine(
+        replica_url,
+        **({"execution_options": {"schema_translate_map": _SCHEMA_TRANSLATE_MAP}}
+           if _SCHEMA_TRANSLATE_MAP is not None else {}),
+        **replica_engine_kwargs,
+    )
     _ReplicaSessionLocal = sessionmaker(
         autocommit=False,
         autoflush=False,
@@ -558,6 +571,10 @@ def create_tables() -> None:
     """Create all database tables (development/SQLite only)."""
     _guard_dev_only("create_tables")
     from infrastructure.database.base import Base as ModelsBase
+    if _IS_SQLITE:
+        # SQLite doesn't support schemas - strip schema from all tables
+        for table in ModelsBase.metadata.tables.values():
+            table.schema = None
     ModelsBase.metadata.create_all(bind=engine)
     logger.info("Tables created")
 
@@ -566,6 +583,10 @@ def reset_tables() -> None:
     """Drop and recreate all tables (development/SQLite only — destructive)."""
     _guard_dev_only("reset_tables")
     from infrastructure.database.base import Base as ModelsBase
+    if _IS_SQLITE:
+        # SQLite doesn't support schemas - strip schema from all tables
+        for table in ModelsBase.metadata.tables.values():
+            table.schema = None
     ModelsBase.metadata.drop_all(bind=engine)
     ModelsBase.metadata.create_all(bind=engine)
     logger.info("Tables reset")

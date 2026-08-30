@@ -206,20 +206,20 @@ export default function CommissionPage() {
                 {globalConfig ? (
                   <div className="grid gap-4 sm:grid-cols-4">
                     <div>
-                      <p className="text-[10px] text-text-faint uppercase">Default Rate</p>
+                      <p className="text-xs text-text-faint uppercase">Default Rate</p>
                       <p className="text-lg font-bold text-text">{((globalConfig.default_rate ?? 0) * 100).toFixed(1)}%</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-faint uppercase">Min Order</p>
+                      <p className="text-xs text-text-faint uppercase">Min Order</p>
                       <p className="text-lg font-bold text-text">{formatMoney(globalConfig.low_value_threshold || 0)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-faint uppercase">Max Cap</p>
+                      <p className="text-xs text-text-faint uppercase">Max Cap</p>
                       <p className="text-lg font-bold text-text">{globalConfig.fixed_cap_amount ? formatMoney(globalConfig.fixed_cap_amount) : "Unlimited"}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-faint uppercase">Status</p>
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${(globalConfig.is_active ?? true) ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
+                      <p className="text-xs text-text-faint uppercase">Status</p>
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${(globalConfig.is_active ?? true) ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
                         {(globalConfig.is_active ?? true) ? "Active" : "Inactive"}
                       </span>
                     </div>
@@ -234,21 +234,21 @@ export default function CommissionPage() {
               <div className="theme-card rounded-xl border p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Users className="h-4 w-4 text-primary" />
-                  <span className="text-[10px] text-text-faint uppercase">Suppliers</span>
+                  <span className="text-xs text-text-faint uppercase">Suppliers</span>
                 </div>
                 <p className="text-xl font-bold text-text">{suppliers.length}</p>
               </div>
               <div className="theme-card rounded-xl border p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <ShoppingCart className="h-4 w-4 text-warning" />
-                  <span className="text-[10px] text-text-faint uppercase">Total Orders</span>
+                  <span className="text-xs text-text-faint uppercase">Total Orders</span>
                 </div>
                 <p className="text-xl font-bold text-text">{totalOrders}</p>
               </div>
               <div className="theme-card rounded-xl border p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <DollarSign className="h-4 w-4 text-success" />
-                  <span className="text-[10px] text-text-faint uppercase">Commission Earned</span>
+                  <span className="text-xs text-text-faint uppercase">Commission Earned</span>
                 </div>
                 <p className="text-xl font-bold text-text">{formatMoney(totalEarned)}</p>
               </div>

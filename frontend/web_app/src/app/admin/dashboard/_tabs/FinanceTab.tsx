@@ -119,7 +119,7 @@ export default function FinanceTab() {
               <div key={item.slug} className="rounded-lg border border-border bg-surface-2 p-3">
                 <p className="text-[11px] text-text-faint uppercase">{item.name}</p>
                 <p className="text-lg font-bold text-text">{formatMoney(item.balance)}</p>
-                <p className="text-[10px] text-text-faint">{item.gl_account_code}</p>
+                <p className="text-xs text-text-faint">{item.gl_account_code}</p>
               </div>
             ))}
           </div>

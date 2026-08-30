@@ -72,7 +72,6 @@ logger = logging.getLogger(__name__)
 
 _FOUNDATION: list[type] = [
     GZipMiddleware,              # Original pos 1 — built-in gzip compression
-    CORSMiddleware,              # Original pos 2 — CORS headers
     IPExtractionMiddleware,      # Original pos 3 — extract & store client IP
     RequestIDMiddleware,         # Generates/preserves X-Request-ID for tracing
     ApiVersionMiddleware,         # Extracts API version from headers

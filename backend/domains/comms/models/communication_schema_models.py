@@ -37,6 +37,7 @@ class SupportTicket(Base):
     __tablename__ = "support_tickets"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     subject = Column(String, nullable=False)
     priority = Column(String, default="medium")

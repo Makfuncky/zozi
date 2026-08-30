@@ -31,7 +31,7 @@ export default function RecentlyViewed({ excludeId }: RecentlyViewedProps) {
                 <Image src={p.image_url} alt={p.name} width={96} height={80} className="w-full h-20 object-cover" />
               )}
             </div>
-            <p className="text-[10px] text-text-muted group-hover:text-text line-clamp-2">
+            <p className="text-xs text-text-muted group-hover:text-text line-clamp-2">
               {p.name}
             </p>
           </Link>

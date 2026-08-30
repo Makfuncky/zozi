@@ -197,7 +197,7 @@ export default function LogisticsPartnersDiscoveryPage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-lg font-bold text-text group-hover:text-primary">{partner.name}</h2>
-                        <span className="theme-chip-success rounded-full px-2 py-0.5 text-[10px] font-bold">
+                        <span className="theme-chip-success rounded-full px-2 py-0.5 text-xs font-bold">
                           <ShieldCheck className="mr-1 inline h-3 w-3" />Approved
                         </span>
                       </div>

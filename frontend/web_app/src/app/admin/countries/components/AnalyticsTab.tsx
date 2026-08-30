@@ -19,19 +19,19 @@ export default function AnalyticsTab({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-lg border border-border bg-surface p-3 text-center">
           <div className="text-2xl font-bold text-primary">{country?.regions?.reduce((acc, r) => acc + (r.cities?.length || 0), 0) || 0}</div>
-          <div className="text-[10px] text-text-muted uppercase">Cities Covered</div>
+          <div className="text-xs text-text-muted uppercase">Cities Covered</div>
         </div>
         <div className="rounded-lg border border-border bg-surface p-3 text-center">
           <div className="text-2xl font-bold text-primary">{country?.payment_gateways?.filter(g => g.enabled).length || 0}</div>
-          <div className="text-[10px] text-text-muted uppercase">Active Gateways</div>
+          <div className="text-xs text-text-muted uppercase">Active Gateways</div>
         </div>
         <div className="rounded-lg border border-border bg-surface p-3 text-center">
           <div className="text-2xl font-bold text-primary">{country?.logistics_providers?.filter(p => p.enabled).length || 0}</div>
-          <div className="text-[10px] text-text-muted uppercase">Delivery Partners</div>
+          <div className="text-xs text-text-muted uppercase">Delivery Partners</div>
         </div>
         <div className="rounded-lg border border-border bg-surface p-3 text-center">
           <div className="text-2xl font-bold text-primary">{promotionRules.length}</div>
-          <div className="text-[10px] text-text-muted uppercase">Active Promotions</div>
+          <div className="text-xs text-text-muted uppercase">Active Promotions</div>
         </div>
       </div>
 
@@ -72,7 +72,7 @@ export default function AnalyticsTab({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <h4 className="text-xs font-bold text-text">Commission Structure</h4>
-          <div className="text-[10px] space-y-1">
+          <div className="text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-text-faint">Value-based Tiers:</span>
               <span className="text-text font-medium">{commissionTiers.length}</span>
@@ -93,7 +93,7 @@ export default function AnalyticsTab({
         </div>
         <div className="space-y-2">
           <h4 className="text-xs font-bold text-text">Regional Coverage</h4>
-          <div className="text-[10px] space-y-1">
+          <div className="text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-text-faint">Regions/Hubs:</span>
               <span className="text-text font-medium">{regions.length}</span>
@@ -112,7 +112,7 @@ export default function AnalyticsTab({
         </div>
       </div>
 
-      <div className="text-[10px] text-text-muted italic border-t border-border pt-2">
+      <div className="text-xs text-text-muted italic border-t border-border pt-2">
         Advanced analytics dashboard with sales trends, conversion rates, and performance KPIs coming soon.
       </div>
     </section>

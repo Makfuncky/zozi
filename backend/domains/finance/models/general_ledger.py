@@ -3,6 +3,7 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 __all__ = ['FiscalPeriod', 'TransactionLedger', 'SupplierSettlement', 'JournalEntry', 'JournalEntryLine', 'Account', 'AccountGroup', 'AccountBalance', 'FinancialReport', 'Invoice', 'InvoiceItem', 'RefundLedger', 'BankTransaction', 'VATRemittance', 'CashAccount', 'CashTransaction', 'TreasuryAccount', 'TreasuryTransaction', 'CashFlowForecast', 'CashPositionSnapshot', 'GatewaySettlementSchedule', 'PendingJournalEntry', 'PayoutBatch', 'PayoutBatchItem', 'ARLedgerEntry', 'APLedger', 'BankStatementImport', 'BankStatementLine', 'BankMappingRule', 'FixedAsset', 'Accrual', 'ScannedExpense', 'FinanceAutomationLog', 'AutomationRule', 'AutomationLog', 'Vendor', 'Customer', 'CostCenter', 'APBill', 'ARInvoice', 'BankAccount', 'Budget', 'BankReconciliation', 'RecurringTemplate', 'FinanceAuditLog']
@@ -10,7 +11,7 @@ __all__ = ['FiscalPeriod', 'TransactionLedger', 'SupplierSettlement', 'JournalEn
 class FiscalPeriod(Base):
     __tablename__ = 'fiscal_periods'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -36,7 +37,7 @@ class FiscalPeriod(Base):
 class TransactionLedger(Base):
     __tablename__ = 'transaction_ledgers'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -79,7 +80,7 @@ class TransactionLedger(Base):
 class SupplierSettlement(Base):
     __tablename__ = 'supplier_settlements'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
@@ -111,7 +112,7 @@ class SupplierSettlement(Base):
 class JournalEntry(Base):
     __tablename__ = 'journal_entries'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     updated_by = Column(Integer, nullable=True, index=True)
@@ -140,7 +141,7 @@ class JournalEntry(Base):
 class JournalEntryLine(Base):
     __tablename__ = 'journal_entry_lines'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -166,7 +167,7 @@ class JournalEntryLine(Base):
 class Account(Base):
     __tablename__ = 'accounts'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -191,7 +192,7 @@ class Account(Base):
 class AccountGroup(Base):
     __tablename__ = 'account_groups'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -214,7 +215,7 @@ class AccountGroup(Base):
 class AccountBalance(Base):
     __tablename__ = 'account_balances'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -239,7 +240,7 @@ class AccountBalance(Base):
 class ARLedgerEntry(Base):
     __tablename__ = 'ar_ledger_entries'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     deleted_by_id = Column(Integer, nullable=True)
@@ -270,7 +271,7 @@ class ARLedgerEntry(Base):
 class APLedger(Base):
     __tablename__ = 'ap_ledger_entries'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     deleted_by_id = Column(Integer, nullable=True)
@@ -303,7 +304,7 @@ class APLedger(Base):
 class FinancialReport(Base):
     __tablename__ = 'financial_reports'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -323,7 +324,7 @@ class FinancialReport(Base):
 
 class Invoice(Base):
     __tablename__ = 'invoices'
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
@@ -360,7 +361,7 @@ class Invoice(Base):
 class InvoiceItem(Base):
     __tablename__ = 'invoice_items'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -385,7 +386,7 @@ class InvoiceItem(Base):
 class RefundLedger(Base):
     __tablename__ = 'refund_ledgers'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     created_by_id = Column(Integer, nullable=True, index=True)
@@ -419,7 +420,7 @@ class RefundLedger(Base):
 class BankTransaction(Base):
     __tablename__ = 'bank_transactions'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -454,7 +455,7 @@ class BankTransaction(Base):
 class VATRemittance(Base):
     __tablename__ = 'vat_remittances'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -483,7 +484,7 @@ class VATRemittance(Base):
 class CashAccount(Base):
     __tablename__ = 'cash_accounts'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -505,7 +506,7 @@ class CashAccount(Base):
 class CashTransaction(Base):
     __tablename__ = 'cash_transactions'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -529,7 +530,7 @@ class CashTransaction(Base):
 class TreasuryAccount(Base):
     __tablename__ = 'treasury_accounts'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -544,7 +545,7 @@ class TreasuryAccount(Base):
     currency = Column(String(3), default='USD')
     gl_account_code = Column(String(20), nullable=False)
     description = Column(Text, nullable=True)
-    employee_id = Column(Integer, ForeignKey('logistics.employees.id', ondelete='RESTRICT'), nullable=True, index=True)
+    employee_id = Column(Integer, ForeignKey('hr.employees.id', ondelete='RESTRICT'), nullable=True, index=True)
     balance = Column(Numeric(12, 2), default=0)
     is_active = Column(Boolean, default=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -554,7 +555,7 @@ class TreasuryAccount(Base):
 class TreasuryTransaction(Base):
     __tablename__ = 'treasury_transactions'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -579,7 +580,7 @@ class TreasuryTransaction(Base):
 class CashFlowForecast(Base):
     __tablename__ = 'cash_flow_forecasts'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -601,7 +602,7 @@ class CashFlowForecast(Base):
 class CashPositionSnapshot(Base):
     __tablename__ = 'cash_position_snapshots'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -621,7 +622,7 @@ class CashPositionSnapshot(Base):
 class GatewaySettlementSchedule(Base):
     __tablename__ = 'gateway_settlement_schedules'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -643,7 +644,7 @@ class PendingJournalEntry(Base):
     """Maker-Checker: pending journal entries awaiting second approval."""
     __tablename__ = 'pending_journal_entries'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -673,7 +674,7 @@ class PayoutBatch(Base):
     """Payout batch for supplier/logistics payouts with state machine."""
     __tablename__ = 'payout_batches'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -700,7 +701,7 @@ class PayoutBatch(Base):
 class PayoutBatchItem(Base):
     __tablename__ = 'payout_batch_items'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -711,7 +712,7 @@ class PayoutBatchItem(Base):
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = ({'schema': 'finance'},)
     id = Column(Integer, primary_key=True, index=True)
-    batch_id = Column(Integer, ForeignKey('payout_batches.id', ondelete='RESTRICT'), nullable=False, index=True)
+    batch_id = Column(Integer, ForeignKey('finance.payout_batches.id', ondelete='RESTRICT'), nullable=False, index=True)
     entity_type = Column(String(20), nullable=False)
     entity_id = Column(Integer, nullable=False)
     amount = Column(Numeric(16, 4), nullable=False)
@@ -725,7 +726,7 @@ class BankMappingRule(Base):
     """Configurable mapping: bank-statement description pattern -> GL account + side."""
     __tablename__ = 'bank_mapping_rules'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -750,7 +751,7 @@ class BankStatementImport(Base):
     """Header record for one uploaded bank statement file."""
     __tablename__ = 'bank_statement_imports'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -777,7 +778,7 @@ class BankStatementLine(Base):
     """A single line from an imported bank statement awaiting mapping/reconciliation."""
     __tablename__ = 'bank_statement_lines'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -805,7 +806,7 @@ class FixedAsset(Base):
     """Fixed asset register with straight-line depreciation schedule."""
     __tablename__ = 'fixed_assets'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -835,7 +836,7 @@ class Accrual(Base):
     """Accrued expense / revenue recognized before cash movement."""
     __tablename__ = 'accruals'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -862,7 +863,7 @@ class ScannedExpense(Base):
     """Bill scanned via OCR that becomes an expense + GL posting after approval."""
     __tablename__ = 'scanned_expenses'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -871,7 +872,7 @@ class ScannedExpense(Base):
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_se_country', 'country_code'), Index('ix_se_status', 'status'), Index('ix_scanned_expenses_country_created', 'country_code', 'created_at'), {'schema': 'finance'})
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey('logistics.employees.id', ondelete='RESTRICT'), nullable=True, index=True)
+    employee_id = Column(Integer, ForeignKey('hr.employees.id', ondelete='RESTRICT'), nullable=True, index=True)
     vendor_name = Column(String(200), nullable=True)
     invoice_number = Column(String(100), nullable=True)
     expense_date = Column(DateTime, nullable=True)
@@ -896,7 +897,7 @@ class AutomationRule(Base):
     """Configurable finance automation rule (e.g. auto-post accruals, classify expenses)."""
     __tablename__ = 'automation_rules'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -925,7 +926,7 @@ class AutomationLog(Base):
     """Execution log for an AutomationRule run."""
     __tablename__ = 'automation_logs'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -952,7 +953,7 @@ class Vendor(Base):
     """Vendor master (entity we receive bills from / owe money to)."""
     __tablename__ = 'vendors'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -975,7 +976,7 @@ class Customer(Base):
     """Customer master for B2B / trade receivables (distinct from platform User)."""
     __tablename__ = 'customers'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -999,7 +1000,7 @@ class CostCenter(Base):
     """Cost center / department used to tag journal lines for reporting."""
     __tablename__ = 'cost_centers'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -1019,7 +1020,7 @@ class APBill(Base):
     """Accounts-Payable bill received from a vendor (dr expense/asset, cr AP)."""
     __tablename__ = 'ap_bills'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -1048,7 +1049,7 @@ class ARInvoice(Base):
     """Accounts-Receivable invoice issued to a customer (dr AR, cr Revenue)."""
     __tablename__ = 'ar_invoices'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -1077,7 +1078,7 @@ class BankAccount(Base):
     """Company bank-account registry mapped to a GL cash account."""
     __tablename__ = 'bank_accounts'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -1102,7 +1103,7 @@ class Budget(Base):
     """Period budget per GL account for variance reporting."""
     __tablename__ = 'budgets'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -1125,7 +1126,7 @@ class BankReconciliation(Base):
     """Human-reviewed match between a bank statement line and a GL journal entry."""
     __tablename__ = 'bank_reconciliations'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -1150,7 +1151,7 @@ class RecurringTemplate(Base):
     """Template that generates a journal entry on trigger (e.g. monthly rent)."""
     __tablename__ = 'recurring_templates'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -1174,7 +1175,7 @@ class FinanceAuditLog(Base):
     """Scoped audit trail of finance actions (posts, reversals, approvals, automations)."""
     __tablename__ = 'finance_audit_logs'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -1197,7 +1198,7 @@ class FinanceAutomationLog(Base):
     """Audit trail for automation runs (OCR, reconciliation, depreciation, mapping)."""
     __tablename__ = 'finance_automation_logs'
     __table_args__ = {"schema": "finance"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)

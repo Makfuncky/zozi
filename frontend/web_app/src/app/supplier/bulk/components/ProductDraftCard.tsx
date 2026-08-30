@@ -398,7 +398,7 @@ export function ProductDraftCard({ draft, index, availableRegions, getResolvedVa
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Quick Add Essentials</p>
-                          <p className="mt-1 text-[10px] text-text-faint">Fill these first: name, price, category, stock, and color. Everything else is optional.</p>
+                          <p className="mt-1 text-xs text-text-faint">Fill these first: name, price, category, stock, and color. Everything else is optional.</p>
                         </div>
                         <button
                           type="button"
@@ -463,7 +463,7 @@ export function ProductDraftCard({ draft, index, availableRegions, getResolvedVa
                         <div className="rounded-xl border border-border bg-surface-2 px-3 py-2">
                           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Variant Stock Total</p>
                           <p className="text-sm font-semibold text-text">{totalVariantStock} units</p>
-                          <p className="mt-1 text-[10px] text-text-faint">Per-variant stock controls the total once variants exist.</p>
+                          <p className="mt-1 text-xs text-text-faint">Per-variant stock controls the total once variants exist.</p>
                         </div>
                       ) : (
                         <div>
@@ -492,7 +492,7 @@ export function ProductDraftCard({ draft, index, availableRegions, getResolvedVa
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Advanced Details (optional)</p>
-                        <p className="mt-1 text-[10px] text-text-faint">
+                        <p className="mt-1 text-xs text-text-faint">
                           {isFashion
                             ? "Copy, tags, fabric details, return settings, and region visibility."
                             : isElectronics
@@ -519,7 +519,7 @@ export function ProductDraftCard({ draft, index, availableRegions, getResolvedVa
                             <label htmlFor={getDraftFieldId(draft.id, "tags")} className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-text-muted">Tags (comma separated)</label>
                             <input id={getDraftFieldId(draft.id, "tags")} type="text" value={draft.tags} onChange={(event) => onUpdate({ tags: event.target.value })} placeholder="e.g. wireless, portable, bestseller" className="theme-input h-9 w-full rounded-xl border px-3 text-xs placeholder:text-text-faint focus:border-primary focus:outline-none transition-colors" />
                           </div>
-                          <p className="mt-2 text-[10px] text-text-faint">Keywords are generated automatically from your sub-category and tags.{autoKeywords ? ` Current keywords: ${autoKeywords}` : ""}</p>
+                          <p className="mt-2 text-xs text-text-faint">Keywords are generated automatically from your sub-category and tags.{autoKeywords ? ` Current keywords: ${autoKeywords}` : ""}</p>
                         </div>
 
                         {showSpecifications ? (
@@ -555,7 +555,7 @@ export function ProductDraftCard({ draft, index, availableRegions, getResolvedVa
                           <div className="flex flex-wrap items-center gap-3">
                             <p className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Publishing</p>
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-[10px] text-text-faint">Return:</span>
+                              <span className="text-xs text-text-faint">Return:</span>
                               {[10, 14, 21, 30].map((days) => (
                                 <button
                                   key={days}

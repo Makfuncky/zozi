@@ -88,7 +88,7 @@ function MatchBadge({ pct }: { pct: number }) {
     pct >= 80 ? CheckCircle2 :
     AlertCircle;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${color}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${color}`}>
       <Icon className="h-3 w-3" />
       {pct}%
     </span>
@@ -105,7 +105,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   const c = config[status] || { label: status, color: "text-text-muted bg-surface-2" };
   return (
-    <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-semibold ${c.color}`}>
+    <span className={`rounded-md px-1.5 py-0.5 text-3xs font-semibold ${c.color}`}>
       {c.label}
     </span>
   );
@@ -116,7 +116,7 @@ function StatusBadge({ status }: { status: string }) {
 function Sparkline({ data, width = 120, height = 32 }: { data: number[]; width?: number; height?: number }) {
   if (data.length < 2) {
     return (
-      <div className="flex items-center justify-center text-[9px] text-text-faint" style={{ width, height }}>
+      <div className="flex items-center justify-center text-3xs text-text-faint" style={{ width, height }}>
         —
       </div>
     );
@@ -213,11 +213,11 @@ function EngineBar({ label, score, maxScore }: { label: string; score: number; m
     "bg-danger";
   return (
     <div className="flex items-center gap-2">
-      <span className="w-24 text-[10px] text-text-muted truncate">{label}</span>
+      <span className="w-24 text-xs text-text-muted truncate">{label}</span>
       <div className="flex-1 h-1.5 rounded-full bg-surface-2 overflow-hidden">
         <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="w-8 text-right text-[10px] font-medium text-text tabular-nums">
+      <span className="w-8 text-right text-xs font-medium text-text tabular-nums">
         {(score * 100).toFixed(0)}
       </span>
     </div>
@@ -408,7 +408,7 @@ export default function ParcelAuditWidget({
             {compact ? "Parcel Audit" : "Parcel Verification Audit"}
           </h2>
           {items.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
               <CheckCircle2 className="h-3 w-3" />
               {verifiedCount}/{items.length} verified
             </span>
@@ -419,7 +419,7 @@ export default function ParcelAuditWidget({
           <div className="relative">
             <button
               onClick={() => setShowSettings((s) => !s)}
-              className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-[10px] font-semibold text-text-muted hover:text-text transition-colors"
+              className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs font-semibold text-text-muted hover:text-text transition-colors"
               title="Threshold & notification settings"
             >
               <Settings className="h-3 w-3" />
@@ -440,7 +440,7 @@ export default function ParcelAuditWidget({
                 {/* Slider */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-text-muted">Alert when match is below</span>
+                    <span className="text-xs text-text-muted">Alert when match is below</span>
                     <span className="text-xs font-bold text-text tabular-nums">{threshold}%</span>
                   </div>
                   <input
@@ -455,7 +455,7 @@ export default function ParcelAuditWidget({
                       [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-sm
                       [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-125"
                   />
-                  <div className="flex justify-between text-[9px] text-text-faint">
+                  <div className="flex justify-between text-3xs text-text-faint">
                     <span>10% (lenient)</span>
                     <span>95% (strict)</span>
                   </div>
@@ -480,7 +480,7 @@ export default function ParcelAuditWidget({
                     />
                   </button>
                 </div>
-                <p className="text-[9px] text-text-faint mt-1.5">
+                <p className="text-3xs text-text-faint mt-1.5">
                   Sends a browser notification when a new verification scores below {threshold}%.
                 </p>
               </div>
@@ -490,7 +490,7 @@ export default function ParcelAuditWidget({
           <button
             onClick={fetchHistory}
             disabled={loading}
-            className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-[10px] font-semibold text-text-muted hover:text-text disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs font-semibold text-text-muted hover:text-text disabled:opacity-50 transition-colors"
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -511,7 +511,7 @@ export default function ParcelAuditWidget({
                 <p className="text-xs font-semibold text-danger">
                   {lowItems.length} {lowItems.length === 1 ? "verification" : "verifications"} below {threshold}% threshold
                 </p>
-                <p className="text-[10px] text-danger/80 mt-0.5">
+                <p className="text-xs text-danger/80 mt-0.5">
                   {lowItems.slice(0, 3).map((i) => i.order_number || `#${i.order_id}`).join(", ")}
                   {lowItems.length > 3 && ` and ${lowItems.length - 3} more`}
                   {notifyOnLowMatch ? " · Push notifications active" : ""}
@@ -520,7 +520,7 @@ export default function ParcelAuditWidget({
                   {lowItems.slice(0, 3).map((i) => (
                     <span
                       key={i.order_id}
-                      className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-[9px] font-semibold text-danger"
+                      className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-3xs font-semibold text-danger"
                     >
                       {i.order_number || `#${i.order_id}`}
                       <span className="tabular-nums">{Math.round(i.match_percentage)}%</span>
@@ -545,13 +545,13 @@ export default function ParcelAuditWidget({
         <div className="grid grid-cols-4 gap-2 mb-4">
           <div className="rounded-lg bg-surface-2 p-2.5 text-center">
             <p className="text-lg font-bold text-text tabular-nums">{total}</p>
-            <p className="text-[10px] text-text-muted">Total Checks</p>
+            <p className="text-xs text-text-muted">Total Checks</p>
           </div>
           <div className="rounded-lg bg-surface-2 p-2.5 text-center">
             <p className={`text-lg font-bold tabular-nums ${
               avgMatch >= 80 ? "text-success" : avgMatch >= 50 ? "text-warning" : "text-danger"
             }`}>{avgMatch}%</p>
-            <p className="text-[10px] text-text-muted">Avg Match</p>
+            <p className="text-xs text-text-muted">Avg Match</p>
           </div>
           <div className="rounded-lg bg-surface-2 p-2.5 text-center">
             <p className={`text-lg font-bold tabular-nums ${
@@ -559,17 +559,17 @@ export default function ParcelAuditWidget({
             }`}>
               {recentTrend === "up" ? "↑ Good" : recentTrend === "mixed" ? "~ Mixed" : "− N/A"}
             </p>
-            <p className="text-[10px] text-text-muted">Trend</p>
+            <p className="text-xs text-text-muted">Trend</p>
           </div>
           <div className="rounded-lg bg-surface-2 p-2.5">
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[10px] text-text-muted">30-Check Trend</span>
+              <span className="text-xs text-text-muted">30-Check Trend</span>
               {items.length >= 2 && (() => {
                 const firstVal = items[items.length - 1]?.match_percentage ?? 0;
                 const lastVal = items[0]?.match_percentage ?? 0;
                 const delta = lastVal - firstVal;
                 return (
-                  <span className={`text-[9px] font-semibold tabular-nums ${
+                  <span className={`text-3xs font-semibold tabular-nums ${
                     delta > 5 ? "text-success" : delta < -5 ? "text-danger" : "text-text-muted"
                   }`}>
                     {delta > 0 ? "+" : ""}{delta.toFixed(1)}
@@ -636,7 +636,7 @@ export default function ParcelAuditWidget({
                           className="h-full w-full object-cover"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                         />
-                        <div className="absolute inset-x-0 bottom-0 bg-primary/60 text-[7px] text-white font-semibold text-center leading-tight py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-x-0 bottom-0 bg-primary/60 text-5xs text-white font-semibold text-center leading-tight py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           Ref
                         </div>
                       </div>
@@ -651,7 +651,7 @@ export default function ParcelAuditWidget({
                       </p>
                       <MatchBadge pct={Math.round(entry.match_percentage)} />
                     </div>
-                    <p className="text-[10px] text-text-muted mt-0.5">
+                    <p className="text-xs text-text-muted mt-0.5">
                       {entry.matched_items}/{entry.total_items} items · {formatDuration(entry.elapsed_seconds)} · {timeAgo(entry.analyzed_at)}
                     </p>
                   </div>
@@ -669,7 +669,7 @@ export default function ParcelAuditWidget({
                 {/* Expanded: engine breakdown */}
                 {isExpanded && (
                   <div className="mx-3 mb-2 rounded-lg bg-surface-2 p-3 space-y-2">
-                    <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                       Engine Breakdown
                     </p>
                     {engineScores.map((eng) => (
@@ -684,7 +684,7 @@ export default function ParcelAuditWidget({
                     {/* Homography detail */}
                     {engines.homography && engines.homography.homography_found && (
                       <div className="flex flex-col gap-2 pt-1 border-t border-border/50 mt-1">
-                        <div className="flex items-center gap-3 text-[10px] text-text-muted">
+                        <div className="flex items-center gap-3 text-xs text-text-muted">
                           <span className="flex items-center gap-1">
                             <Layers className="h-3 w-3" />
                             {engines.homography.inliers}/{engines.homography.good_matches} inliers
@@ -707,14 +707,14 @@ export default function ParcelAuditWidget({
                           <button
                             onClick={() => handleFilePick(entry.order_id)}
                             disabled={uploadingRef === entry.order_id}
-                            className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-surface-2 px-2 py-1 text-[9px] font-medium text-text-muted hover:text-text hover:border-border disabled:opacity-50 transition-colors"
+                            className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-surface-2 px-2 py-1 text-3xs font-medium text-text-muted hover:text-text hover:border-border disabled:opacity-50 transition-colors"
                             title="Upload a new reference image for the homography engine"
                           >
                             <Camera className="h-3 w-3" />
                             {uploadingRef === entry.order_id ? "Uploading..." : "Replace Reference"}
                           </button>
                           {engines.homography.keypoints_reference !== undefined && (
-                            <span className="text-[9px] text-text-faint">
+                            <span className="text-3xs text-text-faint">
                               {engines.homography.keypoints_reference} ref kp
                             </span>
                           )}
@@ -724,7 +724,7 @@ export default function ParcelAuditWidget({
 
                     {/* Vision AI detail */}
                     {engines.vision_ai && engines.vision_ai.packaging_quality && (
-                      <div className="flex items-center gap-2 text-[10px] text-text-muted pt-1 border-t border-border/50 mt-1">
+                      <div className="flex items-center gap-2 text-xs text-text-muted pt-1 border-t border-border/50 mt-1">
                         <span>Packaging: <span className="font-medium text-text">{engines.vision_ai.packaging_quality}</span></span>
                         {engines.vision_ai.seal_integrity && (
                           <>
@@ -743,7 +743,7 @@ export default function ParcelAuditWidget({
 
                     {/* Anomalies */}
                     {engines.vision_ai?.anomalies_found && engines.vision_ai.anomalies_found.length > 0 && (
-                      <div className="rounded bg-danger/5 p-2 text-[10px] text-danger mt-1">
+                      <div className="rounded bg-danger/5 p-2 text-xs text-danger mt-1">
                         {engines.vision_ai.anomalies_found.map((a: string, i: number) => (
                           <div key={i} className="flex items-start gap-1">
                             <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
@@ -753,7 +753,7 @@ export default function ParcelAuditWidget({
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-[10px] text-text-faint pt-1 border-t border-border/50 mt-1">
+                    <div className="flex items-center justify-between text-xs text-text-faint pt-1 border-t border-border/50 mt-1">
                       <span>Engines: {entry.engines_used}</span>
                       <span>{new Date(entry.analyzed_at).toLocaleString()}</span>
                     </div>

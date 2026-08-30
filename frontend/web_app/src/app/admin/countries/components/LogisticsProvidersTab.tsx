@@ -16,35 +16,35 @@ export default function LogisticsProvidersTab({
       <p className="text-xs text-text-muted">Manage active global delivery providers (e.g. Aramex, SMSA, J&T) with standard SLAs and custom tier-pricing rules.</p>
 
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 p-3 rounded-lg border border-border bg-surface">
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Provider ID
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderId} onChange={(e) => setNewProviderId(e.target.value)} placeholder="aramex" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Provider Name
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderName} onChange={(e) => setNewProviderName(e.target.value)} placeholder="Aramex Express" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Standard SLA (Days)
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderSlaStd} onChange={(e) => setNewProviderSlaStd(e.target.value)} placeholder="2-3" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Express SLA (Days)
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderSlaExp} onChange={(e) => setNewProviderSlaExp(e.target.value)} placeholder="1" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Base Rate
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderBaseRate} onChange={(e) => setNewProviderBaseRate(e.target.value)} />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Per KG Rate
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderPerKg} onChange={(e) => setNewProviderPerKg(e.target.value)} />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Currency Override
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderCurrency} onChange={(e) => setNewProviderCurrency(e.target.value)} placeholder="SAR" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted sm:col-span-2">
+        <label className="space-y-1 text-xs text-text-muted sm:col-span-2">
           Service Areas (comma-separated)
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newProviderServiceAreas} onChange={(e) => setNewProviderServiceAreas(e.target.value)} placeholder="riyadh, jeddah, dammam" />
         </label>
@@ -87,7 +87,7 @@ export default function LogisticsProvidersTab({
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-bold text-text block text-sm">{prov.name}</span>
-                <span className="text-[10px] font-mono text-text-faint uppercase">{prov.provider_id}</span>
+                <span className="text-xs font-mono text-text-faint uppercase">{prov.provider_id}</span>
               </div>
               <div className="flex items-center gap-2">
                 <label className="inline-flex items-center gap-1 text-[11px] font-semibold text-text-muted cursor-pointer">

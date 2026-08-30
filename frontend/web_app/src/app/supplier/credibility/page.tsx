@@ -148,7 +148,7 @@ export default function SupplierCredibilityPage() {
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-semibold text-text">{label}</p>
                             <span
-                              className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${status.cls}`}
+                              className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${status.cls}`}
                             >
                               {status.text}
                             </span>

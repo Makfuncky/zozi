@@ -103,7 +103,7 @@ export default function AlumniContractorTab({ employees, addToast }: AlumniContr
                 <div key={record.id} className="rounded-lg bg-surface-2 border border-border p-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-text">{record.full_name}</p>
-                    <p className="text-[10px] text-text-faint mt-0.5 capitalize">{record.reason} · Ended {new Date(record.end_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-text-faint mt-0.5 capitalize">{record.reason} · Ended {new Date(record.end_date).toLocaleDateString()}</p>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Button variant="secondary" title="Rehire">
@@ -139,9 +139,9 @@ export default function AlumniContractorTab({ employees, addToast }: AlumniContr
                 <div key={milestone.id} className="rounded-lg bg-surface-2 border border-border p-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-text">{milestone.employee_name ?? `#${milestone.employee_id}`}</p>
-                    <p className="text-[10px] text-text-faint mt-0.5 capitalize">{milestone.milestone_type.replace(/_/g, " ")} · Due {new Date(milestone.due_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-text-faint mt-0.5 capitalize">{milestone.milestone_type.replace(/_/g, " ")} · Due {new Date(milestone.due_date).toLocaleDateString()}</p>
                   </div>
-                  <span className={`rounded-full text-[10px] font-semibold px-2 py-0.5 border ${milestone.status === "completed" ? "bg-success/10 text-success border-success/20" : milestone.status === "overdue" ? "bg-danger/10 text-danger border-danger/20" : "bg-warning/10 text-warning border-warning/20"}`}>
+                  <span className={`rounded-full text-xs font-semibold px-2 py-0.5 border ${milestone.status === "completed" ? "bg-success/10 text-success border-success/20" : milestone.status === "overdue" ? "bg-danger/10 text-danger border-danger/20" : "bg-warning/10 text-warning border-warning/20"}`}>
                     {milestone.status}
                   </span>
                 </div>

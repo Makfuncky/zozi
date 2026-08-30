@@ -25,7 +25,7 @@ export default function FeatureFlagsTab({
               <div>
                 <span className="font-medium text-text">{ff.feature_key}</span>
                 {ff.config && Object.keys(ff.config).length > 0 && (
-                  <div className="text-[10px] text-text-faint mt-1">
+                  <div className="text-xs text-text-faint mt-1">
                     Config: <span className="font-mono">{JSON.stringify(ff.config)}</span>
                   </div>
                 )}
@@ -61,7 +61,7 @@ export default function FeatureFlagsTab({
       <div className="border-t border-border pt-4">
         <h4 className="text-xs font-bold text-text mb-2">Add New Feature Flag</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-end">
-          <label className="space-y-1 text-[10px] text-text-muted">
+          <label className="space-y-1 text-xs text-text-muted">
             Feature Key
             <input
               type="text"

@@ -76,7 +76,7 @@ def _find_user(db: Session, email: str | None, username: str | None) -> "User | 
     if email:
         q = q.filter(User.email == email)
     elif username:
-        q = q.filter(User.username == username)
+        q = q.filter(User.email == username)
     else:
         return None
     user = q.first()
@@ -120,7 +120,7 @@ def register(payload: RegisterRequest, db: Session=Depends(get_db)):
     try:
         User = _get_cross_domain_model("User")
         email_exists = db.query(User).filter(User.email == payload.email).first() is not None
-        username_exists = payload.username and db.query(User).filter(User.username == payload.username).first() is not None
+        username_exists = payload.username and db.query(User).filter(User.email == payload.username).first() is not None
         if email_exists or username_exists:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Registration failed: account already exists')
         valid_roles = {'customer', 'supplier', 'admin', 'employee', 'logistics_partner'}

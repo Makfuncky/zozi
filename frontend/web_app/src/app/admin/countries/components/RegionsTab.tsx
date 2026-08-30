@@ -16,11 +16,11 @@ export default function RegionsTab({
       <p className="text-xs text-text-muted">Set up regional hubs and map specific cities inside this country's delivery footprint.</p>
 
       <div className="grid gap-2 sm:grid-cols-3 items-end p-3 rounded-lg border border-border bg-surface">
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Region / Governorate Name
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newRegionName} onChange={(e) => setNewRegionName(e.target.value)} placeholder="e.g. Riyadh Province" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Cities (comma-separated list)
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newRegionCities} onChange={(e) => setNewRegionCities(e.target.value)} placeholder="Riyadh, Diriyah, Kharj" />
         </label>
@@ -62,8 +62,8 @@ export default function RegionsTab({
                 >
                   {isExpanded ? <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" /> : <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" />}
                   <span>{reg.name}</span>
-                  <span className="text-[10px] text-text-faint font-mono font-normal">({reg.region_id})</span>
-                  <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-normal">{reg.cities.length} cities</span>
+                  <span className="text-xs text-text-faint font-mono font-normal">({reg.region_id})</span>
+                  <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-normal">{reg.cities.length} cities</span>
                 </button>
                 <Button variant="danger" className="p-1 rounded transition" type="button"
                   onClick={() => setRegions(regions.filter((_, i) => i !== index))}
@@ -76,7 +76,7 @@ export default function RegionsTab({
                 <div className="p-3 text-xs border-t border-border/60">
                   <div className="flex flex-wrap gap-1">
                     {reg.cities.map((city, cidx) => (
-                      <span key={cidx} className="inline-flex items-center gap-1 bg-surface-2 px-2 py-1 rounded border border-border font-mono text-[10px] text-text">
+                      <span key={cidx} className="inline-flex items-center gap-1 bg-surface-2 px-2 py-1 rounded border border-border font-mono text-xs text-text">
                         {city}
                         <button
                           type="button"
@@ -106,7 +106,7 @@ export default function RegionsTab({
                             }
                           }
                         }}
-                        className="border rounded bg-surface px-1.5 py-0.5 text-[10px] text-text w-24 outline-none"
+                        className="border rounded bg-surface px-1.5 py-0.5 text-xs text-text w-24 outline-none"
                       />
                     </span>
                   </div>

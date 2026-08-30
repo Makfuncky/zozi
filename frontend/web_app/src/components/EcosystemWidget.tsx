@@ -66,7 +66,7 @@ export default function EcosystemWidget() {
               <role.icon className={`w-6 h-6 ${role.color}`} />
             </div>
             <div>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${role.color}`}>Role</p>
+              <p className={`text-xs font-bold uppercase tracking-widest mb-0.5 ${role.color}`}>Role</p>
               <h3 className="text-lg font-bold text-white tracking-tight">{role.title}</h3>
             </div>
           </div>

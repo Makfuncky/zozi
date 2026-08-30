@@ -1179,7 +1179,7 @@ export default function AdminCountriesPage() {
                       <h2 className="text-sm font-bold text-text">
                         {country.name} <span className="text-text-faint font-normal">({country.code})</span>
                       </h2>
-                      <span className={`ml-2 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                      <span className={`ml-2 inline-block px-1.5 py-0.5 rounded text-3xs font-bold ${
                         country.is_active ? "bg-success/10 text-success" : "bg-text-faint/10 text-text-muted"
                       }`}>
                         {country.is_active ? "Active" : "Inactive"}

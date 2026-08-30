@@ -33,6 +33,7 @@ function CustomerLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[Login] handleSubmit called, identifier:', identifier, 'password:', password ? '***' : '(empty)');
     setError("");
     if (!identifier.trim() || !password) {
       setError("Please enter your email/username and password.");
@@ -40,13 +41,15 @@ function CustomerLoginPage() {
     }
     setLoading(true);
     try {
-      const body = JSON.stringify({ username: identifier.trim(), password });
-      const res = await apiFetch("/auth/login", {
+      const body = JSON.stringify({ email: identifier.trim(), password });
+      console.log('[Login] Calling apiFetch for /api/auth/login');
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body,
         skipAuthRedirect: true,
       });
+      console.log('[Login] Response status:', res.status);
       const data = await parseJsonResponse(res);
       if (!res.ok) {
         setError(getErrorMessage(data || {}));

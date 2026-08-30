@@ -147,7 +147,7 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
                         safe_update_cols = [quoted_name(c, quote=True) for c in updates.keys() if c != pk_col]
                         set_clause = ", ".join([f"{c} = :{c}" for c in safe_update_cols])
                         db.execute(
-                            text(f"UPDATE {safe_table} SET {set_clause} WHERE {safe_pk} = :{pk_col}"),
+                            text("UPDATE " + safe_table + " SET " + set_clause + " WHERE " + safe_pk + " = :" + pk_col),
                             updates,
                         )
                         rows_updated += 1

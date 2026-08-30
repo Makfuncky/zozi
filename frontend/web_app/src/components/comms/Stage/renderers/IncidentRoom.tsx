@@ -13,7 +13,7 @@ export default function IncidentRoom() {
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle className="w-5 h-5 text-error" />
           <span className="text-sm font-bold text-text">Incident Active</span>
-          <span className="ml-auto rounded-full bg-error/20 text-error text-[9px] font-semibold px-2 py-0.5">
+          <span className="ml-auto rounded-full bg-error/20 text-error text-3xs font-semibold px-2 py-0.5">
             SEV-1
           </span>
         </div>
@@ -24,7 +24,7 @@ export default function IncidentRoom() {
 
       {/* Action items */}
       <div className="rounded-xl bg-surface-2/30 p-3 space-y-2">
-        <h3 className="text-[10px] font-semibold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
           <CheckCircle className="w-3 h-3" /> Action Items
         </h3>
         {[
@@ -39,7 +39,7 @@ export default function IncidentRoom() {
               <span className={`text-[11px] ${item.done ? "line-through text-text-muted" : "text-text"}`}>
                 {item.text}
               </span>
-              <p className="text-[9px] text-text-faint">{item.assignee}</p>
+              <p className="text-3xs text-text-faint">{item.assignee}</p>
             </div>
           </label>
         ))}
@@ -56,13 +56,13 @@ export default function IncidentRoom() {
 
       {/* Participants */}
       <div className="rounded-xl bg-surface-2/30 p-3">
-        <h3 className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
+        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
           <Users className="w-3 h-3" /> Responders
         </h3>
         <div className="space-y-1.5">
           {["Aisha Al-Mamari", "Karim Benali", "Layla Hassan", "Omar Rashid"].map((name) => (
             <div key={name} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-2 transition-colors">
-              <div className="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-[8px] font-bold text-text-muted">
+              <div className="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-4xs font-bold text-text-muted">
                 {name.charAt(0)}
               </div>
               <span className="text-[11px] text-text">{name}</span>

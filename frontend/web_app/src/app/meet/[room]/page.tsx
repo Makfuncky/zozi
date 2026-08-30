@@ -55,7 +55,7 @@ export default function MeetingRoomPage() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-text">Join Meeting</h2>
-              <p className="text-[10px] text-text-muted font-mono">Room: {roomUuid}</p>
+              <p className="text-xs text-text-muted font-mono">Room: {roomUuid}</p>
             </div>
           </div>
 
@@ -63,11 +63,11 @@ export default function MeetingRoomPage() {
             <div className="text-center text-text-muted">
               <Video className="h-8 w-8 mx-auto mb-2 opacity-40" />
               <p className="text-xs">Camera preview</p>
-              <p className="text-[10px] text-text-faint mt-1">E2E Encrypted</p>
+              <p className="text-xs text-text-faint mt-1">E2E Encrypted</p>
             </div>
           </div>
 
-          <label className="block space-y-1 text-[10px] text-text-muted">
+          <label className="block space-y-1 text-xs text-text-muted">
             Your Display Name
             <input
               value={displayName}
@@ -104,7 +104,7 @@ export default function MeetingRoomPage() {
             {joining ? "Joining..." : "Join Meeting"}
           </Button>
 
-          <div className="flex items-center gap-2 text-[10px] text-text-faint justify-center">
+          <div className="flex items-center gap-2 text-xs text-text-faint justify-center">
             <Shield className="h-3 w-3" />
             End-to-end encrypted · Secure room
           </div>
@@ -124,7 +124,7 @@ export default function MeetingRoomPage() {
               <div className="text-center text-text-muted">
                 <Video className="h-10 w-10 mx-auto mb-2 opacity-30" />
                 <p className="text-sm">{displayName || "You"}</p>
-                <p className="text-[10px] text-text-faint mt-1">Camera feed (simulated)</p>
+                <p className="text-xs text-text-faint mt-1">Camera feed (simulated)</p>
               </div>
             ) : (
               <div className="text-center text-text-muted">
@@ -132,7 +132,7 @@ export default function MeetingRoomPage() {
                 <p className="text-sm">Camera Off</p>
               </div>
             )}
-            <span className="absolute bottom-2 left-2 text-[10px] text-text-faint bg-black/50 px-2 py-0.5 rounded">
+            <span className="absolute bottom-2 left-2 text-xs text-text-faint bg-black/50 px-2 py-0.5 rounded">
               {displayName || "You"}
             </span>
           </div>
@@ -142,7 +142,7 @@ export default function MeetingRoomPage() {
             <div className="text-center text-text-muted">
               <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
               <p className="text-sm">Waiting for others...</p>
-              <p className="text-[10px] text-text-faint mt-1">Share the meeting link to invite</p>
+              <p className="text-xs text-text-faint mt-1">Share the meeting link to invite</p>
             </div>
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function MeetingRoomPage() {
         </Button>
       </div>
 
-      <div className="text-center text-[10px] text-text-faint pb-2 flex items-center justify-center gap-2">
+      <div className="text-center text-xs text-text-faint pb-2 flex items-center justify-center gap-2">
         <Shield className="h-3 w-3" />
         E2EE · Room: {roomUuid}
       </div>

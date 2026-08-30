@@ -63,10 +63,10 @@ export default function StatusDock() {
         )}
         <span className={`relative w-2 h-2 rounded-full ${config.dot}`} />
       </span>
-      <span className="text-[10px]">{config.label}</span>
+      <span className="text-xs">{config.label}</span>
       <span className="mx-1.5 text-text-faint">·</span>
-      <span className="text-[10px]">{label}</span>
-      <span className="ml-auto flex items-center gap-1 text-[9px] text-text-faint">
+      <span className="text-xs">{label}</span>
+      <span className="ml-auto flex items-center gap-1 text-3xs text-text-faint">
         <Keyboard className="w-2.5 h-2.5" />
         ⌘/ for shortcuts
       </span>

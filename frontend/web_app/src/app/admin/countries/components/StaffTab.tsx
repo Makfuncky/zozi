@@ -20,7 +20,7 @@ export default function StaffTab({
         <div className="border-t border-border pt-4">
           <h4 className="text-xs font-bold text-text mb-2">Assign New Staff</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               User ID
               <input
                 type="text"
@@ -30,7 +30,7 @@ export default function StaffTab({
                 placeholder="12345"
               />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               User Name
               <input
                 type="text"
@@ -40,7 +40,7 @@ export default function StaffTab({
                 placeholder="John Doe"
               />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Email
               <input
                 type="email"
@@ -50,7 +50,7 @@ export default function StaffTab({
                 placeholder="john@example.com"
               />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Role
               <select
                 className="w-full rounded border border-border bg-surface px-2 py-1 text-xs text-text"

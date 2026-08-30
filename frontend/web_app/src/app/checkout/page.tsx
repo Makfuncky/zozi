@@ -106,7 +106,7 @@ function ShippingBreakdown({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 text-[10px] text-text-faint hover:text-text transition-colors"
+        className="flex items-center gap-1 text-xs text-text-faint hover:text-text transition-colors"
       >
         {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         {expanded ? "Hide" : "Show"} delivery breakdown
@@ -122,7 +122,7 @@ function ShippingBreakdown({
           {rows.map((row) => (
             <div
               key={row.key}
-              className={`flex justify-between text-[10px] ${row.indent ? "ml-3" : ""}`}
+              className={`flex justify-between text-xs ${row.indent ? "ml-3" : ""}`}
             >
               <span className="text-text-faint">{row.label}</span>
               <span className={row.value < 0 ? "text-success font-medium" : "font-medium text-text"}>
@@ -171,7 +171,16 @@ export default function CheckoutPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [config, setConfig] = useState<{ vat_rate: number; shipping_flat_rate: number; free_shipping_threshold: number } | null>(null);
+  const [totals, setTotals] = useState<{
+    subtotal: number;
+    discount: number;
+    shipping: number;
+    tax_amount: number;
+    tax_type: string;
+    total: number;
+    free_shipping_threshold: number;
+    free_shipping_applied: boolean;
+  } | null>(null);
   const [shipping, setShipping] = useState<{
     shipping_amount: number;
     estimated_delivery_min?: number | null;
@@ -375,14 +384,12 @@ export default function CheckoutPage() {
     const raw = useCartStore.getState().items;
     if (!raw.length || !form.country) { setShipping(null); return; }
     setShippingLoading(true);
-    const subtotal = raw.reduce((sum, i) => sum + Number(i.price ?? 0) * i.quantity, 0);
     apiFetch("/cart/shipping-quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         country: form.country,
         city: form.city,
-        subtotal,
         items: raw.map((i) => ({ product_id: Number(i.id), quantity: i.quantity, selected_size: i.selected_size || "", selected_color: i.selected_color || "" })),
       }),
     })
@@ -392,12 +399,38 @@ export default function CheckoutPage() {
       .finally(() => setShippingLoading(false));
   }, [form.country, form.city, items]);
 
-  const subtotal = useMemo(() => items.reduce((sum, i) => sum + Number(i.price ?? 0) * i.quantity, 0), [items]);
-  const vatRate = config?.vat_rate ?? 0.05;
-  const shippingAmount = shipping?.shipping_amount ?? config?.shipping_flat_rate ?? 0;
-  const vatAmount = useMemo(() => Number((subtotal * vatRate).toFixed(2)), [subtotal, vatRate]);
-  const discountAmount = 0;
-  const total = useMemo(() => Number((subtotal + vatAmount + shippingAmount - discountAmount).toFixed(2)), [subtotal, vatAmount, shippingAmount, discountAmount]);
+  // Fetch server-side totals (Law 14: business logic in backend)
+  useEffect(() => {
+    const raw = items;
+    if (raw.length === 0) {
+      setTotals(null);
+      return;
+    }
+    apiFetch("/cart/totals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: raw.map((i) => ({
+          product_id: Number(i.id),
+          price: Number(i.price ?? 0),
+          quantity: i.quantity,
+        })),
+        country: form.country || undefined,
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setTotals(data);
+      })
+      .catch(() => {});
+  }, [items, form.country]);
+
+  const displaySubtotal = totals?.subtotal ?? 0;
+  const displayDiscount = totals?.discount ?? 0;
+  const displayShipping = shipping?.shipping_amount ?? totals?.shipping ?? 0;
+  const displayTax = totals?.tax_amount ?? 0;
+  const displayTotal = totals?.total ?? 0;
+  const displayTaxType = totals?.tax_type ?? "VAT";
 
   const updateForm = (patch: Partial<typeof form>) => setForm((prev) => ({ ...prev, ...patch }));
 
@@ -654,13 +687,13 @@ export default function CheckoutPage() {
                         value={form.delivery_location}
                         onChange={(lat, lng) => void applyCoords(lat, lng)}
                       />
-                      <p className="mt-1 text-[10px] text-text-faint">
+                      <p className="mt-1 text-xs text-text-faint">
                         Pin your exact drop-off on the map (drag the marker or tap to move it). This helps the courier find you faster.
                       </p>
                       {form.delivery_location && (
-                        <p className="mt-1 text-[10px] font-medium text-primary">Selected: {form.delivery_location}</p>
+                        <p className="mt-1 text-xs font-medium text-primary">Selected: {form.delivery_location}</p>
                       )}
-                      {locationMsg && <p className="mt-1 text-[10px] text-text-faint">{locationMsg}</p>}
+                      {locationMsg && <p className="mt-1 text-xs text-text-faint">{locationMsg}</p>}
                     </div>
                     <div className="sm:col-span-2">
                       <label className="mb-1 block text-[11px] font-semibold text-text-muted">Delivery Note</label>
@@ -689,7 +722,7 @@ export default function CheckoutPage() {
                           <button key={opt.id} type="button" onClick={() => setSelected(opt.selection)}
                             className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-2.5 text-[11px] font-semibold transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border text-text-muted hover:border-border-light"}`}>
                             <Icon className="w-4 h-4" /> {opt.label}
-                            <span className="text-[9px] font-normal text-text-faint text-center leading-tight">{opt.sublabel}</span>
+                            <span className="text-3xs font-normal text-text-faint text-center leading-tight">{opt.sublabel}</span>
                           </button>
                         );
                       })}
@@ -724,15 +757,15 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="border-t border-border mt-3 pt-2 space-y-1.5 text-xs">
-                    <div className="flex justify-between"><span className="text-text-faint">{getItemCount()} items</span><span>{formatPrice(subtotal)}</span></div>
-                    <div className="flex justify-between"><span className="text-text-faint">VAT ({(vatRate * 100).toFixed(0)}%)</span><span>{formatPrice(vatAmount)}</span></div>
+                    <div className="flex justify-between"><span className="text-text-faint">{getItemCount()} items</span><span>{formatPrice(displaySubtotal)}</span></div>
+                    <div className="flex justify-between"><span className="text-text-faint">{displayTaxType}</span><span>{formatPrice(displayTax)}</span></div>
 
                     {/* Delivery line (always visible) */}
                     <div className="flex justify-between items-center">
                       <span className="text-text-faint flex items-center gap-1">
                         <Truck className="w-3 h-3" /> Delivery
                       </span>
-                      <span>{shippingLoading ? "..." : shippingAmount === 0 ? <span className="text-success font-semibold">Free</span> : formatPrice(shippingAmount)}</span>
+                      <span>{shippingLoading ? "..." : displayShipping === 0 ? <span className="text-success font-semibold">Free</span> : formatPrice(displayShipping)}</span>
                     </div>
 
                     {/* Collapsible pricing breakdown */}
@@ -744,19 +777,19 @@ export default function CheckoutPage() {
                       />
                     )}
 
-                    {discountAmount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-{formatPrice(discountAmount)}</span></div>}
+                    {displayDiscount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-{formatPrice(displayDiscount)}</span></div>}
                     <div className="border-t border-border pt-1.5 mt-1.5">
-                      <div className="flex justify-between font-bold text-sm"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>
+                      <div className="flex justify-between font-bold text-sm"><span>Total</span><span className="text-primary">{formatPrice(displayTotal)}</span></div>
                     </div>
                   </div>
 
                   {(shipping?.estimated_delivery_min || shipping?.estimated_delivery_max) && (
-                    <p className="mt-2 text-[10px] text-text-faint flex items-center gap-1"><Truck className="w-3 h-3" /> Est. delivery: {shipping.estimated_delivery_min ?? "?"}–{shipping.estimated_delivery_max ?? "?"} days</p>
+                    <p className="mt-2 text-xs text-text-faint flex items-center gap-1"><Truck className="w-3 h-3" /> Est. delivery: {shipping.estimated_delivery_min ?? "?"}–{shipping.estimated_delivery_max ?? "?"} days</p>
                   )}
                 </div>
 
                 <button type="submit" disabled={submitting || methodsLoading || paymentOptions.length === 0} className="theme-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-60">
-                  {submitting ? "Processing..." : `Place Order — ${formatPrice(total)}`}
+                  {submitting ? "Processing..." : `Place Order — ${formatPrice(displayTotal)}`}
                 </button>
                 <button type="button" onClick={() => router.push("/cart")} className="w-full rounded-xl border border-border py-2 text-xs font-semibold text-text-muted hover:text-text transition-colors">
                   Back to Cart

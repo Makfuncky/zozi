@@ -118,7 +118,7 @@ export function ColorPickerField({ inputId, value, onChange }: ColorPickerFieldP
           })}
         </div>
       ) : (
-        <p className="text-[10px] text-text-faint">Select colors above — each becomes a variant combination axis.</p>
+        <p className="text-xs text-text-faint">Select colors above — each becomes a variant combination axis.</p>
       )}
 
       {/* Custom color input */}

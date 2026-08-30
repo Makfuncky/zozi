@@ -166,7 +166,7 @@ export default function DisciplinaryOffboardingTab({ employees, addToast }: Disc
               <BookOpen className="h-4 w-4 text-warning" />
               Disciplinary Ladder
             </h4>
-            <Button variant="warning" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold shadow-sm transition-colors" onClick={() => setShowDisciplinaryModal(true)}
+            <Button variant="warning" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm transition-colors" onClick={() => setShowDisciplinaryModal(true)}
             >
               <Plus className="h-3 w-3" />
               Issue Case
@@ -184,9 +184,9 @@ export default function DisciplinaryOffboardingTab({ employees, addToast }: Disc
                 <div key={c.id} className="rounded-lg bg-surface-2 border border-border p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-text">{c.employee_name ?? `#${c.employee_id}`}</p>
-                    <span className="text-[10px] text-text-faint capitalize">{c.stage.replace(/_/g, " ")}</span>
+                    <span className="text-xs text-text-faint capitalize">{c.stage.replace(/_/g, " ")}</span>
                   </div>
-                  <p className="text-[10px] text-text-muted mt-1 line-clamp-2">{c.description}</p>
+                  <p className="text-xs text-text-muted mt-1 line-clamp-2">{c.description}</p>
                 </div>
               ))}
             </div>
@@ -199,7 +199,7 @@ export default function DisciplinaryOffboardingTab({ employees, addToast }: Disc
               <UserX className="h-4 w-4 text-danger" />
               Offboarding Queue
             </h4>
-            <Button variant="danger" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold shadow-sm transition-colors" onClick={() => setShowOffboardingModal(true)}
+            <Button variant="danger" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm transition-colors" onClick={() => setShowOffboardingModal(true)}
             >
               <Plus className="h-3 w-3" />
               Initiate
@@ -213,9 +213,9 @@ export default function DisciplinaryOffboardingTab({ employees, addToast }: Disc
                 <div key={case_.id} className="rounded-lg bg-surface-2 border border-border p-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-text">{case_.employee_name ?? `#${case_.employee_id}`}</p>
-                    <p className="text-[10px] text-text-muted mt-0.5 capitalize">{case_.reason}</p>
+                    <p className="text-xs text-text-muted mt-0.5 capitalize">{case_.reason}</p>
                   </div>
-                  <span className={`rounded-full text-[10px] font-semibold px-2 py-0.5 border ${case_.status === "completed" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
+                  <span className={`rounded-full text-xs font-semibold px-2 py-0.5 border ${case_.status === "completed" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
                     {case_.status}
                   </span>
                 </div>

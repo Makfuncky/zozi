@@ -607,10 +607,10 @@ export default function ExportsPanel() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold text-text-muted">
+              <span className="rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-text-muted">
                 Auto-sync every {refreshIntervalSeconds}s
               </span>
-              <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold text-text-muted">
+              <span className="rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-text-muted">
                 Last sync {lastInspectedAtLabel}
               </span>
               <button
@@ -645,7 +645,7 @@ export default function ExportsPanel() {
                     {architecture?.summary || "SQLite or PostgreSQL is the primary source of truth, while Redis handles cache and shared runtime state."}
                   </p>
                 </div>
-                <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold text-text-muted">
+                <span className="rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-text-muted">
                   Primary {architecture?.primary_database_engine?.toUpperCase() || databaseOverview?.database.engine?.toUpperCase() || "-"}
                 </span>
               </div>
@@ -654,7 +654,7 @@ export default function ExportsPanel() {
                 <div className="rounded-xl border border-border bg-background/60 p-3 text-xs text-text-muted">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-text">SQLite</p>
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${runtimeStatusTone(sqliteService.status)}`}>
+                    <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${runtimeStatusTone(sqliteService.status)}`}>
                       {formatRuntimeStatusLabel(sqliteService.status)}
                     </span>
                   </div>
@@ -666,7 +666,7 @@ export default function ExportsPanel() {
                 <div className="rounded-xl border border-border bg-background/60 p-3 text-xs text-text-muted">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-text">PostgreSQL</p>
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${runtimeStatusTone(postgresService.status)}`}>
+                    <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${runtimeStatusTone(postgresService.status)}`}>
                       {formatRuntimeStatusLabel(postgresService.status)}
                     </span>
                   </div>
@@ -678,7 +678,7 @@ export default function ExportsPanel() {
                 <div className="rounded-xl border border-border bg-background/60 p-3 text-xs text-text-muted">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-text">Redis</p>
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${runtimeStatusTone(redisService.status)}`}>
+                    <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${runtimeStatusTone(redisService.status)}`}>
                       {formatRuntimeStatusLabel(redisService.status)}
                     </span>
                   </div>
@@ -698,7 +698,7 @@ export default function ExportsPanel() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-faint">Live Summary</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <div className="rounded-xl border border-border bg-background/60 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">Health</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-faint">Health</p>
                   <div className="mt-2 flex items-center gap-2">
                     {databaseOverview?.status === "healthy" ? <CheckCircle2 className="w-4 h-4 text-success" /> : <AlertCircle className="w-4 h-4 text-danger" />}
                     <p className="text-sm font-semibold text-text">{databaseOverview?.status === "healthy" ? "Healthy" : databaseLoading ? "Checking" : "Unavailable"}</p>
@@ -706,17 +706,17 @@ export default function ExportsPanel() {
                   <p className="mt-2 text-xs text-text-muted">{databaseOverview?.database.engine?.toUpperCase() || "-"} via {databaseOverview?.database.driver || "-"}</p>
                 </div>
                 <div className="rounded-xl border border-border bg-background/60 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">Schema</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-faint">Schema</p>
                   <p className="mt-2 text-sm font-semibold text-text">{databaseOverview?.totals.table_count ?? 0} tables</p>
                   <p className="mt-2 text-xs text-text-muted">Alembic {databaseOverview?.database.alembic_version || "not tracked"}</p>
                 </div>
                 <div className="rounded-xl border border-border bg-background/60 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">Backups</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-faint">Backups</p>
                   <p className="mt-2 text-sm font-semibold text-text">{databaseOverview?.backup.artifact_count ?? backups.length}</p>
                   <p className="mt-2 text-xs text-text-muted">Latest {databaseOverview?.backup.latest_filename || latestBackup?.filename || "-"}</p>
                 </div>
                 <div className="rounded-xl border border-border bg-background/60 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">Drift</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-faint">Drift</p>
                   <p className="mt-2 text-sm font-semibold text-text">{databaseOverview?.totals.missing_model_table_count ?? 0} missing</p>
                   <p className="mt-2 text-xs text-text-muted">Managed {databaseOverview?.totals.managed_table_count ?? 0}</p>
                 </div>
@@ -806,7 +806,7 @@ export default function ExportsPanel() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-faint">Backup Library</p>
                 <p className="mt-1 text-xs text-text-muted">Newest files are listed first so the most recent recovery point stays at the top.</p>
               </div>
-              <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold text-text-muted">
+              <span className="rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-text-muted">
                 {backups.length} file{backups.length === 1 ? "" : "s"}
               </span>
             </div>
@@ -965,11 +965,11 @@ export default function ExportsPanel() {
                       <div className="min-w-0 space-y-2 text-xs text-text-muted">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-semibold text-text">{table.name}</p>
-                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${table.orm_managed ? "border-success/30 text-success" : "border-border text-text-muted"}`}>
+                          <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${table.orm_managed ? "border-success/30 text-success" : "border-border text-text-muted"}`}>
                             {table.orm_managed ? "ORM managed" : "Database only"}
                           </span>
                           {table.primary_key.length > 0 && (
-                            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold text-text-muted">
+                            <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-text-muted">
                               PK {table.primary_key.join(", ")}
                             </span>
                           )}
@@ -1005,9 +1005,9 @@ export default function ExportsPanel() {
                               <div key={`${table.name}:${column.name}`} className="rounded-lg border border-border px-2.5 py-2">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="font-semibold text-text">{column.name}</span>
-                                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold text-text-muted">{column.type}</span>
-                                  {column.primary_key && <span className="rounded-full border border-success/30 px-2 py-0.5 text-[10px] font-semibold text-success">PK</span>}
-                                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${column.nullable ? "border-border text-text-muted" : "border-warning/30 text-warning"}`}>
+                                  <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-text-muted">{column.type}</span>
+                                  {column.primary_key && <span className="rounded-full border border-success/30 px-2 py-0.5 text-xs font-semibold text-success">PK</span>}
+                                  <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${column.nullable ? "border-border text-text-muted" : "border-warning/30 text-warning"}`}>
                                     {column.nullable ? "Nullable" : "Required"}
                                   </span>
                                 </div>

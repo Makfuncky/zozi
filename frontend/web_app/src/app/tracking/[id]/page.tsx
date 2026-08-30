@@ -224,7 +224,7 @@ export default function SharedTrackingPage({ params }: PageProps) {
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step.completed ? "bg-success border-success" : step.active ? "bg-primary/20 border-primary" : "bg-surface-2 border-border"}`}>
                       <StepIcon className={`w-3.5 h-3.5 ${step.completed ? "text-on-brand" : step.active ? "theme-status-info" : "text-text-faint"}`} />
                     </div>
-                    <span className={`mt-1 text-[10px] text-center whitespace-nowrap ${step.completed ? "theme-status-success" : step.active ? "theme-status-info font-semibold" : "text-text-faint"}`}>{step.label}</span>
+                    <span className={`mt-1 text-xs text-center whitespace-nowrap ${step.completed ? "theme-status-success" : step.active ? "theme-status-info font-semibold" : "text-text-faint"}`}>{step.label}</span>
                   </div>
                   {!isLast && <div className={`flex-1 h-0.5 mb-4 mx-1 ${step.completed ? "bg-success" : step.active ? "bg-primary/40" : "bg-border"}`} />}
                 </div>
@@ -264,7 +264,7 @@ export default function SharedTrackingPage({ params }: PageProps) {
                   <div key={shipment.id} className="rounded-xl border border-border/60 bg-surface-2/40 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-text">Shipment #{shipment.id}{shipment.supplier_name ? ` · ${shipment.supplier_name}` : ""}</p>
-                      <span className="rounded-lg bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">{shipment.status_label || shipment.status.replaceAll("_", " ")}</span>
+                      <span className="rounded-lg bg-primary/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-primary">{shipment.status_label || shipment.status.replaceAll("_", " ")}</span>
                     </div>
                     <div className="mt-2 space-y-1 text-xs text-text-muted">
                       {shipment.current_hub ? <p>Current hub: <span className="text-text">{shipment.current_hub}</span></p> : null}

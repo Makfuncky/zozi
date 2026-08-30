@@ -79,7 +79,7 @@ export default function LocalizationTab({
           </label>
         </div>
 
-        <div className="text-[10px] text-text-muted">
+        <div className="text-xs text-text-muted">
           <div className="font-semibold mb-1">Supported Languages</div>
           <div className="flex flex-wrap gap-1">
             {localization.supported_languages.map((lang) => (

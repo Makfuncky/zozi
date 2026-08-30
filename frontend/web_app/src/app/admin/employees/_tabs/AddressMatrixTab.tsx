@@ -200,7 +200,7 @@ export default function AddressMatrixTab({ employees, addToast }: AddressMatrixT
                   <td className="px-4 py-3 text-text-muted">{addr.city}{addr.state_province ? `, ${addr.state_province}` : ""}</td>
                   <td className="px-4 py-3 text-text-muted">{addr.country}</td>
                   <td className="px-4 py-3">
-                    {addr.is_primary && <span className="rounded-full bg-success/10 text-success text-[10px] font-semibold px-2 py-0.5 border border-success/20">Primary</span>}
+                    {addr.is_primary && <span className="rounded-full bg-success/10 text-success text-xs font-semibold px-2 py-0.5 border border-success/20">Primary</span>}
                   </td>
                   <td className="px-4 py-3 text-text-muted">
                     {addr.valid_from ? new Date(addr.valid_from).toLocaleDateString() : "—"}

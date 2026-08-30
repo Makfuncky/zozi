@@ -165,19 +165,19 @@ export default function CommandCenterAlertsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-text truncate">{alert.title}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded border border-current/20 shrink-0">
+                      <span className="text-xs px-2 py-0.5 rounded border border-current/20 shrink-0">
                         {alert.severity}
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-text-muted">{alert.message}</p>
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[10px] text-text-faint">
+                      <span className="text-xs text-text-faint">
                         {new Date(alert.created_at).toLocaleString()}
                         {alert.country_code ? ` · ${alert.country_code}` : ""}
                       </span>
                       <button
                         onClick={() => handleResolve(alert.id)}
-                        className="theme-btn-secondary rounded-md px-2 py-1 text-[10px] font-semibold"
+                        className="theme-btn-secondary rounded-md px-2 py-1 text-xs font-semibold"
                       >
                         Resolve
                       </button>

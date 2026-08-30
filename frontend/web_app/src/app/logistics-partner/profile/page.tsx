@@ -1132,7 +1132,7 @@ export default function LogisticsPartnerProfilePage() {
             ].map((card) => (
               <div key={card.label} className="rounded-xl border border-border bg-surface-2 p-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${card.chip}`}>{card.label}</span>
+                  <span className={`rounded-xl px-2 py-1 text-xs font-bold ${card.chip}`}>{card.label}</span>
                   <card.icon className="h-4 w-4 text-primary" />
                 </div>
                 <p className="mt-1.5 text-base font-bold capitalize text-text">{card.value}</p>
@@ -1201,7 +1201,7 @@ export default function LogisticsPartnerProfilePage() {
                           <p className="truncate text-base font-bold text-text">{profile.name || "Logistics partner name"}</p>
                           <p className="text-xs text-text-muted">{[profile.city, profile.country].filter(Boolean).join(", ") || "City, country"}</p>
                         </div>
-                        <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${STATUS_CHIP[profile.verification_status] ?? "theme-chip-muted"}`}>
+                        <span className={`rounded-xl px-2 py-1 text-xs font-bold ${STATUS_CHIP[profile.verification_status] ?? "theme-chip-muted"}`}>
                           {titleCase(profile.verification_status)}
                         </span>
                       </div>
@@ -1246,7 +1246,7 @@ export default function LogisticsPartnerProfilePage() {
                       { label: "Rejected", value: rejectedAreas, tone: "theme-chip-danger" },
                     ].map((card) => (
                       <div key={card.label} className="rounded-xl border border-border bg-surface-2 p-3">
-                        <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${card.tone}`}>{card.label}</span>
+                        <span className={`rounded-xl px-2 py-1 text-xs font-bold ${card.tone}`}>{card.label}</span>
                         <p className="mt-2 text-xl font-bold text-text">{card.value}</p>
                       </div>
                     ))}
@@ -1258,7 +1258,7 @@ export default function LogisticsPartnerProfilePage() {
                       { label: "Load-fit rules live", value: approvedVehicleRules, tone: "theme-chip-success" },
                     ].map((card) => (
                       <div key={card.label} className="rounded-xl border border-border bg-surface-2 p-3">
-                        <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${card.tone}`}>{card.label}</span>
+                        <span className={`rounded-xl px-2 py-1 text-xs font-bold ${card.tone}`}>{card.label}</span>
                         <p className="mt-2 text-xl font-bold text-text">{card.value}</p>
                       </div>
                     ))}
@@ -1466,7 +1466,7 @@ export default function LogisticsPartnerProfilePage() {
                       <span className="font-bold text-text-faint">= </span>
                       <span className="rounded-md border border-success/40 bg-success/10 px-2 py-1 font-bold text-success text-xs">Your earnings</span>
                     </div>
-                    <p className="mt-1 text-[10px] text-text-faint">
+                    <p className="mt-1 text-xs text-text-faint">
                       Service area values are the defaults. Approved pricing profiles override specific fields, and only the highest applicable approved handling rule is used per grouped shipment.
                       Only rows with <span className="font-semibold text-success">approved</span> status are used in checkout and shipment allocation.
                     </p>
@@ -1601,7 +1601,7 @@ export default function LogisticsPartnerProfilePage() {
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${STATUS_CHIP[area.approval_status] ?? "theme-chip-muted"}`}>{titleCase(area.approval_status)}</span>
+                                <span className={`rounded-xl px-2 py-1 text-xs font-bold ${STATUS_CHIP[area.approval_status] ?? "theme-chip-muted"}`}>{titleCase(area.approval_status)}</span>
                                 <span className="text-xs font-semibold text-text">{area.zone_label || area.city_name || area.country_name}</span>
                               </div>
                               <p className="mt-1 text-xs text-text-muted">{describeAreaLocation(area)}</p>
@@ -1705,7 +1705,7 @@ export default function LogisticsPartnerProfilePage() {
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${STATUS_CHIP[pricingProfile.approval_status] ?? "theme-chip-muted"}`}>{titleCase(pricingProfile.approval_status)}</span>
+                                  <span className={`rounded-xl px-2 py-1 text-xs font-bold ${STATUS_CHIP[pricingProfile.approval_status] ?? "theme-chip-muted"}`}>{titleCase(pricingProfile.approval_status)}</span>
                                   <span className="text-xs font-semibold text-text">{pricingProfile.profile_name || linkedArea?.zone_label || linkedArea?.city_name || "Partner default profile"}</span>
                                 </div>
                                 <p className="mt-1 text-xs text-text-muted">{linkedArea ? `Targets ${linkedArea.zone_label || linkedArea.city_name || linkedArea.country_name}` : "Applies to all approved service areas for this partner"}</p>
@@ -1803,7 +1803,7 @@ export default function LogisticsPartnerProfilePage() {
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${STATUS_CHIP[rule.approval_status] ?? "theme-chip-muted"}`}>{titleCase(rule.approval_status)}</span>
+                                  <span className={`rounded-xl px-2 py-1 text-xs font-bold ${STATUS_CHIP[rule.approval_status] ?? "theme-chip-muted"}`}>{titleCase(rule.approval_status)}</span>
                                   <span className="text-xs font-semibold text-text">{rule.category_name}</span>
                                 </div>
                                 <p className="mt-1 text-xs text-text-muted">{linkedArea ? `Targets ${linkedArea.zone_label || linkedArea.city_name || linkedArea.country_name}` : "Applies to all approved service areas for this partner"}</p>
@@ -1911,7 +1911,7 @@ export default function LogisticsPartnerProfilePage() {
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className={`rounded-xl px-2 py-1 text-[10px] font-bold ${STATUS_CHIP[rule.approval_status] ?? "theme-chip-muted"}`}>{titleCase(rule.approval_status)}</span>
+                                  <span className={`rounded-xl px-2 py-1 text-xs font-bold ${STATUS_CHIP[rule.approval_status] ?? "theme-chip-muted"}`}>{titleCase(rule.approval_status)}</span>
                                   <span className="text-xs font-semibold text-text">{rule.vehicle_type}</span>
                                 </div>
                                 <p className="mt-1 text-xs text-text-muted">{linkedArea ? `Targets ${linkedArea.zone_label || linkedArea.city_name || linkedArea.country_name}` : "Applies to all approved service areas for this partner"}</p>
@@ -2048,16 +2048,16 @@ export default function LogisticsPartnerProfilePage() {
                     <p className="mt-1 text-xs text-text-muted">Submit the bank account used for delivery-fee payouts and logistics-side finance reconciliation. COD collection review and payout activation both depend on the verified account shown here.</p>
                   </div>
                   {lpBankAccount?.verification_status === "verified" && (
-                    <span className="inline-flex items-center gap-1 rounded-xl border border-success/40 bg-success/10 px-2 py-1 text-[10px] font-bold text-success"><CheckCircle className="h-3 w-3" /> verified</span>
+                    <span className="inline-flex items-center gap-1 rounded-xl border border-success/40 bg-success/10 px-2 py-1 text-xs font-bold text-success"><CheckCircle className="h-3 w-3" /> verified</span>
                   )}
                   {lpBankAccount?.verification_status === "pending" && (
-                    <span className="inline-flex items-center gap-1 rounded-xl border border-warning/40 bg-warning/10 px-2 py-1 text-[10px] font-bold text-warning"><Clock className="h-3 w-3" /> pending review</span>
+                    <span className="inline-flex items-center gap-1 rounded-xl border border-warning/40 bg-warning/10 px-2 py-1 text-xs font-bold text-warning"><Clock className="h-3 w-3" /> pending review</span>
                   )}
                   {lpBankAccount?.verification_status === "rejected" && (
-                    <span className="inline-flex items-center gap-1 rounded-xl border border-danger/40 bg-danger/10 px-2 py-1 text-[10px] font-bold text-danger"><XCircle className="h-3 w-3" /> rejected</span>
+                    <span className="inline-flex items-center gap-1 rounded-xl border border-danger/40 bg-danger/10 px-2 py-1 text-xs font-bold text-danger"><XCircle className="h-3 w-3" /> rejected</span>
                   )}
                   {!lpBankAccount?.id && (
-                    <span className="rounded-xl border border-border bg-surface-2 px-2 py-1 text-[10px] font-bold text-text-muted">not configured</span>
+                    <span className="rounded-xl border border-border bg-surface-2 px-2 py-1 text-xs font-bold text-text-muted">not configured</span>
                   )}
                 </div>
 

@@ -253,10 +253,10 @@ function EmailInbox({ emails, loading, onLoad }: { emails: EmailThread[]; loadin
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-semibold ${email.read ? "text-text-muted" : "text-text"}`}>{email.sender}</span>
-                    <span className="text-[10px] text-text-faint">{new Date(email.created_at).toLocaleDateString()}</span>
+                    <span className="text-xs text-text-faint">{new Date(email.created_at).toLocaleDateString()}</span>
                   </div>
                   <p className={`text-xs ${email.read ? "text-text-muted" : "text-text font-medium"} truncate`}>{email.subject}</p>
-                  <p className="text-[10px] text-text-faint truncate">{email.snippet}</p>
+                  <p className="text-xs text-text-faint truncate">{email.snippet}</p>
                 </div>
                 {email.has_attachments && <Paperclip className="h-3 w-3 text-text-faint shrink-0" />}
                 {!email.read && <div className="w-2 h-2 bg-primary rounded-full shrink-0 mt-2" />}
@@ -334,10 +334,10 @@ function EmailCompose({
     <PanelSection title="Compose Email" icon={<Send className="w-4 h-4 text-primary" />}>
       <div className="space-y-4 max-w-2xl">
         <div className="relative">
-          <label className="block text-[10px] font-medium text-text-muted mb-1">To</label>
+          <label className="block text-xs font-medium text-text-muted mb-1">To</label>
           <div className="flex flex-wrap gap-1 mb-1">
             {selectedRecipients.map((r) => (
-              <span key={r.id} className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-[10px] px-2 py-0.5 font-medium">
+              <span key={r.id} className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-xs px-2 py-0.5 font-medium">
                 {r.full_name} <button onClick={() => removeRecipient(r.id)} className="hover:text-danger"><X className="h-2.5 w-2.5" /></button>
               </span>
             ))}
@@ -356,19 +356,19 @@ function EmailCompose({
                     <span className="text-text font-medium">{emp.full_name}</span>
                     <span className="text-text-faint ml-2">{emp.department}</span>
                   </div>
-                  <span className="text-text-faint text-[10px]">{emp.employee_code}</span>
+                  <span className="text-text-faint text-xs">{emp.employee_code}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
         <div>
-          <label className="block text-[10px] font-medium text-text-muted mb-1">Subject</label>
+          <label className="block text-xs font-medium text-text-muted mb-1">Subject</label>
           <input type="text" value={subject} onChange={(e) => onSubjectChange(e.target.value)} placeholder="Email subject"
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
         </div>
         <div>
-          <label className="block text-[10px] font-medium text-text-muted mb-1">Body</label>
+          <label className="block text-xs font-medium text-text-muted mb-1">Body</label>
           <textarea rows={8} value={body} onChange={(e) => onBodyChange(e.target.value)} placeholder="Compose your message..."
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text outline-none focus:border-primary/50 resize-none" />
         </div>
@@ -419,12 +419,12 @@ function DlpViolationsPanel({ violations, loading, onLoad }: { violations: DlpVi
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-text capitalize">{v.violation_type.replace("_", " ")}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       v.status === "pending" ? "bg-warning/10 text-warning" : "bg-success/10 text-success"
                     }`}>{v.status}</span>
                   </div>
                   <p className="text-xs text-text-muted mt-1">To: {v.recipient_email || "N/A"} {v.detected_content ? `· Subject: ${v.detected_content}` : ""}</p>
-                  <p className="text-[10px] text-text-faint mt-0.5">
+                  <p className="text-xs text-text-faint mt-0.5">
                     {v.created_at ? new Date(v.created_at).toLocaleString() : ""}
                     {v.sender_id ? ` · Sender ID: ${v.sender_id}` : ""}
                   </p>

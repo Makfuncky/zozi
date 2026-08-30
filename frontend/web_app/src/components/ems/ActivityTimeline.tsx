@@ -171,7 +171,7 @@ export default function ActivityTimeline({
                   </p>
                   <span className={cn(
                     "text-xs text-text-muted flex-shrink-0",
-                    compact ? "text-[10px]" : "",
+                    compact ? "text-xs" : "",
                   )}>
                     {formatTimestamp(event.timestamp)}
                   </span>

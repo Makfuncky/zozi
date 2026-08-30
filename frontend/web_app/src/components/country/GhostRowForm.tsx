@@ -196,13 +196,13 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 							{searching ? "Searching..." : "Search"}
 						</Button>
 					</div>
-					<p className="text-[10px] text-text-faint">
+					<p className="text-xs text-text-faint">
 						Search a country name or ISO code (e.g. &quot;Saudi Arabia&quot; or &quot;SA&quot;) to auto-fill the form with researched details.
 					</p>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						<span className="flex items-center gap-1">
 							Code *
 						</span>
@@ -219,7 +219,7 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 						/>
 					</label>
 
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						Name *
 						<input
 							type="text"
@@ -233,7 +233,7 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 						/>
 					</label>
 
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						Currency *
 						<input
 							type="text"
@@ -248,7 +248,7 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 						/>
 					</label>
 
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						Timezone *
 						<input
 							type="text"
@@ -262,7 +262,7 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 						/>
 					</label>
 
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						Currency Symbol
 						<input
 							type="text"
@@ -274,7 +274,7 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 						/>
 					</label>
 
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						Phone Code
 						<div className="relative">
 							<AtSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-text-muted" />
@@ -289,7 +289,7 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 						</div>
 					</label>
 
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						Language
 						<select
 							className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm text-text"
@@ -302,7 +302,7 @@ export default function GhostRowForm({ onCountryCreated }: GhostRowFormProps) {
 						</select>
 					</label>
 
-					<label className="space-y-1 text-[10px] text-text-muted">
+					<label className="space-y-1 text-xs text-text-muted">
 						Status
 						<select
 							className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm text-text"

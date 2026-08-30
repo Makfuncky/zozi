@@ -90,7 +90,7 @@ export default function AdminInventoryAlertsPage() {
           <div className="flex items-center gap-2 rounded-lg border border-glass-border bg-glass-panel px-3 py-2">
             <Globe className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium text-text">{selectedCountry.name}</span>
-            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-primary">{selectedCountry.code}</span>
+            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-mono font-semibold text-primary">{selectedCountry.code}</span>
           </div>
         )}
 
@@ -140,7 +140,7 @@ export default function AdminInventoryAlertsPage() {
                       Stock: {product.stock} · Threshold: {product.low_stock_threshold ?? 5}
                     </p>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-warning/10 text-warning">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-warning/10 text-warning">
                     Low Stock
                   </span>
                 </div>

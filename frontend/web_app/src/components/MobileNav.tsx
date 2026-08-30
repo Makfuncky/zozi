@@ -41,12 +41,12 @@ export default function MobileNav() {
                 <span className="relative">
                   <Icon className="w-5 h-5" />
                   {badge && itemCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">
                       {itemCount > 99 ? "99+" : itemCount}
                     </span>
                   )}
                 </span>
-                <span className="text-[10px] font-medium">{label}</span>
+                <span className="text-xs font-medium">{label}</span>
               </Link>
             </li>
           );

@@ -13,7 +13,9 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 from . import Base
+# CountryConfig relationship resolved lazily via string reference
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 
 __all__ = ["ShippingRule"]
@@ -22,7 +24,7 @@ __all__ = ["ShippingRule"]
 class ShippingRule(Base):
     __tablename__ = 'shipping_rules'
     __table_args__ = (Index('ix_shipping_rules_country_created', 'country_code', 'created_at'), {'schema': 'logistics'})
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)

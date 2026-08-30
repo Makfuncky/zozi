@@ -145,7 +145,7 @@ export default function BgStrategyOnboardingTooltip({
                   {current.bestFor.map((b) => (
                     <span
                       key={b}
-                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-2 text-[10px] text-text-muted capitalize"
+                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-2 text-xs text-text-muted capitalize"
                     >
                       {b}
                     </span>

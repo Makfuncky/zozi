@@ -1,0 +1,36 @@
+- generic:
+  - generic [active]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - navigation [ref=e6]:
+          - button [disabled] [ref=e7]:
+            - img "previous" [ref=e8]
+          - generic [ref=e10]:
+            - generic [ref=e11]: 1/
+            - generic [ref=e12]: "1"
+          - button [disabled] [ref=e13]:
+            - img "next" [ref=e14]
+        - generic [ref=e17]:
+          - generic "Latest available version is detected (16.3.3)." [ref=e20]: Next.js 16.3.3
+          - generic [ref=e21]: Webpack
+      - dialog "Build Error" [ref=e23]:
+        - generic [ref=e26]:
+          - generic [ref=e28]:
+            - generic [ref=e29]:
+              - generic [ref=e30]: Build Error
+              - generic [ref=e32]:
+                - button "Copy Error Info" [ref=e33] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e36]
+                - button "Attach Node.js inspector" [ref=e39] [cursor=pointer]
+            - generic [ref=e48]: "Module parse failed: Unexpected character '@' (1:0)"
+          - generic [ref=e51]:
+            - generic [ref=e53]:
+              - generic [ref=e57]: ./src/styles/globals.css
+              - button "Open in editor" [ref=e58] [cursor=pointer]
+            - generic [ref=e62]: "Module parse failed: Unexpected character '@' (1:0) > @import \"./tokens.css\"; | @tailwind base; | @tailwind components;"
+    - button "Open issues overlay" [ref=e71] [cursor=pointer]:
+      - generic [ref=e75]:
+        - generic [ref=e76]: "0"
+        - generic [ref=e77]: "1"
+      - generic [ref=e78]: Issue
+  - alert [ref=e79]

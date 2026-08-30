@@ -266,7 +266,7 @@ def get_all_orders(
             or_(
                 func.cast(Order.id, String).ilike(term),
                 func.cast(Order.user_id, String).ilike(term),
-                User.username.ilike(term),
+                User.email.ilike(term),
                 User.email.ilike(term),
             )
         )
@@ -285,7 +285,7 @@ def get_all_orders(
     user_ids = list({cast(int, o.user_id) for o in orders if o.user_id is not None})
     username_map: dict[int, str] = {}
     if user_ids:
-        user_rows = db.query(User.id, User.username).filter(User.id.in_(user_ids)).all()
+        user_rows = db.query(User.id, User.email).filter(User.id.in_(user_ids)).all()
         username_map = {r.id: r.username for r in user_rows}
 
     # Batch-load shipments for all orders at once (avoid N+1)

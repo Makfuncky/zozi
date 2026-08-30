@@ -4,27 +4,18 @@ from sqlalchemy import func, UUID
 from decimal import Decimal
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, text
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 
 # Lazy imports for cross-domain relationships (avoid circular imports)
-from domains.logistics.models.shipping_rules import ShippingRule  # noqa: F401
-from domains.finance.models.tax_rules import PayoutRule, TaxRule  # noqa: F401
-from domains.country.models.country_basics import CountryBasics  # noqa: F401
-from domains.country.models.country_economics import CountryEconomics  # noqa: F401
-from domains.country.models.country_legal import CountryLegal  # noqa: F401
-from domains.country.models.country_tax import CountryTax  # noqa: F401
-from domains.country.models.country_enhancements import (  # noqa: F401
-    CountryCategoryTaxRate, CountryFeatureFlag, CountryCommissionRate,
-    CountryStaffAssignment, CountryConfigVersion, SupplierKYCRequirement,
-    LogisticsPartnerKYCRequirement, CountryCity
-)
+# All relationships resolved lazily via string reference to avoid circular imports
 __all__ = ['CountryConfig', 'CountryCommunication', 'CountryGatewayCredentials', 'ShippingRule']
 
 class CountryConfig(Base):
     __tablename__ = 'country_configs'
     __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)
@@ -139,7 +130,7 @@ class CountryConfig(Base):
 class CountryCommunication(Base):
     __tablename__ = 'country_communications'
     __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -169,7 +160,7 @@ class CountryCommunication(Base):
 class CountryGatewayCredentials(Base):
     __tablename__ = 'country_gateway_credentials'
     __table_args__ = {"schema": "country"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)

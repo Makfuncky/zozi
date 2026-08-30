@@ -101,15 +101,22 @@ COLOR_ALIASES = {
     "beige": "beige",
     "orange": "orange",
 }
-TEXT_SEARCH_FIELDS = (
-    Product.name,
-    Product.description,
-    Product.category,
-    Product.brand,
-    Product.tags,
-    Product.ai_description,
-    Product.materials,
-)
+def _text_search_fields():
+    """Lazily resolve the searchable ORM columns.
+
+    Built lazily (not at module import) so importing this module never touches
+    ``Product`` class attributes at import time — important under the app's
+    multi-package boot where ORM classes may not be fully configured yet.
+    """
+    return (
+        Product.name,
+        Product.description,
+        Product.category,
+        Product.brand,
+        Product.tags,
+        Product.ai_description,
+        Product.materials,
+    )
 
 
 def _database_supports_postgres_fts(db: Session) -> bool:
@@ -540,10 +547,10 @@ def smart_search_from_parsed(
     text_conditions = []
     if parsed["q"]:
         phrase = f"%{parsed['q'].lower()}%"
-        text_conditions.extend(field.ilike(phrase) for field in TEXT_SEARCH_FIELDS)
+        text_conditions.extend(field.ilike(phrase) for field in _text_search_fields())
     for term in parsed["terms"][:6]:
         token = f"%{term}%"
-        text_conditions.extend(field.ilike(token) for field in TEXT_SEARCH_FIELDS)
+        text_conditions.extend(field.ilike(token) for field in _text_search_fields())
 
     fts_rank = None
     if _database_supports_postgres_fts(db):

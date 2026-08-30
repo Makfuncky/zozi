@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
+# CountryConfig relationship resolved lazily via string reference in relationship()
+
 __all__ = ["Category", "Product", "ProductVariant", "Review", "WishlistItem", "Wishlist", "ProductVideo", "VideoAnalytics", "ProductFilterMetadata", "ProductFilterOption"]
 
 
@@ -218,7 +220,7 @@ class VideoAnalytics(Base):
     __tablename__ = "video_analytics"
     __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
-    video_id = Column(Integer, ForeignKey("media.product_videos.id", ondelete='CASCADE'), nullable=False, index=True)
+    video_id = Column(Integer, ForeignKey("catalog.product_videos.id", ondelete='CASCADE'), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True, index=True)
     event_type = Column(String(50), nullable=False)
     watch_duration_seconds = Column(Integer, nullable=True)

@@ -1283,19 +1283,19 @@ export default function AddProduct() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="theme-card p-2">
-                  <p className="text-[10px] text-text-faint uppercase tracking-wide">SSIM</p>
+                  <p className="text-xs text-text-faint uppercase tracking-wide">SSIM</p>
                   <p className="text-sm font-bold text-text">{metrics.ssim.toFixed(3)}</p>
                 </div>
                 <div className="theme-card p-2">
-                  <p className="text-[10px] text-text-faint uppercase tracking-wide">PSNR</p>
+                  <p className="text-xs text-text-faint uppercase tracking-wide">PSNR</p>
                   <p className="text-sm font-bold text-text">{metrics.psnr_rgb_db.toFixed(1)} dB</p>
                 </div>
                 <div className="theme-card p-2">
-                  <p className="text-[10px] text-text-faint uppercase tracking-wide">Edge IoU</p>
+                  <p className="text-xs text-text-faint uppercase tracking-wide">Edge IoU</p>
                   <p className="text-sm font-bold text-text">{(metrics.edge_band_iou * 100).toFixed(1)}%</p>
                 </div>
                 <div className="theme-card p-2">
-                  <p className="text-[10px] text-text-faint uppercase tracking-wide">Timing</p>
+                  <p className="text-xs text-text-faint uppercase tracking-wide">Timing</p>
                   <p className="text-sm font-bold text-text">{metrics.timing_s.toFixed(2)}s</p>
                 </div>
               </div>
@@ -1369,11 +1369,11 @@ export default function AddProduct() {
                           });
                           setVariantOptions(newOpts);
                         }}
-                          className="theme-btn-secondary px-2 py-1 rounded text-[10px] flex items-center gap-1">
+                          className="theme-btn-secondary px-2 py-1 rounded text-xs flex items-center gap-1">
                           <Wand2 className="w-3 h-3" /> Fill all options
                         </button>
                         <button type="button" onClick={() => setShowVariantMatrix(true)}
-                          className="theme-btn-secondary px-2 py-1 rounded text-[10px] flex items-center gap-1">
+                          className="theme-btn-secondary px-2 py-1 rounded text-xs flex items-center gap-1">
                           <Grid2x2 className="w-3 h-3" /> Stock Matrix
                         </button>
                       </div>
@@ -1457,14 +1457,14 @@ export default function AddProduct() {
                           {bgLoading === mdl.key ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                           {mdl.label}
                           {isBestForCategory && (
-                            <span className="absolute -top-1.5 -right-1.5 inline-flex items-center px-1 py-0.5 rounded-full bg-emerald-500 text-[8px] font-bold text-white leading-none shadow-sm">
+                            <span className="absolute -top-1.5 -right-1.5 inline-flex items-center px-1 py-0.5 rounded-full bg-emerald-500 text-4xs font-bold text-white leading-none shadow-sm">
                               Best
                             </span>
                           )}
                         </button>
                         {/* Metrics badge */}
                         {metrics && (
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 hidden group-hover:flex items-center gap-1 z-50 bg-gray-900 text-white text-[9px] rounded px-1.5 py-1 shadow-xl whitespace-nowrap">
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 hidden group-hover:flex items-center gap-1 z-50 bg-gray-900 text-white text-3xs rounded px-1.5 py-1 shadow-xl whitespace-nowrap">
                             <span className="text-emerald-400">{metrics.coverage_pct.toFixed(0)}%</span>
                             <span className="text-gray-500">·</span>
                             <span className="text-gray-300">{metrics.timing_s.toFixed(2)}s</span>
@@ -1493,7 +1493,7 @@ export default function AddProduct() {
                   )}
                   <div className="w-px h-5 bg-border/30 mx-1" />
                   <button type="button" onClick={() => setFastMode((p) => !p)}
-                    className={`theme-btn-secondary px-2 py-1.5 text-xs text-[10px] ${fastMode ? 'bg-accent/15 text-accent border-accent/30' : 'bg-surface-2 text-text-muted border-border'}`}>
+                    className={`theme-btn-secondary px-2 py-1.5 text-xs text-xs ${fastMode ? 'bg-accent/15 text-accent border-accent/30' : 'bg-surface-2 text-text-muted border-border'}`}>
                     {fastMode ? '⚡ Fast' : '🎯 Quality'}
                   </button>
                 </div>
@@ -1574,9 +1574,9 @@ export default function AddProduct() {
                   if (suggested.length === 0) return null;
                   return (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      <span className="text-[10px] text-text-faint mr-0.5 self-center">Auto-variants:</span>
+                      <span className="text-xs text-text-faint mr-0.5 self-center">Auto-variants:</span>
                       {suggested.map(s => (
-                        <span key={s.key} className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-[10px] border border-primary/20">
+                        <span key={s.key} className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-xs border border-primary/20">
                           {s.name}
                         </span>
                       ))}
@@ -1646,12 +1646,12 @@ export default function AddProduct() {
                           </div>
                           {quickOptions.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-1.5">
-                              <span className="text-[10px] text-text-faint mr-0.5 self-center">Quick:</span>
+                              <span className="text-xs text-text-faint mr-0.5 self-center">Quick:</span>
                               {quickOptions.filter(o => !(variantOptions[type] || []).includes(o)).slice(0, 8).map((opt) => (
                                 <button key={opt} type="button" onClick={() => {
                                   setVariantOptions(p => ({ ...p, [type]: [...(p[type] || []), opt] }));
                                 }}
-                                  className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-[10px] border border-primary/20 hover:bg-primary/10 transition-colors">
+                                  className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-xs border border-primary/20 hover:bg-primary/10 transition-colors">
                                   +{opt}
                                 </button>
                               ))}
@@ -1771,7 +1771,7 @@ export default function AddProduct() {
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                {draftSavedAt && <p className="text-[10px] text-text-muted mt-1">Saved {new Date(draftSavedAt).toLocaleTimeString()}</p>}
+                {draftSavedAt && <p className="text-xs text-text-muted mt-1">Saved {new Date(draftSavedAt).toLocaleTimeString()}</p>}
               </div>
 
               {/* Submit / Verify */}

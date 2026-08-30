@@ -107,7 +107,7 @@ function TrackingTimeline({
                 />
               </div>
               <span
-                className={`text-[10px] mt-1 text-center leading-tight whitespace-nowrap ${
+                className={`text-xs mt-1 text-center leading-tight whitespace-nowrap ${
                   done ? "theme-status-success" : active ? "theme-status-info font-semibold" : "text-text-faint"
                 }`}
               >
@@ -411,7 +411,7 @@ export default function OrderDetailPage({ params }: PageProps) {
                         Shipment #{shipment.id}
                         {shipment.supplier_name ? ` · ${shipment.supplier_name}` : ""}
                       </span>
-                      <span className="rounded-lg bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                      <span className="rounded-lg bg-primary/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
                         {shipment.status_label || shipment.status.replaceAll("_", " ")}
                       </span>
                     </div>
@@ -451,7 +451,7 @@ export default function OrderDetailPage({ params }: PageProps) {
             {order.payment_intent_id && (
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <CreditCard className="theme-status-info h-3.5 w-3.5 shrink-0" />
-                <span className="font-mono text-[10px] truncate">{order.payment_intent_id}</span>
+                <span className="font-mono text-xs truncate">{order.payment_intent_id}</span>
               </div>
             )}
           </motion.div>
@@ -468,7 +468,7 @@ export default function OrderDetailPage({ params }: PageProps) {
             <div className="mb-3 rounded-xl border border-border/70 bg-surface-2/40 p-3 text-xs text-text-muted">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold text-text">Return policy</p>
-                <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">
+                <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
                   {selectedReturnWindowDays}-day window
                 </span>
               </div>

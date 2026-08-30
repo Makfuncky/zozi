@@ -217,15 +217,15 @@ export default function FlashSalesPanel() {
         {/* Stats cards */}
         <div className="grid grid-cols-3 gap-3">
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-faint">Active Now</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">Active Now</p>
             <p className="mt-1 text-xl font-bold text-success">{activeCount}</p>
           </div>
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-faint">Upcoming</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">Upcoming</p>
             <p className="mt-1 text-xl font-bold text-warning">{upcomingCount}</p>
           </div>
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-faint">Total</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">Total</p>
             <p className="mt-1 text-xl font-bold text-text">{sales.length}</p>
           </div>
         </div>
@@ -281,7 +281,7 @@ export default function FlashSalesPanel() {
                       <TableCell>
                         <span className="text-xs font-semibold text-text">{sale.title}</span>
                         {sale.description && (
-                          <p className="text-[10px] text-text-faint truncate max-w-[200px]">{sale.description}</p>
+                          <p className="text-xs text-text-faint truncate max-w-[200px]">{sale.description}</p>
                         )}
                       </TableCell>
                       <TableCell>
@@ -297,7 +297,7 @@ export default function FlashSalesPanel() {
                         <span className="text-xs text-text-muted">{durationDays > 0 ? `${durationDays}d ` : ""}{durationHours}h</span>
                       </TableCell>
                       <TableCell>
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                           st === "active" ? "bg-success/10 text-success" :
                           st === "upcoming" ? "bg-warning/10 text-warning" :
                           st === "expired" ? "bg-danger/10 text-danger" :
@@ -310,13 +310,13 @@ export default function FlashSalesPanel() {
                             <>
                               <button
                                 onClick={() => handleEdit(sale)}
-                                className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted hover:text-primary transition-colors"
+                                className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted hover:text-primary transition-colors"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleArchive(sale.id)}
-                                className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted hover:text-danger transition-colors"
+                                className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted hover:text-danger transition-colors"
                                 title="Archive"
                               >
                                 <Archive className="h-3 w-3" />
@@ -326,7 +326,7 @@ export default function FlashSalesPanel() {
                           {sale.is_deleted && (
                             <button
                               onClick={() => handleRestore(sale.id)}
-                              className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted hover:text-success transition-colors"
+                              className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted hover:text-success transition-colors"
                               title="Restore"
                             >
                               <RotateCcw className="h-3 w-3" />
@@ -352,18 +352,18 @@ export default function FlashSalesPanel() {
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Title*</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Title*</label>
                   <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
                     className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Description</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Description</label>
                   <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2}
                     className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50 resize-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Discount %*</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Discount %*</label>
                     <input type="number" step="0.01" min="0" max="100" value={form.discount_pct} onChange={(e) => setForm({ ...form, discount_pct: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
@@ -377,12 +377,12 @@ export default function FlashSalesPanel() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Start Date*</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Start Date*</label>
                     <input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">End Date*</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">End Date*</label>
                     <input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>

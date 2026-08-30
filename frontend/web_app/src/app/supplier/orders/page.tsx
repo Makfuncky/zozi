@@ -327,7 +327,7 @@ export default function SupplierOrdersPage() {
   }, []);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const bodyText = dc(density, "text-[10px]", "text-xs", "text-sm");
+  const bodyText = dc(density, "text-xs", "text-xs", "text-sm");
 
   const returnColumns: EnterpriseColumn<any>[] = [
     { key: "id", label: "#", width: "72px", sortable: true, render: (r) => <span className={`${bodyText} font-mono tabular-nums text-text-faint`}>#{r.id}</span> },
@@ -336,7 +336,7 @@ export default function SupplierOrdersPage() {
     { key: "reason", label: "Reason", width: "240px", render: (r) => <span className={`${bodyText} text-text-muted truncate block max-w-[220px]`}>{r.reason || "—"}</span> },
     { key: "refund_amount", label: "Refund", width: "120px", align: "right", render: (r) => <span className={`${bodyText} font-semibold tabular-nums text-text`}>{r.refund_amount != null ? formatMoney(r.refund_amount) : "—"}</span> },
     { key: "status", label: "Status", width: "110px", render: (r) => (
-      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${RETURN_STATUS_CHIP[r.status ?? ""] || "theme-chip-muted"}`}>
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${RETURN_STATUS_CHIP[r.status ?? ""] || "theme-chip-muted"}`}>
         {r.status}
       </span>
     )},
@@ -397,7 +397,7 @@ export default function SupplierOrdersPage() {
                   className="flex h-9 items-center justify-center rounded-xl border border-border bg-surface-1 px-3 text-xs text-text-muted hover:bg-surface-2 disabled:opacity-50">
                   <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
                 </button>
-                <span className="text-[10px] text-text-faint tabular-nums">{total} total</span>
+                <span className="text-xs text-text-faint tabular-nums">{total} total</span>
               </div>
             }
           />

@@ -41,6 +41,28 @@ function renderStars(value: string, max = 5) {
   return `${"★".repeat(filled)}${"☆".repeat(empty)}`;
 }
 
+function sameArray(a: string[], b: string[]) {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function sameAttributes(a: Record<string, string[]>, b: Record<string, string[]>) {
+  if (a === b) return true;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    const av = a[key];
+    const bv = b[key];
+    if (!Array.isArray(av) || !Array.isArray(bv) || !sameArray(av, bv)) return false;
+  }
+  return true;
+}
+
 export default function ProductsPage() {
   return (
     <Suspense fallback={<BrandLoading fullscreen label="Loading products..." />}>
@@ -157,6 +179,10 @@ function ProductsContent() {
 
   const deferredSupplierResults = supplierResults;
 
+  // Stable key for attributes so fetchProducts identity doesn't churn when the
+  // object reference changes but the value is the same.
+  const attributesKey = useMemo(() => JSON.stringify(attributes), [attributes]);
+
   const fetchProducts = useCallback(async (reset = false) => {
     // If visual search is active, results are already set via setProducts
     if (isVisualSearch) {
@@ -211,7 +237,7 @@ function ProductsContent() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, category, sort, minPrice, maxPrice, brand, color, minRating, inStock, selectedTag, effectiveSupplierFilter, deals, hasVideo, hasDiscount, attributes, visibleCount]);
+  }, [debouncedSearch, category, sort, minPrice, maxPrice, brand, color, minRating, inStock, selectedTag, effectiveSupplierFilter, deals, hasVideo, hasDiscount, attributesKey, visibleCount]);
 
   useEffect(() => {
     fetchProducts(true);
@@ -346,36 +372,67 @@ function ProductsContent() {
     }
   }, [params]);
 
+  // Read URL params into state. Idempotent: only writes when the value actually
+  // changes, so it never produces a fresh array/object reference for an unchanged
+  // value. This is critical to avoid a read/write feedback loop with the
+  // router.replace effect below (which would otherwise cause "Maximum update
+  // depth exceeded").
   useEffect(() => {
-    setSearch(params?.get("q") || params?.get("search") || "");
-    setCategory(params?.get("category") || "all");
-    setSort(params?.get("sort") || "default");
-    setView(params?.get("view") === "list" ? "list" : "grid");
-    setTrendingOnly(params?.get("trending") === "1");
-    setNewArrivals(params?.get("newArrivals") === "1");
-    setBestSellers(params?.get("bestSellers") === "1");
-    setDiscountPct(params?.get("discountPct") || "");
-    setMinPrice(params?.get("minPrice") || "");
-    setMaxPrice(params?.get("maxPrice") || "");
-    setBrand(params?.get("brand") || "");
-    setBrands(params?.get("brands") ? params.get("brands")!.split(",").filter(Boolean) : []);
-    setColor(params?.get("color") || "");
-    setMinRating(params?.get("minRating") || "");
-    setInStock(params?.get("inStock") === "true");
-    setSelectedTag(params?.get("tag") || "");
-    setSupplier(params?.get("supplier") || "");
-    setSelectedSuppliers(params?.get("supplier") ? params.get("supplier")!.split(",").filter(Boolean) : []);
-    setDeals(params?.get("deals") === "1");
-    setHasVideo(params?.get("hasVideo") === "1");
-    setHasDiscount(params?.get("hasDiscount") === "1");
-    setAttributes(() => {
-      try {
-        return params?.get("attributes") ? JSON.parse(params.get("attributes")!) : {};
-      } catch {
-        return {};
-      }
-    });
-    setSaleId(params?.get("sale_id") || "");
+    const getStr = (key: string, fallback = "") => params?.get(key) ?? fallback;
+    const nextSearch = getStr("q") || getStr("search");
+    const nextCategory = getStr("category") || "all";
+    const nextSort = getStr("sort") || "default";
+    const nextView = params?.get("view") === "list" ? "list" : "grid";
+    const nextTrending = params?.get("trending") === "1";
+    const nextNewArrivals = params?.get("newArrivals") === "1";
+    const nextBestSellers = params?.get("bestSellers") === "1";
+    const nextDiscountPct = getStr("discountPct");
+    const nextMinPrice = getStr("minPrice");
+    const nextMaxPrice = getStr("maxPrice");
+    const nextBrand = getStr("brand");
+    const nextBrands = params?.get("brands") ? params.get("brands")!.split(",").filter(Boolean) : [];
+    const nextColor = getStr("color");
+    const nextMinRating = getStr("minRating");
+    const nextInStock = params?.get("inStock") === "true";
+    const nextSelectedTag = getStr("tag");
+    const nextSupplier = getStr("supplier");
+    const nextSelectedSuppliers = params?.get("supplier")
+      ? params.get("supplier")!.split(",").filter(Boolean)
+      : [];
+    const nextDeals = params?.get("deals") === "1";
+    const nextHasVideo = params?.get("hasVideo") === "1";
+    const nextHasDiscount = params?.get("hasDiscount") === "1";
+    let nextAttributes: Record<string, string[]> = {};
+    try {
+      nextAttributes = params?.get("attributes") ? JSON.parse(params.get("attributes")!) : {};
+    } catch {
+      nextAttributes = {};
+    }
+    const nextSaleId = getStr("sale_id");
+
+    setSearch((p) => (p === nextSearch ? p : nextSearch));
+    setCategory((p) => (p === nextCategory ? p : nextCategory));
+    setSort((p) => (p === nextSort ? p : nextSort));
+    setView((p) => (p === nextView ? p : nextView));
+    setTrendingOnly((p) => (p === nextTrending ? p : nextTrending));
+    setNewArrivals((p) => (p === nextNewArrivals ? p : nextNewArrivals));
+    setBestSellers((p) => (p === nextBestSellers ? p : nextBestSellers));
+    setDiscountPct((p) => (p === nextDiscountPct ? p : nextDiscountPct));
+    setMinPrice((p) => (p === nextMinPrice ? p : nextMinPrice));
+    setMaxPrice((p) => (p === nextMaxPrice ? p : nextMaxPrice));
+    setBrand((p) => (p === nextBrand ? p : nextBrand));
+    setBrands((p) => (sameArray(p, nextBrands) ? p : nextBrands));
+    setColor((p) => (p === nextColor ? p : nextColor));
+    setMinRating((p) => (p === nextMinRating ? p : nextMinRating));
+    setInStock((p) => (p === nextInStock ? p : nextInStock));
+    setSelectedTag((p) => (p === nextSelectedTag ? p : nextSelectedTag));
+    setSupplier((p) => (p === nextSupplier ? p : nextSupplier));
+    setSelectedSuppliers((p) => (sameArray(p, nextSelectedSuppliers) ? p : nextSelectedSuppliers));
+    setDeals((p) => (p === nextDeals ? p : nextDeals));
+    setHasVideo((p) => (p === nextHasVideo ? p : nextHasVideo));
+    setHasDiscount((p) => (p === nextHasDiscount ? p : nextHasDiscount));
+    setAttributes((p) => (sameAttributes(p, nextAttributes) ? p : nextAttributes));
+    setSaleId((p) => (p === nextSaleId ? p : nextSaleId));
   }, [params]);
 
   useEffect(() => {
@@ -561,7 +618,7 @@ function ProductsContent() {
             onChange={(e) => handleHi(Number(e.target.value))}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-text-faint">
+        <div className="flex justify-between text-xs text-text-faint">
           <span>{format(lo)}</span>
           <span>{format(hi)}</span>
         </div>
@@ -690,7 +747,7 @@ function ProductsContent() {
             )}
           </p>
           {activeFilterCount > 0 && (
-            <span className="text-[10px] text-text-faint">{activeFilterCount} {activeFilterCount === 1 ? tr("filterApplied") : tr("filtersApplied")}</span>
+            <span className="text-xs text-text-faint">{activeFilterCount} {activeFilterCount === 1 ? tr("filterApplied") : tr("filtersApplied")}</span>
           )}
         </div>
 
@@ -1006,7 +1063,7 @@ function SupplierStoreCard({
           backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)",
           backgroundSize: "18px 18px",
         }} />
-        <div className={`absolute right-3 top-2.5 flex items-center gap-1.5 rounded-full border border-current/25 bg-background/75 px-2.5 py-1 text-[10px] font-bold backdrop-blur-sm ${badgeInfo.toneClass}`}>
+        <div className={`absolute right-3 top-2.5 flex items-center gap-1.5 rounded-full border border-current/25 bg-background/75 px-2.5 py-1 text-xs font-bold backdrop-blur-sm ${badgeInfo.toneClass}`}>
           <span className="text-base leading-none">{badgeInfo.emoji}</span>
           <span className="uppercase tracking-wide">{badgeInfo.shortLabel ?? badgeInfo.label}</span>
         </div>
@@ -1030,7 +1087,7 @@ function SupplierStoreCard({
           </div>
         )}
         <div className="mb-1 min-w-0 flex-1">            {isVerified && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
+            <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success">
               <CheckCircle className="h-3 w-3" />
               Verified
             </span>
@@ -1053,18 +1110,18 @@ function SupplierStoreCard({
       {/* Stats grid */}
       <div className="mx-4 mt-3 grid grid-cols-3 gap-1.5 text-xs">
         <div className="flex flex-col items-center rounded-xl bg-surface-2/60 py-2">
-          <span className="text-[10px] font-medium text-text-faint">Products</span>
+          <span className="text-xs font-medium text-text-faint">Products</span>
           <span className="mt-0.5 font-bold text-text">{supplier.product_count.toLocaleString()}</span>
         </div>
         <div className="flex flex-col items-center rounded-xl bg-surface-2/60 py-2">
-          <span className="text-[10px] font-medium text-text-faint">Rating</span>
+          <span className="text-xs font-medium text-text-faint">Rating</span>
           <span className="mt-0.5 inline-flex items-center gap-0.5 font-bold text-text">
             <Star className="h-3 w-3 fill-warning text-warning" />
             {reviewCount > 0 ? avgRating.toFixed(1) : "New"}
           </span>
         </div>
         <div className="flex flex-col items-center rounded-xl bg-surface-2/60 py-2">
-          <span className="text-[10px] font-medium text-text-faint">Sales</span>
+          <span className="text-xs font-medium text-text-faint">Sales</span>
           <span className="mt-0.5 font-bold text-text">{Number(supplier.total_sales ?? 0).toLocaleString()}</span>
         </div>
       </div>

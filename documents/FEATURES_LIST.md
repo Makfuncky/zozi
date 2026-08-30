@@ -5052,10 +5052,6 @@ Here are the **project rules and decisions** we've established:
 30. **Providers never import domains** — Data flows through parameters and return values only.
 
 
-
-
-
-
 ------------------------------------------------------------
 
 - Proceed for Phase 18, 19, 20, 21, 22 and verification, investigation, correction, testing. 
@@ -5138,16 +5134,6 @@ Here are the **project rules and decisions** we've established:
 
 
 
-
-
-
-
-
-
-
-
-
-
 ---------------------------------------------------------------
 > COMPLETE FULL CODEBASE `SOLVER` PROMPT: 
 ---------------------------------------------------------------
@@ -5218,101 +5204,6 @@ Here are the **project rules and decisions** we've established:
 
 ------------------------------------------------------------------------------------------
 
-- Do the detail investigation and findout the problems of the "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\{DOMAIN}" according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
-
-- Some problem, I dignose which are services are not proper aligned and code & files of services are in worst shape. and all the relevant code of the `{DOMAIN}` domain is not correctly placed and logically broken. not proper files names and not right plaement also. Now your turn to list down all the problem in detail. a range of architectural and logical violation and also logics are completely broken which must be accoding to a professional codes and for professional virtual market place and e-commerce. 
-
-- table, schema, port, events, database connection, infrastructure connection, router connection, provider tools proper connection, proper foldering, proper filing, proper coding and correct and complete and code all are missing 
-
-- List down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document in `docs\action\{DOMAIN}_INVESTIGATION.md` and list down each dignosed problem properly.
-------------------------------------------------------------------------------------------
-
----------------------------------------------------------------
-
-- Some problem, I dignose which are services are not proper aligned and code & files of services are in worst shape. and all the relevant code of the catalog domain is not correctly placed and logically broken. not proper files names and not right plaement also. Now your turn to list down all the problem in detail. a range of architectural and logical violation and also logics are completely broken which must be accoding to a professional codes and for professional virtual market place and e-commerce. 
-- Handling of the database, table, security, wiring with other backend folders, using of `providers-tools` 
-- List down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document in `docs\action\**` and list down each dignosed problem properly.
-
-
----------------------------------------------------------------
-
-- Do the detail investigation and findout the problems of the "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\accounts" according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
-- Some problem, I dignose which are services are not proper aligned and code & files of services are in worst shape. all the accounts means admin, employees, suppliers, logistics, customers are not correctly placed and all the relevant code of the accounts domain is not correctly placed and logically broken. Now your turn to list down all the problem in detail.
-- List down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.
-
----------------------------------------------------------------
-modules/{m}/routers/{d}:
-modules:
-domains/{d}/services/{sub-domain}:
-domains:
-database: 
-security:
-middleware:
-jobs:
-poviders:
-kernal:
-infrastructure:
-rbac:
-frontend/web_app:
-frontned/mobile_app:
-
----------------------------------------------------------------
-
-
-Objective: 
-Reference_file:
-Target: 
-Instruction:
-let's proceed to reslove all the problem mentioned into  `docs\COMPLETE_INVESTIGATION_REPORT.md`, 
-- Read Backend completely while resolving the problems.
-- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
-- You are not allowed to make any mistake and ensure problem is resolved completely.
-- Use Multiples 10 to 12 sub-agent to resolve the problem accurately and give them clear instructions to resolve particular problem becasue we can't afford any new error.
-- Run agents for Verification and check the status and if any problem still remaining.
-- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
-- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
-
----
-
-
-let's proceed to reslove all the problem mentioned into  `docs\COMPLETE_INVESTIGATION_REPORT.md`, 
-- Read Backend completely while resolving the problems.
-- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
-- You are not allowed to make any mistake and ensure problem is resolved completely.
-- Use Multiples 10 to 12 sub-agent to resolve the problem accurately and give them clear instructions to resolve particular problem becasue we can't afford any new error.
-- Run agents for Verification and check the status and if any problem still remaining.
-- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
-- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
-
-
-
-
-start to resolve all the `domain`, and other backend folders except `routers` and `provider` because another agent is handling `routers` and `provider`
-
-
-Resolve above all problems separately because i don't want these problem again to see, without creating new problem. ensure these all the problems resolve so run agents which are resloving the problem, then agent who will investigate problems are properly resolved or not and do correction and again run agent if any problem still remaining.
-
-
-----
-
-You are the router manager and you didn't resolve yet below important problems.
-
-run agents which are resloving the problem, then agent who will investigate problems are properly resolved or not and do correction and again run agent if any problem still remaining.
-
-i don't have problem with the files size but business logic in the router is not acceptable, run agent to check the business logics kept inside the router then extract into domain. routers are not allowed to keep busienss logics 
-
-Resolve below problems correctly. and ensure there is no more problems inside the router any more.
-
-read the `ROUTER_SHIFT_PLAN.md` which is investigated report that have to be verify and have to make thin and business logic must be shifted into `backend\domains\{d}\service\**`. and please when you are shifting the code you  must have shift carefully inside the relevant file and check first that business logic is already inside or not.
-
----
-
-Do a complete investigation of `backend` and find out what are broken, need enhancement, improvement, wriing problem, architecture problem, logic problem, security problem.
-Just investigate and make a detail report. and use multiples 6 or 7 sub-agents at each level for better and detailed investigation.
-The architecture files is `ARCHITECTURE_DIAGRAM.md`
-
-
-
 
 
 -------------------------------------------------------------
@@ -5343,23 +5234,23 @@ Get-ChildItem -Recurse -Filter "__pycache__" -Path "D:\Projects\10- E-COMMERCE W
 
 -------------------------------------------------------------
 
+- `ARCHITECTURE_DIAGRAM.md` the $Law$ must be read top to bottom becasue it is $Benchmark$.
+- Do the complete investigation and understand `backend`, `frontend`, `database`, complete `architecture` and it's problem.
 
 
+- Investigate the list of problems for the seed data which is biggest hurdle for logins, product visibility, order cycle and etc, fix them in systematic way and ensure by doing browser playwright test properly to resolve the login of admin, supplier, customer, logistic partner, employee by prefroming logins, upload some product dummy product from supplier account, perform customer order to cart and placement role to ensure evrything is working.
 
 
-
-
-
-
-
-
+- `ARCHITECTURE_DIAGRAM.md` the $Law$ must be read top to bottom becasue it is $Benchmark$.
+- Do the complete investigation and understand `backend`, `frontend`, `database`, complete `architecture` and it's problem.
+- Do the complete investigaion of design problems and improvement such as removing `black boarder in light theme`, `glossy look`, `popup colors and looks`, and etc.
+- list down all the problem and improvement.
 
 
 **Target**: 
 - run the `backend` and `frontend` and make system product ready but without breaking the $Law$ of `ARCHITECTURE_DIAGRAM.md` which is architecture $Benchmark$
 
 **Process**
-- `ARCHITECTURE_DIAGRAM.md` must be read top to bottom becasue it is $Benchmark$.  
 - Perform the complete investigation and inspection of `backend`, `frontend` to under the *problem* to be resolve.
 - Make a pipeline in file to file and line to line to resolve the *problem* which discovered and make the design the solution according to the $Benchmark$ of `ARCHITECTURE_DIAGRAM.md`.
 - Start implemetation of above designed solution to resolve the problem to achieve the target to run the appication.
@@ -5368,11 +5259,84 @@ Get-ChildItem -Recurse -Filter "__pycache__" -Path "D:\Projects\10- E-COMMERCE W
 - If the taget is not acheived and application is not running successfully then repeat the process.
 - You must have to follow `ARCHITECTURE_DIAGRAM.md` and run the application and resolve all the error and problems.
 
+-------------------------------------------------------------
+- `ARCHITECTURE_DIAGRAM.md` the $Law$ must be read top to bottom becasue it is $Benchmark$.
+- Do the complete investigation and understand `backend`, `frontend`, `database`, complete `architecture` and it's problem.
+- Do the complete investigaion of design problems and improvement such as removing `black boarder in light theme`, `glossy look`, `popup colors and looks`, and etc.
+- list down all the problem and improvement.
+- Investigate the list of problems for the seed data which is biggest hurdle for logins, product visibility, order cycle and etc, fix them in systematic way and ensure by doing browser playwright test properly to resolve the login of admin, supplier, customer, logistic partner, employee by prefroming logins, upload some product dummy product from supplier account, perform customer order to cart and placement role to ensure evrything is working.
+- do the browser test and check the running logs of frontend and backend and resolve all the problem.
+- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.  
+- Use maximum sub-agent at a time to identify the problem *accurately* and *faster* and give them clear instructions to identify problem correctly.
+- Our target is to achieve architecture clean and production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality and etc.
+---
+
+Proceed to resolving the below problem and also `Do browser test properly to confirm everything is working 100% correctly`
+
+
+- `ARCHITECTURE_DIAGRAM.md` -`Law` must be read top to bottom because it is $Benchmark$.
+- Do the complete investigation and understand backend, frontend, database, complete architecture and it's problem.
+- Do the complete investigation and fixing of design problems and improvement such as removing black boarder in light theme, glossy look, popup colors and looks, and the complete designing which need to be fix.
+- Do the complete investigation and fixing of wiring of backend, frontend, database which have a range of problem to be fix.
+- the seed data is not reflecting into the browser test, do the complete investigation and fixing.
+- ensure everything is working perfectly into the system.
 
 
 
 
+We have design which needs to be investigate into git. but I don't wanna pull everything from git becasue current project have a range of corrections. can you put from git just style and design files and safe somewhere please. then again investigate.
+need your help for CSS and Design things investigation in proper way. 
+we have previous version of project into git where design was good and which we need to copy into our project.
+do the investigation in detail and make a report with code blocks which should to bring from git to our current directory.
+you can use max sub agent also for making document, but I want complete codes into the document and implementation plan in complete detail.
+DESIGN_MIGRATION_REPORT.md is not complete. check again
+
+
+
+You didn't make report properly because you mentioned for restore the class but you didn't check the overlaping, duplication, modern look suggestion, better animation, more nicer look suggestion of components and etc.
+right now we are making complete plan for design which we are going to plug into our current application.
+
+- `ARCHITECTURE_DIAGRAM.md` -`Law` must be read top to bottom because it is $Benchmark$.
+- `_design_investigation` we have all kind of files which we are keeping of current and previous files of the design to make plan what will be the design/style we are going to keep into our current project.
+- You have to make plan and make a `new document` in detail  line to line which we will keep in our design after analysis of all files in detail line to line completely, and findout what actually we have should to bring into current project design/style which will make make better and modern look of the application, modern look suggestion, better animation, more nicer look suggestion of components and etc.
+- the theme, color scheme, glossy and glassy look we are going to keep, popup and other compoment must be looks modern and you already understand by deep reading of the codes.
+- right now we have more then 12500+ line of codes, so do your job carefully to make plan.
+- read `frontend` in detail which will make you understand to make the design plan in detail.
+- I am repeating MAKE THE PLAN LINE TO LINE AND FILE TO FILE WHICH CAN IMPLEMENT AND COPY PASTE EASILY AND PLAY AND PLAY.
+
+
+- Read `ARCHITECTURE_DIAGRAM.md` -`Law` must be read top to bottom because it is $Benchmark$.
+- Read `_design_investigation\DESIGN_PLAN_COMPREHENSIVE.md` in detail and start implementation of design properly, completely and carefully in our project.
+- After each implementation do the complete wiring of the design into the frontend and also do the test and verify properly in detail.
+- Do the complete broswer playwright test also of each page when you finish everything and ensure everything is working 100% and looking fabulous.
+
+- Read `ARCHITECTURE_DIAGRAM.md` -`Law` must be read top to bottom because it is $Benchmark$.
+- Read complete database setup, the seed data is not visible while running the application, and logins also not working.
+- Do the complete investigation in detail of the reason of not visible seed data and list down all the problem and solution of all problem and start implementation.
+- After each implementation do the complete wiring of the database and also do the test and verify properly in detail.
+- Do the complete broswer playwright test also of each page when you finish everything and ensure everything is working 100%.
+
+
+- Identify all problems, violations, and risks compared to `ARCHITECTURE_DIAGRAM.md` Law and architecture which is $Benchmark$ 
+- `ARCHITECTURE_DIAGRAM.md` must be read top to bottom becasue it is $Benchmark$.  
+- Do the detail investigation and findout the problems of the `backend` according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
+- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.  
+- Use maximum sub-agent at a time to identify the problem *accurately* and *faster* and give them clear instructions to identify problem correctly.
+- Our target is to achieve architecture clean and production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality and etc.
 
 
 
 
+- Read `ARCHITECTURE_DIAGRAM.md` -`Law` must be read top to bottom because it is $Benchmark$.
+- Do the complete browser playwright test of all pages one by one and all the features as each role-play (admin, customer, employee, supplier, logistic partner) of each page and check which page is not properly not connected with the `backend`, `database`.
+- Do role-play test as human of each feature and invesitage which feature of which page is working correctly and which feature is not working. 
+- Do the complete investigation and understand `backend`, `frontend`, `database`, complete `architecture` problems.
+- Use properly seed data system which we have already.
+- Do not forget two country's detail {emplyee, supplier, customer, logistic, product, banner, flash discount and other} into the seed database to check how the backend and frontend working on them for 2 countries becasue as we discussed both must be separated and for admin it should be both separate and consolidated.
+- Make a report 
+	| Sno | Module Name | Domain name | Page | feature Name | Role-Play Check | Status | Problem | Solution |	 
+- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.
+- Do the complete broswer playwright test of each page and feature when you finish everything and ensure everything is capturing into the report 100% correct.
+- Use maximum sub-agent at a time to identify the problem *accurately* and *faster* and give them clear instructions to identify problem correctly.
+- use loging system to track all the agent performance and working properly and ensure all the pages and feature are proceesed 100% in broswer test.
+- Our target is to achieve architecture clean and production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality and etc.

@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (currentAccessToken) {
-        const meRes = await apiFetch("/auth/me");
+        const meRes = await apiFetch("/api/v1/auth/me");
         if (meRes.ok) {
           const userData = await meRes.json();
           return await applyAuthenticatedUser(userData);
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (refreshResult.status === "ok") {
         // Fetch the user profile using the refreshed in-memory access token.
-        const meRes = await apiFetch("/auth/me");
+        const meRes = await apiFetch("/api/v1/auth/me");
         if (meRes.ok) {
           const userData = await meRes.json();
           return await applyAuthenticatedUser(userData);

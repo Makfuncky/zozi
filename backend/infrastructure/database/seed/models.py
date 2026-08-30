@@ -10,13 +10,14 @@ import importlib as _importlib
 
 # Registry: model_name → (module_path, class_name)
 _REGISTRY: dict[str, tuple[str, str]] = {
-    # governance
+    # accounts
     "User": ("domains.accounts.models.user", "User"),
     # catalog
     "Category": ("domains.catalog.models.products", "Category"),
     "Product": ("domains.catalog.models.products", "Product"),
     # comms
     "EmailTemplate": ("domains.comms.models.marketing", "EmailTemplate"),
+    # suppliers
     "SupplierProfile": ("domains.suppliers.models.suppliers", "SupplierProfile"),
     # country
     "CountryConfig": ("domains.country.models.countries", "CountryConfig"),
@@ -34,6 +35,17 @@ _REGISTRY: dict[str, tuple[str, str]] = {
     # hr
     "Employee": ("domains.hr.models.employee_models", "Employee"),
     "Office": ("domains.hr.models.employee_models", "Office"),
+    # finance (for treasury integration)
+    "Account": ("domains.finance.models.finance", "Account"),
+    "AccountGroup": ("domains.finance.models.finance", "AccountGroup"),
+    "TreasuryAccount": ("domains.finance.models.finance", "TreasuryAccount"),
+    # promotions
+    "Banner": ("domains.promotions.models.promotions", "Banner"),
+    "FlashSale": ("domains.promotions.models.promotions", "FlashSale"),
+    "FlashSaleItem": ("domains.comms.models.marketing", "FlashSaleItem"),
+    "Coupon": ("domains.promotions.models.promotions", "Coupon"),
+    # supplier products (country-specific)
+    "SupplierProduct": ("domains.suppliers.models.products", "SupplierProduct"),
 }
 
 _CACHE: dict[str, object] = {}

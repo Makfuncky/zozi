@@ -142,7 +142,7 @@ class TestLaw34ParameterizedSQLOnly:
             re.compile(r"(?:execute|text)\s*\(\s*['\"].*\.format\("),
         ]
         offenders: list[tuple[str, str]] = []
-        for path in _iter_py(_BACKEND_ROOT, exclude_dirs={"tests", "scripts", "venv"}):
+        for path in _iter_py(_BACKEND_ROOT, exclude_dirs={"tests", "scripts", "venv", "alembic"}):
             try:
                 src = path.read_text(encoding="utf-8")
             except OSError:

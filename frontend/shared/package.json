@@ -6,46 +6,41 @@
     "types": "src/index.ts",
     "exports": {
         ".": "./src/index.ts",
-        "./api-core": "./src/api-core.ts",
-        "./types": "./src/types.ts",
-        "./productQuery": "./src/productQuery.ts",
-        "./theme": "./src/theme.ts",
-        "./theme.native": "./src/theme.native.ts",
-        "./errorLogging": "./src/errorLogging.ts"
+        "./*": "./src/*.ts"
     },
-    "scripts":  {
-                    "typecheck":  "tsc --noEmit",
-                    "test":  "npx jest --passWithNoTests",
-                    "check:component-porting":  "npm run lint --prefix ../web_app \u0026\u0026 npm run lint --prefix ../mobile_app \u0026\u0026 npm run typecheck \u0026\u0026 npm test",
-                    "build":  "tsc --outDir dist --declaration"
-                },
-    "peerDependencies":  {
-                             "react":  "^18.0.0 || ^19.0.0",
-                             "react-dom":  "^18.0.0 || ^19.0.0",
-                             "react-native":  "^0.70.0 || ^0.76.0",
-                             "react-native-svg":  "\u003e=12.0.0",
-                             "react-native-web":  "^0.19.0 || ^0.21.0"
-                         },
-    "dependencies":  {
-                         "clsx":  "^2.1.1",
-                         "framer-motion":  "^11.5.6",
-                         "lucide-react":  "^0.563.0",
-                         "tailwind-merge":  "^2.6.1",
-                         "zustand":  "^5.0.14"
-                     },
-    "devDependencies":  {
-                            "@testing-library/dom":  "^10.4.1",
-                            "@testing-library/jest-dom":  "^6.0.0",
-                            "@testing-library/react":  "^16.3.0",
-                            "@types/jest":  "^29.0.0",
-                            "@types/react":  "^19.2.17",
-                            "@types/react-dom":  "^19.2.3",
-                            "@types/react-native":  "~0.73.0",
-                            "jest":  "^29.0.0",
-                            "jest-environment-jsdom":  "^29.0.0",
-                            "react":  "^19.2.7",
-                            "react-dom":  "^19.2.7",
-                            "ts-jest":  "^29.0.0",
-                            "typescript":  "^5.9.3"
-                        }
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "test": "npx jest --passWithNoTests",
+        "check:component-porting": "npm run lint --prefix ../web_app && npm run lint --prefix ../mobile_app && npm run typecheck && npm test",
+        "build": "tsc --outDir dist --declaration"
+    },
+    "peerDependencies": {
+        "react": "^18.0.0 || ^19.0.0",
+        "react-dom": "^18.0.0 || ^19.0.0",
+        "react-native": "^0.70.0 || ^0.76.0",
+        "react-native-svg": ">=12.0.0",
+        "react-native-web": "^0.19.0 || ^0.21.0"
+    },
+    "dependencies": {
+        "clsx": "^2.1.1",
+        "framer-motion": "^11.5.6",
+        "lucide-react": "^0.563.0",
+        "tailwind-merge": "^2.6.1",
+        "zustand": "^5.0.14"
+    },
+    "devDependencies": {
+        "@testing-library/dom": "^10.4.1",
+        "@testing-library/jest-dom": "^6.0.0",
+        "@testing-library/react": "^16.3.0",
+        "@types/jest": "^29.0.0",
+        "@types/react": "^18.3.1",
+        "@types/react-dom": "^18.3.1",
+        "@types/react-native": "~0.73.0",
+        "jest": "^29.0.0",
+        "jest-environment-jsdom": "^29.0.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "ts-jest": "^29.0.0",
+        "typescript": "^5.9.3"
+    }
 }

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
  *    unlayered CSS – fixing the "bar expands instead of dropdown floating" bug.
  *  • `glass-search` is applied ONLY to the bar container, NOT to the input.
  *  • Outer wrapper carries `z-[60]` so the filter bar stacks above page content.
- *  • All dropdowns use `z-[999]` consistently.
+ *  • All dropdowns use `z-modal` consistently.
  *  • RTL support via `dir` attribute + logical CSS properties throughout.
  *  • Component owns its dropdown-visibility state and outside-click handling.
  */
@@ -230,7 +230,7 @@ function FilterSearchBar({
   // Note: glass-dropdown is in @layer components so `absolute`, `z-*`,
   // `overflow-*` Tailwind utilities correctly override it.
   const panelBase =
-    "glass-dropdown absolute top-[calc(100%+6px)] z-[999] rounded-2xl overflow-hidden";
+    "glass-dropdown absolute top-[calc(100%+6px)] z-modal rounded-2xl overflow-hidden";
   const panelStart = `${panelBase} start-0`; // logical: left in LTR, right in RTL
 
   return (
@@ -291,7 +291,7 @@ function FilterSearchBar({
                   transition={dropTransition}
                   className={`${panelStart} w-56 max-h-[70vh] overflow-y-auto`}
                 >
-                  <li className="flex items-center gap-2 border-b border-border px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+                  <li className="flex items-center gap-2 border-b border-border px-4 py-2 text-xs font-semibold uppercase tracking-widest text-text-faint">
                     <Filter className="h-3 w-3 text-primary" />
                     {tr("department")}
                   </li>
@@ -373,7 +373,7 @@ function FilterSearchBar({
                   transition={dropTransition}
                   className={`${panelStart} w-52 p-3`}
                 >
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-text-faint">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-text-faint">
                     Sort Direction
                   </p>
                   <div className="mb-3 flex flex-wrap gap-1">
@@ -390,7 +390,7 @@ function FilterSearchBar({
                           onSetSort(sort === value ? "default" : value);
                           onResetVisibleCount();
                         }}
-                        className={`rounded-full border px-2.5 py-1 text-[10px] transition-colors duration-150 ${
+                        className={`rounded-full border px-2.5 py-1 text-xs transition-colors duration-150 ${
                           sort === value
                             ? "border-primary/30 bg-primary/20 text-primary"
                             : "border-border text-text-muted hover:text-text"
@@ -401,7 +401,7 @@ function FilterSearchBar({
                     ))}
                   </div>
 
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-text-faint">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-text-faint">
                     {tr("priceRange")}
                   </p>
                   {(() => {
@@ -449,7 +449,7 @@ function FilterSearchBar({
                             }}
                           />
                         </div>
-                        <div className="mt-1 flex justify-between text-[10px] text-text-faint">
+                        <div className="mt-1 flex justify-between text-xs text-text-faint">
                           <span>{formatCurrent(lo)}</span>
                           <span>{formatCurrent(hi)}</span>
                         </div>
@@ -483,7 +483,7 @@ function FilterSearchBar({
                           closeAll();
                           onResetVisibleCount();
                         }}
-                        className={`rounded-full border px-2.5 py-1 text-[10px] transition-colors duration-150 ${
+                        className={`rounded-full border px-2.5 py-1 text-xs transition-colors duration-150 ${
                           minPrice === mn && maxPrice === mx
                             ? "border-primary/30 bg-primary/20 text-primary"
                             : "border-border text-text-muted hover:text-text"
@@ -493,7 +493,7 @@ function FilterSearchBar({
                       </button>
                     ))}
                     {(minPrice || maxPrice) && (
-                      <Button variant="danger" className="rounded-full border border-danger/30 px-2.5 py-1 text-[10px] text-danger transition-colors duration-150" type="button"
+                      <Button variant="danger" className="rounded-full border border-danger/30 px-2.5 py-1 text-xs text-danger transition-colors duration-150" type="button"
                         onClick={() => {
                           onSetMinPrice("");
                           onSetMaxPrice("");
@@ -542,7 +542,7 @@ function FilterSearchBar({
                   transition={dropTransition}
                   className={`${panelStart} w-44`}
                 >
-                  <li className="border-b border-border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-text-faint">
+                  <li className="border-b border-border px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-text-faint">
                     {tr("minRating")}
                   </li>
                   {(["4", "3", "2", "1"] as const).map((r) => (
@@ -616,7 +616,7 @@ function FilterSearchBar({
                   transition={dropTransition}
                   className={`${panelStart} max-h-52 w-56 overflow-y-auto`}
                 >
-                  <li className="flex items-center gap-2 border-b border-border px-4 py-1.5 text-[10px] text-text-faint">
+                  <li className="flex items-center gap-2 border-b border-border px-4 py-1.5 text-xs text-text-faint">
                     <Store className="h-3 w-3" />
                     {tr("allSuppliers")}
                   </li>
@@ -689,14 +689,14 @@ function FilterSearchBar({
                     transition={dropTransition}
                     className={`${panelStart} min-w-[18rem] w-full`}
                   >
-                    <li className="flex items-center gap-2 border-b border-border px-4 py-2 text-[10px] text-primary">
+                    <li className="flex items-center gap-2 border-b border-border px-4 py-2 text-xs text-primary">
                       <Sparkles className="h-3 w-3" />
                       {tr("aiSuggestions")}
                     </li>
 
                     {supplierSuggestions.length > 0 && (
                       <>
-                        <li className="border-b border-border/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-text-faint">
+                        <li className="border-b border-border/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-text-faint">
                           Supplier storefronts
                         </li>
                         {supplierSuggestions.map((item, index) => (
@@ -729,7 +729,7 @@ function FilterSearchBar({
 
                     {suggestions.length > 0 && (
                       <>
-                        <li className="border-y border-border/70 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-text-faint">
+                        <li className="border-y border-border/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-text-faint">
                           Products
                         </li>
                         {suggestions.map((s, i) => (
@@ -863,7 +863,7 @@ function FilterSearchBar({
                   transition={dropTransition}
                   className={`${panelStart} w-44`}
                 >
-                  <li className="border-b border-border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-text-faint">
+                  <li className="border-b border-border px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-text-faint">
                     {tr("minDiscount")}
                   </li>
                   {(["10", "20", "30", "50"] as const).map((val) => (

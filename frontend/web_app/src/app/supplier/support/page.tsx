@@ -319,7 +319,7 @@ function SupplierSupportPageContent() {
                         <p className="text-sm font-semibold text-text">#{ticket.id} {ticket.subject}</p>
                         <p className="mt-1 text-xs text-text-muted">Created {formatDate(ticket.created_at)} · Priority {ticket.priority}</p>
                       </div>
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase ${STATUS_CHIP[ticket.status] || "theme-chip-muted"}`}>{ticket.status.replaceAll("_", " ")}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${STATUS_CHIP[ticket.status] || "theme-chip-muted"}`}>{ticket.status.replaceAll("_", " ")}</span>
                     </div>
                     {ticket.reply_count ? <p className="mt-2 text-xs text-text-faint">Replies: {ticket.reply_count}</p> : null}
                   </article>
@@ -381,7 +381,7 @@ function SupplierSupportPageContent() {
                         <p className="text-sm font-semibold text-text">#{dispute.id} {dispute.title || "Untitled dispute"}</p>
                         <p className="mt-1 text-xs text-text-muted">{dispute.dispute_type} · Priority {dispute.priority} · Created {formatDate(dispute.created_at)}</p>
                       </div>
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase ${STATUS_CHIP[dispute.status] || "theme-chip-muted"}`}>{dispute.status.replaceAll("_", " ")}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${STATUS_CHIP[dispute.status] || "theme-chip-muted"}`}>{dispute.status.replaceAll("_", " ")}</span>
                     </div>
                     <p className="mt-2 text-sm text-text-muted">{dispute.description}</p>
                     {dispute.related_order_id ? <p className="mt-2 text-xs text-text-faint">Related order #{dispute.related_order_id}</p> : null}

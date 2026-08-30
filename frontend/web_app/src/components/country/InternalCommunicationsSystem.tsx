@@ -170,7 +170,7 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   isActive
                     ? "bg-primary text-white"
                     : "bg-surface-2 text-text-muted hover:text-text border border-border"
@@ -179,7 +179,7 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
                 <Icon className="h-3 w-3" />
                 {cat.label}
                 {!isActive && cat.id !== "all" && messages.filter((m) => m.category === cat.id).length > 0 && (
-                  <span className="ml-1 bg-surface-3 px-1.5 py-0.5 rounded text-[9px]">
+                  <span className="ml-1 bg-surface-3 px-1.5 py-0.5 rounded text-3xs">
                     {messages.filter((m) => m.category === cat.id).length}
                   </span>
                 )}
@@ -202,7 +202,7 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
             New Internal Communication
           </h4>
           <div className="grid gap-3 sm:grid-cols-3">
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Subject
               <input
                 value={newSubject}
@@ -211,7 +211,7 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
                 placeholder="Brief subject line..."
               />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Priority
               <select
                 value={newPriority}
@@ -224,7 +224,7 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
                 <option value="urgent">Urgent</option>
               </select>
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Category
               <select
                 value={newCategory}
@@ -243,7 +243,7 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
           <div className="rounded-lg border border-border bg-surface-2 p-3">
             <div className="flex items-center gap-2 mb-2">
               <Hash className="h-3.5 w-3.5 text-text-faint" />
-              <span className="text-[10px] font-semibold text-text-faint uppercase">Link to Entity (optional)</span>
+              <span className="text-xs font-semibold text-text-faint uppercase">Link to Entity (optional)</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <select
@@ -264,13 +264,13 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
               />
             </div>
             {newEntityType && newEntityId && (
-              <p className="mt-1.5 text-[9px] text-text-faint flex items-center gap-1">
+              <p className="mt-1.5 text-3xs text-text-faint flex items-center gap-1">
                 <Hash className="h-2.5 w-2.5" />
                 Message will be linked to {newEntityType}#{newEntityId}
               </p>
             )}
           </div>
-          <label className="space-y-1 text-[10px] text-text-muted">
+          <label className="space-y-1 text-xs text-text-muted">
             Message Body
             <textarea
               value={newBody}
@@ -317,14 +317,14 @@ export default function InternalCommunicationsSystem({ countryCode }: InternalCo
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-text truncate">{msg.subject}</span>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${PRIORITY_STYLES[msg.priority] ?? PRIORITY_STYLES.normal}`}>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-semibold border ${PRIORITY_STYLES[msg.priority] ?? PRIORITY_STYLES.normal}`}>
                         {msg.priority.charAt(0).toUpperCase() + msg.priority.slice(1)}
                       </span>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold ${CATEGORY_STYLES[msg.category] ?? ""}`}>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-semibold ${CATEGORY_STYLES[msg.category] ?? ""}`}>
                         {msg.category}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-1 text-[10px] text-text-muted">
+                    <div className="flex items-center gap-2 mt-1 text-xs text-text-muted">
                       <span>{msg.sender_name}</span>
                       <span className="text-text-faint">·</span>
                       <span className="text-text-faint">{new Date(msg.created_at).toLocaleString()}</span>

@@ -21,7 +21,7 @@ export function TypingIndicator({ typingUserNames }: TypingIndicatorProps) {
         <span className="h-1.5 w-1.5 rounded-full bg-text-faint animate-bounce [animation-delay:150ms]" />
         <span className="h-1.5 w-1.5 rounded-full bg-text-faint animate-bounce [animation-delay:300ms]" />
       </div>
-      <span className="text-[10px] text-text-muted italic">{label}</span>
+      <span className="text-xs text-text-muted italic">{label}</span>
     </div>
   );
 }

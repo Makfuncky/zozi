@@ -76,7 +76,7 @@ export default function InvoicesPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-text">Invoice Management</h2>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-text-faint">{isGlobalView ? "Global View" : `Country: ${selectedCountry?.code}`}</span>
+            <span className="text-xs text-text-faint">{isGlobalView ? "Global View" : `Country: ${selectedCountry?.code}`}</span>
             <button onClick={fetchInvoices} className="rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-text-faint hover:bg-surface-3">
               <RefreshCw className="h-3 w-3" />
             </button>
@@ -90,15 +90,15 @@ export default function InvoicesPage() {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] text-text-faint uppercase">Total</p>
+            <p className="text-xs text-text-faint uppercase">Total</p>
             <p className="text-xl font-bold text-text">{invoices.length}</p>
           </div>
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] text-text-faint uppercase">Outstanding</p>
+            <p className="text-xs text-text-faint uppercase">Outstanding</p>
             <p className="text-xl font-bold text-warning">{invoices.filter((i) => i.status === "issued" || i.status === "overdue").length}</p>
           </div>
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] text-text-faint uppercase">Total Value</p>
+            <p className="text-xs text-text-faint uppercase">Total Value</p>
             <p className="text-xl font-bold text-text">{formatMoney(invoices.reduce((s, i) => s + i.total_amount, 0))}</p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function InvoicesPage() {
                     <td className="p-2 text-xs text-text-faint">#{inv.order_id}</td>
                     <td className="p-2 text-right font-semibold">{formatMoney(inv.total_amount)}</td>
                     <td className="p-2 text-center">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusTone(inv.status)}`}>{inv.status}</span>
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${statusTone(inv.status)}`}>{inv.status}</span>
                     </td>
                     <td className="p-2 text-xs text-text-faint">{inv.created_at?.slice(0, 10)}</td>
                     <td className="p-2 text-xs text-text-faint">{inv.due_at?.slice(0, 10) || "—"}</td>

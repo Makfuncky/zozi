@@ -131,7 +131,7 @@ export default function ArchivePage() {
                   (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE_PATH;
                 }}
               />
-              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-danger/80 text-white text-[10px] font-bold">
+              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-danger/80 text-white text-xs font-bold">
                 {archivedBadgeLabel}
               </span>
             </div>

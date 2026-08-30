@@ -171,7 +171,7 @@ export default function LogisticsPartnerRegisterPage() {
               autoComplete="new-password"
               className={inputClass}
             />
-            <p className="mt-1 text-[10px] text-text-faint">
+            <p className="mt-1 text-xs text-text-faint">
               Min. 8 chars, with uppercase, lowercase, number &amp; special character.
             </p>
           </div>

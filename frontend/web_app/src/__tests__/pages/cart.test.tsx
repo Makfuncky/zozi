@@ -111,12 +111,7 @@ describe("CartPage — empty", () => {
     useTranslatedOutput = false;
     jest.clearAllMocks();
     mockApiFetch.mockImplementation(async (path: string) => {
-      if (path === "/config/checkout") {
-        return {
-          ok: true,
-          json: async () => ({ vat_rate: 0.05, shipping_flat_rate: 2, free_shipping_threshold: 0 }),
-        };
-      }
+      if (path === "/cart/totals") { return { ok: true, json: async () => ({ subtotal: 55, discount: 0, shipping: 2, tax_amount: 2.75, tax_type: "VAT", total: 59.75, free_shipping_threshold: 0, free_shipping_applied: false }) }; }
       return { ok: true, json: async () => ({}) };
     });
   });
@@ -136,12 +131,7 @@ describe("CartPage — with items", () => {
     useTranslatedOutput = false;
     jest.clearAllMocks();
     mockApiFetch.mockImplementation(async (path: string) => {
-      if (path === "/config/checkout") {
-        return {
-          ok: true,
-          json: async () => ({ vat_rate: 0.05, shipping_flat_rate: 2, free_shipping_threshold: 0 }),
-        };
-      }
+      if (path === "/cart/totals") { return { ok: true, json: async () => ({ subtotal: 55, discount: 0, shipping: 2, tax_amount: 2.75, tax_type: "VAT", total: 59.75, free_shipping_threshold: 0, free_shipping_applied: false }) }; }
       return { ok: true, json: async () => ({}) };
     });
   });
@@ -207,12 +197,7 @@ describe("CartPage — with items", () => {
   it("uses approved logistics quotes in the order summary", async () => {
     mockDeliveryDetails = { country: "AE", city: "Dubai" };
     mockApiFetch.mockImplementation(async (path: string) => {
-      if (path === "/config/checkout") {
-        return {
-          ok: true,
-          json: async () => ({ vat_rate: 0.05, shipping_flat_rate: 2, free_shipping_threshold: 0 }),
-        };
-      }
+      if (path === "/cart/totals") { return { ok: true, json: async () => ({ subtotal: 55, discount: 0, shipping: 2, tax_amount: 2.75, tax_type: "VAT", total: 59.75, free_shipping_threshold: 0, free_shipping_applied: false }) }; }
       if (path === "/cart/shipping-quote") {
         return {
           ok: true,

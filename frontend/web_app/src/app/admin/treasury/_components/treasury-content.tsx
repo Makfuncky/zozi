@@ -517,7 +517,7 @@ function DashboardView({ metrics, cashPosition, codRemittances, liabilities, gat
               <span className="text-[11px] font-semibold text-text-faint uppercase">{k.label}</span>
             </div>
             <p className="text-2xl font-bold text-text tabular-nums">{k.value}</p>
-            <p className="text-[10px] text-text-faint mt-0.5">{k.hint}</p>
+            <p className="text-xs text-text-faint mt-0.5">{k.hint}</p>
           </div>
         ))}
       </div>
@@ -536,7 +536,7 @@ function DashboardView({ metrics, cashPosition, codRemittances, liabilities, gat
             <div key={b.label} className="grid grid-cols-[10rem_1fr_auto] items-center gap-3">
               <div>
                 <p className="text-[11px] font-semibold text-text">{b.label}</p>
-                <p className="text-[10px] text-text-faint">{b.hint}</p>
+                <p className="text-xs text-text-faint">{b.hint}</p>
               </div>
               <div className="h-2.5 w-full rounded-full bg-surface-2 overflow-hidden">
                 <div className={`h-full rounded-full ${b.bar}`} style={{ width: `${Math.min(100, (Math.abs(b.value) / bucketMax) * 100)}%` }} />
@@ -584,7 +584,7 @@ function DashboardView({ metrics, cashPosition, codRemittances, liabilities, gat
               <ShieldCheck className={`h-4 w-4 ${reconHealth ? "text-success" : "text-warning"}`} />
               <div>
                 <p className="text-xs font-bold text-text">Reconciliation Health</p>
-                <p className="text-[10px] text-text-faint">
+                <p className="text-xs text-text-faint">
                   {gatewayExceptions.length} settlement exceptions · {formatMoney(reconDiscrepancy)} discrepancy
                 </p>
               </div>
@@ -611,7 +611,7 @@ function DashboardView({ metrics, cashPosition, codRemittances, liabilities, gat
               <History className="h-4 w-4 text-info" />
               <div>
                 <p className="text-xs font-bold text-text">Ledger Integrity</p>
-                <p className="text-[10px] text-text-faint">Detect delivered orders / paid payouts missing a journal entry</p>
+                <p className="text-xs text-text-faint">Detect delivered orders / paid payouts missing a journal entry</p>
               </div>
             </div>
             <Button variant="info" className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50" onClick={onDetectOrphans}
@@ -640,7 +640,7 @@ function DashboardView({ metrics, cashPosition, codRemittances, liabilities, gat
             <div key={item.gl_code} className="rounded-lg border border-border bg-surface-2 p-3">
               <p className="text-[11px] text-text-faint uppercase">{item.account_name}</p>
               <p className="text-lg font-bold text-text tabular-nums">{formatMoney(item.balance)}</p>
-              <p className="text-[10px] text-text-faint">{item.gl_code}</p>
+              <p className="text-xs text-text-faint">{item.gl_code}</p>
             </div>
           ))}
         </div>
@@ -793,7 +793,7 @@ function CashPositionView({ data, formatMoney }: { data: CashPosition[]; formatM
                 <Wallet className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <p className="text-[10px] text-text-faint mt-2">{item.gl_code}</p>
+            <p className="text-xs text-text-faint mt-2">{item.gl_code}</p>
           </div>
         ))}
       </div>
@@ -898,7 +898,7 @@ function PayoutsView({ batches, supplierPayouts, logisticsPayouts, formatMoney, 
             >
               <t.icon className="h-3.5 w-3.5" />
               {t.label}
-              <span className={`rounded-full px-1.5 text-[9px] ${sub === t.key ? "bg-white/20" : "bg-surface-2"}`}>{t.count}</span>
+              <span className={`rounded-full px-1.5 text-3xs ${sub === t.key ? "bg-white/20" : "bg-surface-2"}`}>{t.count}</span>
             </button>
           ))}
         </div>
@@ -992,15 +992,15 @@ function PayoutsView({ batches, supplierPayouts, logisticsPayouts, formatMoney, 
                       <td className="p-2 text-center">
                         <div className="flex items-center justify-center gap-1">
                           {batch.status === "pending_approval" && (
-                            <Button variant="primary" className="rounded px-2 py-1 text-[10px] font-semibold text-success transition disabled:opacity-40 disabled:cursor-not-allowed" onClick={() => onShowMakerChecker(batch, "approve")} disabled={isMaker === true}
+                            <Button variant="primary" className="rounded px-2 py-1 text-xs font-semibold text-success transition disabled:opacity-40 disabled:cursor-not-allowed" onClick={() => onShowMakerChecker(batch, "approve")} disabled={isMaker === true}
                               title={isMaker ? "Cannot approve your own batch (Maker-Checker)" : "Approve batch"}>Approve</Button>
                           )}
                           {batch.status === "approved" && (
-                            <Button variant="primary" className="rounded px-2 py-1 text-[10px] font-semibold text-primary transition disabled:opacity-40 disabled:cursor-not-allowed" onClick={() => onShowMakerChecker(batch, "dispatch")} disabled={isMaker === true}
+                            <Button variant="primary" className="rounded px-2 py-1 text-xs font-semibold text-primary transition disabled:opacity-40 disabled:cursor-not-allowed" onClick={() => onShowMakerChecker(batch, "dispatch")} disabled={isMaker === true}
                               title={isMaker ? "Cannot dispatch your own batch (Maker-Checker)" : "Dispatch batch"}>Dispatch</Button>
                           )}
                           {batch.status !== "pending_approval" && batch.status !== "approved" && (
-                            <span className="text-[10px] text-text-faint">—</span>
+                            <span className="text-xs text-text-faint">—</span>
                           )}
                         </div>
                       </td>
@@ -1037,12 +1037,12 @@ function PayoutsView({ batches, supplierPayouts, logisticsPayouts, formatMoney, 
                     <td className="p-2 font-mono text-xs">#{p.id}</td>
                     <td className="p-2">
                       <p className="font-medium text-text">{p.supplier_name}</p>
-                      <p className="text-[10px] text-text-faint">Supplier #{p.supplier_id}</p>
+                      <p className="text-xs text-text-faint">Supplier #{p.supplier_id}</p>
                     </td>
                     <td className="p-2 text-right font-medium">{formatMoney(p.amount)}</td>
                     <td className="p-2 text-center capitalize text-xs">{p.method ?? "—"}</td>
-                    <td className="p-2 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] ${statusPill(p.status, payStatus)}`}>{p.status}</span></td>
-                    <td className="p-2 font-mono text-[10px] text-text-faint">{p.reference ?? "—"}</td>
+                    <td className="p-2 text-center"><span className={`px-2 py-0.5 rounded-full text-xs ${statusPill(p.status, payStatus)}`}>{p.status}</span></td>
+                    <td className="p-2 font-mono text-xs text-text-faint">{p.reference ?? "—"}</td>
                     <td className="p-2 text-xs">{p.country_code ?? "—"}</td>
                   </tr>
                 ))}
@@ -1076,11 +1076,11 @@ function PayoutsView({ batches, supplierPayouts, logisticsPayouts, formatMoney, 
                     <td className="p-2 font-mono text-xs">#{p.id}</td>
                     <td className="p-2 text-xs">Partner #{p.partner_id}</td>
                     <td className="p-2 text-right font-medium">{formatMoney(p.amount)}</td>
-                    <td className="p-2 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] ${statusPill(p.status, payStatus)}`}>{p.status}</span></td>
-                    <td className="p-2 text-[10px] text-text-faint">
+                    <td className="p-2 text-center"><span className={`px-2 py-0.5 rounded-full text-xs ${statusPill(p.status, payStatus)}`}>{p.status}</span></td>
+                    <td className="p-2 text-xs text-text-faint">
                       {p.period_start ? p.period_start.slice(0, 10) : "—"} → {p.period_end ? p.period_end.slice(0, 10) : "—"}
                     </td>
-                    <td className="p-2 font-mono text-[10px] text-text-faint">{p.reference_id ?? "—"}</td>
+                    <td className="p-2 font-mono text-xs text-text-faint">{p.reference_id ?? "—"}</td>
                     <td className="p-2 text-xs">{p.country_code ?? "—"}</td>
                   </tr>
                 ))}
@@ -1117,7 +1117,7 @@ function VATView({ formatMoney, vatLiability, onMarkRemitted }: { formatMoney: (
                 <span className="font-bold text-text">{formatMoney(outputVat)}</span>
               </div>
               {vatLiability?.country_code && (
-                <p className="text-[9px] text-text-faint mt-0.5">Country: {vatLiability.country_code}</p>
+                <p className="text-3xs text-text-faint mt-0.5">Country: {vatLiability.country_code}</p>
               )}
             </div>
             <div className="flex justify-between text-xs">
@@ -1243,7 +1243,7 @@ function GatewayReconView({ data, exceptions, formatMoney }: { data: GatewayReco
                     <td className="p-2 font-medium">{e.gateway_id}</td>
                     <td className="p-2 text-right">{formatMoney(e.amount)}</td>
                     <td className="p-2 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] ${e.status === "flagged" ? "bg-danger/20 text-danger" : "bg-warning/20 text-warning"}`}>{e.status}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${e.status === "flagged" ? "bg-danger/20 text-danger" : "bg-warning/20 text-warning"}`}>{e.status}</span>
                     </td>
                     <td className="p-2 text-text-faint text-xs">{e.settlement_date?.slice(0, 10) ?? "—"}</td>
                     <td className="p-2 text-text-faint text-xs">{e.country_code ?? "—"}</td>
@@ -1300,7 +1300,7 @@ function CODView({ remittances, formatMoney }: { remittances: CODRemittance[]; f
                     <td className="p-2 text-right">{formatMoney(r.amount_remitted)}</td>
                     <td className="p-2 text-right font-medium text-warning">{formatMoney(r.amount_expected - r.amount_remitted)}</td>
                     <td className="p-2 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${
                         r.status === "reconciled" ? "bg-success/20 text-success" : "bg-warning/20 text-warning"
                       }`}>
                         {r.status}
@@ -1726,20 +1726,20 @@ function ReconciliationView({ filterCountry, formatMoney, forceRefresh, exceptio
                       <ChevronDown className={`h-3.5 w-3.5 text-text-faint transition-transform ${expanded ? "rotate-180" : ""}`} />
                       <div>
                         <p className="text-xs font-bold text-text">#{item.order_id}</p>
-                        <p className="text-[10px] text-text-muted">{item.order_status}</p>
+                        <p className="text-xs text-text-muted">{item.order_status}</p>
                       </div>
                     </button>
                     <div>
                       <p className="text-[11px] font-semibold text-text tabular-nums">{formatMoney(item.order_total)}</p>
-                      <p className="text-[10px] text-text-faint">{item.payment_method || "—"}</p>
+                      <p className="text-xs text-text-faint">{item.payment_method || "—"}</p>
                     </div>
                     {item.logistics_partner && (
-                      <p className="text-[10px] text-text-muted hidden sm:block">🚚 {item.logistics_partner}</p>
+                      <p className="text-xs text-text-muted hidden sm:block">🚚 {item.logistics_partner}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     {action && (
-                      <button onClick={action.onClick} className={`rounded px-2.5 py-1 text-[10px] font-semibold ${
+                      <button onClick={action.onClick} className={`rounded px-2.5 py-1 text-xs font-semibold ${
                         action.tone === "warning" ? "bg-warning/20 text-warning hover:bg-warning/30"
                         : action.tone === "info" ? "bg-info/20 text-info hover:bg-info/30"
                         : "bg-success/20 text-success hover:bg-success/30"
@@ -1747,7 +1747,7 @@ function ReconciliationView({ filterCountry, formatMoney, forceRefresh, exceptio
                         {action.label}
                       </button>
                     )}
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${stageColor[item.stage] || "bg-text-faint/20 text-text-faint"}`}>
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${stageColor[item.stage] || "bg-text-faint/20 text-text-faint"}`}>
                       {stageLabel[item.stage] || item.stage}
                     </span>
                   </div>
@@ -1758,14 +1758,14 @@ function ReconciliationView({ filterCountry, formatMoney, forceRefresh, exceptio
                   {steps.map((step, i) => (
                     <div key={step.key} className="flex flex-1 items-center gap-1">
                       <div className="flex flex-col items-center gap-1 flex-1">
-                        <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold border ${
+                        <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold border ${
                           step.done ? "bg-success/20 border-success text-success"
                           : i === currentIdx ? "bg-warning/20 border-warning text-warning animate-pulse"
                           : "bg-surface-2 border-border text-text-faint"
                         }`}>
                           {step.done ? "✓" : i + 1}
                         </div>
-                        <span className={`text-[9px] text-center leading-tight ${step.done ? "text-success" : i === currentIdx ? "text-warning" : "text-text-faint"}`}>{step.label}</span>
+                        <span className={`text-3xs text-center leading-tight ${step.done ? "text-success" : i === currentIdx ? "text-warning" : "text-text-faint"}`}>{step.label}</span>
                       </div>
                       {i < steps.length - 1 && (
                         <div className={`h-0.5 flex-1 rounded ${steps[i + 1].done || step.done ? "bg-success/40" : "bg-border"}`} />
@@ -1937,7 +1937,7 @@ function PaymentsView({ txns, gatewayRecon, gatewayExceptions, formatMoney, star
         <div className="theme-card rounded-xl border p-4">
           <p className="text-[11px] uppercase text-text-faint font-semibold">Collected</p>
           <p className="text-2xl font-bold text-success">{formatMoney(totalCollected)}</p>
-          <p className="text-[10px] text-text-faint">{txns.length} transactions</p>
+          <p className="text-xs text-text-faint">{txns.length} transactions</p>
         </div>
         <div className="theme-card rounded-xl border p-4">
           <p className="text-[11px] uppercase text-text-faint font-semibold">Captured</p>
@@ -1983,7 +1983,7 @@ function PaymentsView({ txns, gatewayRecon, gatewayExceptions, formatMoney, star
           {Array.from(new Set(txns.map((t) => t.status).filter(Boolean) as string[])).map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         {providers.length > 0 && (
-          <span className="text-[10px] text-text-faint ml-2">Providers: {providers.join(", ")}</span>
+          <span className="text-xs text-text-faint ml-2">Providers: {providers.join(", ")}</span>
         )}
       </div>
 
@@ -2013,7 +2013,7 @@ function PaymentsView({ txns, gatewayRecon, gatewayExceptions, formatMoney, star
                   <td className="p-2">{t.provider ?? "—"}</td>
                   <td className="p-2 text-right font-medium">{formatMoney(t.amount)}</td>
                   <td className="p-2 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${(t.status === "captured" || t.status === "paid") ? "bg-success/20 text-success" : (t.status === "failed" || t.status === "refunded" || t.status === "cancelled") ? "bg-danger/20 text-danger" : "bg-warning/20 text-warning"}`}>{t.status ?? "—"}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${(t.status === "captured" || t.status === "paid") ? "bg-success/20 text-success" : (t.status === "failed" || t.status === "refunded" || t.status === "cancelled") ? "bg-danger/20 text-danger" : "bg-warning/20 text-warning"}`}>{t.status ?? "—"}</span>
                   </td>
                   <td className="p-2 text-text-faint text-xs">{t.created_at?.slice(0, 10) ?? "—"}</td>
                   <td className="p-2 text-text-faint text-xs">{t.country_code ?? "—"}</td>
@@ -2139,23 +2139,23 @@ function PendingEntriesView({ entries, formatMoney, currentUser, filterCountry, 
                   <td className="p-2 text-xs">{e.country_code ?? "—"}</td>
                   <td className="p-2 text-center">
                     {e.amount_threshold_triggered
-                      ? <span className="px-2 py-0.5 rounded-full bg-warning/20 text-warning text-[10px]">High</span>
-                      : <span className="text-text-faint text-[10px]">—</span>}
+                      ? <span className="px-2 py-0.5 rounded-full bg-warning/20 text-warning text-xs">High</span>
+                      : <span className="text-text-faint text-xs">—</span>}
                   </td>
                   <td className="p-2 text-xs">{e.created_by}{selfMade ? " (you)" : ""}</td>
                   <td className="p-2">
                     <div className="flex items-center justify-center gap-1">
-                      <Button variant="primary" className="rounded-lg px-2 py-1 text-[10px] font-medium disabled:opacity-40" onClick={() => handleApprove(e.id, e.created_by)} disabled={busy === e.id || selfMade}>
+                      <Button variant="primary" className="rounded-lg px-2 py-1 text-xs font-medium disabled:opacity-40" onClick={() => handleApprove(e.id, e.created_by)} disabled={busy === e.id || selfMade}>
                         {busy === e.id ? "..." : "Approve"}
                       </Button>
-                      <button onClick={() => setRejectId(rejectId === e.id ? null : e.id)} disabled={busy === e.id} className="rounded-lg border border-border px-2 py-1 text-[10px] font-medium text-text-muted disabled:opacity-40">
+                      <button onClick={() => setRejectId(rejectId === e.id ? null : e.id)} disabled={busy === e.id} className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-muted disabled:opacity-40">
                         Reject
                       </button>
                     </div>
                     {rejectId === e.id && (
                       <div className="mt-2 flex gap-1">
-                        <input value={reason} onChange={(ev) => setReason(ev.target.value)} placeholder="Reason" className="theme-input flex-1 rounded border px-2 py-1 text-[10px]" />
-                        <Button variant="danger" className="rounded px-2 py-1 text-[10px] font-medium" onClick={() => handleReject(e.id)}>Send</Button>
+                        <input value={reason} onChange={(ev) => setReason(ev.target.value)} placeholder="Reason" className="theme-input flex-1 rounded border px-2 py-1 text-xs" />
+                        <Button variant="danger" className="rounded px-2 py-1 text-xs font-medium" onClick={() => handleReject(e.id)}>Send</Button>
                       </div>
                     )}
                   </td>

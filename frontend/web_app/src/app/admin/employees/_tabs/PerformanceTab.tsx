@@ -132,7 +132,7 @@ export default function PerformanceTab({ employees, addToast }: PerformanceTabPr
               <Target className="h-4 w-4 text-primary" />
               OKRs & KPIs
             </h4>
-            <Button variant="primary" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold shadow-sm transition-colors" onClick={() => setShowOkrModal(true)}
+            <Button variant="primary" className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm transition-colors" onClick={() => setShowOkrModal(true)}
             >
               <Plus className="h-3 w-3" />
               New OKR
@@ -150,7 +150,7 @@ export default function PerformanceTab({ employees, addToast }: PerformanceTabPr
                 <div key={okr.id} className="rounded-lg bg-surface-2 border border-border p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-text truncate max-w-[220px]">{okr.title}</p>
-                    <span className="text-[10px] text-text-faint">{okr.progress}%</span>
+                    <span className="text-xs text-text-faint">{okr.progress}%</span>
                   </div>
                   <div className="mt-2 h-1.5 rounded-full bg-surface-3 overflow-hidden">
                     <div className="h-full rounded-full bg-primary" style={{ width: `${okr.progress}%` }} />
@@ -177,9 +177,9 @@ export default function PerformanceTab({ employees, addToast }: PerformanceTabPr
                   <div key={risk.id} className="rounded-lg bg-surface-2 border border-border p-3 flex items-center justify-between">
                     <div>
                       <p className="text-xs font-semibold text-text">{emp?.full_name ?? emp?.name ?? `Employee #${risk.employee_id}`}</p>
-                      <p className="text-[10px] text-text-faint mt-0.5">Score: {risk.score}/100</p>
+                      <p className="text-xs text-text-faint mt-0.5">Score: {risk.score}/100</p>
                     </div>
-                    <span className={`rounded-full text-[10px] font-semibold px-2 py-0.5 border ${risk.risk_level === "critical" ? "bg-danger/10 text-danger border-danger/20" : risk.risk_level === "high" ? "bg-warning/10 text-warning border-warning/20" : "bg-surface-3 text-text-muted border-border"}`}>
+                    <span className={`rounded-full text-xs font-semibold px-2 py-0.5 border ${risk.risk_level === "critical" ? "bg-danger/10 text-danger border-danger/20" : risk.risk_level === "high" ? "bg-warning/10 text-warning border-warning/20" : "bg-surface-3 text-text-muted border-border"}`}>
                       {risk.risk_level}
                     </span>
                   </div>

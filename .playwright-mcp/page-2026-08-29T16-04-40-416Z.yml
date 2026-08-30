@@ -1,0 +1,86 @@
+- generic [active] [ref=f7e1]:
+  - link "Skip to main content" [ref=f7e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f7e3]:
+    - banner [ref=f7e129]:
+      - generic [ref=f7e131]:
+        - link "Go to home" [ref=f7e132] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f7e133]:
+            - img "Zozi logo" [ref=f7e135]
+            - generic [ref=f7e151]: Zozi
+        - generic [ref=f7e152]:
+          - button "Switch to dark theme" [ref=f7e153] [cursor=pointer]: 🌙
+          - generic [ref=f7e154]:
+            - generic [ref=f7e155]:
+              - generic [ref=f7e156]: OMR
+              - generic [ref=f7e157]: Detected PK
+            - button "Choose country" [ref=f7e159] [cursor=pointer]:
+              - generic [ref=f7e160]: PK
+            - button "Choose language" [ref=f7e164] [cursor=pointer]:
+              - generic [ref=f7e165]: EN
+          - link "Wishlist" [ref=f7e168] [cursor=pointer]:
+            - /url: /wishlist
+          - link "Cart" [ref=f7e171] [cursor=pointer]:
+            - /url: /cart
+          - button "Open sign in menu" [ref=f7e176] [cursor=pointer]
+    - main [ref=f7e57]:
+      - main [ref=f7e58]:
+        - generic [ref=f7e59]:
+          - generic [ref=f7e60]:
+            - heading "Customer Sign In" [level=1] [ref=f7e65]
+            - paragraph [ref=f7e66]: Welcome back — sign in to your ZOZI account
+          - generic [ref=f7e67]:
+            - generic [ref=f7e68]:
+              - generic [ref=f7e69]: Email or Username
+              - textbox "you@email.com" [ref=f7e71]: customer@zozi.com
+            - generic [ref=f7e72]:
+              - generic [ref=f7e73]: Password
+              - generic [ref=f7e74]:
+                - textbox "••••••••" [ref=f7e75]: customer123
+                - button "Show password" [ref=f7e76] [cursor=pointer]
+            - button "Signing in…" [disabled] [ref=f7e185]
+          - paragraph [ref=f7e84]:
+            - text: New to ZOZI?
+            - link "Create an account" [ref=f7e85] [cursor=pointer]:
+              - /url: /register
+          - paragraph [ref=f7e86]:
+            - text: Are you a seller or logistics partner?
+            - link "Supplier" [ref=f7e87] [cursor=pointer]:
+              - /url: /supplier/login
+            - text: ·
+            - link "Logistics" [ref=f7e88] [cursor=pointer]:
+              - /url: /logistics-partner/login
+    - contentinfo [ref=f7e90]:
+      - generic [ref=f7e92]:
+        - generic [ref=f7e93]:
+          - generic [ref=f7e94]: ZOZI
+          - paragraph [ref=f7e100]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f7e101]:
+            - link "Become a Supplier" [ref=f7e102] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f7e103] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f7e104]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f7e105]
+          - generic [ref=f7e106]:
+            - generic [ref=f7e107]:
+              - heading "Stay in Style" [level=3] [ref=f7e108]
+              - paragraph [ref=f7e109]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f7e110]:
+              - textbox "First name (optional)" [ref=f7e112]
+              - textbox "Enter your email" [ref=f7e114]
+              - button "Subscribe" [disabled] [ref=f7e115]
+      - generic [ref=f7e120]:
+        - paragraph [ref=f7e121]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f7e122]:
+          - link "Terms" [ref=f7e123] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f7e124] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f7e125] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f7e126] [cursor=pointer]:
+            - /url: /admin/login
+    - button "Chat" [ref=f7e180] [cursor=pointer]
+  - alert [ref=f7e184]

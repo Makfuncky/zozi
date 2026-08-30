@@ -26,7 +26,7 @@ export default function TopCategoriesWidget() {
         </div>
         <Link
           href="/products"
-          className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary-light hover:text-text transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-primary-light hover:text-text transition-colors"
         >
           See All <ChevronRight className="w-3 h-3" />
         </Link>

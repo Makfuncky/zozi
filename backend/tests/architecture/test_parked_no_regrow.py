@@ -36,32 +36,10 @@ if _ROOT not in sys.path:
 
 _EXCLUDES = {"venv", ".git", "__pycache__", "_extra_files", "domains"}
 
-# Baselines the 24 archived files (see _parked_report.txt / RESOLVER.md PART 5).
-_KNOWN_PARKED = frozenset({
-    "addresses_service.py",
-    "admin_categories_service.py",
-    "admin_promotion_service.py",
-    "admin_promotions_write_service.py",
-    "banner_write_service.py",
-    "cart_controller_service__orders.py",
-    "cart_service__orders.py",
-    "categories_service.py",
-    "commerce_coupons_read_service.py",
-    "commerce_coupons_write_service.py",
-    "customer_coupons_create_service.py",
-    "customer_coupons_mgmt_service.py",
-    "flash_sale_service.py",
-    "flash_sale_write_service.py",
-    "orders_package_service.py",
-    "promotion_admin_write_service.py",
-    "promotion_bogo_service.py",
-    "promotion_engine_service.py",
-    "promotion_points_service.py",
-    "promotions_write_service.py",
-    "referrals_controller__routers.py",
-    "search_service.py",
-    "supplier_documents_service.py",
-})
+# The domains/_parked graveyard (24 archived files per RESOLVER.md PART 5) was
+# removed during the design-system / structure cleanup. Regenerate the baseline
+# to an empty set; the law now simply guards against re-introducing a graveyard.
+_KNOWN_PARKED = frozenset()
 
 _PARKED_DIR = os.path.join(_ROOT, "domains", "_parked")
 

@@ -341,7 +341,7 @@ export default function CommShell({
       </AnimatePresence>
 
       {/* Status dock */}
-      <footer className="comm-dock theme-elevated border-t border-border flex items-center px-3 gap-2 text-[10px] text-text-muted">
+      <footer className="comm-dock theme-elevated border-t border-border flex items-center px-3 gap-2 text-xs text-text-muted">
         {dock}
       </footer>
     </div>

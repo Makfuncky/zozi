@@ -9,12 +9,17 @@ import sys
 import uuid
 from typing import Optional
 
+# Import all models FIRST to ensure SQLAlchemy class registry is populated
+# before any mapper configuration happens. This MUST be the first import.
+from infrastructure.database import models  # noqa: F401  # registers all ORM models
+
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _BACKEND_DIR)
 
 
 from fastapi import FastAPI, Request, WebSocket, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from middleware.orchestrator import setup_middleware
 from infrastructure.utils.ip_utils import set_request_ip
@@ -80,6 +85,13 @@ setup_middleware(app)
 from infrastructure.observability.prometheus_setup import setup_prometheus
 setup_prometheus(app)
 
+# Mount static files for local uploads (development only)
+# In production, S3/CloudFront serves media directly
+import os
+_uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+if os.path.isdir(_uploads_dir):
+    app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
+
 # Initialize OpenTelemetry tracing (requires OTEL_EXPORTER_OTLP_ENDPOINT env var)
 try:
     from infrastructure.utils.tracing import setup_tracing
@@ -126,7 +138,7 @@ async def health_ready():
     from infrastructure.utils.config import settings
     from infrastructure.utils.auth import _get_redis
     from infrastructure.database.database import check_connection_health
-    from domains.finance.services.payments.payments import _payment_provider_runtime_status
+    from domains.finance.services.payments.payment_engine import _payment_provider_runtime_status
 
     db_ok = check_connection_health()
     

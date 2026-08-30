@@ -37,6 +37,8 @@ export const responseCache = createResponseRequestCache();
 
 function resolveRequestUrl(path: string, _body?: BodyInit | null): string {
   if (path.startsWith("http")) return path;
+  // All auth paths go direct to backend v1 API (CSRF handled by backend middleware)
+  if (path.startsWith("/auth/")) return `/api/v1${path}`;
   if (!path.startsWith("/api") && !path.startsWith("/auth") && !path.startsWith("/admin")) return `/__api${path}`;
   return path;
 }
@@ -88,6 +90,10 @@ export function isUrlSameOrigin(url: string, currentOrigin?: string): boolean {
 
 // ── apiFetch ────────────────────────────────────────────────────────────
 
+// Guard to prevent infinite recursion when refresh endpoint calls apiFetch
+// Using an object to allow mutation from imported bindings
+export const _rlsGuard = { isRefreshing: false };
+
 export async function apiFetch(
   path: string,
   options: RequestInit & { skipAuthRedirect?: boolean; disableCache?: boolean; cacheTtlMs?: number; timeoutMs?: number } = {}
@@ -100,12 +106,20 @@ export async function apiFetch(
     ...fetchOptions
   } = options;
   const url = resolveRequestUrl(path, fetchOptions.body);
+  console.log('[apiFetch] path:', path, '-> url:', url, 'method:', method);
 
   const headers = new Headers(fetchOptions.headers);
   const method = (fetchOptions.method || "GET").toUpperCase();
   const useGetCache = shouldUseShortGetCache(path, method, disableCache);
 
-  await ensureAccessToken();
+  // Only call ensureAccessToken if we're not already refreshing (prevents infinite loop)
+  if (!_rlsGuard.isRefreshing) {
+    console.log('[apiFetch] calling ensureAccessToken');
+    await ensureAccessToken();
+    console.log('[apiFetch] ensureAccessToken done');
+  } else {
+    console.log('[apiFetch] skipping ensureAccessToken (refreshing)');
+  }
 
   const attachAccessToken = () => {
     if (fetchOptions.headers && new Headers(fetchOptions.headers).has("Authorization")) {

@@ -1,21 +1,22 @@
 ﻿import type { Metadata } from "next";
+import { Fraunces, Sora, Nunito, Noto_Naskh_Arabic } from "next/font/google";
+import { Suspense } from "react";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
 import "@/styles/glow.css";
-import { Fraunces, Sora, Nunito, Noto_Naskh_Arabic } from "next/font/google";
-import { Suspense } from "react";
 import { AuthProvider } from "@/lib/useAuth";
 import Header from "@/components/Header";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
+import Chatbot from "@/components/Chatbot";
 import ToastContainer from "@/components/ToastContainer";
 import Footer from "@/components/Footer";
-import AppFooter from "@/components/AppFooter";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import CurrencyInit from "@/components/CurrencyInit";
 import ErrorHandlerInit from "@/components/ErrorHandlerInit";
 import LocaleInit from "@/components/LocaleInit";
+import BackgroundEffect from "@/components/BackgroundEffect";
 import UserRealtimeBridge from "@/components/UserRealtimeBridge";
-import { DeferredBackgroundEffect, DeferredChatbot } from "@/components/ClientDeferred";
 
 const displayFont = Fraunces({
   subsets: ["latin"],
@@ -34,7 +35,6 @@ const notoArabic = Noto_Naskh_Arabic({
   variable: "--font-arabic",
   weight: ["400", "500", "600", "700"],
   display: "swap",
-  preload: false,
 });
 
 const nunitoFont = Nunito({
@@ -42,7 +42,6 @@ const nunitoFont = Nunito({
   variable: "--font-nunito",
   weight: ["700", "800", "900"],
   display: "swap",
-  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -94,15 +93,8 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            {/* Skip to content link for keyboard users */}
-            <a
-              href="#main-content"
-              className="absolute -top-10 left-0 z-[var(--z-overlay)] mx-auto mt-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-on-brand shadow-lg transition-all duration-200 hover:bg-primary-light focus:top-0"
-            >
-              Skip to main content
-            </a>
             {/* Fixed full-page background animation — z:0 in root stacking context, renders behind data-app-frame */}
-            <DeferredBackgroundEffect />
+            <BackgroundEffect />
             {/* All page content at z:10 with isolation:isolate — transparent gaps let BackgroundEffect show through */}
             <div className="relative" data-app-frame style={{ isolation: "isolate", zIndex: 10 }}>
               <LocaleInit />
@@ -113,18 +105,16 @@ export default function RootLayout({
                 <Header />
               </div>
               <div data-app-body>
-                <main id="main-content" tabIndex={-1}>
+                <ErrorBoundary>
                   {children}
-                </main>
+                </ErrorBoundary>
               </div>
               <div data-app-footer>
-                <AppFooter />
+                <Footer />
               </div>
               <AuthRequiredModal />
               <Suspense fallback={null}>
-                <Suspense fallback={null}>
-          <DeferredChatbot />
-        </Suspense>
+                <Chatbot />
               </Suspense>
               <ToastContainer />
             </div>

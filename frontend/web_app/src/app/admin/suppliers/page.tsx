@@ -341,9 +341,9 @@ function StatCard({ icon: Icon, label, value, hint }: { icon: typeof Store; labe
     <div className="theme-card rounded-xl border p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">{label}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">{label}</p>
           <p className="mt-1 text-lg font-semibold text-text">{value}</p>
-          <p className="mt-0.5 text-[10px] text-text-muted">{hint}</p>
+          <p className="mt-0.5 text-xs text-text-muted">{hint}</p>
         </div>
         <div className="theme-chip-muted flex h-7 w-7 items-center justify-center rounded-lg">
           <Icon className="h-3.5 w-3.5 text-text-muted" />
@@ -1033,7 +1033,7 @@ function AdminSuppliersInner() {
         <div>
           <span className="text-xs font-medium text-text">{supplier.profile?.country || "—"}</span>
           {supplier.profile?.verification_status && (
-            <span className={`ml-1.5 inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold ${
+            <span className={`ml-1.5 inline-flex items-center px-1 py-0.5 rounded text-3xs font-semibold ${
               supplier.profile.verification_status === "verified" ? "bg-success/10 text-success" :
               supplier.profile.verification_status === "pending" ? "bg-warning/10 text-warning" :
               "bg-surface-3 text-text-muted"
@@ -1053,7 +1053,7 @@ function AdminSuppliersInner() {
       searchValue: (supplier) => statusForSupplier(supplier),
       render: (supplier) => {
         const supplierStatus = statusForSupplier(supplier);
-        return <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize ${STATUS_TONE[supplierStatus] || "theme-chip-muted"}`}>{formatLabel(supplierStatus)}</span>;
+        return <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold capitalize ${STATUS_TONE[supplierStatus] || "theme-chip-muted"}`}>{formatLabel(supplierStatus)}</span>;
       },
     },
     {
@@ -1069,7 +1069,7 @@ function AdminSuppliersInner() {
           <div className="min-w-32">
             <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
               <span className="font-semibold text-text">{credibilityScore}/100</span>
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${BADGE_TONE[supplier.profile?.badge_level || "none"] || "theme-chip-muted"}`}>{formatLabel(supplier.profile?.badge_level || "none")}</span>
+              <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${BADGE_TONE[supplier.profile?.badge_level || "none"] || "theme-chip-muted"}`}>{formatLabel(supplier.profile?.badge_level || "none")}</span>
             </div>
             <div className="h-2 rounded-full bg-surface-2"><div className="h-2 rounded-full bg-gradient-brand-to-success" style={{ width: `${Math.max(8, credibilityScore)}%` }} /></div>
           </div>
@@ -1377,7 +1377,7 @@ function AdminSuppliersInner() {
                               <input value={documentReviewNotes[document.id] || ""} onChange={(event) => setDocumentReviewNotes((current) => ({ ...current, [document.id]: event.target.value }))} placeholder="Review note" className="theme-input mt-1.5 w-full rounded-xl border px-2 py-1.5 text-[11px]" />
                             </td>
                             <td className={`${cellPad} ${bodyText} text-text-muted`}>{formatLabel(document.document_type)}</td>
-                            <td className={cellPad}><span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_TONE[document.status] || "theme-chip-muted"}`}>{formatLabel(document.status)}</span></td>
+                            <td className={cellPad}><span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${STATUS_TONE[document.status] || "theme-chip-muted"}`}>{formatLabel(document.status)}</span></td>
                             <td className={`${cellPad} ${bodyText} text-text-muted`}>{safeDate(document.created_at)}</td>
                             <td className={`${cellPad} ${bodyText} text-text-muted`}>Reviewed by {document.reviewed_by || "-"}<br />{safeDateTime(document.reviewed_at)}</td>
                             <td className={cellPad}><div className="flex flex-wrap gap-1.5"><button onClick={() => void reviewDocument(document.id, "approved", documentReviewNotes[document.id])} disabled={documentActionLoading !== null} className="theme-chip-success rounded-md px-2 py-1 text-[11px] font-semibold disabled:opacity-50">Approve</button><button onClick={() => void reviewDocument(document.id, "rejected", documentReviewNotes[document.id])} disabled={documentActionLoading !== null} className="theme-chip-danger rounded-md px-2 py-1 text-[11px] font-semibold disabled:opacity-50">Reject</button></div></td>
@@ -1493,7 +1493,7 @@ function AdminSuppliersInner() {
                       ) : activityRows.length === 0 ? (
                         <tr><td colSpan={6} className="p-8 text-center text-xs text-text-muted">Choose a supplier and load activity to review the immutable moderation trail.</td></tr>
                       ) : (
-                        activityRows.map((row) => <tr key={row.id} className="border-b border-border/60 hover:bg-surface-1/60"><td className="px-3 py-2 text-text-muted">{safeDateTime(row.created_at)}</td><td className="px-3 py-2 font-semibold text-text">{row.username || "system"}</td><td className="px-3 py-2 text-text-muted">{row.user_role || "-"}</td><td className="px-3 py-2 font-semibold text-text">{row.action}</td><td className="px-3 py-2"><span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${row.status === "success" ? "theme-chip-success" : "theme-chip-warning"}`}>{formatLabel(row.status)}</span></td><td className="px-3 py-2 text-text-muted">{parseDetails(row.details)}</td></tr>)
+                        activityRows.map((row) => <tr key={row.id} className="border-b border-border/60 hover:bg-surface-1/60"><td className="px-3 py-2 text-text-muted">{safeDateTime(row.created_at)}</td><td className="px-3 py-2 font-semibold text-text">{row.username || "system"}</td><td className="px-3 py-2 text-text-muted">{row.user_role || "-"}</td><td className="px-3 py-2 font-semibold text-text">{row.action}</td><td className="px-3 py-2"><span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${row.status === "success" ? "theme-chip-success" : "theme-chip-warning"}`}>{formatLabel(row.status)}</span></td><td className="px-3 py-2 text-text-muted">{parseDetails(row.details)}</td></tr>)
                       )}
                     </tbody>
                   </table>

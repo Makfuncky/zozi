@@ -179,7 +179,7 @@ function AdminCategoriesInner() {
   const hasActiveFilters = search.trim() !== "" || includeDeleted;
   const clearFilters = () => { setSearch(""); setIncludeDeleted(false); setPage(1); };
 
-  const bodyText = dc(density, "text-[10px]", "text-xs", "text-sm");
+  const bodyText = dc(density, "text-xs", "text-xs", "text-sm");
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const columns: Array<EnterpriseColumn<AdminCategory>> = [
@@ -188,14 +188,14 @@ function AdminCategoriesInner() {
       <div className="flex items-center gap-2">
         {cat.icon ? <span className="text-lg">{cat.icon}</span> : null}
         <span className={`${bodyText} font-medium text-text`}>{cat.name}</span>
-        {cat.is_featured ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">Featured</span> : null}
+        {cat.is_featured ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Featured</span> : null}
       </div>
     )},
     { key: "slug", label: "Slug", width: "150px", render: (cat) => <span className={`${bodyText} text-text-muted`}>{cat.slug}</span> },
     { key: "parent_id", label: "Parent", width: "100px", render: (cat) => <span className={`${bodyText} text-text-faint`}>{cat.parent_id ? `#${cat.parent_id}` : "—"}</span> },
     { key: "sort_order", label: "Order", width: "70px", align: "right", render: (cat) => <span className={`${bodyText} tabular-nums text-text-muted`}>{cat.sort_order}</span> },
     { key: "commission_rate", label: "Comm%", width: "80px", align: "right", render: (cat) => <span className={`${bodyText} tabular-nums text-text-faint`}>{cat.commission_rate ? `${cat.commission_rate}%` : "—"}</span> },
-    { key: "is_active", label: "Active", width: "80px", render: (cat) => cat.is_deleted ? <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-semibold text-danger">Deleted</span> : cat.is_active ? <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">Active</span> : <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">Inactive</span> },
+    { key: "is_active", label: "Active", width: "80px", render: (cat) => cat.is_deleted ? <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">Deleted</span> : cat.is_active ? <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">Active</span> : <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">Inactive</span> },
     { key: "created_at", label: "Created", width: "140px", render: (cat) => <span className={`${bodyText} tabular-nums text-text-faint`}>{cat.created_at ? new Date(cat.created_at).toLocaleDateString() : "—"}</span> },
   ];
 

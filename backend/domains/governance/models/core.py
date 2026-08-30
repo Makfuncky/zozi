@@ -57,6 +57,7 @@ class UserBrowsingHistory(Base):
 
 class SystemHealthEvent(Base):
     __tablename__ = "system_health_events"
+    __table_args__ = (Index("ix_health_events_metric_time", "metric_name", "created_at"), {"schema": "governance"})
     id = Column(Integer, primary_key=True, index=True)
     service = Column(String(100), nullable=True)
     metric_name = Column(String(100), nullable=False)
@@ -67,7 +68,6 @@ class SystemHealthEvent(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    __table_args__ = (Index("ix_health_events_metric_time", "metric_name", "created_at"), {"schema": "governance"})
 
 
 # Lazy re-export shims for models whose canonical home is another domain.

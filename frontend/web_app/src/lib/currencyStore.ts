@@ -168,13 +168,13 @@ interface CurrencyState {
   detected: boolean;
   selectedCountry: string;
   countryLocked: boolean;
+  _hasHydrated: boolean;
   setCurrency: (code: string) => Promise<void>;
   setCountry: (country: string, options?: { lock?: boolean }) => Promise<void>;
   detectFromIP: () => Promise<void>;
+  markHydrated: () => void;
   format: (aedAmount: number) => string;
   formatCurrent: (amount: number | string) => string;
-  convert: (aedAmount: number) => number;
-  toAED: (amount: number | string) => number;
 }
 
 export const useCurrencyStore = create<CurrencyState>()(
@@ -184,6 +184,11 @@ export const useCurrencyStore = create<CurrencyState>()(
       detected: false,
       selectedCountry: "",
       countryLocked: false,
+      _hasHydrated: false,
+
+      markHydrated: () => {
+        set({ _hasHydrated: true });
+      },
 
       setCurrency: async (code: string) => {
         try {
@@ -214,15 +219,16 @@ export const useCurrencyStore = create<CurrencyState>()(
       },
 
       detectFromIP: async () => {
+        // Respect user's manual selection — don't override if locked
+        const { countryLocked, selectedCountry } = get();
+        if (countryLocked && selectedCountry) {
+          return;
+        }
+
         const persistedDeliveryCountry = getPersistedDeliveryCountry();
         if (persistedDeliveryCountry) {
           await get().setCountry(persistedDeliveryCountry, { lock: true });
           return;
-        }
-
-        const { countryLocked } = get();
-        if (countryLocked) {
-          set({ selectedCountry: "", countryLocked: false });
         }
 
         try {
@@ -256,20 +262,16 @@ export const useCurrencyStore = create<CurrencyState>()(
         }
       },
 
-      format: (aedAmount: number) => get().formatCurrent(get().convert(aedAmount)),
-
-      formatCurrent: (amount: number | string) => formatCurrencyAmount(amount, get().currency),
-
-      convert: (aedAmount: number) => {
-        const { currency } = get();
-        return Number((aedAmount * currency.rateFromAED).toFixed(currency.decimals));
+      format: (aedAmount: number) => {
+        const { currency, _hasHydrated } = get();
+        const activeCurrency = _hasHydrated ? currency : DEFAULT_CURRENCY;
+        return formatCurrencyAmount(aedAmount, activeCurrency);
       },
 
-      toAED: (amount: number | string) => {
-        const { currency } = get();
-        const normalizedAmount = typeof amount === "number" ? amount : Number(amount || 0);
-        if (!normalizedAmount || !currency.rateFromAED) return 0;
-        return Number((normalizedAmount / currency.rateFromAED).toFixed(2));
+      formatCurrent: (amount: number | string) => {
+        const { currency, _hasHydrated } = get();
+        const activeCurrency = _hasHydrated ? currency : DEFAULT_CURRENCY;
+        return formatCurrencyAmount(amount, activeCurrency);
       },
     }),
     {
@@ -292,6 +294,7 @@ export const useCurrencyStore = create<CurrencyState>()(
           currency: normalizeCurrencyInfo(saved?.currency),
           selectedCountry: normalizedSavedCountry,
           countryLocked: saved?.countryLocked ?? false,
+          _hasHydrated: false,
         };
       },
     }

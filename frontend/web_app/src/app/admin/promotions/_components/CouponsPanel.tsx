@@ -214,15 +214,15 @@ export default function CouponsPanel() {
         {/* Stats cards */}
         <div className="grid grid-cols-3 gap-3">
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-faint">Active</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">Active</p>
             <p className="mt-1 text-xl font-bold text-text">{activeCount}</p>
           </div>
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-faint">Expired</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">Expired</p>
             <p className="mt-1 text-xl font-bold text-text">{expiredCount}</p>
           </div>
           <div className="theme-card rounded-xl border p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-faint">Total</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">Total</p>
             <p className="mt-1 text-xl font-bold text-text">{coupons.length}</p>
           </div>
         </div>
@@ -315,13 +315,13 @@ export default function CouponsPanel() {
                             <>
                               <button
                                 onClick={() => handleEdit(coupon)}
-                                className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted hover:text-primary transition-colors"
+                                className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted hover:text-primary transition-colors"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleArchive(coupon.id)}
-                                className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted hover:text-danger transition-colors"
+                                className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted hover:text-danger transition-colors"
                                 title="Archive"
                               >
                                 <Archive className="h-3 w-3" />
@@ -331,7 +331,7 @@ export default function CouponsPanel() {
                           {coupon.is_deleted && (
                             <button
                               onClick={() => handleRestore(coupon.id)}
-                              className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted hover:text-success transition-colors"
+                              className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted hover:text-success transition-colors"
                               title="Restore"
                             >
                               <RotateCcw className="h-3 w-3" />
@@ -358,12 +358,12 @@ export default function CouponsPanel() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Code*</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Code*</label>
                     <input type="text" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Type</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Type</label>
                     <select value={form.discount_type} onChange={(e) => setForm({ ...form, discount_type: e.target.value as "percentage" | "fixed" })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50">
                       {DISCOUNT_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -372,36 +372,36 @@ export default function CouponsPanel() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Value*</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Value*</label>
                     <input type="number" step="0.01" min="0" value={form.discount_value} onChange={(e) => setForm({ ...form, discount_value: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Max Discount</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Max Discount</label>
                     <input type="number" step="0.01" min="0" value={form.maximum_discount} onChange={(e) => setForm({ ...form, maximum_discount: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Min Order</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Min Order</label>
                     <input type="number" step="0.01" min="0" value={form.minimum_order} onChange={(e) => setForm({ ...form, minimum_order: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Usage Limit</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Usage Limit</label>
                     <input type="number" min="0" value={form.usage_limit} onChange={(e) => setForm({ ...form, usage_limit: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Start Date</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Start Date</label>
                     <input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-text-faint mb-1">Expiry Date</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1">Expiry Date</label>
                     <input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
                       className="w-full rounded-lg border border-glass-border bg-glass-mid px-3 py-2 text-xs text-text outline-none focus:border-primary/50" />
                   </div>

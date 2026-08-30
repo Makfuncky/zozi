@@ -212,7 +212,7 @@ export default function EmailTemplateManager() {
                   <p className="font-semibold text-text">{template.name}</p>
                   <p className="mt-1 text-text-faint">{template.subject}</p>
                 </div>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium ${getTemplateTypeColor(template.template_type)}`}>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTemplateTypeColor(template.template_type)}`}>
                   {template.template_type}
                 </span>
               </div>

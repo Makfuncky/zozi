@@ -43,8 +43,26 @@ def _reset_sqlite_database() -> bool:
     return True
 
 
+def _import_all_models() -> None:
+    import importlib
+    import pkgutil
+    import domains
+    for _, modname, ispkg in pkgutil.walk_packages(domains.__path__, prefix='domains.'):
+        if '.models.' in modname or modname.endswith('.models'):
+            try:
+                importlib.import_module(modname)
+            except Exception as exc:
+                logger.debug('Skip model import %s: %s', modname, exc)
+
+
 def _create_tables() -> None:
     from infrastructure.database.base import Base as ModelsBase
+    from infrastructure.database.database import _IS_SQLITE
+    _import_all_models()
+    if _IS_SQLITE:
+        # SQLite doesn't support schemas - strip schema from all tables
+        for table in ModelsBase.metadata.tables.values():
+            table.schema = None
     ModelsBase.metadata.create_all(bind=engine)
     logger.info("Database tables created successfully.")
 

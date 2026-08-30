@@ -39,14 +39,14 @@ export default function EmailView({ messages }: { messages: Message[] }) {
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface-1/50">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center">
-                <span className="text-[9px] font-bold text-text-muted">{msg.senderName.charAt(0).toUpperCase()}</span>
+                <span className="text-3xs font-bold text-text-muted">{msg.senderName.charAt(0).toUpperCase()}</span>
               </div>
               <div>
                 <p className="text-[12px] font-semibold text-text">{msg.senderName}</p>
-                <p className="text-[9px] text-text-faint">to me</p>
+                <p className="text-3xs text-text-faint">to me</p>
               </div>
             </div>
-            <span className="text-[10px] text-text-faint">{formatTime(msg.createdAt)}</span>
+            <span className="text-xs text-text-faint">{formatTime(msg.createdAt)}</span>
           </div>
           <div className="px-4 py-3 text-[13px] text-text leading-relaxed whitespace-pre-wrap">
             {msg.body}
@@ -62,14 +62,14 @@ export default function EmailView({ messages }: { messages: Message[] }) {
             </div>
           )}
           <div className="px-4 pb-3 flex items-center gap-2">
-            <button className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text transition-colors">
+            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-text transition-colors">
               <ChevronDown className="w-3 h-3" />
               Show quoted text
             </button>
-            <span className="text-[9px] text-text-faint">·</span>
+            <span className="text-3xs text-text-faint">·</span>
             <button
               onClick={() => handleReply(msg)}
-              className="flex items-center gap-1 text-[10px] text-text-muted hover:text-primary transition-colors"
+              className="flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
             >
               <Reply className="w-3 h-3" />
               Reply

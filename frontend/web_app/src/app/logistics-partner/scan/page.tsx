@@ -133,7 +133,7 @@ function LogisticsPartnerScanInner() {
           <div className="space-y-3 rounded-xl border border-border bg-surface p-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-text">Shipment #{shipment.id}</h2>
-              <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
+              <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
                 {shipment.status_label || shipment.status}
               </span>
             </div>

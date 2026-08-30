@@ -18,6 +18,7 @@ class MeetingRecording(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     room_id = Column(String(64), nullable=False)
     started_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     recording_url = Column(String(500), nullable=True)

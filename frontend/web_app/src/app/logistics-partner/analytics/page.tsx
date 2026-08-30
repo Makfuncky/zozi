@@ -242,7 +242,7 @@ export default function LPAnalyticsPage() {
                       <div>
                         <p className="text-xs font-semibold text-text">{formatMoney(p.amount)}</p>
                         {p.period_start && p.period_end && (
-                          <p className="text-[10px] text-text-muted">
+                          <p className="text-xs text-text-muted">
                             {new Date(p.period_start).toLocaleDateString()} –{" "}
                             {new Date(p.period_end).toLocaleDateString()}
                           </p>
@@ -250,7 +250,7 @@ export default function LPAnalyticsPage() {
                       </div>
                       <div className="text-right">
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                             p.status === "paid"
                               ? "bg-success/10 text-success"
                               : p.status === "pending"
@@ -261,7 +261,7 @@ export default function LPAnalyticsPage() {
                           {p.status}
                         </span>
                         {p.payout_date && (
-                          <p className="text-[10px] text-text-muted mt-0.5">
+                          <p className="text-xs text-text-muted mt-0.5">
                             {new Date(p.payout_date).toLocaleDateString()}
                           </p>
                         )}

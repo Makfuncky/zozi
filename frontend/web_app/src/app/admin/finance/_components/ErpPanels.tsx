@@ -39,7 +39,7 @@ export function csvExport(filename: string, rows: any[], columns: { key: string;
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase text-text-faint font-semibold">{label}</span>
+      <span className="text-xs uppercase text-text-faint font-semibold">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );
@@ -239,12 +239,12 @@ export function ARPanel() {
       {aging && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="theme-card rounded-xl border p-3">
-            <div className="text-[10px] uppercase text-text-faint">Total AR</div>
+            <div className="text-xs uppercase text-text-faint">Total AR</div>
             <div className="text-lg font-bold">{formatMoney(aging.total || 0)}</div>
           </div>
           {buckets.map(([k, v]) => (
             <div key={k} className="theme-card rounded-xl border p-3">
-              <div className="text-[10px] uppercase text-text-faint">{k.replace("b", "bucket ")}</div>
+              <div className="text-xs uppercase text-text-faint">{k.replace("b", "bucket ")}</div>
               <div className="text-lg font-bold">{formatMoney(v as number)}</div>
             </div>
           ))}
@@ -274,7 +274,7 @@ export function ARPanel() {
                     <td className="p-2 font-mono text-xs">{r.invoice_number}</td>
                     <td className="p-2 text-right">{formatMoney(r.amount)}</td>
                     <td className="p-2 text-xs text-text-faint">{r.due_date?.slice(0, 10)}</td>
-                    <td className="p-2 text-center"><span className="text-[10px] bg-info/20 text-info px-1.5 py-0.5 rounded-full">{r.status}</span></td>
+                    <td className="p-2 text-center"><span className="text-xs bg-info/20 text-info px-1.5 py-0.5 rounded-full">{r.status}</span></td>
                     <td className="p-2 text-center text-xs text-text-faint">{r.country_code || "—"}</td>
                   </tr>
                 ))}
@@ -343,12 +343,12 @@ export function APPanel() {
       {aging && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="theme-card rounded-xl border p-3">
-            <div className="text-[10px] uppercase text-text-faint">Total AP</div>
+            <div className="text-xs uppercase text-text-faint">Total AP</div>
             <div className="text-lg font-bold">{formatMoney(aging.total || 0)}</div>
           </div>
           {buckets.map(([k, v]) => (
             <div key={k} className="theme-card rounded-xl border p-3">
-              <div className="text-[10px] uppercase text-text-faint">{k.replace("b", "bucket ")}</div>
+              <div className="text-xs uppercase text-text-faint">{k.replace("b", "bucket ")}</div>
               <div className="text-lg font-bold">{formatMoney(v as number)}</div>
             </div>
           ))}
@@ -378,7 +378,7 @@ export function APPanel() {
                     <td className="p-2 font-mono text-xs">{r.bill_number}</td>
                     <td className="p-2 text-right">{formatMoney(r.amount)}</td>
                     <td className="p-2 text-xs text-text-faint">{r.due_date?.slice(0, 10)}</td>
-                    <td className="p-2 text-center"><span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded-full">{r.status}</span></td>
+                    <td className="p-2 text-center"><span className="text-xs bg-warning/20 text-warning px-1.5 py-0.5 rounded-full">{r.status}</span></td>
                     <td className="p-2 text-center text-xs text-text-faint">{r.country_code || "—"}</td>
                   </tr>
                 ))}
@@ -707,7 +707,7 @@ export function FinanceAuditPanel() {
               {rows.length === 0 ? <tr><td colSpan={6} className="p-6 text-center text-text-muted text-xs">No audit events.</td></tr>
                 : rows.map((a) => (
                   <tr key={a.id} className="border-b border-border last:border-0">
-                    <td className="p-2"><span className="text-[10px] bg-success/20 text-success px-1.5 py-0.5 rounded-full font-mono">{a.action}</span></td>
+                    <td className="p-2"><span className="text-xs bg-success/20 text-success px-1.5 py-0.5 rounded-full font-mono">{a.action}</span></td>
                     <td className="p-2 text-xs">{a.actor_id}</td>
                     <td className="p-2 text-xs text-text-faint">{a.entity_type || "—"}{a.entity_id ? ` #${a.entity_id}` : ""}</td>
                     <td className="p-2 text-xs text-text-faint max-w-[280px] truncate">{a.detail ? JSON.stringify(a.detail).slice(0, 80) : "—"}</td>

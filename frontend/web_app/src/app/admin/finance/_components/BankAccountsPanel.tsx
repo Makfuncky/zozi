@@ -81,27 +81,27 @@ export default function BankAccountsPanel() {
         {settings ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <p className="text-[10px] text-text-faint uppercase">Bank Name</p>
+              <p className="text-xs text-text-faint uppercase">Bank Name</p>
               <p className="text-sm font-semibold">{settings.bank_name}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text-faint uppercase">Account Name</p>
+              <p className="text-xs text-text-faint uppercase">Account Name</p>
               <p className="text-sm font-semibold">{settings.account_name}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text-faint uppercase">Account Number</p>
+              <p className="text-xs text-text-faint uppercase">Account Number</p>
               <p className="text-sm font-mono">{settings.account_number}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text-faint uppercase">IBAN</p>
+              <p className="text-xs text-text-faint uppercase">IBAN</p>
               <p className="text-sm font-mono">{settings.iban}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text-faint uppercase">SWIFT/BIC</p>
+              <p className="text-xs text-text-faint uppercase">SWIFT/BIC</p>
               <p className="text-sm font-mono">{settings.swift_bic}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text-faint uppercase">Status</p>
+              <p className="text-xs text-text-faint uppercase">Status</p>
               <span className={`inline-flex items-center gap-1 text-xs font-semibold ${settings.is_active ? "text-success" : "text-warning"}`}>
                 {settings.is_active ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
                 {settings.is_active ? "Active" : "Inactive"}
@@ -119,7 +119,7 @@ export default function BankAccountsPanel() {
           <CreditCard className="h-4 w-4 text-warning" />
           Pending Verifications
           {pendingAccounts.length > 0 && (
-            <span className="ml-auto text-[10px] bg-warning/20 text-warning px-2 py-0.5 rounded-full">{pendingAccounts.length}</span>
+            <span className="ml-auto text-xs bg-warning/20 text-warning px-2 py-0.5 rounded-full">{pendingAccounts.length}</span>
           )}
         </h3>
         {pendingAccounts.length > 0 ? (
@@ -141,7 +141,7 @@ export default function BankAccountsPanel() {
                     <td className="p-2 text-sm">{acc.bank_name}</td>
                     <td className="p-2 font-mono text-xs">{acc.account_number}</td>
                     <td className="p-2">
-                      <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded-full">{acc.status}</span>
+                      <span className="text-xs bg-warning/20 text-warning px-1.5 py-0.5 rounded-full">{acc.status}</span>
                     </td>
                     <td className="p-2 text-xs text-text-faint">{acc.created_at?.slice(0, 10)}</td>
                   </tr>

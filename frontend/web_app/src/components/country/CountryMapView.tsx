@@ -193,7 +193,7 @@ export default function CountryMapView({ countryCode, cities, onCitiesChange }: 
                 <MapPin className="h-4 w-4 text-text-faint" />
                 <div>
                   <span className="text-sm font-medium text-text">{city.name}</span>
-                  <div className="text-[10px] text-text-muted">
+                  <div className="text-xs text-text-muted">
                     {city.latitude.toFixed(4)}, {city.longitude.toFixed(4)}
                     {city.is_capital && <span className="ml-2 text-warning font-medium">★ Capital</span>}
                   </div>
@@ -233,7 +233,7 @@ export default function CountryMapView({ countryCode, cities, onCitiesChange }: 
         <div className="border-t border-border pt-4 mt-4">
           <h4 className="text-xs font-bold text-text mb-3">Edit City Details</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               City Name
               <input
                 type="text"
@@ -242,7 +242,7 @@ export default function CountryMapView({ countryCode, cities, onCitiesChange }: 
                 className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm text-text"
               />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Latitude
               <input
                 type="number"
@@ -253,7 +253,7 @@ export default function CountryMapView({ countryCode, cities, onCitiesChange }: 
                 disabled
               />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Longitude
               <input
                 type="number"
@@ -264,7 +264,7 @@ export default function CountryMapView({ countryCode, cities, onCitiesChange }: 
                 disabled
               />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Population
               <input
                 type="number"

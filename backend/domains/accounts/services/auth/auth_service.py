@@ -1253,7 +1253,7 @@ def refresh_session(refresh_token: str, db: Session | None = None) -> dict:
     else:
         close_db = False
     try:
-        user = db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(User.email == username).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -1426,7 +1426,7 @@ def find_user(db: Session, email: str | None, username: str | None) -> User | No
     if email:
         q = q.filter(User.email == email)
     elif username:
-        q = q.filter(User.username == username)
+        q = q.filter(User.email == username)
     else:
         return None
     user = q.first()
@@ -1445,7 +1445,6 @@ def record_login_history(db: Session, user: User, request=None, success: bool = 
             user_id=user.id,
             ip_address=ip or "unknown",
             user_agent=ua,
-            timestamp=datetime.now(timezone.utc),
             success=success,
             country_code=user.country_code,
         )
@@ -1464,7 +1463,7 @@ def check_email_exists(db: Session, email: str) -> bool:
 
 
 def check_username_exists(db: Session, username: str) -> bool:
-    return db.query(User).filter(User.username == username).first() is not None
+    return db.query(User).filter(User.email == username).first() is not None
 
 
 def create_user(db: Session, email: str, username: str, full_name: str, phone: str | None, role: str, hashed_password: str) -> User:
@@ -1509,7 +1508,7 @@ from providers.auth import oauth
 from fastapi import Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -1626,8 +1625,20 @@ class SocialLoginJsonRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: str
+    email: Optional[str] = None
+    username: Optional[str] = None
     password: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_username_to_email(cls, values):
+        # Frontend login forms (admin/supplier/customer/logistics) all send
+        # {"username", "password"}. Accept username as an alias for email so
+        # the same endpoint works for every login door.
+        if isinstance(values, dict):
+            if not values.get("email") and values.get("username"):
+                values["email"] = values["username"]
+        return values
 
 
 class PublicResendVerificationRequest(BaseModel):
@@ -1676,27 +1687,28 @@ def _resolve_user_from_subject(subject: str, db: Session) -> User | None:
     try:
         return db.query(User).filter(User.id == int(subject)).first()
     except (TypeError, ValueError):
-        return db.query(User).filter(User.username == str(subject)).first()
+        return db.query(User).filter(User.email == str(subject)).first()
 
 
 def _user_id(user: User | UserSchema) -> int:
-    return cast(int, getattr(user, "id"))
+    return cast(int, getattr(user, "id", None))
 
 
 def _user_username(user: User | UserSchema) -> str:
-    return cast(str, getattr(user, "username"))
+    """Return the user's display identifier (email, since username is not a column)."""
+    return cast(str, getattr(user, "email", None) or getattr(user, "username", ""))
 
 
 def _user_email(user: User | UserSchema) -> str:
-    return cast(str, getattr(user, "email"))
+    return cast(str, getattr(user, "email", None))
 
 
 def _user_role(user: User | UserSchema) -> str:
-    return cast(str, getattr(user, "role"))
+    return cast(str, getattr(user, "role", None))
 
 
 def _user_phone(user: User | UserSchema) -> str | None:
-    return cast(str | None, getattr(user, "phone"))
+    return cast(str | None, getattr(user, "phone", None))
 
 
 def _user_email_verified(user: User | UserSchema) -> bool:
@@ -1704,7 +1716,7 @@ def _user_email_verified(user: User | UserSchema) -> bool:
 
 
 def _user_profile_image(user: User | UserSchema) -> str | None:
-    return cast(str | None, getattr(user, "profile_image"))
+    return cast(str | None, getattr(user, "profile_image", None))
 
 
 
@@ -1841,9 +1853,9 @@ def _user_public_payload(user: User | UserSchema) -> dict[str, Any]:
         "role": _user_role(user),
         "profile_image": _user_profile_image(user),
         "phone": _user_phone(user),
-        "preferred_language": cast(str | None, getattr(user, "preferred_language")) or DEFAULT_LANGUAGE,
-        "preferred_currency": cast(str | None, getattr(user, "preferred_currency")) or DEFAULT_CURRENCY,
-        "preferred_country": cast(str | None, getattr(user, "preferred_country")) or DEFAULT_COUNTRY,
+        "preferred_language": cast(str | None, getattr(user, "preferred_language", None)) or DEFAULT_LANGUAGE,
+        "preferred_currency": cast(str | None, getattr(user, "preferred_currency", None)) or DEFAULT_CURRENCY,
+        "preferred_country": cast(str | None, getattr(user, "preferred_country", None)) or DEFAULT_COUNTRY,
         "referral_code": cast(str | None, getattr(user, "referral_code", None)),
         "referral_points": int(cast(int | None, getattr(user, "referral_points", 0)) or 0),
         "sharing_points": int(cast(int | None, getattr(user, "sharing_points", 0)) or 0),
@@ -1878,19 +1890,19 @@ def get_optional_user(
             "username": _user_username(user),
             "email": _user_email(user),
             "role": _user_role(user),
-            "is_active": bool(cast(Any, getattr(user, "is_active"))),
+            "is_active": bool(cast(Any, getattr(user, "is_active", None))),
             "phone": _user_phone(user),
             "profile_image": _user_profile_image(user),
-            "preferred_language": cast(str | None, getattr(user, "preferred_language")) or DEFAULT_LANGUAGE,
-            "preferred_currency": cast(str | None, getattr(user, "preferred_currency")) or DEFAULT_CURRENCY,
-            "preferred_country": cast(str | None, getattr(user, "preferred_country")) or DEFAULT_COUNTRY,
-            "country_code": cast(str | None, getattr(user, "country_code")) or cast(str | None, getattr(user, "preferred_country")) or DEFAULT_COUNTRY,
+            "preferred_language": cast(str | None, getattr(user, "preferred_language", None)) or DEFAULT_LANGUAGE,
+            "preferred_currency": cast(str | None, getattr(user, "preferred_currency", None)) or DEFAULT_CURRENCY,
+            "preferred_country": cast(str | None, getattr(user, "preferred_country", None)) or DEFAULT_COUNTRY,
+            "country_code": cast(str | None, getattr(user, "country_code", None)) or cast(str | None, getattr(user, "preferred_country", None)) or DEFAULT_COUNTRY,
             "referral_code": cast(str | None, getattr(user, "referral_code", None)),
             "referral_points": int(cast(int | None, getattr(user, "referral_points", 0)) or 0),
             "sharing_points": int(cast(int | None, getattr(user, "sharing_points", 0)) or 0),
             "total_points": _total_referral_points(user),
             "email_verified": user.email_verified,
-            "created_at": cast(datetime, getattr(user, "created_at")),
+            "created_at": cast(datetime, getattr(user, "created_at", None)),
             "_token": token,
         }
         if _user_role(user) in STAFF_ROLES:
@@ -1906,12 +1918,10 @@ def _find_user_for_login(identifier: str, db: Session) -> User | None:
     if not normalized:
         return None
 
+    # Login is by email only (username is an alias for email)
     return (
         db.query(User)
-        .filter(
-            (func.lower(User.email) == normalized.lower())
-            | (func.lower(User.username) == normalized.lower())
-        )
+        .filter(func.lower(User.email) == normalized.lower())
         .first()
     )
 
@@ -2034,7 +2044,6 @@ def _record_login_history(db: Session, user: User, request: Request | None = Non
             user_id=user.id,
             ip_address=ip or "unknown",
             user_agent=ua,
-            timestamp=datetime.now(timezone.utc),
             success=True,
             country_code=user.country_code,
         )
@@ -2082,13 +2091,13 @@ def _slugify_username(value: str) -> str:
 
 def _unique_username(base: str, db: Session) -> str:
     candidate = _slugify_username(base)
-    if not db.query(User).filter(func.lower(User.username) == candidate.lower()).first():
+    if not db.query(User).filter(func.lower(User.email) == candidate.lower()).first():
         return candidate
 
     suffix = 1
     while True:
         next_candidate = f"{candidate[:34]}_{suffix}"
-        if not db.query(User).filter(func.lower(User.username) == next_candidate.lower()).first():
+        if not db.query(User).filter(func.lower(User.email) == next_candidate.lower()).first():
             return next_candidate
         suffix += 1
 
@@ -2344,7 +2353,7 @@ def handle_facebook_oauth_callback(code: str, state: str | None, request: Reques
 def register_user(user: UserCreate, db: Session) -> UserSchema:
     if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-    if db.query(User).filter(User.username == user.username).first():
+    if db.query(User).filter(User.email == user.username).first():
         raise HTTPException(status_code=400, detail="Username already taken")
 
     # Supplier-specific validation
@@ -2642,7 +2651,7 @@ def login_user(
         )
 
     user = _find_user_for_login(form_data.username, db)
-    if not user or not verify_password(form_data.password, cast(str, getattr(user, "hashed_password"))):
+    if not user or not verify_password(form_data.password, cast(str, getattr(user, "hashed_password", None))):
         record_failed_login(form_data.username)
         # Log failed attempt
         audit_log(
@@ -2720,7 +2729,7 @@ def json_login_user(
         )
 
     user = _find_user_for_login(login_data.email, db)
-    if not user or not verify_password(login_data.password, cast(str, getattr(user, "hashed_password"))):
+    if not user or not verify_password(login_data.password, cast(str, getattr(user, "hashed_password", None))):
         record_failed_login(login_data.email)
         # Log failed attempt
         audit_log(
@@ -3024,7 +3033,7 @@ def update_profile(body: ProfileUpdate, current_user: dict, db: Session) -> User
 
     username = getattr(body, "username", None)
     if username and username != _user_username(user):
-        if db.query(User).filter(User.username == username).first():
+        if db.query(User).filter(User.email == username).first():
             raise HTTPException(status_code=409, detail="Username already taken")
         setattr(user, "username", username)
 
@@ -3094,7 +3103,7 @@ def change_password(body: ChangePasswordRequest, current_user: dict, db: Session
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not verify_password(body.get_current_password(), cast(str, getattr(user, "hashed_password"))):
+    if not verify_password(body.get_current_password(), cast(str, getattr(user, "hashed_password", None))):
         raise HTTPException(status_code=400, detail="Incorrect current password")
     
     # Validate new password complexity
@@ -3183,9 +3192,9 @@ def get_user_preferences(current_user: dict, db: Session) -> dict:
     ).order_by(UserBrowsingHistory.viewed_at.desc()).limit(20).all()
     history = [bh.product_id for bh in browsing_history]
     return {
-        "preferred_language": cast(str | None, getattr(user, "preferred_language")) or DEFAULT_LANGUAGE,
-        "preferred_currency": cast(str | None, getattr(user, "preferred_currency")) or DEFAULT_CURRENCY,
-        "preferred_country": cast(str | None, getattr(user, "preferred_country")) or DEFAULT_COUNTRY,
+        "preferred_language": cast(str | None, getattr(user, "preferred_language", None)) or DEFAULT_LANGUAGE,
+        "preferred_currency": cast(str | None, getattr(user, "preferred_currency", None)) or DEFAULT_CURRENCY,
+        "preferred_country": cast(str | None, getattr(user, "preferred_country", None)) or DEFAULT_COUNTRY,
         "browsing_history": history,
     }
 
@@ -3294,7 +3303,7 @@ def disable_totp(current_user: dict, db: Session, password: str) -> dict:
     if not getattr(user, "totp_enabled", False):
         raise HTTPException(status_code=400, detail="TOTP 2FA is not enabled")
 
-    if not verify_password(password, cast(str, getattr(user, "hashed_password"))):
+    if not verify_password(password, cast(str, getattr(user, "hashed_password", None))):
         raise HTTPException(status_code=400, detail="Incorrect password")
 
     setattr(user, "totp_secret", None)
@@ -4216,7 +4225,7 @@ def claim_share_points(db: Session, user: User, channel: str, points: int) -> Us
     user.sharing_points = current_sharing + points
     record_referral_event(
         db,
-        user_id=int(getattr(user, "id")),
+        user_id=int(getattr(user, "id", None)),
         event_type="share_bonus",
         points=points,
         channel=channel,
@@ -4260,7 +4269,7 @@ def find_user_by_identifier(
     if email:
         q = q.filter(User.email == email)
     elif username:
-        q = q.filter(User.username == username)
+        q = q.filter(User.email == username)
     else:
         return None
     user = q.first()

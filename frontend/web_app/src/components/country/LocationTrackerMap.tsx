@@ -53,7 +53,7 @@ export default function LocationTrackerMap({ locations, showOnlyActive = true }:
                 <Icon className="h-4 w-4 text-primary" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-text">{loc.name}</p>
-                  <p className="text-[10px] text-text-muted capitalize">{loc.type}</p>
+                  <p className="text-xs text-text-muted capitalize">{loc.type}</p>
                 </div>
                 <div className={`w-2 h-2 rounded-full ${
                   loc.status === "active" ? "bg-success" : "bg-danger"

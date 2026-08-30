@@ -110,7 +110,7 @@ function PromotionsHubInner() {
           <div className="flex items-center gap-2 rounded-lg border border-glass-border bg-glass-panel px-3 py-2">
             <Globe className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium text-text">{selectedCountry.name}</span>
-            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-primary">{selectedCountry.code}</span>
+            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-mono font-semibold text-primary">{selectedCountry.code}</span>
           </div>
         )}
 
@@ -126,7 +126,7 @@ function PromotionsHubInner() {
               <div key={m.label} className="theme-card rounded-xl border p-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-text-faint">{m.label}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">{m.label}</p>
                     <p className="mt-0.5 text-xl font-bold text-text">{m.value}</p>
                   </div>
                   <div className={`${m.color} opacity-60`}>

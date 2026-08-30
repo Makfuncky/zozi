@@ -79,7 +79,7 @@ export function Dropdown({
             exit={{ opacity: 0, y: side === "bottom" ? -6 : 6, scale: 0.98 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
             className={cn(
-              "glass-dropdown absolute z-[999] mt-2 min-w-[12rem] rounded-2xl p-1.5 shadow-2xl",
+              "glass-dropdown absolute z-modal mt-2 min-w-[12rem] rounded-2xl p-1.5 shadow-2xl",
               align === "right" ? "right-0" : "left-0",
               side === "top" && "bottom-full mb-2 mt-0",
               menuClassName

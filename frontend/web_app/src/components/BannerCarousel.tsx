@@ -134,7 +134,7 @@ function BannerCarousel({
           <div className="relative z-10 px-5 sm:px-8 md:px-10 max-w-2xl py-6 sm:py-8">
             {current.badge_text && (
               <span
-                className="mb-2 inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider"
+                className="mb-2 inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider"
                 style={{
                   backgroundColor: current.badge_color || "rgba(255,255,255,0.14)",
                   color: current.text_color || "#fff",

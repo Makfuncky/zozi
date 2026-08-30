@@ -118,14 +118,14 @@ export default function ReturnsPanel() {
                   <td className="px-2 py-2 font-mono text-text-faint">#{r.id}</td>
                   <td className="px-2 py-2 text-text">#{r.order_id}</td>
                   <td className="px-2 py-2 text-text">
-                    <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-semibold uppercase text-text-muted">
+                    <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs font-semibold uppercase text-text-muted">
                       {r.intent || "return"}
                     </span>
                   </td>
                   <td className="px-2 py-2 text-text-muted">{r.customer_name || r.user_id || "—"}</td>
                   <td className="px-2 py-2 text-text-muted">{r.reason || r.description || "—"}</td>
                   <td className="px-2 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_CHIP[r.status ?? ""] || "bg-surface-3 text-text-muted"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_CHIP[r.status ?? ""] || "bg-surface-3 text-text-muted"}`}>
                       {r.status}
                     </span>
                   </td>

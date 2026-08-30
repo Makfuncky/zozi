@@ -16,12 +16,12 @@ class ShiftHandoverLog(Base):
         Index("ix_handover_user_created", "user_id", "created_at"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="RESTRICT"), nullable=False, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=False, index=True)
     shift_start = Column(DateTime, nullable=False)
     shift_end = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    handover_to_user_id = Column(Integer, nullable=True)
+    handover_to_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     handover_notes = Column(Text, nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=False, index=True)
@@ -65,7 +65,7 @@ class SupplierOnboardingSync(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=False, index=True)
-    supplier_id = Column(Integer, nullable=False, index=True)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="RESTRICT"), nullable=False, index=True)
     kyc_status = Column(String(30), default="pending")
     kyc_documents = Column(Text, nullable=True)
     onboarding_fee_paid = Column(Boolean, default=False)

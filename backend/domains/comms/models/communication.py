@@ -3,7 +3,9 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, text
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 from . import Base
+from domains.country.models.countries import CountryConfig  # noqa: F401
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from infrastructure.database.mixins import TenantMixin, VersionMixin
 __all__ = ['Notification', 'Announcement', 'FAQ', 'HelpCategory', 'TicketMessage', 'ProxyChannel', 'ProxySession', 'ProxyMessage', 'ProxyCallLog', 'EmployeeCommunicationThread', 'ExternalContactMasking', 'CommunicationAuditTrail', 'InternalChannel', 'InternalChannelMember', 'InternalMessage', 'ChatAttachment', 'InternalEmail', 'EmailFolder', 'MaskedMessage']
@@ -11,7 +13,7 @@ __all__ = ['Notification', 'Announcement', 'FAQ', 'HelpCategory', 'TicketMessage
 class Notification(Base, TenantMixin):
     __tablename__ = 'notifications'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -39,7 +41,7 @@ class Notification(Base, TenantMixin):
 class TicketMessage(Base, TenantMixin):
     __tablename__ = 'ticket_messages'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -60,7 +62,7 @@ class TicketMessage(Base, TenantMixin):
 class Announcement(Base):
     __tablename__ = 'announcements'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -80,7 +82,7 @@ class Announcement(Base):
 class FAQ(Base, TenantMixin):
     __tablename__ = 'faqs'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -98,7 +100,7 @@ class FAQ(Base, TenantMixin):
 class HelpCategory(Base):
     __tablename__ = 'help_categories'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -115,7 +117,7 @@ class HelpCategory(Base):
 class ProxyChannel(Base):
     __tablename__ = 'proxy_channels'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -137,7 +139,7 @@ class ProxyChannel(Base):
 class ProxySession(Base):
     __tablename__ = 'proxy_sessions'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -163,7 +165,7 @@ class ProxySession(Base):
 class ProxyMessage(Base):
     __tablename__ = 'proxy_messages'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -188,7 +190,7 @@ class ProxyMessage(Base):
 class ProxyCallLog(Base):
     __tablename__ = 'proxy_call_logs'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -215,7 +217,7 @@ class ProxyCallLog(Base):
 class EmployeeCommunicationThread(Base, TenantMixin):
     __tablename__ = 'employee_communication_threads'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -235,7 +237,7 @@ class EmployeeCommunicationThread(Base, TenantMixin):
 class ExternalContactMasking(Base):
     __tablename__ = 'external_contact_maskings'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -256,7 +258,7 @@ class ExternalContactMasking(Base):
 class CommunicationAuditTrail(Base):
     __tablename__ = 'communication_audit_trails'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -279,7 +281,7 @@ class CommunicationAuditTrail(Base):
 class InternalChannel(Base, TenantMixin):
     __tablename__ = 'internal_channels'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -310,7 +312,7 @@ class InternalChannel(Base, TenantMixin):
 class InternalChannelMember(Base):
     __tablename__ = 'internal_channel_members'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -331,7 +333,7 @@ class InternalChannelMember(Base):
 class InternalMessage(Base):
     __tablename__ = 'internal_messages'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -354,7 +356,7 @@ class InternalMessage(Base):
 class ChatReadReceipt(Base):
     __tablename__ = 'chat_read_receipts'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -373,7 +375,7 @@ class ChatReadReceipt(Base):
 class ChatAttachment(Base):
     __tablename__ = 'chat_attachments'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -399,7 +401,7 @@ class ChatAttachment(Base):
 class InternalEmail(Base, TenantMixin):
     __tablename__ = 'internal_emails'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -426,7 +428,7 @@ class InternalEmail(Base, TenantMixin):
 class EmailFolder(Base):
     __tablename__ = 'email_folders'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -446,7 +448,7 @@ class EmailFolder(Base):
 class MaskedMessage(Base, TenantMixin):
     __tablename__ = 'masked_messages'
     __table_args__ = {"schema": "comms"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)

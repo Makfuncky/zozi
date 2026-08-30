@@ -1,0 +1,86 @@
+- generic [ref=f12e1]:
+  - link "Skip to main content" [ref=f12e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f12e3]:
+    - banner [ref=f12e5]:
+      - generic [ref=f12e7]:
+        - link "Go to home" [ref=f12e8] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f12e9]:
+            - img "Zozi logo" [ref=f12e11]
+            - generic [ref=f12e27]: Zozi
+        - generic [ref=f12e28]:
+          - button "Switch to dark theme" [ref=f12e129] [cursor=pointer]: 🌙
+          - generic [ref=f12e30]:
+            - generic [ref=f12e31]:
+              - generic [ref=f12e32]: OMR
+              - generic [ref=f12e33]: Detected PK
+            - button "Choose country" [ref=f12e35] [cursor=pointer]:
+              - generic [ref=f12e36]: PK
+            - button "Choose language" [ref=f12e40] [cursor=pointer]:
+              - generic [ref=f12e41]: EN
+          - link "Wishlist" [ref=f12e44] [cursor=pointer]:
+            - /url: /wishlist
+          - link "Cart" [ref=f12e47] [cursor=pointer]:
+            - /url: /cart
+          - button "Open sign in menu" [ref=f12e52] [cursor=pointer]
+    - main [ref=f12e57]:
+      - main [ref=f12e58]:
+        - generic [ref=f12e59]:
+          - generic [ref=f12e60]:
+            - heading "Customer Sign In" [level=1] [ref=f12e65]
+            - paragraph [ref=f12e66]: Welcome back — sign in to your ZOZI account
+          - generic [ref=f12e67]:
+            - generic [ref=f12e68]:
+              - generic [ref=f12e69]: Email or Username
+              - textbox "you@email.com" [ref=f12e71]: customer@zozi.com
+            - generic [ref=f12e72]:
+              - generic [ref=f12e73]: Password
+              - generic [ref=f12e74]:
+                - textbox "••••••••" [active] [ref=f12e75]: customer123
+                - button "Show password" [ref=f12e76] [cursor=pointer]
+            - button "Sign In" [ref=f12e80] [cursor=pointer]
+          - paragraph [ref=f12e84]:
+            - text: New to ZOZI?
+            - link "Create an account" [ref=f12e85] [cursor=pointer]:
+              - /url: /register
+          - paragraph [ref=f12e86]:
+            - text: Are you a seller or logistics partner?
+            - link "Supplier" [ref=f12e87] [cursor=pointer]:
+              - /url: /supplier/login
+            - text: ·
+            - link "Logistics" [ref=f12e88] [cursor=pointer]:
+              - /url: /logistics-partner/login
+    - contentinfo [ref=f12e90]:
+      - generic [ref=f12e92]:
+        - generic [ref=f12e93]:
+          - generic [ref=f12e94]: ZOZI
+          - paragraph [ref=f12e100]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f12e101]:
+            - link "Become a Supplier" [ref=f12e102] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f12e103] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f12e104]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f12e105]
+          - generic [ref=f12e106]:
+            - generic [ref=f12e107]:
+              - heading "Stay in Style" [level=3] [ref=f12e108]
+              - paragraph [ref=f12e109]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f12e110]:
+              - textbox "First name (optional)" [ref=f12e112]
+              - textbox "Enter your email" [ref=f12e114]
+              - button "Subscribe" [disabled] [ref=f12e115]
+      - generic [ref=f12e120]:
+        - paragraph [ref=f12e121]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f12e122]:
+          - link "Terms" [ref=f12e123] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f12e124] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f12e125] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f12e126] [cursor=pointer]:
+            - /url: /admin/login
+    - button "Chat" [ref=f12e130] [cursor=pointer]
+  - alert [ref=f12e134]

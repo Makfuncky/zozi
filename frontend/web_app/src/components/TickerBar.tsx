@@ -26,7 +26,7 @@ export default function TickerBar() {
             {TICKER_ITEMS.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2 px-6">
                 <item.icon className={`w-3 h-3 shrink-0 ${item.color}`} />
-                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
                   {item.text}
                 </span>
                 <span className="ml-4 text-slate-600">&bull;</span>

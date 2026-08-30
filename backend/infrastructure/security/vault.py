@@ -165,7 +165,7 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
                         safe_field = quoted_name(field, quote=True)
                         safe_table = quoted_name(_VAULT_TABLE, quote=True)
                         db.execute(
-                            _text(f"UPDATE {safe_table} SET {safe_field} = :val WHERE id = :id"),
+                            _text("UPDATE " + safe_table + " SET " + safe_field + " = :val WHERE id = :id"),
                             {"val": new_encrypted, "id": conn_id},
                         )
                         reencrypted_count += 1

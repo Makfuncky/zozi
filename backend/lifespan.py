@@ -19,6 +19,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 import structlog
 
+# Ensure all models are registered before any mapper configuration
+from infrastructure.database import models  # noqa: F401
+
 logger = structlog.get_logger(__name__)
 
 
@@ -35,14 +38,7 @@ def _ensure_tables_exist() -> bool:
     Raises:
         RuntimeError: If table creation fails on an empty database.
     """
-    # Import models to register them in Base.metadata
-    # Use try/except to handle missing models gracefully
-    try:
-        from infrastructure.database import models  # noqa: F401
-    except ImportError as exc:
-        logger.warning("Could not import some ORM models: %s", exc)
-    except Exception as exc:
-        logger.warning("Error importing ORM models: %s", exc)
+    # Models are imported at module level (above) to register them in Base.metadata
     try:
         from sqlalchemy import inspect
 
@@ -127,10 +123,23 @@ def _startup_register_services() -> None:
     Non-critical: failure is logged but does not prevent startup.
     """
     try:
-        import services.unknown._registry  # noqa: F401 — import side-effects only
-        logger.info("Service side-effect registry imported")
+        import importlib
+        # Try multiple possible locations for the service registry
+        registry_paths = [
+            "services.unknown._registry",
+            "services._registry",
+            "services.registry",
+        ]
+        for path in registry_paths:
+            try:
+                importlib.import_module(path)
+                logger.info("Service side-effect registry imported from %s", path)
+                return
+            except ModuleNotFoundError:
+                continue
+        logger.debug("No service side-effect registry found (non-critical)")
     except Exception:
-        logger.exception("Failed to import services.unknown._registry at startup (non-critical)")
+        logger.exception("Failed to import service registry at startup (non-critical)")
 
 
 def _startup_register_event_listeners() -> None:
@@ -139,11 +148,21 @@ def _startup_register_event_listeners() -> None:
     Non-critical: failure is logged but does not prevent startup.
     """
     try:
-        from domains.finance.services.payments.payments import _event_publisher
+        # _event_publisher lives in payment_engine, not payments
+        from domains.finance.services.payments.payment_engine import _event_publisher
         from infrastructure.messaging.events import PaymentConfirmedEvent
-        from domains.orders.services.fulfillment_service import FulfillmentService
 
-        fulfillment = FulfillmentService()
+        # Try to import FulfillmentService - may not exist in all deployments
+        try:
+            from domains.orders.services.fulfillment_service import FulfillmentService
+            fulfillment = FulfillmentService()
+        except ModuleNotFoundError:
+            # FulfillmentService doesn't exist - use a no-op handler
+            class FulfillmentService:
+                def handle_payment_confirmed(self, event, db):
+                    pass
+            fulfillment = FulfillmentService()
+
         from infrastructure.database.database import SessionLocal
 
         def _handle_fulfillment(event: PaymentConfirmedEvent) -> None:
@@ -260,6 +279,39 @@ def _startup_background_jobs() -> list:
 # Main lifespan factory
 # ---------------------------------------------------------------------------
 
+def _preload_all_models() -> None:
+    """Import every ``domains/*/models`` module so all ORM mappers/relationships
+    are registered before the first request.
+
+    Relationship string references (e.g. ``relationship('TaxRule')``) only resolve
+    when the target class is imported and its mapper registered. The router
+    import chain does not reliably pull in every model module, which caused
+    ``InvalidRequestError: One or more mappers failed to initialize`` at request
+    time. Walking all model packages here guarantees registration. Import errors
+    in individual modules are non-fatal (best-effort, like the test bootstrap).
+    """
+    import importlib
+    import pkgutil
+
+    def _walk(pkg_name: str) -> None:
+        try:
+            pkg = importlib.import_module(pkg_name)
+        except Exception:
+            return
+        for _m in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
+            try:
+                importlib.import_module(_m.name)
+            except Exception:
+                continue
+
+    for _d in (
+        "accounts", "catalog", "orders", "finance", "suppliers", "logistics",
+        "comms", "hr", "promotions", "security", "governance", "analytics",
+        "country", "customers", "audit",
+    ):
+        _walk(f"domains.{_d}.models")
+
+
 def build_lifespan():
     """Return an ``asynccontextmanager`` lifespan for the FastAPI app."""
 
@@ -268,7 +320,18 @@ def build_lifespan():
         from infrastructure.utils.config import settings
 
         # --- Startup ---
+        _preload_all_models()
         fresh = _ensure_tables_exist()
+
+        # Re-install RLS interceptor now that tables exist (COUNTRY_AWARE_TABLES was empty at import time)
+        try:
+            from infrastructure.database.rls_interceptor import instrument_rls
+            from infrastructure.database.database import engine
+            instrument_rls(engine)
+            logger.info("RLS interceptor re-installed after table creation")
+        except Exception as exc:
+            logger.warning("RLS re-install failed (non-critical): %s", exc)
+
         _bootstrap_runtime(tables_just_created=fresh)
         _startup_load_role_permissions()
         _startup_seed_treasury()

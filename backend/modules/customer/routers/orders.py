@@ -5,10 +5,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from decimal import Decimal
 
 from infrastructure.security.dependencies import get_current_user, require_admin
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import CartItemCreate, CartSyncRequest, OrderCreate, OrderPreviewOut, ReturnRequestCreate, ReturnRequestOut, ReturnRequestUpdate
+from infrastructure.utils.config import settings
+from kernel.money import round_money, to_decimal
 from domains.orders.ports import list_return_requests
 from domains.orders.services.cart.service import (
     get_cart as svc_get_cart,
@@ -33,6 +36,9 @@ from domains.orders.services.returns.service import bulk_update_return_requests
 from domains.orders.services.returns.service import create_return_request
 from domains.orders.services.returns.service import get_return_request
 from domains.orders.services.returns.service import update_return_request
+from domains.customers.services.coupons_service import build_coupon_quote
+from domains.promotions.services.engine.promotion_service import calculate_order_tier_discount
+from domains.finance.services.ledger.general_ledger_service import calculate_tax
 from rbac.dependencies import require_feature
 
 
@@ -108,6 +114,85 @@ def get_cart_shipping_quote(
     _rf_gate: None = Depends(require_feature("logistics.delivery.estimates")),
 ):
     return svc_get_cart_shipping_quote(body, db)
+
+
+# === Cart Totals — server-side pricing (Law 14: business logic in backend) ===
+
+
+class CartTotalsItem(BaseModel):
+    product_id: int
+    price: float
+    quantity: int
+
+
+class CartTotalsRequest(BaseModel):
+    items: list[CartTotalsItem]
+    coupon_code: str | None = None
+    country: str | None = None
+
+
+@router.post("/totals")
+def calculate_cart_totals(
+    body: CartTotalsRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("customers.cart.manage")),
+):
+    """Compute cart totals server-side. Frontend must NOT duplicate this logic."""
+    subtotal = sum(item.price * item.quantity for item in body.items)
+
+    # Coupon discount
+    discount = Decimal("0")
+    coupon_code = None
+    if body.coupon_code and body.coupon_code.strip():
+        try:
+            coupon_quote = build_coupon_quote(body.coupon_code.strip(), Decimal(str(subtotal)), db)
+            discount = round_money(Decimal(str(coupon_quote["discount_amount"])))
+            coupon_code = coupon_quote["code"]
+        except Exception:
+            discount = Decimal("0")
+
+    # Tier discount
+    coupon_adjusted = Decimal(str(subtotal)) - discount
+    try:
+        tier_discount, _ = calculate_order_tier_discount(coupon_adjusted, db)
+        discount = round_money(discount + tier_discount)
+    except Exception:
+        pass
+
+    after_discount = max(Decimal("0"), Decimal(str(subtotal)) - discount)
+
+    # Shipping (flat-rate with free threshold)
+    free_threshold = Decimal(str(getattr(settings, "free_shipping_threshold", 0) or 0))
+    flat_rate = Decimal(str(getattr(settings, "shipping_flat_rate", 0) or 0))
+    shipping = Decimal("0") if (free_threshold > 0 and after_discount >= free_threshold) else flat_rate
+
+    # Tax
+    country_code = (body.country or current_user.get("preferred_country") or "OM").upper()
+    tax_amount = Decimal("0")
+    tax_type = "VAT"
+    try:
+        tax_result = calculate_tax(float(after_discount), country_code, db)
+        tax_amount = round_money(Decimal(str(tax_result.get("tax_amount") or 0)))
+        tax_type = str(tax_result.get("tax_type") or "VAT").upper()
+    except Exception:
+        vat_rate = Decimal(str(getattr(settings, "vat_rate", 0.05) or 0))
+        tax_amount = round_money(after_discount * vat_rate)
+        tax_type = "VAT"
+
+    total = round_money(after_discount + shipping + tax_amount)
+
+    return {
+        "subtotal": float(round_money(Decimal(str(subtotal)))),
+        "discount": float(discount),
+        "coupon_code": coupon_code,
+        "shipping": float(shipping),
+        "tax_amount": float(tax_amount),
+        "tax_type": tax_type,
+        "total": float(total),
+        "free_shipping_threshold": float(free_threshold),
+        "free_shipping_applied": shipping == 0 and free_threshold > 0,
+    }
 
 
 # === From customer_orders.py ===

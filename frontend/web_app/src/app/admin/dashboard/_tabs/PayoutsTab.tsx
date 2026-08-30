@@ -158,7 +158,7 @@ function PayoutsInner() {
       { key: "amount", label: "Amount", width: "140px", sortable: true, sortValue: (r) => r.amount, align: "right", render: (r) => <span className="font-mono text-xs font-semibold text-text">{formatMoney(r.amount)}</span> },
       { key: "reference", label: "Reference", width: "180px", sortable: true, sortValue: (r) => (r.reference || ""), render: (r) => <span className="font-mono text-xs text-text-muted">{r.reference || "—"}</span> },
       { key: "status", label: "Status", width: "150px", sortable: true, sortValue: (r) => r.status, render: (r) => (
-        <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize ${STATUS_TONE[r.status] || "theme-chip-muted"}`}>{r.status}</span>
+        <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold capitalize ${STATUS_TONE[r.status] || "theme-chip-muted"}`}>{r.status}</span>
       )},
       { key: "created_at", label: "Created", width: "160px", sortable: true, sortValue: (r) => new Date(r.created_at).getTime(), render: (r) => <span className="text-xs text-text-muted">{new Date(r.created_at).toLocaleDateString()}</span> },
       {
@@ -202,15 +202,15 @@ function PayoutsInner() {
           <>
             <div className="grid gap-2 sm:grid-cols-3">
               <div className="rounded-xl border border-border bg-surface-1 px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-faint">Pending</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-faint">Pending</p>
                 <p className="mt-1 text-lg font-bold text-text">{total}</p>
               </div>
               <div className="rounded-xl border border-border bg-surface-1 px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-faint">Total Value</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-faint">Total Value</p>
                 <p className="mt-1 text-lg font-bold text-text">{formatMoney(payouts.reduce((s, p) => s + p.amount, 0))}</p>
               </div>
               <div className="rounded-xl border border-border bg-surface-1 px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-faint">Selected</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-faint">Selected</p>
                 <p className="mt-1 text-lg font-bold text-text">{selectedIds.size}</p>
               </div>
             </div>

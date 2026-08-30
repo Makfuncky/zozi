@@ -609,7 +609,7 @@ export function EmployeesContent() {
             </div>
             <div>
               <p className="font-semibold text-text text-sm">{name}</p>
-              <p className="text-[10px] text-text-muted">{e.email ?? "—"}</p>
+              <p className="text-xs text-text-muted">{e.email ?? "—"}</p>
             </div>
           </div>
         );
@@ -622,7 +622,7 @@ export function EmployeesContent() {
         <div>
           <p className="text-[12px] text-text">{e.position ?? "—"}</p>
           {e.department && (
-            <p className="text-[10px] text-text-faint">{e.department}</p>
+            <p className="text-xs text-text-faint">{e.department}</p>
           )}
         </div>
       ),
@@ -829,7 +829,7 @@ export function EmployeesContent() {
                             </div>
                             <div>
                               <p className="font-semibold text-text text-sm">{employee.full_name ?? employee.name ?? "—"}</p>
-                              <p className="text-[10px] text-text-muted">{employee.email ?? "—"}</p>
+                              <p className="text-xs text-text-muted">{employee.email ?? "—"}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -837,7 +837,7 @@ export function EmployeesContent() {
                           <div>
                             <p className="text-[12px] text-text">{employee.position ?? "—"}</p>
                             {employee.department && (
-                              <p className="text-[10px] text-text-faint">{employee.department}</p>
+                              <p className="text-xs text-text-faint">{employee.department}</p>
                             )}
                           </div>
                         </TableCell>
@@ -858,11 +858,11 @@ export function EmployeesContent() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
-                            <Button variant="secondary" className="rounded-md border border-glass-border px-2 py-1 text-[10px] font-medium text-text-muted hover:text-primary transition-colors" onClick={() => setSelectedEmployee(employee)}
+                            <Button variant="secondary" className="rounded-md border border-glass-border px-2 py-1 text-xs font-medium text-text-muted hover:text-primary transition-colors" onClick={() => setSelectedEmployee(employee)}
                             >
                               View
                             </Button>
-                            <Button variant="secondary" className="rounded-md border border-glass-border px-2 py-1 text-[10px] font-medium text-text-muted hover:text-primary transition-colors" onClick={() => handleGenerateQR(employee.id)}
+                            <Button variant="secondary" className="rounded-md border border-glass-border px-2 py-1 text-xs font-medium text-text-muted hover:text-primary transition-colors" onClick={() => handleGenerateQR(employee.id)}
                               disabled={generatingQR === employee.id}
                               title="Generate QR Token"
                             >
@@ -908,7 +908,7 @@ export function EmployeesContent() {
                   <p className="text-[11px] text-text-muted">
                     {office.city ?? "—"}, {office.country_code}
                   </p>
-                  {office.address && <p className="text-[10px] text-text-faint">{office.address}</p>}
+                  {office.address && <p className="text-xs text-text-faint">{office.address}</p>}
                   <StatusBadge status={office.is_active ? "active" : "inactive"} />
                 </div>
               ))}
@@ -1008,8 +1008,8 @@ export function EmployeesContent() {
                       <TableCell>
                         {lr.status === "pending" && (
                           <div className="flex items-center gap-1">
-                            <Button variant="primary" className="rounded-md border border-success px-2 py-1 text-[10px] text-success transition-colors" onClick={() => handleApproveLeave(lr.id, "approved")}>Approve</Button>
-                            <Button variant="danger" className="rounded-md border border-danger/30 px-2 py-1 text-[10px] text-danger transition-colors" onClick={() => handleApproveLeave(lr.id, "rejected")}>Reject</Button>
+                            <Button variant="primary" className="rounded-md border border-success px-2 py-1 text-xs text-success transition-colors" onClick={() => handleApproveLeave(lr.id, "approved")}>Approve</Button>
+                            <Button variant="danger" className="rounded-md border border-danger/30 px-2 py-1 text-xs text-danger transition-colors" onClick={() => handleApproveLeave(lr.id, "rejected")}>Reject</Button>
                           </div>
                         )}
                       </TableCell>
@@ -1088,7 +1088,7 @@ export function EmployeesContent() {
                       <button
                         onClick={() => handleGenerateQR(emp.id)}
                         disabled={generatingQR === emp.id}
-                        className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted hover:text-primary transition-colors"
+                        className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted hover:text-primary transition-colors"
                       >
                         {generatingQR === emp.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <QrCode className="h-3 w-3" />}
                       </button>
@@ -1096,7 +1096,7 @@ export function EmployeesContent() {
                   ))}
                 </div>
                 {employees.length > 10 && (
-                  <p className="text-[10px] text-text-faint text-center">+{employees.length - 10} more employees</p>
+                  <p className="text-xs text-text-faint text-center">+{employees.length - 10} more employees</p>
                 )}
               </div>
               <div className="rounded-lg border border-glass-border bg-glass-panel p-4 space-y-3">
@@ -1120,7 +1120,7 @@ export function EmployeesContent() {
                   </div>
                   <div className="flex items-center justify-between rounded-md border border-glass-border bg-glass-mid p-2">
                     <span className="text-xs text-text">QR Token Lifetime</span>
-                    <span className="text-[10px] text-text-muted">60 seconds</span>
+                    <span className="text-xs text-text-muted">60 seconds</span>
                   </div>
                 </div>
               </div>
@@ -1143,19 +1143,19 @@ export function EmployeesContent() {
             </div>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="rounded-lg border border-glass-border bg-glass-panel p-4 space-y-2">
-                <span className="text-[10px] text-text-faint font-medium uppercase tracking-wider">Total Gross Payroll</span>
+                <span className="text-xs text-text-faint font-medium uppercase tracking-wider">Total Gross Payroll</span>
                 <p className="text-2xl font-bold text-text">{currency.code} {payroll ? payroll.total_gross.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}</p>
-                <p className="text-[10px] text-text-faint">Current month</p>
+                <p className="text-xs text-text-faint">Current month</p>
               </div>
               <div className="rounded-lg border border-glass-border bg-glass-panel p-4 space-y-2">
-                <span className="text-[10px] text-text-faint font-medium uppercase tracking-wider">Active Employees</span>
+                <span className="text-xs text-text-faint font-medium uppercase tracking-wider">Active Employees</span>
                 <p className="text-2xl font-bold text-text">{payroll ? payroll.employee_count : stats.active}</p>
-                <p className="text-[10px] text-text-faint">Receiving salary</p>
+                <p className="text-xs text-text-faint">Receiving salary</p>
               </div>
               <div className="rounded-lg border border-glass-border bg-glass-panel p-4 space-y-2">
-                <span className="text-[10px] text-text-faint font-medium uppercase tracking-wider">Net Payroll</span>
+                <span className="text-xs text-text-faint font-medium uppercase tracking-wider">Net Payroll</span>
                 <p className="text-2xl font-bold text-text">{currency.code} {payroll ? payroll.total_net.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}</p>
-                <p className="text-[10px] text-text-faint">After tax</p>
+                <p className="text-xs text-text-faint">After tax</p>
               </div>
             </div>
             <div className="rounded-lg border border-glass-border bg-glass-panel overflow-hidden">
@@ -1277,7 +1277,7 @@ export function EmployeesContent() {
                     <AlertTriangle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs font-medium text-danger">{c.type ?? "Conflict Detected"}</p>
-                      <p className="text-[10px] text-text-muted mt-0.5">{c.description ?? JSON.stringify(c)}</p>
+                      <p className="text-xs text-text-muted mt-0.5">{c.description ?? JSON.stringify(c)}</p>
                     </div>
                   </div>
                 ))}
@@ -1374,10 +1374,10 @@ export function EmployeesContent() {
                     </TableRow>
                   ) : auditLogs.map((log: any, i: number) => (
                     <TableRow key={log.id ?? i}>
-                      <TableCell className="text-[10px] text-text-muted whitespace-nowrap">{log.created_at ?? log.timestamp}</TableCell>
+                      <TableCell className="text-xs text-text-muted whitespace-nowrap">{log.created_at ?? log.timestamp}</TableCell>
                       <TableCell className="text-xs text-text capitalize">{log.action ?? log.event_type}</TableCell>
                       <TableCell className="text-xs text-text-muted">{log.entity_type ?? log.resource_type}</TableCell>
-                      <TableCell className="text-[10px] text-text-faint max-w-[200px] truncate">{log.details ?? log.description ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-text-faint max-w-[200px] truncate">{log.details ?? log.description ?? "—"}</TableCell>
                       <TableCell className="text-xs text-text-muted">{log.user_name ?? log.user_id ?? "—"}</TableCell>
                     </TableRow>
                   ))}
@@ -1386,20 +1386,20 @@ export function EmployeesContent() {
             </div>
             {auditTotal > 0 && (
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-text-faint">{auditTotal} total entries</p>
+                <p className="text-xs text-text-faint">{auditTotal} total entries</p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
                     disabled={auditPage <= 1}
-                    className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted disabled:opacity-30"
+                    className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted disabled:opacity-30"
                   >
                     Previous
                   </button>
-                  <span className="text-[10px] text-text-faint">Page {auditPage}</span>
+                  <span className="text-xs text-text-faint">Page {auditPage}</span>
                   <button
                     onClick={() => setAuditPage((p) => p + 1)}
                     disabled={auditPage * 50 >= auditTotal}
-                    className="rounded-md border border-glass-border px-2 py-1 text-[10px] text-text-muted disabled:opacity-30"
+                    className="rounded-md border border-glass-border px-2 py-1 text-xs text-text-muted disabled:opacity-30"
                   >
                     Next
                   </button>

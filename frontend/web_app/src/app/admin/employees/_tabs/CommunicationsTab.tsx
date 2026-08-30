@@ -257,7 +257,7 @@ const res = await apiFetch("/admin/video/rooms", {
                       <td className="px-4 py-3 text-text font-semibold">{room.name}</td>
                       <td className="px-4 py-3 text-text-muted capitalize">{room.purpose}</td>
                       <td className="px-4 py-3">
-                        <span className="rounded-full bg-success/10 text-success text-[10px] font-semibold px-2 py-0.5 border border-success/20">
+                        <span className="rounded-full bg-success/10 text-success text-xs font-semibold px-2 py-0.5 border border-success/20">
                           {room.status ?? "active"}
                         </span>
                       </td>
@@ -294,9 +294,9 @@ const res = await apiFetch("/admin/video/rooms", {
                 <div key={thread.id} className="flex items-center justify-between rounded-lg bg-surface-2 border border-border p-3 hover:border-primary/30 transition-colors">
                   <div>
                     <p className="text-xs font-semibold text-text">{thread.title}</p>
-                    <p className="text-[10px] text-text-faint">Last activity: {thread.last_message_at ? new Date(thread.last_message_at).toLocaleString() : "—"}</p>
+                    <p className="text-xs text-text-faint">Last activity: {thread.last_message_at ? new Date(thread.last_message_at).toLocaleString() : "—"}</p>
                   </div>
-                  <span className="rounded-full bg-surface-3 text-text-muted text-[10px] font-semibold px-2 py-0.5 border border-border">
+                  <span className="rounded-full bg-surface-3 text-text-muted text-xs font-semibold px-2 py-0.5 border border-border">
                     {thread.is_private ? "Private" : "Group"}
                   </span>
                 </div>
@@ -318,7 +318,7 @@ const res = await apiFetch("/admin/video/rooms", {
             ].map((item) => (
               <div key={item.label} className="rounded-lg bg-surface-2 border border-border p-3">
                 <p className="text-xs font-semibold text-text">{item.label}</p>
-                <p className="text-[10px] text-text-muted mt-1">{item.desc}</p>
+                <p className="text-xs text-text-muted mt-1">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -357,7 +357,7 @@ const res = await apiFetch("/admin/video/rooms", {
             ].map((item) => (
               <div key={item.title} className="rounded-lg bg-surface-2 border border-border p-3">
                 <p className="text-xs font-semibold text-text">{item.title}</p>
-                <p className="text-[10px] text-text-muted mt-1">{item.desc}</p>
+                <p className="text-xs text-text-muted mt-1">{item.desc}</p>
               </div>
             ))}
           </div>

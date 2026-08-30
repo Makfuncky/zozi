@@ -125,13 +125,19 @@ def _normalize_product_visibility_regions(value: Any) -> str | None:
 
 
 def _serialize_product(product: Product) -> dict[str, Any]:
+    price = float(product.price) if product.price else 0
+    compare_price = float(product.compare_price) if product.compare_price else None
+    discount_percent = None
+    if compare_price and compare_price > 0 and price > 0 and compare_price > price:
+        discount_percent = round((1 - price / compare_price) * 100, 1)
     return {
         "id": product.id,
         "name": product.name,
         "slug": product.slug,
         "slug_hash": getattr(product, "slug_hash", None),
-        "price": float(product.price) if product.price else 0,
-        "compare_price": float(product.compare_price) if product.compare_price else None,
+        "price": price,
+        "compare_price": compare_price,
+        "discount_percent": discount_percent,
         "stock": product.stock,
         "category": product.category,
         "subcategory": getattr(product, "subcategory", None),

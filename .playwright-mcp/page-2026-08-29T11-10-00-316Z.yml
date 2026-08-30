@@ -1,0 +1,18 @@
+- generic [ref=f16e1]:
+  - link "Skip to main content" [ref=f16e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=f16e5]:
+    - main [ref=f16e6]:
+      - generic [ref=f16e7]:
+        - generic [ref=f16e8]:
+          - heading "Admin Access" [level=1] [ref=f16e12]
+          - paragraph [ref=f16e13]: Restricted area. Staff credentials required.
+        - generic [ref=f16e14]:
+          - generic [ref=f16e15]:
+            - generic [ref=f16e16]: Username
+            - textbox "Your username" [ref=f16e17]: admin@zozi.com
+          - generic [ref=f16e18]:
+            - generic [ref=f16e19]: Password
+            - textbox "••••••••" [active] [ref=f16e20]: admin123
+          - button "Sign In" [ref=f16e21] [cursor=pointer]
+  - alert [ref=f16e25]

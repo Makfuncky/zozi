@@ -10,6 +10,7 @@ from __future__ import annotations
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 from . import Base
+from domains.country.models.countries import CountryConfig  # noqa: F401
 
 __all__ = ["LegalContractTemplate"]
 

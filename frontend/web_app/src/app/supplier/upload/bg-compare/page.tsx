@@ -509,7 +509,7 @@ export default function BgComparePage() {
                             <Icon className="w-4 h-4 text-text-muted" />
                             <span className="text-xs font-semibold">{r.label}</span>
                             {isBest && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500 text-[9px] font-bold text-white leading-none">
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500 text-3xs font-bold text-white leading-none">
                                 <BadgeCheck className="w-2.5 h-2.5" />
                                 Best
                               </span>
@@ -517,7 +517,7 @@ export default function BgComparePage() {
                           </div>
                           <div className="flex items-center gap-2">
                             {r.timing > 0 && (
-                              <span className="text-[10px] text-text-muted font-mono">{r.timing}ms</span>
+                              <span className="text-xs text-text-muted font-mono">{r.timing}ms</span>
                             )}                              {r.url && (
                                 <button
                                   onClick={() => setExpandedStrategy(expandedStrategy === r.key ? null : r.key)}
@@ -554,7 +554,7 @@ export default function BgComparePage() {
                         {/* Diff metrics */}
                         {metrics && (
                           <div className="px-3 py-2 border-t border-border/10 bg-surface-2/30">
-                            <div className="flex items-center gap-3 text-[10px] font-mono">
+                            <div className="flex items-center gap-3 text-xs font-mono">
                               <span className="text-green-600">Δ {metrics.diffPct}%</span>
                               <span className="text-red-500">RGB {metrics.rgbPct}%</span>
                               <span className="text-blue-500">α {metrics.alphaPct}%</span>
@@ -565,18 +565,18 @@ export default function BgComparePage() {
                         {/* Expanded view: diff overlay */}
                         {expandedStrategy === r.key && r.url && metrics && (
                           <div className="border-t border-border/10 p-3 bg-surface-2/20">
-                            <p className="text-[10px] font-medium text-text-muted mb-2">RGBA Diff Overlay vs Original</p>
+                            <p className="text-xs font-medium text-text-muted mb-2">RGBA Diff Overlay vs Original</p>
                             <div className="flex items-start gap-3">
                               <div className="flex-1">
-                                <p className="text-[9px] text-text-muted mb-1">Original</p>
+                                <p className="text-3xs text-text-muted mb-1">Original</p>
                                 <img src={originalUrl} alt="Original" className="w-full max-h-40 rounded border border-border/10 object-contain bg-gray-100" />
                               </div>
                               <div className="flex-1">
-                                <p className="text-[9px] text-text-muted mb-1">Result</p>
+                                <p className="text-3xs text-text-muted mb-1">Result</p>
                                 <img src={r.url} alt={r.label} className="w-full max-h-40 rounded border border-border/10 object-contain bg-gray-100" />
                               </div>
                               <div className="flex-1">
-                                <p className="text-[9px] text-text-muted mb-1">Diff</p>
+                                <p className="text-3xs text-text-muted mb-1">Diff</p>
                                 {/* Diff canvas — rendered on-the-fly */}
                                 <DiffOverlayView
                                   originalUrl={originalUrl}
@@ -615,7 +615,7 @@ export default function BgComparePage() {
                       </strong>
                       .
                     </p>
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-500 mt-1">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-1">
                       The "Best" badge on matching strategy cards above is automatically highlighted.
                     </p>
                   </div>
@@ -740,7 +740,7 @@ function DiffOverlayView({
           <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
         </div>
       )}
-      <div className="flex items-center gap-2 mt-1 text-[9px] font-mono text-text-muted">
+      <div className="flex items-center gap-2 mt-1 text-3xs font-mono text-text-muted">
         <span className="inline-block w-2 h-2 rounded-sm" style={{ background: "rgb(0,200,0)" }} />
         <span>ok</span>
         <span className="inline-block w-2 h-2 rounded-sm" style={{ background: "rgb(255,40,40)" }} />

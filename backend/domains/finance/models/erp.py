@@ -11,8 +11,9 @@ from uuid import uuid4
 
 from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey, Index,
-    Integer, Numeric, String, Text, UniqueConstraint, UUID,
+    Integer, Numeric, String, Text, UniqueConstraint,
 )
+from infrastructure.database.types import GUID
 from sqlalchemy.orm import relationship
 
 from infrastructure.database.base import Base

@@ -61,7 +61,7 @@ export default function PayoutSettingsTab({
 
       <div className="pt-4 border-t border-border/60">
         <h4 className="text-xs font-bold text-text mb-2">Category-Level Payout Overrides</h4>
-        <p className="text-[10px] text-text-muted mb-3">
+        <p className="text-xs text-text-muted mb-3">
           Override the country-level payout rate for specific product categories.
           Higher priority than the default payout rate but lower than per-product rules.
         </p>
@@ -79,7 +79,7 @@ export default function PayoutSettingsTab({
                 <option key={c.slug} value={c.slug}>{c.name}</option>
               ))}
           </select>
-          <label className="text-[10px] text-text-muted flex items-center gap-1">
+          <label className="text-xs text-text-muted flex items-center gap-1">
             Rate:
             <input
               type="number"
@@ -91,7 +91,7 @@ export default function PayoutSettingsTab({
               onChange={(e) => setNewCatPayoutRate(e.target.value)}
             />
           </label>
-          <Button variant="primary" className="rounded text-primary px-2.5 py-1.5 text-[10px] font-semibold transition" type="button"
+          <Button variant="primary" className="rounded text-primary px-2.5 py-1.5 text-xs font-semibold transition" type="button"
             disabled={!newCatPayoutSlug || !newCatPayoutRate}
             onClick={async () => {
               const slug = newCatPayoutSlug;
@@ -147,13 +147,13 @@ export default function PayoutSettingsTab({
           </div>
         )}
         {catPayoutRules.length === 0 && (
-          <p className="text-[10px] text-text-muted italic">No category-level payout overrides configured.</p>
+          <p className="text-xs text-text-muted italic">No category-level payout overrides configured.</p>
         )}
       </div>
 
       <div className="pt-4 border-t border-border/60">
         <h4 className="text-xs font-bold text-text mb-2">Product-Level Payout Overrides</h4>
-        <p className="text-[10px] text-text-muted mb-3">
+        <p className="text-xs text-text-muted mb-3">
           Override the payout rate for individual products.
           These take the highest precedence in the payout resolution chain.
         </p>
@@ -166,7 +166,7 @@ export default function PayoutSettingsTab({
             value={newProdPayoutId}
             onChange={(e) => setNewProdPayoutId(e.target.value)}
           />
-          <label className="text-[10px] text-text-muted flex items-center gap-1">
+          <label className="text-xs text-text-muted flex items-center gap-1">
             Rate:
             <input
               type="number"
@@ -178,7 +178,7 @@ export default function PayoutSettingsTab({
               onChange={(e) => setNewProdPayoutRate(e.target.value)}
             />
           </label>
-          <Button variant="primary" className="rounded text-primary px-2.5 py-1.5 text-[10px] font-semibold transition" type="button"
+          <Button variant="primary" className="rounded text-primary px-2.5 py-1.5 text-xs font-semibold transition" type="button"
             disabled={!newProdPayoutId || !newProdPayoutRate}
             onClick={async () => {
               const pid = Number(newProdPayoutId);
@@ -234,7 +234,7 @@ export default function PayoutSettingsTab({
           </div>
         )}
         {prodPayoutRules.length === 0 && (
-          <p className="text-[10px] text-text-muted italic">No product-level payout overrides configured.</p>
+          <p className="text-xs text-text-muted italic">No product-level payout overrides configured.</p>
         )}
       </div>
     </section>

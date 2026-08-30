@@ -30,7 +30,7 @@ export function Badge({ variant = "default", className, children, icon }: BadgeP
 
   return (
     <span className={cn(
-      "text-[10px] px-2 py-0.5 rounded inline-flex items-center gap-1 font-medium border backdrop-blur",
+      "text-xs px-2 py-0.5 rounded inline-flex items-center gap-1 font-medium border backdrop-blur",
       variantClasses[variant],
       className
     )}>

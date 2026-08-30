@@ -210,7 +210,7 @@ export interface BannerLayout {
 
 export const DEFAULT_LAYOUT: BannerLayout = {
   bg: {
-    color: "#0f172a",
+    color: "var(--zozi-ext-0f172a)",
     gradientFrom: "",
     gradientVia: "",
     gradientTo: "",
@@ -316,7 +316,7 @@ const makeElement = (type: CanvasElementType, z: number): CanvasElement => {
     h: 26,
     rotation: 0,
     z,
-    fill: "#ffffff",
+    fill: "var(--zozi-ext-ffffff)",
     stroke: "transparent",
     strokeWidth: 0,
     borderRadius: type === "rect" ? 12 : 0,
@@ -325,25 +325,25 @@ const makeElement = (type: CanvasElementType, z: number): CanvasElement => {
   };
   switch (type) {
     case "text":
-      return { ...base, fill: "transparent", content: "Your text here", textColor: "#ffffff", fontSize: 24, fontWeight: 800, fontFamily: FONT_OPTIONS[0].value, textAlign: "left", letterSpacing: 0, lineHeight: 1.1 };
+      return { ...base, fill: "transparent", content: "Your text here", textColor: "var(--zozi-ext-ffffff)", fontSize: 24, fontWeight: 800, fontFamily: FONT_OPTIONS[0].value, textAlign: "left", letterSpacing: 0, lineHeight: 1.1 };
     case "emoji":
       return { ...base, fill: "transparent", stroke: "transparent", strokeWidth: 0, content: "🎉", fontSize: 48, fontWeight: 400, fontFamily: FONT_OPTIONS[0].value, textAlign: "center", letterSpacing: 0, lineHeight: 1, name: "Emoji" };
     case "image":
       return { ...base, fill: "transparent", src: "", borderRadius: 12, objectFit: "cover", imgFilter: { brightness: 100, contrast: 100, saturate: 100, blur: 0, grayscale: 0 } };
     case "button":
-      return { ...base, fill: "#ffd700", content: "Shop Now", textColor: "#111111", fontSize: 15, fontWeight: 700, fontFamily: FONT_OPTIONS[0].value, borderRadius: 999, ctaUrl: "/products" };
+      return { ...base, fill: "var(--zozi-ext-ffd700)", content: "Shop Now", textColor: "var(--zozi-ext-111111)", fontSize: 15, fontWeight: 700, fontFamily: FONT_OPTIONS[0].value, borderRadius: 999, ctaUrl: "/products" };
     case "video":
-      return { ...base, fill: "#000000", src: "", borderRadius: 12, objectFit: "cover", imgFilter: { brightness: 100, contrast: 100, saturate: 100, blur: 0, grayscale: 0 } };
+      return { ...base, fill: "var(--zozi-ext-000000)", src: "", borderRadius: 12, objectFit: "cover", imgFilter: { brightness: 100, contrast: 100, saturate: 100, blur: 0, grayscale: 0 } };
     case "triangle":
-      return { ...base, fill: "#fbbf24", stroke: "transparent", strokeWidth: 0, w: 26, h: 24, borderRadius: 0, name: "Triangle" };
+      return { ...base, fill: "var(--zozi-ext-fbbf24)", stroke: "transparent", strokeWidth: 0, w: 26, h: 24, borderRadius: 0, name: "Triangle" };
     case "line":
-      return { ...base, fill: "transparent", stroke: "#ffffff", strokeWidth: 4, w: 34, h: 3, borderRadius: 0, name: "Line" };
+      return { ...base, fill: "transparent", stroke: "var(--zozi-ext-ffffff)", strokeWidth: 4, w: 34, h: 3, borderRadius: 0, name: "Line" };
     case "star":
-      return { ...base, fill: "#fbbf24", stroke: "transparent", strokeWidth: 0, w: 26, h: 26, points: 5, borderRadius: 0, name: "Star" };
+      return { ...base, fill: "var(--zozi-ext-fbbf24)", stroke: "transparent", strokeWidth: 0, w: 26, h: 26, points: 5, borderRadius: 0, name: "Star" };
     case "polygon":
-      return { ...base, fill: "#60a5fa", stroke: "transparent", strokeWidth: 0, w: 26, h: 26, points: 6, borderRadius: 0, name: "Polygon" };
+      return { ...base, fill: "var(--zozi-ext-60a5fa)", stroke: "transparent", strokeWidth: 0, w: 26, h: 26, points: 6, borderRadius: 0, name: "Polygon" };
     case "icon":
-      return { ...base, fill: "#f472b6", stroke: "transparent", strokeWidth: 0, w: 18, h: 18, icon: "Star", borderRadius: 0, name: "Icon" };
+      return { ...base, fill: "var(--zozi-ext-f472b6)", stroke: "transparent", strokeWidth: 0, w: 18, h: 18, icon: "Star", borderRadius: 0, name: "Icon" };
     default:
       return base;
   }
@@ -388,7 +388,7 @@ const readAlpha = (color: string): number => {
 };
 const solidHex = (color: string): string => {
   const m = color.match(/rgba?\(([^)]+)\)/);
-  if (!m) return color.startsWith("#") ? color : "#ffffff";
+  if (!m) return color.startsWith("#") ? color : "var(--zozi-ext-ffffff)";
   const p = m[1].split(",").map((s) => s.trim());
   const toHex = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
   return `#${toHex(Number(p[0]))}${toHex(Number(p[1]))}${toHex(Number(p[2]))}`;
@@ -465,19 +465,19 @@ const CONFETTI = buildDeco(56, ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#a8
 const SNOW = buildDeco(50, ["#ffffff", "#e0f2fe", "#f1f5f9"], 23, { sizeMin: 4, sizeMax: 9 });
 const SPARKLES = buildDeco(40, ["#fde68a", "#fef08a", "#fbbf24", "#ffffff"], 37, { sizeMin: 3, sizeMax: 7 });
 const FIREWORKS = [
-  { left: 20, top: 30, color: "#f472b6", delay: 0 },
-  { left: 50, top: 22, color: "#60a5fa", delay: 1.3 },
-  { left: 78, top: 34, color: "#fde68a", delay: 0.6 },
-  { left: 35, top: 46, color: "#34d399", delay: 2.1 },
-  { left: 65, top: 50, color: "#a78bfa", delay: 1.7 },
+  { left: 20, top: 30, color: "var(--zozi-ext-f472b6)", delay: 0 },
+  { left: 50, top: 22, color: "var(--zozi-ext-60a5fa)", delay: 1.3 },
+  { left: 78, top: 34, color: "var(--zozi-ext-fde68a)", delay: 0.6 },
+  { left: 35, top: 46, color: "var(--zozi-ext-34d399)", delay: 2.1 },
+  { left: 65, top: 50, color: "var(--zozi-ext-a78bfa)", delay: 1.7 },
 ];
 const BALLOONS = [
-  { left: 10, color: "#ef4444", delay: 0 },
-  { left: 26, color: "#f59e0b", delay: 0.8 },
-  { left: 44, color: "#22c55e", delay: 0.4 },
-  { left: 62, color: "#3b82f6", delay: 1.2 },
-  { left: 80, color: "#a855f7", delay: 0.6 },
-  { left: 92, color: "#ec4899", delay: 1.0 },
+  { left: 10, color: "var(--zozi-ext-ef4444)", delay: 0 },
+  { left: 26, color: "var(--zozi-ext-f59e0b)", delay: 0.8 },
+  { left: 44, color: "var(--zozi-ext-22c55e)", delay: 0.4 },
+  { left: 62, color: "var(--zozi-ext-3b82f6)", delay: 1.2 },
+  { left: 80, color: "var(--zozi-ext-a855f7)", delay: 0.6 },
+  { left: 92, color: "var(--zozi-ext-ec4899)", delay: 1.0 },
 ];
 const LANTERNS = [
   { left: 14, delay: 0 },
@@ -651,7 +651,7 @@ export function renderCanvasElement(
         {src ? (
           <img src={src} alt={el.content || "banner image"} style={{ width: "100%", height: "100%", objectFit: el.objectFit || "cover", display: "block", filter: filterCss }} />
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#1e293b", color: "#94a3b8", fontSize: 12 }}>Image URL</div>
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--zozi-ext-1e293b)", color: "var(--zozi-ext-94a3b8)", fontSize: 12 }}>Image URL</div>
         )}
       </div>
     );
@@ -663,7 +663,7 @@ export function renderCanvasElement(
       {src ? (
         <video src={src} autoPlay muted loop playsInline style={{ width: "100%", height: "100%", objectFit: el.objectFit || "cover", display: "block", filter: filterCss }} />
       ) : (
-        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#000", color: "#fff", fontSize: 12 }}>Video URL</div>
+        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--zozi-ext-000)", color: "var(--zozi-ext-fff)", fontSize: 12 }}>Video URL</div>
       )}
     </div>
   );
@@ -732,12 +732,12 @@ const buildTemplate = (key: string, nextZ: () => number): BannerLayout => {
         ...DEFAULT_LAYOUT,
         ratio: 0.3,
         effect: "poppers",
-        bg: { ...DEFAULT_LAYOUT.bg, color: "#7f1d1d", gradientFrom: "#ef4444", gradientTo: "#7f1d1d" },
+        bg: { ...DEFAULT_LAYOUT.bg, color: "var(--zozi-ext-7f1d1d)", gradientFrom: "var(--zozi-ext-ef4444)", gradientTo: "var(--zozi-ext-7f1d1d)" },
         elements: [
-          el("text", { name: "Headline", x: 6, y: 26, w: 60, h: 26, content: "FLASH SALE", textColor: "#fff", fontSize: 34, fontWeight: 900, letterSpacing: 1 }),
-          el("text", { name: "Sub", x: 6, y: 54, w: 50, h: 16, content: "Up to 70% OFF", textColor: "#fde68a", fontSize: 16, fontWeight: 600 }),
-          el("button", { name: "CTA", x: 62, y: 40, w: 30, h: 18, content: "Grab Now", fill: "#fde68a", textColor: "#7f1d1d", ctaUrl: "/products" }),
-          el("star", { name: "Deco", x: 80, y: 10, w: 14, h: 14, fill: "#fde68a", rotation: 15 }),
+          el("text", { name: "Headline", x: 6, y: 26, w: 60, h: 26, content: "FLASH SALE", textColor: "var(--zozi-ext-fff)", fontSize: 34, fontWeight: 900, letterSpacing: 1 }),
+          el("text", { name: "Sub", x: 6, y: 54, w: 50, h: 16, content: "Up to 70% OFF", textColor: "var(--zozi-ext-fde68a)", fontSize: 16, fontWeight: 600 }),
+          el("button", { name: "CTA", x: 62, y: 40, w: 30, h: 18, content: "Grab Now", fill: "var(--zozi-ext-fde68a)", textColor: "var(--zozi-ext-7f1d1d)", ctaUrl: "/products" }),
+          el("star", { name: "Deco", x: 80, y: 10, w: 14, h: 14, fill: "var(--zozi-ext-fde68a)", rotation: 15 }),
         ],
       };
     case "eid":
@@ -745,12 +745,12 @@ const buildTemplate = (key: string, nextZ: () => number): BannerLayout => {
         ...DEFAULT_LAYOUT,
         ratio: 0.34,
         effect: "eid",
-        bg: { ...DEFAULT_LAYOUT.bg, color: "#064e3b", gradientFrom: "#065f46", gradientVia: "#0d9488", gradientTo: "#064e3b" },
+        bg: { ...DEFAULT_LAYOUT.bg, color: "var(--zozi-ext-064e3b)", gradientFrom: "var(--zozi-ext-065f46)", gradientVia: "var(--zozi-ext-0d9488)", gradientTo: "var(--zozi-ext-064e3b)" },
         elements: [
-          el("icon", { name: "Moon", x: 8, y: 30, w: 16, h: 16, icon: "Moon", fill: "#fde68a" }),
-          el("text", { name: "Headline", x: 26, y: 30, w: 64, h: 22, content: "Eid Mubarak", textColor: "#fff", fontSize: 30, fontWeight: 800 }),
-          el("text", { name: "Sub", x: 26, y: 56, w: 60, h: 14, content: "Festive offers inside", textColor: "#bbf7d0", fontSize: 14 }),
-          el("button", { name: "CTA", x: 36, y: 72, w: 28, h: 16, content: "Shop Eid", fill: "#fde68a", textColor: "#064e3b", ctaUrl: "/products" }),
+          el("icon", { name: "Moon", x: 8, y: 30, w: 16, h: 16, icon: "Moon", fill: "var(--zozi-ext-fde68a)" }),
+          el("text", { name: "Headline", x: 26, y: 30, w: 64, h: 22, content: "Eid Mubarak", textColor: "var(--zozi-ext-fff)", fontSize: 30, fontWeight: 800 }),
+          el("text", { name: "Sub", x: 26, y: 56, w: 60, h: 14, content: "Festive offers inside", textColor: "var(--zozi-ext-bbf7d0)", fontSize: 14 }),
+          el("button", { name: "CTA", x: 36, y: 72, w: 28, h: 16, content: "Shop Eid", fill: "var(--zozi-ext-fde68a)", textColor: "var(--zozi-ext-064e3b)", ctaUrl: "/products" }),
         ],
       };
     case "newyear":
@@ -758,12 +758,12 @@ const buildTemplate = (key: string, nextZ: () => number): BannerLayout => {
         ...DEFAULT_LAYOUT,
         ratio: 0.34,
         effect: "newyear",
-        bg: { ...DEFAULT_LAYOUT.bg, color: "#1e1b4b", gradientFrom: "#4f46e5", gradientVia: "#9333ea", gradientTo: "#0f172a" },
+        bg: { ...DEFAULT_LAYOUT.bg, color: "var(--zozi-ext-1e1b4b)", gradientFrom: "var(--zozi-ext-4f46e5)", gradientVia: "var(--zozi-ext-9333ea)", gradientTo: "var(--zozi-ext-0f172a)" },
         elements: [
-          el("text", { name: "Headline", x: 8, y: 24, w: 84, h: 24, content: "Happy New Year", textColor: "#fff", fontSize: 32, fontWeight: 900, textAlign: "center" }),
-          el("star", { name: "Star1", x: 12, y: 12, w: 12, h: 12, fill: "#fde68a" }),
-          el("star", { name: "Star2", x: 76, y: 14, w: 16, h: 16, fill: "#fbbf24", points: 6 }),
-          el("button", { name: "CTA", x: 34, y: 64, w: 32, h: 18, content: "Celebrate", fill: "#fde68a", textColor: "#1e1b4b", ctaUrl: "/products" }),
+          el("text", { name: "Headline", x: 8, y: 24, w: 84, h: 24, content: "Happy New Year", textColor: "var(--zozi-ext-fff)", fontSize: 32, fontWeight: 900, textAlign: "center" }),
+          el("star", { name: "Star1", x: 12, y: 12, w: 12, h: 12, fill: "var(--zozi-ext-fde68a)" }),
+          el("star", { name: "Star2", x: 76, y: 14, w: 16, h: 16, fill: "var(--zozi-ext-fbbf24)", points: 6 }),
+          el("button", { name: "CTA", x: 34, y: 64, w: 32, h: 18, content: "Celebrate", fill: "var(--zozi-ext-fde68a)", textColor: "var(--zozi-ext-1e1b4b)", ctaUrl: "/products" }),
         ],
       };
     case "diwali":
@@ -771,12 +771,12 @@ const buildTemplate = (key: string, nextZ: () => number): BannerLayout => {
         ...DEFAULT_LAYOUT,
         ratio: 0.34,
         effect: "diwali",
-        bg: { ...DEFAULT_LAYOUT.bg, color: "#451a03", gradientFrom: "#ea580c", gradientVia: "#f59e0b", gradientTo: "#7c2d12" },
+        bg: { ...DEFAULT_LAYOUT.bg, color: "var(--zozi-ext-451a03)", gradientFrom: "var(--zozi-ext-ea580c)", gradientVia: "var(--zozi-ext-f59e0b)", gradientTo: "var(--zozi-ext-7c2d12)" },
         elements: [
-          el("icon", { name: "Lamp", x: 8, y: 34, w: 16, h: 16, icon: "Flame", fill: "#fff7ed" }),
-          el("text", { name: "Headline", x: 26, y: 28, w: 66, h: 22, content: "Happy Diwali", textColor: "#fffbeb", fontSize: 30, fontWeight: 800 }),
-          el("text", { name: "Sub", x: 26, y: 56, w: 60, h: 14, content: "Festival of lights", textColor: "#fed7aa", fontSize: 14 }),
-          el("button", { name: "CTA", x: 36, y: 74, w: 28, h: 15, content: "Shop Now", fill: "#fffbeb", textColor: "#7c2d12", ctaUrl: "/products" }),
+          el("icon", { name: "Lamp", x: 8, y: 34, w: 16, h: 16, icon: "Flame", fill: "var(--zozi-ext-fffbeb)" }),
+          el("text", { name: "Headline", x: 26, y: 28, w: 66, h: 22, content: "Happy Diwali", textColor: "var(--zozi-ext-fffbeb)", fontSize: 30, fontWeight: 800 }),
+          el("text", { name: "Sub", x: 26, y: 56, w: 60, h: 14, content: "Festival of lights", textColor: "var(--zozi-ext-fed7aa)", fontSize: 14 }),
+          el("button", { name: "CTA", x: 36, y: 74, w: 28, h: 15, content: "Shop Now", fill: "var(--zozi-ext-fffbeb)", textColor: "var(--zozi-ext-7c2d12)", ctaUrl: "/products" }),
         ],
       };
     case "ramadan":
@@ -784,11 +784,11 @@ const buildTemplate = (key: string, nextZ: () => number): BannerLayout => {
         ...DEFAULT_LAYOUT,
         ratio: 0.34,
         effect: "ramadan",
-        bg: { ...DEFAULT_LAYOUT.bg, color: "#1e1b4b", gradientFrom: "#312e81", gradientVia: "#4c1d95", gradientTo: "#0f172a" },
+        bg: { ...DEFAULT_LAYOUT.bg, color: "var(--zozi-ext-1e1b4b)", gradientFrom: "var(--zozi-ext-312e81)", gradientVia: "var(--zozi-ext-4c1d95)", gradientTo: "var(--zozi-ext-0f172a)" },
         elements: [
-          el("text", { name: "Headline", x: 10, y: 30, w: 60, h: 22, content: "Ramadan Kareem", textColor: "#fff7d6", fontSize: 28, fontWeight: 800 }),
-          el("text", { name: "Sub", x: 10, y: 56, w: 56, h: 14, content: "Blessed savings await", textColor: "#ddd6fe", fontSize: 14 }),
-          el("button", { name: "CTA", x: 10, y: 72, w: 28, h: 15, content: "Explore", fill: "#fde68a", textColor: "#1e1b4b", ctaUrl: "/products" }),
+          el("text", { name: "Headline", x: 10, y: 30, w: 60, h: 22, content: "Ramadan Kareem", textColor: "var(--zozi-ext-fff7d6)", fontSize: 28, fontWeight: 800 }),
+          el("text", { name: "Sub", x: 10, y: 56, w: 56, h: 14, content: "Blessed savings await", textColor: "var(--zozi-ext-ddd6fe)", fontSize: 14 }),
+          el("button", { name: "CTA", x: 10, y: 72, w: 28, h: 15, content: "Explore", fill: "var(--zozi-ext-fde68a)", textColor: "var(--zozi-ext-1e1b4b)", ctaUrl: "/products" }),
         ],
       };
     case "christmas":
@@ -796,12 +796,12 @@ const buildTemplate = (key: string, nextZ: () => number): BannerLayout => {
         ...DEFAULT_LAYOUT,
         ratio: 0.34,
         effect: "christmas",
-        bg: { ...DEFAULT_LAYOUT.bg, color: "#0c4a6e", gradientFrom: "#0369a1", gradientVia: "#0e7490", gradientTo: "#082f49" },
+        bg: { ...DEFAULT_LAYOUT.bg, color: "var(--zozi-ext-0c4a6e)", gradientFrom: "var(--zozi-ext-0369a1)", gradientVia: "var(--zozi-ext-0e7490)", gradientTo: "var(--zozi-ext-082f49)" },
         elements: [
-          el("text", { name: "Headline", x: 8, y: 28, w: 64, h: 22, content: "Merry Christmas", textColor: "#fff", fontSize: 28, fontWeight: 800 }),
-          el("text", { name: "Sub", x: 8, y: 56, w: 60, h: 14, content: "Joyful season offers", textColor: "#bae6fd", fontSize: 14 }),
-          el("icon", { name: "Gift", x: 80, y: 18, w: 16, h: 16, icon: "Gift", fill: "#fca5a5" }),
-          el("button", { name: "CTA", x: 8, y: 72, w: 28, h: 15, content: "Shop Gifts", fill: "#ef4444", textColor: "#fff", ctaUrl: "/products" }),
+          el("text", { name: "Headline", x: 8, y: 28, w: 64, h: 22, content: "Merry Christmas", textColor: "var(--zozi-ext-fff)", fontSize: 28, fontWeight: 800 }),
+          el("text", { name: "Sub", x: 8, y: 56, w: 60, h: 14, content: "Joyful season offers", textColor: "var(--zozi-ext-bae6fd)", fontSize: 14 }),
+          el("icon", { name: "Gift", x: 80, y: 18, w: 16, h: 16, icon: "Gift", fill: "var(--zozi-ext-fca5a5)" }),
+          el("button", { name: "CTA", x: 8, y: 72, w: 28, h: 15, content: "Shop Gifts", fill: "var(--zozi-ext-ef4444)", textColor: "var(--zozi-ext-fff)", ctaUrl: "/products" }),
         ],
       };
     default: // promo
@@ -809,11 +809,11 @@ const buildTemplate = (key: string, nextZ: () => number): BannerLayout => {
         ...DEFAULT_LAYOUT,
         ratio: 0.3,
         effect: "balloons",
-        bg: { ...DEFAULT_LAYOUT.bg, color: "#0f172a", gradientFrom: "#0ea5e9", gradientTo: "#8b5cf6" },
+        bg: { ...DEFAULT_LAYOUT.bg, color: "var(--zozi-ext-0f172a)", gradientFrom: "var(--zozi-ext-0ea5e9)", gradientTo: "var(--zozi-ext-8b5cf6)" },
         elements: [
-          el("text", { name: "Headline", x: 8, y: 30, w: 56, h: 22, content: "Big Promotion", textColor: "#fff", fontSize: 28, fontWeight: 800 }),
-          el("button", { name: "CTA", x: 64, y: 38, w: 28, h: 18, content: "Explore", fill: "#ffd700", textColor: "#111", ctaUrl: "/products" }),
-          el("rect", { name: "Accent", x: 8, y: 60, w: 24, h: 4, fill: "#ffd700", borderRadius: 2 }),
+          el("text", { name: "Headline", x: 8, y: 30, w: 56, h: 22, content: "Big Promotion", textColor: "var(--zozi-ext-fff)", fontSize: 28, fontWeight: 800 }),
+          el("button", { name: "CTA", x: 64, y: 38, w: 28, h: 18, content: "Explore", fill: "var(--zozi-ext-ffd700)", textColor: "var(--zozi-ext-111)", ctaUrl: "/products" }),
+          el("rect", { name: "Accent", x: 8, y: 60, w: 24, h: 4, fill: "var(--zozi-ext-ffd700)", borderRadius: 2 }),
         ],
       };
   }
@@ -1422,7 +1422,7 @@ export default function BannerCanvasEditor({
         <button type="button" onClick={() => fileInputRef.current?.click()} title="Import layout JSON" className="theme-btn-secondary rounded-lg px-2 py-1.5 text-[11px] font-semibold flex items-center gap-1"><Upload className="w-3.5 h-3.5" /> Import</button>
         <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importJSON(f); e.target.value = ""; }} />
         <div className="flex-1" />
-        <span className="text-[10px] text-text-faint">Shortcuts: Ctrl+Z/Y undo/redo · Ctrl+D dup · Ctrl+C/V copy · Ctrl+G group · Del remove · ←↑↓→ nudge</span>
+        <span className="text-xs text-text-faint">Shortcuts: Ctrl+Z/Y undo/redo · Ctrl+D dup · Ctrl+C/V copy · Ctrl+G group · Del remove · ←↑↓→ nudge</span>
       </div>
 
       {/* Templates */}
@@ -1437,8 +1437,8 @@ export default function BannerCanvasEditor({
       <div className="flex gap-3">
         {/* Layers panel */}
         <div className="w-36 shrink-0 rounded-xl border border-border p-2 space-y-1 max-h-[460px] overflow-y-auto">
-          <div className="text-[10px] font-bold uppercase tracking-wide text-text-faint px-1">Layers</div>
-          {layout.elements.length === 0 && <div className="text-[10px] text-text-faint px-1 py-2">No elements yet</div>}
+          <div className="text-xs font-bold uppercase tracking-wide text-text-faint px-1">Layers</div>
+          {layout.elements.length === 0 && <div className="text-xs text-text-faint px-1 py-2">No elements yet</div>}
           {[...layout.elements].sort((a, b) => b.z - a.z).map((el) => {
             const isSel = selectedIds.includes(el.id);
             return (
@@ -1508,7 +1508,7 @@ export default function BannerCanvasEditor({
                             style={{ ...handlePos(h), pointerEvents: "auto", cursor: h.includes("n") && h.includes("w") ? "nwse-resize" : h.includes("n") && h.includes("e") ? "nesw-resize" : h === "n" || h === "s" ? "ns-resize" : h === "e" || h === "w" ? "ew-resize" : "nwse-resize" }}
                           />
                         ))}
-                        <span className="pointer-events-none absolute -top-5 left-0 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold text-white">{el.name || el.type}</span>
+                        <span className="pointer-events-none absolute -top-5 left-0 rounded bg-primary px-1.5 py-0.5 text-3xs font-bold text-white">{el.name || el.type}</span>
                       </div>
                     )}
                   </Fragment>
@@ -1533,12 +1533,12 @@ export default function BannerCanvasEditor({
               )}
             </div>
           </div>
-          <div className="mt-1 flex items-center justify-between text-[10px] text-text-faint">
+          <div className="mt-1 flex items-center justify-between text-xs text-text-faint">
             <span>Drag to move · handles to resize · shift/ctrl-click to multi-select</span>
             <select
               value={ASPECT_OPTIONS.find((a) => a.ratio === ratio)?.value || "banner"}
               onChange={(e) => { const a = ASPECT_OPTIONS.find((x) => x.value === e.target.value); if (a) commit({ ...layout, ratio: a.ratio }, true); }}
-              className="theme-input rounded border px-1 py-0.5 text-[10px]"
+              className="theme-input rounded border px-1 py-0.5 text-xs"
             >
               {ASPECT_OPTIONS.map((a) => (<option key={a.value} value={a.value}>{a.label}</option>))}
             </select>
@@ -1631,7 +1631,7 @@ export default function BannerCanvasEditor({
               </div>
             )}
             {single.groupId && (
-              <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Grouped</span>
+              <span className="rounded bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary">Grouped</span>
             )}
           </div>
 
@@ -1672,7 +1672,7 @@ export default function BannerCanvasEditor({
             <div className="grid grid-cols-3 gap-2">
               <ColorField label="Text outline" value={single.textStroke || "#000000"} onChange={(v) => liveUpdateElement(single.id, { textStroke: v })} />
               <NumberField label="Outline width" value={single.textStrokeWidth ?? 0} min={0} max={12} step={0.5} onChange={(v) => liveUpdateElement(single.id, { textStrokeWidth: v })} onFocus={beginEdit} onBlur={endEdit} />
-              <div className="flex items-end pb-1 text-[10px] text-text-faint">0 = no outline</div>
+              <div className="flex items-end pb-1 text-xs text-text-faint">0 = no outline</div>
             </div>
           )}
 

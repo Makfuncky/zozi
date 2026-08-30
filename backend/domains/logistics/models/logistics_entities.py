@@ -3,14 +3,17 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 from . import Base
+from domains.country.models.countries import CountryConfig  # noqa: F401
+from domains.finance.models.payments import LogisticsPartnerPayout
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 __all__ = ['LogisticsPartner', 'LogisticsPartnerProfile', 'LogisticsPartnerServiceArea', 'LogisticsPricingProfile', 'LogisticsVehicleRule', 'Shipment', 'ShipmentEvent', 'LogisticsCategoryPricingRule']
 
 class LogisticsPartner(Base):
     __tablename__ = 'logistics_partners'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -64,7 +67,7 @@ class LogisticsPartner(Base):
 class LogisticsPartnerProfile(Base):
     __tablename__ = 'logistics_partner_profiles'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -90,7 +93,7 @@ class LogisticsPartnerProfile(Base):
 class LogisticsPartnerServiceArea(Base):
     __tablename__ = 'logistics_partner_service_areas'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -129,7 +132,7 @@ class LogisticsPartnerServiceArea(Base):
 class LogisticsPricingProfile(Base):
     __tablename__ = 'logistics_pricing_profiles'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -165,7 +168,7 @@ class LogisticsPricingProfile(Base):
 class LogisticsVehicleRule(Base):
     __tablename__ = 'logistics_vehicle_rules'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -196,7 +199,7 @@ class LogisticsVehicleRule(Base):
 class LogisticsCategoryPricingRule(Base):
     __tablename__ = 'logistics_category_pricing_rules'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -225,7 +228,7 @@ class LogisticsCategoryPricingRule(Base):
 class Shipment(Base):
     __tablename__ = 'shipments'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -272,7 +275,7 @@ class Shipment(Base):
 class ShipmentEvent(Base):
     __tablename__ = 'shipment_events'
     __table_args__ = {"schema": "logistics"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)

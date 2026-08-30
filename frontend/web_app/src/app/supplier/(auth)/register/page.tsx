@@ -92,7 +92,7 @@ export default function SupplierRegisterPage() {
               <div>
                 <label className="mb-1 block text-[11px] font-semibold text-text-muted">Password *</label>
                 <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary/50" /><input type="password" minLength={8} value={form.password} onChange={(e) => update({ password: e.target.value })} required className="theme-input w-full rounded-xl border py-2 pl-9 pr-3 text-xs" /></div>
-                <p className="mt-1 text-[10px] text-text-faint">
+                <p className="mt-1 text-xs text-text-faint">
                   Min. 8 chars, with uppercase, lowercase, number &amp; special character.
                 </p>
               </div>

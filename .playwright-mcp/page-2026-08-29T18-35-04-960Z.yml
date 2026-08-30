@@ -1,0 +1,97 @@
+- generic [active] [ref=f25e1]:
+  - link "Skip to main content" [ref=f25e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f25e3]:
+    - banner [ref=f25e5]:
+      - generic [ref=f25e6]:
+        - generic [ref=f25e7]:
+          - link "Go to home" [ref=f25e8] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f25e9]:
+              - img "Zozi logo" [ref=f25e11]
+              - generic [ref=f25e27]: Zozi
+          - generic [ref=f25e28]:
+            - generic [ref=f25e31]:
+              - button "All Products" [ref=f25e33]
+              - button "Price" [ref=f25e40]
+              - button "Rating" [ref=f25e47]
+              - button "Supplier" [ref=f25e53]
+              - textbox "Search products, brands, suppliers..." [ref=f25e64]
+              - button "Search by image" [ref=f25e65]
+              - button "Voice search" [disabled] [ref=f25e69]
+              - button "Search" [ref=f25e73]
+            - button "Choose File" [ref=f25e78]
+          - button "Choose File" [ref=f25e79]
+          - generic [ref=f25e80]:
+            - button "Toggle theme" [disabled] [ref=f25e81]
+            - generic [ref=f25e82]:
+              - generic [ref=f25e83]: OMRAuto detected
+              - button "Choose country" [ref=f25e85]: AUTO
+              - button "Choose language" [ref=f25e89]: EN
+            - link "Wishlist" [ref=f25e92] [cursor=pointer]:
+              - /url: /wishlist
+            - link "Cart" [ref=f25e95] [cursor=pointer]:
+              - /url: /cart
+            - button "Open sign in menu" [ref=f25e100]
+        - navigation [ref=f25e104]:
+          - generic [ref=f25e105]:
+            - link "Shop" [ref=f25e106] [cursor=pointer]:
+              - /url: /products
+            - link "Suppliers" [ref=f25e107] [cursor=pointer]:
+              - /url: /suppliers
+            - link "Offers" [ref=f25e108] [cursor=pointer]:
+              - /url: /offers
+            - link "Help" [ref=f25e109] [cursor=pointer]:
+              - /url: /help
+    - main [ref=f25e111]:
+      - main [ref=f25e112]:
+        - generic [ref=f25e113]:
+          - navigation "Breadcrumb" [ref=f25e114]:
+            - link "Home" [ref=f25e115] [cursor=pointer]:
+              - /url: /
+            - generic [ref=f25e119]: Products
+          - generic [ref=f25e122]:
+            - button "New Arrivals" [ref=f25e123]
+            - button "Trending" [ref=f25e127]
+            - button "Deals" [ref=f25e131]
+            - button "10%+" [ref=f25e136]
+            - button "20%+" [ref=f25e140]
+            - button "30%+" [ref=f25e144]
+            - button "50%+" [ref=f25e148]
+          - button "Choose File" [ref=f25e152]
+          - paragraph [ref=f25e154]: 0 results
+          - generic [ref=f25e156]:
+            - heading "No products found" [level=3] [ref=f25e161]
+            - paragraph [ref=f25e162]: Try adjusting your filters or search terms to discover more products.
+            - button "Clear All Filters" [ref=f25e163]
+    - contentinfo [ref=f25e165]:
+      - generic [ref=f25e167]:
+        - generic [ref=f25e168]:
+          - generic [ref=f25e169]: ZOZI
+          - paragraph [ref=f25e174]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f25e175]:
+            - link "Become a Supplier" [ref=f25e176] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f25e177] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f25e178]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f25e179]
+          - generic [ref=f25e180]:
+            - generic [ref=f25e181]:
+              - heading "Stay in Style" [level=3] [ref=f25e182]
+              - paragraph [ref=f25e183]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f25e184]:
+              - textbox "First name (optional)" [ref=f25e186]
+              - textbox "Enter your email" [ref=f25e188]
+              - button "Subscribe" [disabled] [ref=f25e189]
+      - generic [ref=f25e194]:
+        - paragraph [ref=f25e195]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f25e196]:
+          - link "Terms" [ref=f25e197] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f25e198] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f25e199] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f25e200] [cursor=pointer]:
+            - /url: /admin/login

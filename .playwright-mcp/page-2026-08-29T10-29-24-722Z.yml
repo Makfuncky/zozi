@@ -1,0 +1,547 @@
+- generic [active] [ref=f2e1]:
+  - link "Skip to main content" [ref=f2e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f2e3]:
+    - banner [ref=f2e5]:
+      - generic [ref=f2e6]:
+        - generic [ref=f2e7]:
+          - link "Go to home" [ref=f2e8] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f2e9]:
+              - img "Zozi logo" [ref=f2e11]
+              - generic [ref=f2e27]: Zozi
+          - generic [ref=f2e31]:
+            - button "All Products" [ref=f2e33] [cursor=pointer]
+            - button "Price" [ref=f2e41] [cursor=pointer]
+            - button "Rating" [ref=f2e49] [cursor=pointer]
+            - button "Supplier" [ref=f2e56] [cursor=pointer]
+            - textbox "Search products, brands, suppliers..." [ref=f2e65]
+            - button "Search by image" [ref=f2e66] [cursor=pointer]
+            - button "Voice search" [disabled] [ref=f2e70]
+            - button "Search" [ref=f2e74] [cursor=pointer]
+          - generic [ref=f2e79]:
+            - button "Toggle theme" [disabled] [ref=f2e80]
+            - generic [ref=f2e81]:
+              - generic [ref=f2e82]:
+                - generic [ref=f2e83]: OMR
+                - generic [ref=f2e84]: Auto detected
+              - button "Choose country" [ref=f2e86] [cursor=pointer]:
+                - generic [ref=f2e87]: AUTO
+              - button "Choose language" [ref=f2e91] [cursor=pointer]:
+                - generic [ref=f2e92]: EN
+            - link "Wishlist" [ref=f2e95] [cursor=pointer]:
+              - /url: /wishlist
+            - link "Cart" [ref=f2e98] [cursor=pointer]:
+              - /url: /cart
+            - button "Open sign in menu" [ref=f2e103] [cursor=pointer]
+        - navigation [ref=f2e107]:
+          - generic [ref=f2e108]:
+            - link "Shop" [ref=f2e109] [cursor=pointer]:
+              - /url: /products
+            - link "Suppliers" [ref=f2e110] [cursor=pointer]:
+              - /url: /suppliers
+            - link "Offers" [ref=f2e111] [cursor=pointer]:
+              - /url: /offers
+            - link "Help" [ref=f2e112] [cursor=pointer]:
+              - /url: /help
+    - main [ref=f2e114]:
+      - generic [ref=f2e115]:
+        - generic [ref=f2e117]:
+          - generic [ref=f2e118]:
+            - generic [ref=f2e123]: "Limited Time: 20% Off All Items!"
+            - generic [ref=f2e124]: 24:00:00
+          - button "Close offer banner" [ref=f2e129] [cursor=pointer]
+        - generic [ref=f2e137]:
+          - generic [ref=f2e138]: Free Shipping on First Order
+          - heading [level=1] [ref=f2e144]:
+            - generic [ref=f2e145]: DiscoverAmazing Products
+          - paragraph [ref=f2e146]: Shop from thousands of verified suppliers. Best prices, fast delivery, and quality guaranteed.
+          - generic [ref=f2e147]:
+            - link [ref=f2e148] [cursor=pointer]:
+              - /url: /products
+              - button "Shop Now" [ref=f2e149]
+            - link [ref=f2e155] [cursor=pointer]:
+              - /url: /suppliers
+              - button "Become a Supplier" [ref=f2e156]
+        - main [ref=f2e157]:
+          - generic [ref=f2e159]:
+            - generic [ref=f2e160]: GCC's Premier Marketplace
+            - heading "THE MARKETPLACE." [level=1] [ref=f2e164]
+            - paragraph [ref=f2e165]: Extraordinary products from verified suppliers — delivered across the Gulf. Same-day dispatch from UAE, Saudi Arabia & Kuwait.
+            - generic [ref=f2e166]:
+              - link "Shop All Products" [ref=f2e167] [cursor=pointer]:
+                - /url: /products
+              - link "Flash Deals" [ref=f2e173] [cursor=pointer]:
+                - /url: /offers
+            - paragraph [ref=f2e176]: 12+ curated products · Free returns · Secure checkout
+          - generic [ref=f2e177]:
+            - generic [ref=f2e178]:
+              - generic [ref=f2e179]:
+                - heading "Shop by Category" [level=2] [ref=f2e180]
+                - paragraph [ref=f2e181]: Browse our full collection
+              - link "View all" [ref=f2e182] [cursor=pointer]:
+                - /url: /products
+            - generic [ref=f2e185]:
+              - link "Fashion" [ref=f2e187] [cursor=pointer]:
+                - /url: /products?category=fashion
+              - link "Accessories" [ref=f2e193] [cursor=pointer]:
+                - /url: /products?category=accessories
+              - link "Electronics" [ref=f2e202] [cursor=pointer]:
+                - /url: /products?category=electronics
+              - link "Beauty" [ref=f2e208] [cursor=pointer]:
+                - /url: /products?category=beauty
+              - link "Home & Living" [ref=f2e214] [cursor=pointer]:
+                - /url: /products?category=home-living
+              - link "Sports" [ref=f2e220] [cursor=pointer]:
+                - /url: /products?category=sports
+              - link "Footwear" [ref=f2e227] [cursor=pointer]:
+                - /url: /products?category=footwear
+              - link "Watches" [ref=f2e233] [cursor=pointer]:
+                - /url: /products?category=watches
+          - generic [ref=f2e238]:
+            - generic [ref=f2e239]:
+              - generic [ref=f2e244]:
+                - heading "Trending Now" [level=2] [ref=f2e245]
+                - paragraph [ref=f2e246]: Top-rated this week
+              - link "See all" [ref=f2e247] [cursor=pointer]:
+                - /url: /products?sort=rating
+            - generic [ref=f2e250]:
+              - generic [ref=f2e251] [cursor=pointer]:
+                - generic [ref=f2e252]:
+                  - 'link "View product: Luxury Handbag" [ref=f2e254]':
+                    - /url: /products/1-luxury-handbag
+                    - img "Luxury Handbag" [ref=f2e255]
+                  - generic [ref=f2e256]: "-25% OFF"
+                  - button "Add to Wishlist" [ref=f2e258]
+                - generic [ref=f2e261]:
+                  - generic [ref=f2e262]: ZOZI CURATED
+                  - link [ref=f2e263]:
+                    - /url: /products/1-luxury-handbag
+                    - heading "Luxury Handbag" [level=3] [ref=f2e264]
+                  - generic [ref=f2e265]:
+                    - generic [ref=f2e266]: OMR 31.466
+                    - generic [ref=f2e267]: OMR 41.955
+                  - generic [ref=f2e268]:
+                    - generic [ref=f2e269]:
+                      - generic [ref=f2e272]: "4.5"
+                      - generic [ref=f2e273]: (0+)
+                    - generic [ref=f2e274]:
+                      - button "Quick View" [ref=f2e275]
+                      - button "Add to Cart" [disabled] [ref=f2e281]:
+                        - generic [ref=f2e286]: Out of Stock
+              - generic [ref=f2e287] [cursor=pointer]:
+                - generic [ref=f2e288]:
+                  - 'link "View product: Designer Watch" [ref=f2e290]':
+                    - /url: /products/2-designer-watch
+                    - img "Designer Watch" [ref=f2e291]
+                  - generic [ref=f2e292]: "-29% OFF"
+                  - button "Add to Wishlist" [ref=f2e294]
+                - generic [ref=f2e297]:
+                  - generic [ref=f2e298]: ZOZI CURATED
+                  - link [ref=f2e299]:
+                    - /url: /products/2-designer-watch
+                    - heading "Designer Watch" [level=3] [ref=f2e300]
+                  - generic [ref=f2e301]:
+                    - generic [ref=f2e302]: OMR 52.444
+                    - generic [ref=f2e303]: OMR 73.422
+                  - generic [ref=f2e304]:
+                    - generic [ref=f2e305]:
+                      - generic [ref=f2e308]: "4.8"
+                      - generic [ref=f2e309]: (0+)
+                    - generic [ref=f2e310]:
+                      - button "Quick View" [ref=f2e311]
+                      - button "Add to Cart" [disabled] [ref=f2e317]:
+                        - generic [ref=f2e322]: Out of Stock
+              - generic [ref=f2e323] [cursor=pointer]:
+                - generic [ref=f2e324]:
+                  - 'link "View product: Silk Scarf" [ref=f2e326]':
+                    - /url: /products/3-silk-scarf
+                    - img "Silk Scarf" [ref=f2e327]
+                  - generic [ref=f2e328]: "-31% OFF"
+                  - button "Add to Wishlist" [ref=f2e330]
+                - generic [ref=f2e333]:
+                  - generic [ref=f2e334]: ZOZI CURATED
+                  - link [ref=f2e335]:
+                    - /url: /products/3-silk-scarf
+                    - heading "Silk Scarf" [level=3] [ref=f2e336]
+                  - generic [ref=f2e337]:
+                    - generic [ref=f2e338]: OMR 9.439
+                    - generic [ref=f2e339]: OMR 13.635
+                  - generic [ref=f2e340]:
+                    - generic [ref=f2e341]:
+                      - generic [ref=f2e344]: "4.2"
+                      - generic [ref=f2e345]: (0+)
+                    - generic [ref=f2e346]:
+                      - button "Quick View" [ref=f2e347]
+                      - button "Add to Cart" [disabled] [ref=f2e353]:
+                        - generic [ref=f2e358]: Out of Stock
+              - generic [ref=f2e359] [cursor=pointer]:
+                - generic [ref=f2e360]:
+                  - 'link "View product: Wireless Noise-Cancelling Headphones" [ref=f2e362]':
+                    - /url: /products/4-wireless-noise-cancelling-headphones
+                    - img "Wireless Noise-Cancelling Headphones" [ref=f2e363]
+                  - generic [ref=f2e364]: "-22% OFF"
+                  - button "Add to Wishlist" [ref=f2e366]
+                - generic [ref=f2e369]:
+                  - generic [ref=f2e370]: ZOZI CURATED
+                  - link [ref=f2e371]:
+                    - /url: /products/4-wireless-noise-cancelling-headphones
+                    - heading "Wireless Noise-Cancelling Headphones" [level=3] [ref=f2e372]
+                  - generic [ref=f2e373]:
+                    - generic [ref=f2e374]: OMR 36.710
+                    - generic [ref=f2e375]: OMR 47.199
+                  - generic [ref=f2e376]:
+                    - generic [ref=f2e377]:
+                      - generic [ref=f2e380]: "4.7"
+                      - generic [ref=f2e381]: (0+)
+                    - generic [ref=f2e382]:
+                      - button "Quick View" [ref=f2e383]
+                      - button "Add to Cart" [disabled] [ref=f2e389]:
+                        - generic [ref=f2e394]: Out of Stock
+          - generic [ref=f2e395]:
+            - generic [ref=f2e396]:
+              - paragraph [ref=f2e399]: Same-day dispatch
+              - paragraph [ref=f2e400]: Orders before 2PM ship today
+            - generic [ref=f2e401]:
+              - paragraph [ref=f2e404]: Verified suppliers
+              - paragraph [ref=f2e405]: Every supplier is vetted
+            - generic [ref=f2e406]:
+              - paragraph [ref=f2e410]: Free returns
+              - paragraph [ref=f2e411]: 30-day hassle-free returns
+            - generic [ref=f2e412]:
+              - paragraph [ref=f2e416]: Authentic products
+              - paragraph [ref=f2e417]: 100% genuine guarantee
+          - generic [ref=f2e418]:
+            - generic [ref=f2e420]:
+              - heading "New Arrivals" [level=2] [ref=f2e421]
+              - paragraph [ref=f2e422]: Latest additions to the marketplace
+            - generic [ref=f2e423]:
+              - generic [ref=f2e425]:
+                - button "All" [ref=f2e426] [cursor=pointer]
+                - button "Furniture" [ref=f2e430] [cursor=pointer]
+                - button "Electronics" [ref=f2e434] [cursor=pointer]
+                - button "Fashion" [ref=f2e437] [cursor=pointer]
+                - button "Accessories" [ref=f2e440] [cursor=pointer]
+                - button "Home & Living" [ref=f2e446] [cursor=pointer]
+              - generic [ref=f2e451]:
+                - generic [ref=f2e452] [cursor=pointer]:
+                  - generic [ref=f2e453]:
+                    - 'link "View product: Luxury Handbag" [ref=f2e455]':
+                      - /url: /products/1-luxury-handbag
+                      - img "Luxury Handbag" [ref=f2e456]
+                    - generic [ref=f2e457]:
+                      - generic [ref=f2e458]: "-25% OFF"
+                      - generic [ref=f2e459]: FEATURED
+                    - button "Add to Wishlist" [ref=f2e460]
+                  - generic [ref=f2e463]:
+                    - generic [ref=f2e464]: ZOZI CURATED
+                    - link [ref=f2e465]:
+                      - /url: /products/1-luxury-handbag
+                      - heading "Luxury Handbag" [level=3] [ref=f2e466]
+                    - generic [ref=f2e467]:
+                      - generic [ref=f2e468]: OMR 31.466
+                      - generic [ref=f2e469]: OMR 41.955
+                    - generic [ref=f2e470]:
+                      - generic [ref=f2e471]:
+                        - generic [ref=f2e474]: "4.5"
+                        - generic [ref=f2e475]: (0+)
+                      - generic [ref=f2e476]:
+                        - button "Quick View" [ref=f2e477]
+                        - button "Add to Cart" [disabled] [ref=f2e483]:
+                          - generic [ref=f2e488]: Out of Stock
+                - generic [ref=f2e489] [cursor=pointer]:
+                  - generic [ref=f2e490]:
+                    - 'link "View product: Designer Watch" [ref=f2e492]':
+                      - /url: /products/2-designer-watch
+                      - img "Designer Watch" [ref=f2e493]
+                    - generic [ref=f2e494]: "-29% OFF"
+                    - button "Add to Wishlist" [ref=f2e496]
+                  - generic [ref=f2e499]:
+                    - generic [ref=f2e500]: ZOZI CURATED
+                    - link [ref=f2e501]:
+                      - /url: /products/2-designer-watch
+                      - heading "Designer Watch" [level=3] [ref=f2e502]
+                    - generic [ref=f2e503]:
+                      - generic [ref=f2e504]: OMR 52.444
+                      - generic [ref=f2e505]: OMR 73.422
+                    - generic [ref=f2e506]:
+                      - generic [ref=f2e507]:
+                        - generic [ref=f2e510]: "4.8"
+                        - generic [ref=f2e511]: (0+)
+                      - generic [ref=f2e512]:
+                        - button "Quick View" [ref=f2e513]
+                        - button "Add to Cart" [disabled] [ref=f2e519]:
+                          - generic [ref=f2e524]: Out of Stock
+                - generic [ref=f2e525] [cursor=pointer]:
+                  - generic [ref=f2e526]:
+                    - 'link "View product: Silk Scarf" [ref=f2e528]':
+                      - /url: /products/3-silk-scarf
+                      - img "Silk Scarf" [ref=f2e529]
+                    - generic [ref=f2e530]: "-31% OFF"
+                    - button "Add to Wishlist" [ref=f2e532]
+                  - generic [ref=f2e535]:
+                    - generic [ref=f2e536]: ZOZI CURATED
+                    - link [ref=f2e537]:
+                      - /url: /products/3-silk-scarf
+                      - heading "Silk Scarf" [level=3] [ref=f2e538]
+                    - generic [ref=f2e539]:
+                      - generic [ref=f2e540]: OMR 9.439
+                      - generic [ref=f2e541]: OMR 13.635
+                    - generic [ref=f2e542]:
+                      - generic [ref=f2e543]:
+                        - generic [ref=f2e546]: "4.2"
+                        - generic [ref=f2e547]: (0+)
+                      - generic [ref=f2e548]:
+                        - button "Quick View" [ref=f2e549]
+                        - button "Add to Cart" [disabled] [ref=f2e555]:
+                          - generic [ref=f2e560]: Out of Stock
+                - generic [ref=f2e561] [cursor=pointer]:
+                  - generic [ref=f2e562]:
+                    - 'link "View product: Wireless Noise-Cancelling Headphones" [ref=f2e564]':
+                      - /url: /products/4-wireless-noise-cancelling-headphones
+                      - img "Wireless Noise-Cancelling Headphones" [ref=f2e565]
+                    - generic [ref=f2e566]: "-22% OFF"
+                    - button "Add to Wishlist" [ref=f2e568]
+                  - generic [ref=f2e571]:
+                    - generic [ref=f2e572]: ZOZI CURATED
+                    - link [ref=f2e573]:
+                      - /url: /products/4-wireless-noise-cancelling-headphones
+                      - heading "Wireless Noise-Cancelling Headphones" [level=3] [ref=f2e574]
+                    - generic [ref=f2e575]:
+                      - generic [ref=f2e576]: OMR 36.710
+                      - generic [ref=f2e577]: OMR 47.199
+                    - generic [ref=f2e578]:
+                      - generic [ref=f2e579]:
+                        - generic [ref=f2e582]: "4.7"
+                        - generic [ref=f2e583]: (0+)
+                      - generic [ref=f2e584]:
+                        - button "Quick View" [ref=f2e585]
+                        - button "Add to Cart" [disabled] [ref=f2e591]:
+                          - generic [ref=f2e596]: Out of Stock
+                - generic [ref=f2e597] [cursor=pointer]:
+                  - generic [ref=f2e598]:
+                    - 'link "View product: Diamond Stud Earrings" [ref=f2e600]':
+                      - /url: /products/5-diamond-stud-earrings
+                      - img "Diamond Stud Earrings" [ref=f2e601]
+                    - generic [ref=f2e602]: "-25% OFF"
+                    - button "Add to Wishlist" [ref=f2e604]
+                  - generic [ref=f2e607]:
+                    - generic [ref=f2e608]: ZOZI CURATED
+                    - link [ref=f2e609]:
+                      - /url: /products/5-diamond-stud-earrings
+                      - heading "Diamond Stud Earrings" [level=3] [ref=f2e610]
+                    - generic [ref=f2e611]:
+                      - generic [ref=f2e612]: OMR 94.400
+                      - generic [ref=f2e613]: OMR 125.867
+                    - generic [ref=f2e614]:
+                      - generic [ref=f2e615]:
+                        - generic [ref=f2e618]: "4.9"
+                        - generic [ref=f2e619]: (0+)
+                      - generic [ref=f2e620]:
+                        - button "Quick View" [ref=f2e621]
+                        - button "Add to Cart" [disabled] [ref=f2e627]:
+                          - generic [ref=f2e632]: Out of Stock
+                - generic [ref=f2e633] [cursor=pointer]:
+                  - generic [ref=f2e634]:
+                    - 'link "View product: Premium Moisturizing Serum" [ref=f2e636]':
+                      - /url: /products/6-premium-moisturizing-serum
+                      - img "Premium Moisturizing Serum" [ref=f2e637]
+                    - generic [ref=f2e638]: "-27% OFF"
+                    - button "Add to Wishlist" [ref=f2e640]
+                  - generic [ref=f2e643]:
+                    - generic [ref=f2e644]: ZOZI CURATED
+                    - link [ref=f2e645]:
+                      - /url: /products/6-premium-moisturizing-serum
+                      - heading "Premium Moisturizing Serum" [level=3] [ref=f2e646]
+                    - generic [ref=f2e647]:
+                      - generic [ref=f2e648]: OMR 8.390
+                      - generic [ref=f2e649]: OMR 11.537
+                    - generic [ref=f2e650]:
+                      - generic [ref=f2e651]:
+                        - generic [ref=f2e654]: "4.4"
+                        - generic [ref=f2e655]: (0+)
+                      - generic [ref=f2e656]:
+                        - button "Quick View" [ref=f2e657]
+                        - button "Add to Cart" [disabled] [ref=f2e663]:
+                          - generic [ref=f2e668]: Out of Stock
+                - generic [ref=f2e669] [cursor=pointer]:
+                  - generic [ref=f2e670]:
+                    - 'link "View product: Ergonomic Office Chair" [ref=f2e672]':
+                      - /url: /products/7-ergonomic-office-chair
+                      - img "Ergonomic Office Chair" [ref=f2e673]
+                    - generic [ref=f2e674]: "-25% OFF"
+                    - button "Add to Wishlist" [ref=f2e676]
+                  - generic [ref=f2e679]:
+                    - generic [ref=f2e680]: ZOZI CURATED
+                    - link [ref=f2e681]:
+                      - /url: /products/7-ergonomic-office-chair
+                      - heading "Ergonomic Office Chair" [level=3] [ref=f2e682]
+                    - generic [ref=f2e683]:
+                      - generic [ref=f2e684]: OMR 62.933
+                      - generic [ref=f2e685]: OMR 83.911
+                    - generic [ref=f2e686]:
+                      - generic [ref=f2e687]:
+                        - generic [ref=f2e690]: "4.6"
+                        - generic [ref=f2e691]: (0+)
+                      - generic [ref=f2e692]:
+                        - button "Quick View" [ref=f2e693]
+                        - button "Add to Cart" [disabled] [ref=f2e699]:
+                          - generic [ref=f2e704]: Out of Stock
+                - generic [ref=f2e705] [cursor=pointer]:
+                  - generic [ref=f2e706]:
+                    - 'link "View product: Athletic Running Shoes" [ref=f2e708]':
+                      - /url: /products/8-athletic-running-shoes
+                      - img "Athletic Running Shoes" [ref=f2e709]
+                    - generic [ref=f2e710]: "-25% OFF"
+                    - button "Add to Wishlist" [ref=f2e712]
+                  - generic [ref=f2e715]:
+                    - generic [ref=f2e716]: ZOZI CURATED
+                    - link [ref=f2e717]:
+                      - /url: /products/8-athletic-running-shoes
+                      - heading "Athletic Running Shoes" [level=3] [ref=f2e718]
+                    - generic [ref=f2e719]:
+                      - generic [ref=f2e720]: OMR 15.732
+                      - generic [ref=f2e721]: OMR 20.977
+                    - generic [ref=f2e722]:
+                      - generic [ref=f2e723]:
+                        - generic [ref=f2e726]: "4.5"
+                        - generic [ref=f2e727]: (0+)
+                      - generic [ref=f2e728]:
+                        - button "Quick View" [ref=f2e729]
+                        - button "Add to Cart" [disabled] [ref=f2e735]:
+                          - generic [ref=f2e740]: Out of Stock
+                - generic [ref=f2e741] [cursor=pointer]:
+                  - generic [ref=f2e742]:
+                    - 'link "View product: Leather Bifold Wallet" [ref=f2e744]':
+                      - /url: /products/9-leather-bifold-wallet
+                      - img "Leather Bifold Wallet" [ref=f2e745]
+                    - generic [ref=f2e746]: "-33% OFF"
+                    - button "Add to Wishlist" [ref=f2e748]
+                  - generic [ref=f2e751]:
+                    - generic [ref=f2e752]: ZOZI CURATED
+                    - link [ref=f2e753]:
+                      - /url: /products/9-leather-bifold-wallet
+                      - heading "Leather Bifold Wallet" [level=3] [ref=f2e754]
+                    - generic [ref=f2e755]:
+                      - generic [ref=f2e756]: OMR 6.292
+                      - generic [ref=f2e757]: OMR 9.439
+                    - generic [ref=f2e758]:
+                      - generic [ref=f2e759]:
+                        - generic [ref=f2e762]: "4.3"
+                        - generic [ref=f2e763]: (0+)
+                      - generic [ref=f2e764]:
+                        - button "Quick View" [ref=f2e765]
+                        - button "Add to Cart" [disabled] [ref=f2e771]:
+                          - generic [ref=f2e776]: Out of Stock
+                - generic [ref=f2e777] [cursor=pointer]:
+                  - generic [ref=f2e778]:
+                    - 'link "View product: Smart Fitness Tracker" [ref=f2e780]':
+                      - /url: /products/10-smart-fitness-tracker
+                      - img "Smart Fitness Tracker" [ref=f2e781]
+                    - generic [ref=f2e782]: "-20% OFF"
+                    - button "Add to Wishlist" [ref=f2e784]
+                  - generic [ref=f2e787]:
+                    - generic [ref=f2e788]: ZOZI CURATED
+                    - link [ref=f2e789]:
+                      - /url: /products/10-smart-fitness-tracker
+                      - heading "Smart Fitness Tracker" [level=3] [ref=f2e790]
+                    - generic [ref=f2e791]:
+                      - generic [ref=f2e792]: OMR 20.977
+                      - generic [ref=f2e793]: OMR 26.221
+                    - generic [ref=f2e794]:
+                      - generic [ref=f2e795]:
+                        - generic [ref=f2e798]: "4.4"
+                        - generic [ref=f2e799]: (0+)
+                      - generic [ref=f2e800]:
+                        - button "Quick View" [ref=f2e801]
+                        - button "Add to Cart" [disabled] [ref=f2e807]:
+                          - generic [ref=f2e812]: Out of Stock
+                - generic [ref=f2e813] [cursor=pointer]:
+                  - generic [ref=f2e814]:
+                    - 'link "View product: Cashmere Pullover Sweater" [ref=f2e816]':
+                      - /url: /products/11-cashmere-pullover-sweater
+                      - img "Cashmere Pullover Sweater" [ref=f2e817]
+                    - generic [ref=f2e818]: "-27% OFF"
+                    - button "Add to Wishlist" [ref=f2e820]
+                  - generic [ref=f2e823]:
+                    - generic [ref=f2e824]: ZOZI CURATED
+                    - link [ref=f2e825]:
+                      - /url: /products/11-cashmere-pullover-sweater
+                      - heading "Cashmere Pullover Sweater" [level=3] [ref=f2e826]
+                    - generic [ref=f2e827]:
+                      - generic [ref=f2e828]: OMR 19.928
+                      - generic [ref=f2e829]: OMR 27.270
+                    - generic [ref=f2e830]:
+                      - generic [ref=f2e831]:
+                        - generic [ref=f2e834]: "4.6"
+                        - generic [ref=f2e835]: (0+)
+                      - generic [ref=f2e836]:
+                        - button "Quick View" [ref=f2e837]
+                        - button "Add to Cart" [disabled] [ref=f2e843]:
+                          - generic [ref=f2e848]: Out of Stock
+                - generic [ref=f2e849] [cursor=pointer]:
+                  - generic [ref=f2e850]:
+                    - 'link "View product: Rose Gold Bangle Bracelet" [ref=f2e852]':
+                      - /url: /products/12-rose-gold-bangle-bracelet
+                      - img "Rose Gold Bangle Bracelet" [ref=f2e853]
+                    - generic [ref=f2e854]: "-29% OFF"
+                    - button "Add to Wishlist" [ref=f2e856]
+                  - generic [ref=f2e859]:
+                    - generic [ref=f2e860]: ZOZI CURATED
+                    - link [ref=f2e861]:
+                      - /url: /products/12-rose-gold-bangle-bracelet
+                      - heading "Rose Gold Bangle Bracelet" [level=3] [ref=f2e862]
+                    - generic [ref=f2e863]:
+                      - generic [ref=f2e864]: OMR 12.586
+                      - generic [ref=f2e865]: OMR 17.830
+                    - generic [ref=f2e866]:
+                      - generic [ref=f2e867]:
+                        - generic [ref=f2e870]: "4.5"
+                        - generic [ref=f2e871]: (0+)
+                      - generic [ref=f2e872]:
+                        - button "Quick View" [ref=f2e873]
+                        - button "Add to Cart" [disabled] [ref=f2e879]:
+                          - generic [ref=f2e884]: Out of Stock
+          - generic [ref=f2e889]:
+            - generic [ref=f2e890]: Become a Supplier
+            - heading "Sell on ZOZI Marketplace" [level=2] [ref=f2e894]
+            - paragraph [ref=f2e895]: Join thousands of verified suppliers. Zero listing fees. Fast payouts. Full analytics dashboard.
+            - link "Get Started Free" [ref=f2e896] [cursor=pointer]:
+              - /url: /supplier/register
+          - generic [ref=f2e900]:
+            - heading "Stay in the loop" [level=3] [ref=f2e901]
+            - paragraph [ref=f2e902]: Get notified about flash deals, new arrivals, and exclusive offers.
+            - generic [ref=f2e903]:
+              - textbox "your@email.com" [ref=f2e904]
+              - button "Subscribe" [ref=f2e905] [cursor=pointer]
+    - contentinfo [ref=f2e907]:
+      - generic [ref=f2e909]:
+        - generic [ref=f2e910]:
+          - generic [ref=f2e911]: ZOZI
+          - paragraph [ref=f2e917]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f2e918]:
+            - link "Become a Supplier" [ref=f2e919] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f2e920] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f2e921]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f2e922]
+          - generic [ref=f2e923]:
+            - generic [ref=f2e924]:
+              - heading "Stay in Style" [level=3] [ref=f2e925]
+              - paragraph [ref=f2e926]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f2e927]:
+              - textbox "First name (optional)" [ref=f2e929]
+              - textbox "Enter your email" [ref=f2e931]
+              - button "Subscribe" [disabled] [ref=f2e932]
+      - generic [ref=f2e937]:
+        - paragraph [ref=f2e938]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f2e939]:
+          - link "Terms" [ref=f2e940] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f2e941] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f2e942] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f2e943] [cursor=pointer]:
+            - /url: /admin/login

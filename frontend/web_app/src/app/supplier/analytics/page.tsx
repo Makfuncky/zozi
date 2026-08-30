@@ -214,7 +214,7 @@ export default function SupplierAnalyticsPage() {
                         className="w-full rounded-t bg-primary min-h-0.5"
                         title={formatMoney(d.revenue)}
                       />
-                      <span className="text-[9px] text-text-faint truncate w-full text-center">
+                      <span className="text-3xs text-text-faint truncate w-full text-center">
                         {d.date}
                       </span>
                     </div>
@@ -240,7 +240,7 @@ export default function SupplierAnalyticsPage() {
                       <div key={p.id}>
                         <div className="flex items-center justify-between text-xs mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded bg-surface-2 flex items-center justify-center text-[10px] font-bold text-text-muted">
+                            <span className="w-5 h-5 rounded bg-surface-2 flex items-center justify-center text-xs font-bold text-text-muted">
                               {i + 1}
                             </span>
                             <span className="text-text font-medium truncate max-w-40">

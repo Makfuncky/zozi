@@ -1,0 +1,173 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - link "Go to home" [ref=e8] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e9]:
+              - img "Zozi logo" [ref=e11]
+              - generic [ref=e27]: Zozi
+          - generic [ref=e31]:
+            - button "All Products" [ref=e33] [cursor=pointer]
+            - button "Price" [ref=e41] [cursor=pointer]
+            - button "Rating" [ref=e49] [cursor=pointer]
+            - button "Supplier" [ref=e56] [cursor=pointer]
+            - textbox "Search products, brands, suppliers..." [ref=e65]
+            - button "Search by image" [ref=e66] [cursor=pointer]
+            - button "Voice search" [ref=e70] [cursor=pointer]
+            - button "Search" [ref=e74] [cursor=pointer]
+          - generic [ref=e79]:
+            - button "Switch to dark theme" [ref=e80] [cursor=pointer]: 🌙
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - generic [ref=e83]: OMR
+                - generic [ref=e84]: Detected PK
+              - button "Choose country" [ref=e86] [cursor=pointer]:
+                - generic [ref=e87]: PK
+              - button "Choose language" [ref=e91] [cursor=pointer]:
+                - generic [ref=e92]: EN
+            - link "Wishlist" [ref=e95] [cursor=pointer]:
+              - /url: /wishlist
+            - link "Cart" [ref=e98] [cursor=pointer]:
+              - /url: /cart
+            - button "Open sign in menu" [ref=e103] [cursor=pointer]
+        - navigation [ref=e107]:
+          - generic [ref=e108]:
+            - link "Shop" [ref=e109] [cursor=pointer]:
+              - /url: /products
+            - link "Suppliers" [ref=e110] [cursor=pointer]:
+              - /url: /suppliers
+            - link "Offers" [ref=e111] [cursor=pointer]:
+              - /url: /offers
+            - link "Help" [ref=e112] [cursor=pointer]:
+              - /url: /help
+    - main [ref=e114]:
+      - generic [ref=e115]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - generic [ref=e124]: "Limited Time: 20% Off All Items!"
+            - generic [ref=e125]: 24:00:00
+          - button "Close offer banner" [ref=e130] [cursor=pointer]
+        - generic [ref=e138]:
+          - generic [ref=e139]: Free Shipping on First Order
+          - heading [level=1] [ref=e145]:
+            - generic [ref=e146]: DiscoverAmazing Products
+          - paragraph [ref=e147]: Shop from thousands of verified suppliers. Best prices, fast delivery, and quality guaranteed.
+          - generic [ref=e148]:
+            - link [ref=e149] [cursor=pointer]:
+              - /url: /products
+              - button "Shop Now" [ref=e150]
+            - link [ref=e156] [cursor=pointer]:
+              - /url: /suppliers
+              - button "Become a Supplier" [ref=e157]
+        - main [ref=e158]:
+          - generic [ref=e160]:
+            - generic [ref=e161]: GCC's Premier Marketplace
+            - heading "THE MARKETPLACE." [level=1] [ref=e165]
+            - paragraph [ref=e166]: Extraordinary products from verified suppliers — delivered across the Gulf. Same-day dispatch from UAE, Saudi Arabia & Kuwait.
+            - generic [ref=e167]:
+              - link "Shop All Products" [ref=e168] [cursor=pointer]:
+                - /url: /products
+              - link "Flash Deals" [ref=e174] [cursor=pointer]:
+                - /url: /offers
+            - paragraph [ref=e177]: 8,000++ curated products · Free returns · Secure checkout
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - generic [ref=e180]:
+                - heading "Shop by Category" [level=2] [ref=e181]
+                - paragraph [ref=e182]: Browse our full collection
+              - link "View all" [ref=e183] [cursor=pointer]:
+                - /url: /products
+            - generic [ref=e186]:
+              - link "Electronics" [ref=e188] [cursor=pointer]:
+                - /url: /products?category=electronics
+              - link "Fashion" [ref=e194] [cursor=pointer]:
+                - /url: /products?category=fashion
+              - link "Furniture" [ref=e200] [cursor=pointer]:
+                - /url: /products?category=furniture
+              - link "Accessories" [ref=e207] [cursor=pointer]:
+                - /url: /products?category=accessories
+              - link "Home & Living" [ref=e216] [cursor=pointer]:
+                - /url: /products?category=home
+              - link "Sports" [ref=e223] [cursor=pointer]:
+                - /url: /products?category=sports
+              - link "Beauty" [ref=e230] [cursor=pointer]:
+                - /url: /products?category=beauty
+              - link "Books" [ref=e236] [cursor=pointer]:
+                - /url: /products?category=books
+          - generic [ref=e241]:
+            - generic [ref=e242]:
+              - paragraph [ref=e245]: Same-day dispatch
+              - paragraph [ref=e246]: Orders before 2PM ship today
+            - generic [ref=e247]:
+              - paragraph [ref=e250]: Verified suppliers
+              - paragraph [ref=e251]: Every supplier is vetted
+            - generic [ref=e252]:
+              - paragraph [ref=e256]: Free returns
+              - paragraph [ref=e257]: 30-day hassle-free returns
+            - generic [ref=e258]:
+              - paragraph [ref=e262]: Authentic products
+              - paragraph [ref=e263]: 100% genuine guarantee
+          - generic [ref=e264]:
+            - generic [ref=e266]:
+              - heading "New Arrivals" [level=2] [ref=e267]
+              - paragraph [ref=e268]: Latest additions to the marketplace
+            - generic [ref=e269]:
+              - generic [ref=e271]:
+                - button "All" [ref=e272] [cursor=pointer]
+                - button "Furniture" [ref=e276] [cursor=pointer]
+                - button "Electronics" [ref=e280] [cursor=pointer]
+                - button "Fashion" [ref=e283] [cursor=pointer]
+                - button "Accessories" [ref=e286] [cursor=pointer]
+                - button "Home & Living" [ref=e292] [cursor=pointer]
+              - generic [ref=e297]:
+                - heading "No items found" [level=4] [ref=e302]
+                - paragraph [ref=e303]: No products in this category yet. Try exploring other categories.
+                - button "View All Products" [ref=e304] [cursor=pointer]
+          - generic [ref=e309]:
+            - generic [ref=e310]: Become a Supplier
+            - heading "Sell on ZOZI Marketplace" [level=2] [ref=e314]
+            - paragraph [ref=e315]: Join thousands of verified suppliers. Zero listing fees. Fast payouts. Full analytics dashboard.
+            - link "Get Started Free" [ref=e316] [cursor=pointer]:
+              - /url: /supplier/register
+          - generic [ref=e320]:
+            - heading "Stay in the loop" [level=3] [ref=e321]
+            - paragraph [ref=e322]: Get notified about flash deals, new arrivals, and exclusive offers.
+            - generic [ref=e323]:
+              - textbox "your@email.com" [ref=e324]
+              - button "Subscribe" [ref=e325] [cursor=pointer]
+    - contentinfo [ref=e327]:
+      - generic [ref=e329]:
+        - generic [ref=e330]:
+          - generic [ref=e331]: ZOZI
+          - paragraph [ref=e337]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=e338]:
+            - link "Become a Supplier" [ref=e339] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=e340] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=e341]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=e342]
+          - generic [ref=e343]:
+            - generic [ref=e344]:
+              - heading "Stay in Style" [level=3] [ref=e345]
+              - paragraph [ref=e346]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=e347]:
+              - textbox "First name (optional)" [ref=e349]
+              - textbox "Enter your email" [ref=e351]
+              - button "Subscribe" [disabled] [ref=e352]
+      - generic [ref=e357]:
+        - paragraph [ref=e358]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=e359]:
+          - link "Terms" [ref=e360] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=e361] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=e362] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=e363] [cursor=pointer]:
+            - /url: /admin/login
+  - alert [ref=e366]

@@ -128,7 +128,7 @@ export default function VideoScrollingRow({ productId, title = "Product Videos",
                 </div>
               )}
               {video.duration_seconds ? (
-                <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-white">
                   {formatDuration(video.duration_seconds)}
                 </span>
               ) : null}

@@ -92,7 +92,7 @@ export default function AdvancedFilterPanel({
         <SlidersHorizontal className="h-3.5 w-3.5" />
         Filters
         {activeCount > 0 && (
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-on-brand">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-3xs font-bold text-on-brand">
             {activeCount > 9 ? "9+" : activeCount}
           </span>
         )}
@@ -105,7 +105,7 @@ export default function AdvancedFilterPanel({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.14 }}
-            className={`glass-dropdown absolute top-full z-[999] mt-2 w-max min-w-80 max-w-lg rounded-2xl p-4 ${
+            className={`glass-dropdown absolute top-full z-modal mt-2 w-max min-w-80 max-w-lg rounded-2xl p-4 ${
               align === "right" ? "right-0" : "left-0"
             }`}
           >
@@ -114,7 +114,7 @@ export default function AdvancedFilterPanel({
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-faint">
                 Filters
                 {activeCount > 0 && (
-                  <span className="ml-2 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  <span className="ml-2 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-bold text-primary">
                     {activeCount} active
                   </span>
                 )}
@@ -147,7 +147,7 @@ export default function AdvancedFilterPanel({
             {/* Quick-apply presets */}
             {presets && presets.length > 0 && (
               <div className="mt-3 border-t border-border pt-3">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">
                   Quick presets
                 </p>
                 <div className="flex flex-wrap gap-1.5">

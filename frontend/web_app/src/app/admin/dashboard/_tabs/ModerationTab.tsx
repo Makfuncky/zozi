@@ -210,7 +210,7 @@ function ModerationInner() {
         render: (row) => (
           <div>
             <div className="text-xs font-semibold text-text">{row.business_name || row.username}</div>
-            <div className="text-[10px] text-text-faint">@{row.username}</div>
+            <div className="text-xs text-text-faint">@{row.username}</div>
           </div>
         ),
       },
@@ -229,7 +229,7 @@ function ModerationInner() {
         sortable: true,
         sortValue: (row) => row.verification_status || "pending",
         render: (row) => (
-          <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize ${STATUS_TONE[row.verification_status || "pending"] || "theme-chip-muted"}`}>
+          <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold capitalize ${STATUS_TONE[row.verification_status || "pending"] || "theme-chip-muted"}`}>
             {row.verification_status || "pending"}
           </span>
         ),
@@ -300,15 +300,15 @@ function ModerationInner() {
         {section === "queue" && (
           <div className="grid gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-border bg-surface-1 px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-faint">Pending</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-faint">Pending</p>
               <p className="mt-1 text-lg font-bold text-text">{suppliers.length}</p>
             </div>
             <div className="rounded-xl border border-border bg-surface-1 px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-faint">Selected</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-faint">Selected</p>
               <p className="mt-1 text-lg font-bold text-text">{selectedIds.size}</p>
             </div>
             <div className="rounded-xl border border-border bg-surface-1 px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-faint">Actions</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-faint">Actions</p>
               <p className="mt-1 text-lg font-bold text-text">{suppliers.filter((row) => row.verification_status === "pending").length}</p>
             </div>
           </div>

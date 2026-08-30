@@ -59,7 +59,7 @@ export default function AuditLogsPage() {
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("");
 
-  const bodyText = dc(density, "text-[10px]", "text-xs", "text-sm");
+  const bodyText = dc(density, "text-xs", "text-xs", "text-sm");
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -107,7 +107,7 @@ export default function AuditLogsPage() {
     { key: "username", label: "User", width: "140px", render: (e) => (
       <div>
         <span className={`${bodyText} font-medium text-text`}>{e.username || "—"}</span>
-        {e.user_id && <span className="ml-1 text-[10px] text-text-faint">#{e.user_id}</span>}
+        {e.user_id && <span className="ml-1 text-xs text-text-faint">#{e.user_id}</span>}
       </div>
     )},
     { key: "resource_type", label: "Resource", width: "120px", render: (e) => (
@@ -116,7 +116,7 @@ export default function AuditLogsPage() {
     { key: "status", label: "Status", width: "90px", render: (e) => {
       const s = e.status || "unknown";
       return (
-        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
           s === "success" ? "bg-success/10 text-success" : s === "failed" ? "bg-danger/10 text-danger" : "bg-warning/10 text-warning"
         }`}>
           {s}
@@ -179,7 +179,7 @@ export default function AuditLogsPage() {
                   ))}
                 </select>
               </div>
-              <span className="text-[10px] text-text-faint tabular-nums">
+              <span className="text-xs text-text-faint tabular-nums">
                 {data ? `${data.total} total` : ""}
               </span>
             </div>

@@ -163,7 +163,7 @@ export default function CountryStaffPage() {
     }
   };
 
-  const bodyText = dc(density, "text-[10px]", "text-xs", "text-sm");
+  const bodyText = dc(density, "text-xs", "text-xs", "text-sm");
 
   const columns = useMemo<Array<EnterpriseColumn<CountryStaff>>>(() => [
     {

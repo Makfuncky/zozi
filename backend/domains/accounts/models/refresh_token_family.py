@@ -10,6 +10,7 @@ import uuid
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.types import CHAR, TypeDecorator
+from infrastructure.database.types import GUID
 
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -23,7 +24,7 @@ class GUID(TypeDecorator):
 
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
-            return dialect.type_descriptor(PG_UUID(as_uuid=True))
+            return dialect.type_descriptor(PG_GUID())
         return dialect.type_descriptor(CHAR(32))
 
     def process_bind_param(self, value, dialect):

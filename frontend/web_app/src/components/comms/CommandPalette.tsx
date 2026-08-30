@@ -99,7 +99,7 @@ export default function CommandPalette() {
           <div className="w-full rounded-xl border border-border bg-surface-1 pl-9 pr-3 py-2 text-[11px] text-text-faint text-left transition-colors group-hover:border-primary/30">
             Search people, messages, files, rooms…
           </div>
-          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-text-faint bg-surface-2 rounded-md px-1.5 py-0.5 font-mono border border-border">
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-3xs text-text-faint bg-surface-2 rounded-md px-1.5 py-0.5 font-mono border border-border">
             ⌘K
           </kbd>
         </div>
@@ -161,7 +161,7 @@ export default function CommandPalette() {
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] font-medium truncate">{r.label}</div>
                         {r.description && (
-                          <div className="text-[10px] text-text-faint truncate">{r.description}</div>
+                          <div className="text-xs text-text-faint truncate">{r.description}</div>
                         )}
                       </div>
                       <ArrowRight className="w-3 h-3 text-text-faint opacity-0 group-hover:opacity-100" />
@@ -171,7 +171,7 @@ export default function CommandPalette() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center gap-3 px-4 py-2 border-t border-border text-[9px] text-text-faint">
+              <div className="flex items-center gap-3 px-4 py-2 border-t border-border text-3xs text-text-faint">
                 <span><kbd className="px-1 py-0.5 rounded bg-surface-2 font-mono">↑↓</kbd> Navigate</span>
                 <span><kbd className="px-1 py-0.5 rounded bg-surface-2 font-mono">↵</kbd> Open</span>
                 <span><kbd className="px-1 py-0.5 rounded bg-surface-2 font-mono">Esc</kbd> Close</span>

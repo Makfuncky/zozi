@@ -14,8 +14,9 @@ import secrets
 from decimal import Decimal
 from typing import Any, Callable
 
+from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker, Session
-from infrastructure.database.database import engine
+from infrastructure.database.database import engine, _IS_SQLITE
 
 from infrastructure.database.seed.models import get_model
 
@@ -61,12 +62,11 @@ def _ensure_demo_user(
     User = get_model("User")
     user = db.query(User).filter(User.email == email).first()
     if not user:
-        existing_username = db.query(User).filter(User.username == username).first()
+        existing_username = db.query(User).filter(User.email == email).first()
         if existing_username:
-            username = f"{username}_{role}"
+            email = f"{username}_{role}@example.com"
         user = User(
             email=email,
-            username=username,
             hashed_password=get_password_hash(password),
             role=role,
             country_code="AE",
@@ -138,13 +138,11 @@ def _ensure_demo_supplier_profile(
         supplier_profile = SupplierProfile(
             user_id=supplier_user.id,
             business_name="ZOZI Supplier Demo",
-            slug=DEMO_SUPPLIER_SLUG,
         )
         db.add(supplier_profile)
         logger.info("Seeded default supplier profile")
 
     supplier_profile.business_name = "ZOZI Supplier Demo"
-    supplier_profile.slug = getattr(supplier_profile, "slug", None) or DEMO_SUPPLIER_SLUG
     supplier_profile.business_type = "retailer"
     supplier_profile.country_code = "AE"
     supplier_profile.phone_business = "+971500000000"
@@ -388,7 +386,7 @@ def _ensure_demo_pickup_ready_shipment(
             order_number=f"DEMO-{DEMO_PICKUP_TRACKING_NUMBER}",
             customer_id=customer_user.id,
             user_id=customer_user.id,
-            status="processing",
+            status_code="processing",
             payment_status="pending",
             payment_method="cod",
             subtotal=subtotal_amount,
@@ -418,7 +416,7 @@ def _ensure_demo_pickup_ready_shipment(
     order.payment_method = "cod"
     order.payment_status = order.payment_status or "pending"
     order.currency = "AED"
-    order.status = "processing"
+    order.status_code = "processing"
     order.shipping_address = "Marina Walk, Dubai, United Arab Emirates"
     order.shipping_city = "Dubai"
     order.shipping_country = "AE"
@@ -675,7 +673,6 @@ def _seed_employee_data(db: Session) -> None:
         office = db.query(Office).filter(Office.country_code == country.code).first()
         user = User(
             email=f"employee{i}@zozi.com",
-            username=f"employee{i}",
             hashed_password=get_password_hash(_seed_password("SEED_EMPLOYEE_PASSWORD")),
             role="employee",
             full_name=f"Employee {i}",
@@ -741,7 +738,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             email="logistics@zozi.com",
             username="logistics",
             password=_seed_password("SEED_LOGISTICS_PASSWORD"),
-            role="logistics",
+            role="logistics_partner",
             log_label="logistics partner",
         )
 
@@ -768,6 +765,80 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             password=_seed_password("SEED_CUSTOMER_PASSWORD"),
             role="customer",
             log_label="test customer",
+        )
+
+        # Extended demo users from across GCC regions
+        _ensure_demo_user(
+            db,
+            email="fashion.supplier@zozi.com",
+            username="fashion_house",
+            password=_seed_password("SEED_SUPPLIER_PASSWORD"),
+            role="supplier",
+            log_label="fashion supplier",
+        )
+        _ensure_demo_user(
+            db,
+            email="home.supplier@zozi.com",
+            username="home_living",
+            password=_seed_password("SEED_SUPPLIER_PASSWORD"),
+            role="supplier",
+            log_label="home supplier",
+        )
+        _ensure_demo_user(
+            db,
+            email="beauty.supplier@zozi.com",
+            username="beauty_parlour",
+            password=_seed_password("SEED_SUPPLIER_PASSWORD"),
+            role="supplier",
+            log_label="beauty supplier",
+        )
+        _ensure_demo_user(
+            db,
+            email="sara@customer.com",
+            username="sara_omani",
+            password=_seed_password("SEED_CUSTOMER_PASSWORD"),
+            role="customer",
+            log_label="customer (Oman)",
+        )
+        _ensure_demo_user(
+            db,
+            email="mohammed@customer.com",
+            username="mohammed_ksa",
+            password=_seed_password("SEED_CUSTOMER_PASSWORD"),
+            role="customer",
+            log_label="customer (KSA)",
+        )
+        _ensure_demo_user(
+            db,
+            email="fatima@customer.com",
+            username="fatima_uae",
+            password=_seed_password("SEED_CUSTOMER_PASSWORD"),
+            role="customer",
+            log_label="customer (UAE)",
+        )
+        _ensure_demo_user(
+            db,
+            email="khalid@customer.com",
+            username="khalid_bahrain",
+            password=_seed_password("SEED_CUSTOMER_PASSWORD"),
+            role="customer",
+            log_label="customer (Bahrain)",
+        )
+        _ensure_demo_user(
+            db,
+            email="fast.delivery@zozi.com",
+            username="fast_delivery",
+            password=_seed_password("SEED_LOGISTICS_PASSWORD"),
+            role="logistics_partner",
+            log_label="logistics (KSA)",
+        )
+        _ensure_demo_user(
+            db,
+            email="gulf.shipping@zozi.com",
+            username="gulf_shipping",
+            password=_seed_password("SEED_LOGISTICS_PASSWORD"),
+            role="logistics_partner",
+            log_label="logistics (Oman)",
         )
 
         db.flush()
@@ -1000,6 +1071,13 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
         for template_data in email_templates:
             _upsert_email_template(db, template_data)
 
+        # ── Country-scoped seed data (AE & SA) ────────────────────────────────
+        _seed_country_scoped_data(db, admin_id=admin_id)
+
+        # Seed treasury system (chart of accounts + buckets)
+        from infrastructure.database.treasury_seeder import seed_treasury_system
+        seed_treasury_system(db)
+
         db.commit()
         logger.info("Sample data seeded successfully")
         _seed_employee_data(db)
@@ -1009,3 +1087,305 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
         raise
     finally:
         db.close()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Country-scoped seed data — AE & SA
+# ══════════════════════════════════════════════════════════════════════════
+
+def _seed_country_scoped_data(db: Session, admin_id: int) -> None:
+    """Seed country-specific actors, products, banners, and flash sales for AE and SA.
+
+    This data is used to verify:
+    1. Country isolation (RLS) — data scoped by country_code
+    2. Admin consolidated view — admin sees all countries
+    3. Per-country actors: employees, suppliers, customers, logistics
+    4. Per-country products, banners, flash sales, coupons
+    """
+    from datetime import timedelta
+    from infrastructure.database.rls_interceptor import set_rls_context
+    from infrastructure.utils.auth import get_password_hash
+
+    logger.info("Seeding country-scoped data for AE and SA...")
+
+    # Set RLS context to unrestricted for seeding
+    set_rls_context(None, is_restricted=False)
+
+    User = get_model("User")
+    Employee = get_model("Employee")
+    Office = get_model("Office")
+    SupplierProfile = get_model("SupplierProfile")
+    LogisticsPartner = get_model("LogisticsPartner")
+    Category = get_model("Category")
+    Product = get_model("Product")
+    Banner = get_model("Banner")
+    FlashSale = get_model("FlashSale")
+    FlashSaleItem = get_model("FlashSaleItem")
+    Coupon = get_model("Coupon")
+
+    now = _utcnow()
+
+    # ── Helper: get or create user ─────────────────────────────────────────
+    def _get_or_create_user(email: str, username: str, pwd: str, role: str, country: str, full_name: str) -> object:
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(
+                email=email,
+                hashed_password=get_password_hash(pwd),
+                role=role,
+                full_name=full_name,
+                country_code=country,
+            )
+            db.add(user)
+            db.flush()
+            logger.info(f"Created {role} user: {email} ({country})")
+        return user
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  UAE (AE) COUNTRY DATA
+    # ══════════════════════════════════════════════════════════════════════
+
+    # ── AE Employees ─────────────────────────────────────────────────────
+    ae_employees = [
+        ("ae.manager@zozi.com", "ae_manager", "Ahmed Al-Mansouri", "Operations", "Country Manager"),
+        ("ae.finance@zozi.com", "ae_finance", "Fatima Al-Rashid", "Finance", "Finance Lead"),
+        ("ae.support@zozi.com", "ae_support", "Khalid Hassan", "Customer Support", "Support Lead"),
+    ]
+    for email, uname, name, dept, pos in ae_employees:
+        u = _get_or_create_user(email, uname, "employee123", "employee", "AE", name)
+        if not db.query(Employee).filter(Employee.user_id == u.id).first():
+            office = db.query(Office).filter(Office.country_code == "AE").first()
+            db.add(Employee(
+                user_id=u.id, employee_code=f"AE-{uname[:3].upper()}-{u.id:04d}",
+                office_id=office.id if office else None,
+                department=dept, position=pos, employment_type="full_time",
+                employment_status="active", salary=Decimal("8000"), currency="AED",
+                country_code="AE", hire_date=now - timedelta(days=180),
+            ))
+
+    # ── AE Suppliers ─────────────────────────────────────────────────────
+    ae_suppliers = [
+        ("dubai.fashion@supplier.ae", "dubai_fashion", "Dubai Fashion House", "Premium Fashion"),
+        ("abudhabi.tech@supplier.ae", "abudhabi_tech", "Abu Dhabi Tech Store", "Electronics"),
+    ]
+    for email, uname, name, biz in ae_suppliers:
+        u = _get_or_create_user(email, uname, "supplier123", "supplier", "AE", name)
+        if not db.query(SupplierProfile).filter(SupplierProfile.user_id == u.id).first():
+            db.add(SupplierProfile(
+                user_id=u.id, business_name=biz, business_type="retailer",
+                country_code="AE", website="https://supplier-ae.zozi.local",
+                address=json.dumps({"city": "Dubai", "country": "UAE", "country_code": "AE"}),
+                verification_status="approved",
+            ))
+
+    # ── AE Customers ─────────────────────────────────────────────────────
+    ae_customers = [
+        ("sara@customer.ae", "sara_uae", "Sara Al-Maktoum"),
+        ("omar@customer.ae", "omar_uae", "Omar Al-Rashid"),
+        ("nora@customer.ae", "nora_uae", "Nora Al-Hassan"),
+    ]
+    for email, uname, name in ae_customers:
+        _get_or_create_user(email, uname, "customer123", "customer", "AE", name)
+
+    # ── AE Logistics ─────────────────────────────────────────────────────
+    ae_logistics = [
+        ("emirates.express@zozi.ae", "emirates_express", "Emirates Express Delivery"),
+        ("desert.shipping@zozi.ae", "desert_shipping", "Desert Shipping Co."),
+    ]
+    for email, uname, name in ae_logistics:
+        u = _get_or_create_user(email, uname, "logistics123", "logistics_partner", "AE", name)
+        if not db.query(LogisticsPartner).filter(LogisticsPartner.user_id == u.id).first():
+            db.add(LogisticsPartner(
+                name=name, code=f"AE-LOG-{u.id:04d}", user_id=u.id,
+                contact_name=f"{name} Team", contact_email=email,
+                contact_phone="+971500002000",
+                coverage_regions=json.dumps(["Dubai", "Abu Dhabi", "Sharjah"]),
+                service_types=json.dumps(["ground", "same_day", "express"]),
+                status_code="active", verification_status="approved",
+                verified_by=admin_id, verified_at=now, country_code="AE",
+            ))
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  SAUDI ARABIA (SA) COUNTRY DATA
+    # ══════════════════════════════════════════════════════════════════════
+
+    # ── SA Employees ─────────────────────────────────────────────────────
+    sa_employees = [
+        ("sa.manager@zozi.com", "sa_manager", "Mohammed Al-Saud", "Operations", "Country Manager"),
+        ("sa.finance@zozi.com", "sa_finance", "Layla Al-Zahrani", "Finance", "Finance Lead"),
+        ("sa.support@zozi.com", "sa_support", "Abdullah Al-Qahtani", "Customer Support", "Support Lead"),
+    ]
+    for email, uname, name, dept, pos in sa_employees:
+        u = _get_or_create_user(email, uname, "employee123", "employee", "SA", name)
+        if not db.query(Employee).filter(Employee.user_id == u.id).first():
+            office = db.query(Office).filter(Office.country_code == "SA").first()
+            db.add(Employee(
+                user_id=u.id, employee_code=f"SA-{uname[:3].upper()}-{u.id:04d}",
+                office_id=office.id if office else None,
+                department=dept, position=pos, employment_type="full_time",
+                employment_status="active", salary=Decimal("9000"), currency="SAR",
+                country_code="SA", hire_date=now - timedelta(days=150),
+            ))
+
+    # ── SA Suppliers ─────────────────────────────────────────────────────
+    sa_suppliers = [
+        ("riyadh.fashion@supplier.sa", "riyadh_fashion", "Riyadh Fashion Boutique", "Luxury Fashion"),
+        ("jeddah.tech@supplier.sa", "jeddah_tech", "Jeddah Tech World", "Electronics"),
+    ]
+    for email, uname, name, biz in sa_suppliers:
+        u = _get_or_create_user(email, uname, "supplier123", "supplier", "SA", name)
+        if not db.query(SupplierProfile).filter(SupplierProfile.user_id == u.id).first():
+            db.add(SupplierProfile(
+                user_id=u.id, business_name=biz, business_type="retailer",
+                country_code="SA", website="https://supplier-sa.zozi.local",
+                address=json.dumps({"city": "Riyadh", "country": "Saudi Arabia", "country_code": "SA"}),
+                verification_status="approved",
+            ))
+
+    # ── SA Customers ─────────────────────────────────────────────────────
+    sa_customers = [
+        ("fahd@customer.sa", "fahd_sa", "Fahd Al-Otaibi"),
+        ("reem@customer.sa", "reem_sa", "Reem Al-Dosari"),
+        ("nasser@customer.sa", "nasser_sa", "Nasser Al-Shehri"),
+    ]
+    for email, uname, name in sa_customers:
+        _get_or_create_user(email, uname, "customer123", "customer", "SA", name)
+
+    # ── SA Logistics ─────────────────────────────────────────────────────
+    sa_logistics = [
+        ("saudi.post.express@zozi.sa", "saudi_post", "Saudi Post Express"),
+        ("red.sea@zozi.sa", "red_sea", "Red Sea Logistics"),
+    ]
+    for email, uname, name in sa_logistics:
+        u = _get_or_create_user(email, uname, "logistics123", "logistics_partner", "SA", name)
+        if not db.query(LogisticsPartner).filter(LogisticsPartner.user_id == u.id).first():
+            db.add(LogisticsPartner(
+                name=name, code=f"SA-LOG-{u.id:04d}", user_id=u.id,
+                contact_name=f"{name} Team", contact_email=email,
+                contact_phone="+966500002000",
+                coverage_regions=json.dumps(["Riyadh", "Jeddah", "Dammam"]),
+                service_types=json.dumps(["ground", "express", "cold_chain"]),
+                status_code="active", verification_status="approved",
+                verified_by=admin_id, verified_at=now, country_code="SA",
+            ))
+
+    db.flush()
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  COUNTRY-SPECIFIC PRODUCTS
+    # ══════════════════════════════════════════════════════════════════════
+
+    categories = db.query(Category).limit(10).all()
+    ae_supplier_ids = [u.id for u in db.query(User).filter(User.role == "supplier", User.country_code == "AE").all()]
+    sa_supplier_ids = [u.id for u in db.query(User).filter(User.role == "supplier", User.country_code == "SA").all()]
+
+    ae_products = [
+        ("Luxury Date Box (AE)", "Premium Ajwa dates in luxury packaging", Decimal("199.99"), "General", 0, "https://picsum.photos/seed/ae_dates/600/600"),
+        ("Arabic Coffee Set (AE)", "Traditional Arabic coffee pot and cups", Decimal("149.99"), "Home & Living", 0, "https://picsum.photos/seed/ae_coffee/600/600"),
+        ("Perfume Oud Collection (AE)", "Premium Oud perfume - 100ml", Decimal("399.99"), "Beauty", 1, "https://picsum.photos/seed/ae_oud/600/600"),
+        ("Gold Plated Watch (AE)", "Luxury gold-plated wristwatch", Decimal("599.99"), "Watches", 1, "https://picsum.photos/seed/ae_watch/600/600"),
+    ]
+    sa_products = [
+        ("Saudi Rose Water (SA)", "Pure Taif rose water - 250ml", Decimal("89.99"), "Beauty", 0, "https://picsum.photos/seed/sa_rose/600/600"),
+        ("Majlis Cushion Set (SA)", "Traditional Saudi majlis cushion set", Decimal("249.99"), "Home & Living", 0, "https://picsum.photos/seed/sa_majlis/600/600"),
+        ("Smart Prayer Mat (SA)", "Tech-enabled prayer mat with Qibla finder", Decimal("179.99"), "Electronics", 1, "https://picsum.photos/seed/sa_mat/600/600"),
+        ("Saudi Date Chocolate (SA)", "Premium chocolate-covered dates", Decimal("129.99"), "General", 1, "https://picsum.photos/seed/sa_dates/600/600"),
+    ]
+
+    for name, desc, price, cat_name, sup_idx, img in ae_products:
+        if not db.query(Product).filter(Product.name == name).first():
+            cat = next((c for c in categories if c.name == cat_name), categories[0] if categories else None)
+            if cat:
+                sid = ae_supplier_ids[sup_idx] if sup_idx < len(ae_supplier_ids) else None
+                db.add(Product(name=name, description=desc, price=price, category_id=cat.id,
+                                 supplier_id=sid, image_url=img, country_code="AE",
+                                 is_approved=True, is_active=True, is_featured=True))
+
+    for name, desc, price, cat_name, sup_idx, img in sa_products:
+        if not db.query(Product).filter(Product.name == name).first():
+            cat = next((c for c in categories if c.name == cat_name), categories[0] if categories else None)
+            if cat:
+                sid = sa_supplier_ids[sup_idx] if sup_idx < len(sa_supplier_ids) else None
+                db.add(Product(name=name, description=desc, price=price, category_id=cat.id,
+                                 supplier_id=sid, image_url=img, country_code="SA",
+                                 is_approved=True, is_active=True, is_featured=True))
+
+    db.flush()
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  COUNTRY-SPECIFIC BANNERS
+    # ══════════════════════════════════════════════════════════════════════
+
+    banners = [
+        ("Ramadan Special Offers (AE)", "Up to 50% off on premium products", "AE", "hero",
+         "https://picsum.photos/seed/ae_ramadan/1200/400", "/promotions/ramadan"),
+        ("Free Delivery Dubai (AE)", "Same-day delivery on orders over AED 200", "AE", "promotional",
+         "https://picsum.photos/seed/ae_delivery/1200/400", "/delivery"),
+        ("Saudi National Day Sale (SA)", "Celebrate with up to 60% off", "SA", "hero",
+         "https://picsum.photos/seed/sa_national/1200/400", "/promotions/national-day"),
+        ("Riyadh Express Delivery (SA)", "Get your order in 2 hours", "SA", "promotional",
+         "https://picsum.photos/seed/sa_express/1200/400", "/delivery"),
+    ]
+    for title, subtitle, country, btype, img, link in banners:
+        if not db.query(Banner).filter(Banner.title == title).first():
+            db.add(Banner(title=title, subtitle=subtitle, image_url=img, link=link,
+                           banner_type=btype, country_code=country, is_active=True,
+                           sort_order=10, created_by_id=admin_id,
+                           starts_at=now - timedelta(days=1), ends_at=now + timedelta(days=30)))
+
+    db.flush()
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  COUNTRY-SPECIFIC FLASH SALES
+    # ══════════════════════════════════════════════════════════════════════
+
+    ae_flash_prods = db.query(Product).filter(Product.country_code == "AE").limit(3).all()
+    sa_flash_prods = db.query(Product).filter(Product.country_code == "SA").limit(3).all()
+
+    # AE Flash Sale
+    if not db.query(FlashSale).filter(FlashSale.title == "AE Flash Weekend").first():
+        ae_fs = FlashSale(title="AE Flash Weekend", description="Weekend flash sale - up to 40% off",
+                          starts_at=now - timedelta(hours=1), ends_at=now + timedelta(days=3),
+                          discount_pct=Decimal("40"), is_active=True, country_code="AE")
+        db.add(ae_fs)
+        db.flush()
+        for p in ae_flash_prods:
+            if p.price:
+                disc = (Decimal(str(p.price)) * Decimal("0.60")).quantize(Decimal("0.01"))
+                db.add(FlashSaleItem(flash_sale_id=ae_fs.id, product_id=p.id,
+                                     original_price=Decimal(str(p.price)), discounted_price=disc, country_code="AE"))
+
+    # SA Flash Sale
+    if not db.query(FlashSale).filter(FlashSale.title == "SA Mega Sale").first():
+        sa_fs = FlashSale(title="SA Mega Sale", description="Mega sale event - up to 50% off",
+                          starts_at=now - timedelta(hours=1), ends_at=now + timedelta(days=5),
+                          discount_pct=Decimal("50"), is_active=True, country_code="SA")
+        db.add(sa_fs)
+        db.flush()
+        for p in sa_flash_prods:
+            if p.price:
+                disc = (Decimal(str(p.price)) * Decimal("0.50")).quantize(Decimal("0.01"))
+                db.add(FlashSaleItem(flash_sale_id=sa_fs.id, product_id=p.id,
+                                     original_price=Decimal(str(p.price)), discounted_price=disc, country_code="SA"))
+
+    db.flush()
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  COUNTRY-SPECIFIC COUPONS
+    # ══════════════════════════════════════════════════════════════════════
+
+    coupons = [
+        ("WELCOME_AE", "percentage", Decimal("15"), Decimal("100"), "AE", 100),
+        ("FREESHIP_AE", "fixed", Decimal("25"), Decimal("200"), "AE", 50),
+        ("WELCOME_SA", "percentage", Decimal("20"), Decimal("150"), "SA", 100),
+        ("FREESHIP_SA", "fixed", Decimal("30"), Decimal("250"), "SA", 50),
+    ]
+    for code, dtype, dval, min_ord, country, usage in coupons:
+        if not db.query(Coupon).filter(Coupon.code == code).first():
+            db.add(Coupon(code=code, discount_type=dtype, discount_value=dval,
+                           minimum_order=min_ord, usage_limit=usage,
+                           starts_at=now - timedelta(days=1), expires_at=now + timedelta(days=60),
+                           is_active=True, country_code=country))
+
+    db.commit()
+    logger.info("Country-scoped data seeded successfully")

@@ -25,7 +25,7 @@ export default function CategorySidebar() {
     <div className="hidden lg:block w-56 rounded-2xl overflow-hidden shadow-card shrink-0 bg-slate-800 border border-slate-700">
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-700">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Marketplace</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Marketplace</span>
         <h3 className="text-sm font-semibold text-white mt-0.5">Categories</h3>
       </div>
 

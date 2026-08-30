@@ -5,7 +5,7 @@ auth context (optional) + require_feature(...) + one service call.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from domains.catalog.services.categories.category_service import list_categories
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/v1/customer/catalog", tags=["customer", "catalog
 
 @router.get("/products", status_code=200)
 def list_products(
-    request: Request,
+    response: Response,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     category: str | None = Query(None, description="Category slug or name"),
@@ -45,7 +45,7 @@ def list_products(
     offset = (page - 1) * page_size
     products, total = get_products(
         db,
-        request,
+        response,
         category=category,
         subcategory=subcategory,
         brand=brand,
@@ -165,3 +165,15 @@ def recommended(
 ):
     products = get_recommended_products(current_user, limit, db)
     return {"items": products, "total": len(products)}
+
+
+@router.get("/banners", status_code=200)
+def list_banners(
+    position: str | None = Query(None, description="Banner position: hero, promotional, etc."),
+    country_code: str | None = Query(None, description="ISO country code"),
+    _: None = Depends(require_feature("catalog.list")),
+    db: Session = Depends(get_db),
+):
+    from domains.promotions.services.banners.banner_service import get_banners
+    banners = get_banners(db, banner_type=position, active_only=True, country_code=country_code)
+    return {"items": banners, "total": len(banners)}

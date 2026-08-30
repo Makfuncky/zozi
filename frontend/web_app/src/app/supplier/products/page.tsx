@@ -56,7 +56,7 @@ export default function SupplierProductsPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const bodyText = dc(density, "text-[10px]", "text-xs", "text-sm");
+  const bodyText = dc(density, "text-xs", "text-xs", "text-sm");
 
   const columns: EnterpriseColumn<SupplierProduct>[] = [
     { key: "id", label: "#", width: "64px", sortable: true, render: (p) => <span className={`${bodyText} font-mono tabular-nums text-text-faint`}>#{p.id}</span> },
@@ -69,7 +69,7 @@ export default function SupplierProductsPage() {
     { key: "price", label: "Price", width: "120px", align: "right", sortable: true, render: (p) => <span className={`${bodyText} font-semibold tabular-nums text-text`}>{formatMoney(p.price)}</span> },
     { key: "stock", label: "Stock", width: "80px", align: "right", sortable: true, render: (p) => <span className={`${bodyText} tabular-nums ${p.stock <= 5 ? "text-danger font-semibold" : "text-text"}`}>{p.stock}</span> },
     { key: "status", label: "Status", width: "100px", render: (p) => (
-      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
         p.status === "active" ? "bg-success/10 text-success" : p.status === "pending" ? "bg-warning/10 text-warning" : "bg-surface-2 text-text-muted"
       }`}>{p.status}</span>
     )},
@@ -126,7 +126,7 @@ export default function SupplierProductsPage() {
                 className="flex h-9 items-center justify-center rounded-xl border border-border bg-surface-1 px-3 text-xs text-text-muted hover:bg-surface-2 disabled:opacity-50">
                 <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
               </button>
-              <span className="text-[10px] text-text-faint tabular-nums">{total} total</span>
+              <span className="text-xs text-text-faint tabular-nums">{total} total</span>
             </div>
           }
         />

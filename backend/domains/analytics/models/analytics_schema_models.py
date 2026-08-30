@@ -38,7 +38,6 @@ class ExecutiveNews(Base):
     url = Column(String(500), nullable=True)
     category = Column(String(50), default="general")
     priority = Column(String(20), default="normal")
-    country_code = Column(String(2), nullable=True)
     is_published = Column(Boolean, default=False)
     ai_sentiment = Column(String(20), default="neutral")
     published_at = Column(DateTime, nullable=True)

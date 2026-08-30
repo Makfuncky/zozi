@@ -261,7 +261,7 @@ export default function LogisticsPartnerPayoutsPage() {
                             <td className="px-3 py-3 text-text">
                               <button type="button" onClick={() => setExpandedPayoutId(expanded ? null : payout.id)} className="text-left">
                                 <div className="font-semibold">#{payout.id}</div>
-                                <div className="mt-1 text-[10px] text-primary">{expanded ? "Hide detail" : "Show detail"}</div>
+                                <div className="mt-1 text-xs text-primary">{expanded ? "Hide detail" : "Show detail"}</div>
                               </button>
                             </td>
                             <td className="px-3 py-3 text-text-muted">{payout.created_at ? new Date(payout.created_at).toLocaleDateString() : "Pending"}</td>
@@ -280,16 +280,16 @@ export default function LogisticsPartnerPayoutsPage() {
                               <td colSpan={6} className="px-4 py-3">
                                 <div className="grid gap-3 md:grid-cols-3">
                                   <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">Transfer method</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-faint">Transfer method</p>
                                     <p className="mt-2 text-xs font-semibold text-text">Bank transfer</p>
                                   </div>
                                   <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">Timeline</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-faint">Timeline</p>
                                     <p className="mt-2 text-xs text-text-muted">Requested {payout.created_at ? new Date(payout.created_at).toLocaleString() : "recently"}</p>
                                     <p className="mt-1 text-xs text-text-muted">Processed {payout.processed_at ? new Date(payout.processed_at).toLocaleString() : "not yet"}</p>
                                   </div>
                                   <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">Notes</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-faint">Notes</p>
                                     <p className="mt-2 text-xs text-text-muted">{payout.notes || "No extra notes attached to this request."}</p>
                                   </div>
                                 </div>

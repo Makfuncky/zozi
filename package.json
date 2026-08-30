@@ -18,7 +18,7 @@
     "lint": "cd frontend/web_app && npm run lint",
     "db:migrate": "cd backend && alembic upgrade head",
     "db:reset": "cd backend && python -c \"from db.database import reset_tables; reset_tables()\"",
-    "seed": "cd backend && python -m seed_all"
+    "seed": "cd backend && python -m infrastructure.database.init_db --seed"
   },
   "main": "index.js",
   "directories": {

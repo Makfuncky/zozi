@@ -10,7 +10,7 @@
  *     the frontend whether to attempt a silent refresh on page load.
  */
 
-import { responseCache, apiFetch } from "./client";
+import { responseCache, apiFetch, _rlsGuard } from "./client";
 
 // ── Token store ──────────────────────────────────────────────────────────
 
@@ -61,10 +61,12 @@ export async function silentlyRefreshAccessToken(): Promise<RefreshResult> {
     return _store.refreshPromise;
   }
 
+  // Set refreshing flag to prevent infinite recursion in apiFetch
+  _rlsGuard.isRefreshing = true;
 
   const attempt = async (triesLeft: number): Promise<RefreshResult> => {
     try {
-      const res = await apiFetch("/auth/refresh", {
+      const res = await apiFetch("/api/v1/auth/refresh", {
         method: "POST",
       });
       if (!res.ok) {
@@ -93,6 +95,7 @@ export async function silentlyRefreshAccessToken(): Promise<RefreshResult> {
     return await _store.refreshPromise;
   } finally {
     _store.refreshPromise = null;
+    _rlsGuard.isRefreshing = false;
   }
 }
 

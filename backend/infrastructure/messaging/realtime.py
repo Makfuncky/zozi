@@ -492,12 +492,10 @@ def _staff_user_ids_for_permission(session: OrmSession, permission: str) -> list
         return []
 
     from sqlalchemy import text
+    from domains.accounts.models.user import User
 
-    rows = session.execute(
-        text(_STAFF_LOOKUP_SQL).bindparams(
-            roles=tuple(roles),
-        )
-    ).all()
+    # Use ORM query for SQLite compatibility (raw SQL IN :roles is PostgreSQL-specific)
+    rows = session.query(User.id).filter(User.role.in_(roles), User.is_active == True).all()
     user_ids = [user_id for (user_id,) in rows if _user_connection_key(user_id) is not None]
     cache[permission] = user_ids
     return user_ids

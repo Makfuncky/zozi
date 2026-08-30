@@ -3,13 +3,14 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from . import Base
 __all__ = ['CountryBasics']
 
 class CountryBasics(Base):
     __tablename__ = 'country_basics'
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)

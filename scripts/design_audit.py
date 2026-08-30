@@ -79,6 +79,10 @@ IGNORE_DIRS = {
     "playwright-report", "static-tmp", ".web-build-test", "artifacts",
     "uploads", ".turbo", "dist", "build", "coverage", "test-output", "tmp",
     "e2e", "__tests__", ".web", "web-dist",
+    # Mobile app uses React Native inline styles natively (not Tailwind
+    # theme drift); the prototype CSS under _extra_files is throwaway.
+    # Both are excluded so the score reflects true WEB theme drift only.
+    "mobile_app", "_extra_files",
 }
 
 SOURCE_EXT = {".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"}

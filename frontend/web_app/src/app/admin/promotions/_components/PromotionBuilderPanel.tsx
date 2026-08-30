@@ -305,22 +305,22 @@ export default function PromotionBuilderPanel() {
 
       <div className="grid gap-3 md:grid-cols-4">
         <div className="rounded-xl border border-border bg-surface-1 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Engine</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Engine</p>
           <p className="mt-1 text-lg font-bold text-text">{boolLabel(draft.engine_enabled)}</p>
           <p className="text-[11px] text-text-muted">Master switch</p>
         </div>
         <div className="rounded-xl border border-border bg-surface-1 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Tiers</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Tiers</p>
           <p className="mt-1 text-lg font-bold text-text">{activeTierCount}</p>
           <p className="text-[11px] text-text-muted">Active order bands</p>
         </div>
         <div className="rounded-xl border border-border bg-surface-1 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Referral Points</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Referral Points</p>
           <p className="mt-1 text-lg font-bold text-text">{draft.referral_referrer_points} / {draft.referral_referee_points}</p>
           <p className="text-[11px] text-text-muted">Referrer / Referee</p>
         </div>
         <div className="rounded-xl border border-border bg-surface-1 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Redemption</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Redemption</p>
           <p className="mt-1 text-lg font-bold text-text">{draft.points_per_omr}:1 OMR</p>
           <p className="text-[11px] text-text-muted">Points conversion</p>
         </div>
@@ -532,7 +532,7 @@ export default function PromotionBuilderPanel() {
                     <button
                       type="button"
                       onClick={() => void toggleTierActive(tier)}
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                         tier.is_active
                           ? "bg-success/10 text-success"
                           : "bg-surface-3 text-text-muted"
@@ -610,19 +610,19 @@ export default function PromotionBuilderPanel() {
         {previewResult ? (
           <div className="mt-3 grid gap-3 md:grid-cols-4">
             <div className="rounded-lg border border-border bg-surface-2 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-text-faint">After Coupon</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-text-faint">After Coupon</p>
               <p className="mt-1 text-sm font-semibold text-text">{formatMoney(previewResult.after_coupon)}</p>
             </div>
             <div className="rounded-lg border border-border bg-surface-2 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-text-faint">Tier Discount</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-text-faint">Tier Discount</p>
               <p className="mt-1 text-sm font-semibold text-text">{formatMoney(previewResult.tier_discount)}</p>
             </div>
             <div className="rounded-lg border border-border bg-surface-2 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-text-faint">Final Discount</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-text-faint">Final Discount</p>
               <p className="mt-1 text-sm font-semibold text-text">{formatMoney(previewResult.final_discount)}</p>
             </div>
             <div className="rounded-lg border border-border bg-surface-2 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-text-faint">Matched Tier</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-text-faint">Matched Tier</p>
               <p className="mt-1 text-sm font-semibold text-text">{previewResult?.matched_tier?.tier_name || "None"}</p>
             </div>
           </div>

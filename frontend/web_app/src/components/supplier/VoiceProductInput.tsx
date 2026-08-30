@@ -244,7 +244,7 @@ export default function VoiceProductInput({ onDataExtracted, onClose }: VoicePro
               <span className={`px-2 py-0.5 rounded-full ${step === 'record' ? 'bg-primary text-white' : step === 'processing' ? 'bg-amber/10 text-amber' : 'bg-success/10 text-success'}`}>
                 {step === 'record' ? '1 Record' : step === 'processing' ? '2 Analyze' : '3 Done'}
               </span>
-              {gapProgress && <span className="text-text-faint text-[10px]">Gaps {gapProgress}</span>}
+              {gapProgress && <span className="text-text-faint text-xs">Gaps {gapProgress}</span>}
             </div>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text transition-colors">
               <X className="w-5 h-5" />

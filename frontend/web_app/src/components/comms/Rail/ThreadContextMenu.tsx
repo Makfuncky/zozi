@@ -154,7 +154,7 @@ export default function ThreadContextMenu({
         <p className="text-[11px] font-semibold text-text truncate">
           {thread.title}
         </p>
-        <p className="text-[9px] text-text-faint">Move to folder</p>
+        <p className="text-3xs text-text-faint">Move to folder</p>
       </div>
 
       {/* Folder list */}
@@ -167,10 +167,10 @@ export default function ThreadContextMenu({
 
         {error && (
           <div className="px-2 py-3 text-center">
-            <p className="text-[10px] text-danger">{error}</p>
+            <p className="text-xs text-danger">{error}</p>
             <button
               onClick={() => setError(null)}
-              className="mt-1 text-[9px] text-text-muted hover:text-text underline"
+              className="mt-1 text-3xs text-text-muted hover:text-text underline"
             >
               Dismiss
             </button>
@@ -179,7 +179,7 @@ export default function ThreadContextMenu({
 
         {!loading && !error && folders.length === 0 && (
           <div className="px-2 py-3 text-center">
-            <p className="text-[10px] text-text-faint">No folders found</p>
+            <p className="text-xs text-text-faint">No folders found</p>
           </div>
         )}
 
@@ -210,7 +210,7 @@ export default function ThreadContextMenu({
                 <span className="truncate flex-1 text-left capitalize">
                   {f.name}
                 </span>
-                <span className="text-[9px] text-text-faint tabular-nums">
+                <span className="text-3xs text-text-faint tabular-nums">
                   {f.count || ""}
                 </span>
                 {!isMoving && !isDone && (

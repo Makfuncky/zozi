@@ -196,22 +196,22 @@ export default function SupplierOrdersList({
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-base font-bold text-text">Order #{order.id}</p>
                       <span
-                        className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badgeClass(currentOrderStatus)}`}
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${badgeClass(currentOrderStatus)}`}
                       >
                         {titleStatus(currentOrderStatus)}
                       </span>
                       {order.payment_status === "paid" ? (
-                        <span className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-success/40 bg-success/10 text-success">
+                        <span className="inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide border-success/40 bg-success/10 text-success">
                           paid
                         </span>
                       ) : (
-                        <span className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-warning/40 bg-warning/10 text-warning">
+                        <span className="inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide border-warning/40 bg-warning/10 text-warning">
                           unpaid
                         </span>
                       )}
                       {order.settlement_status ? (
                         <span
-                          className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                          className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
                             order.settlement_status === "settled"
                               ? "border-success/40 bg-success/10 text-success"
                               : order.settlement_status === "eligible" ||
@@ -529,7 +529,7 @@ export default function SupplierOrdersList({
                                             Shipment #{shipment.id}
                                           </p>
                                           <span
-                                            className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badgeClass(shipment.status)}`}
+                                            className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${badgeClass(shipment.status)}`}
                                           >
                                             {shipment.status_label || titleStatus(shipment.status)}
                                           </span>
@@ -809,7 +809,7 @@ export default function SupplierOrdersList({
                                       Recent Parcel Proof
                                     </p>
                                     <span
-                                      className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badgeClass(proof.result || "processing")}`}
+                                      className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${badgeClass(proof.result || "processing")}`}
                                     >
                                       {titleStatus(proof.result || "passed")}
                                     </span>

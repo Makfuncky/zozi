@@ -48,7 +48,7 @@ function DateSeparator({ date }: { date: string }) {
   return (
     <div className="relative flex items-center gap-3 py-2" role="separator" aria-label={label}>
       <div className="flex-1 h-px bg-border/60" />
-      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider shrink-0 select-none">
+      <span className="text-xs font-semibold text-text-muted uppercase tracking-wider shrink-0 select-none">
         {label}
       </span>
       <div className="flex-1 h-px bg-border/60" />
@@ -96,14 +96,14 @@ function MessageBubble({
       data-msg-id={message.id}
     >
       <div className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center shrink-0 mt-0.5">
-        <span className="text-[9px] font-bold text-text-muted">
+        <span className="text-3xs font-bold text-text-muted">
           {message.senderName.charAt(0).toUpperCase()}
         </span>
       </div>
 
       <div className={`max-w-[75%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}>
         {!isOwn && (
-          <span className="text-[10px] font-medium text-text-muted mb-0.5 px-1">
+          <span className="text-xs font-medium text-text-muted mb-0.5 px-1">
             {message.senderName}
           </span>
         )}
@@ -131,7 +131,7 @@ function MessageBubble({
         {message.attachments && message.attachments.length > 0 && (
           <div className="flex gap-1.5 mt-1">
             {message.attachments.map((att, i) => (
-              <div key={i} className="flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-[10px] text-text-muted">
+              <div key={i} className="flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-text-muted">
                 <FileText className="w-3 h-3" />
                 <span className="truncate max-w-[100px]">{att.name}</span>
               </div>
@@ -140,7 +140,7 @@ function MessageBubble({
         )}
 
         <div className={`flex items-center gap-1.5 mt-0.5 px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
-          <span className="text-[9px] text-text-faint">{formatTime(message.createdAt)}</span>
+          <span className="text-3xs text-text-faint">{formatTime(message.createdAt)}</span>
           {isOwn && (
             <CheckCheck className={`w-3 h-3 ${message.readBy && message.readBy.length > 0 ? "text-primary tick-read" : "text-text-faint tick-sent"}`} />
           )}
@@ -246,12 +246,12 @@ function MessageSearchBar({
         className="flex-1 bg-transparent border-0 outline-none text-[12px] text-text placeholder:text-text-faint"
       />
       {totalMatches > 0 && (
-        <span className="text-[10px] text-text-muted tabular-nums shrink-0 min-w-[4ch] text-right">
+        <span className="text-xs text-text-muted tabular-nums shrink-0 min-w-[4ch] text-right">
           {matchIndex + 1}/{totalMatches}
         </span>
       )}
       {totalMatches === 0 && query.trim().length > 0 && (
-        <span className="text-[10px] text-text-faint shrink-0">No results</span>
+        <span className="text-xs text-text-faint shrink-0">No results</span>
       )}
       <div className="flex items-center gap-0.5">
         <button
@@ -505,7 +505,7 @@ export default function ChatStream({ messages, threadId, typingUserNames = [] }:
           <div className="flex justify-center pb-1">
             <button
               onClick={loadMore}
-              className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[10px] font-semibold
+              className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold
                          bg-surface-2/60 hover:bg-surface-2 text-text-muted hover:text-text
                          border border-border/40 transition-colors"
             >
@@ -518,7 +518,7 @@ export default function ChatStream({ messages, threadId, typingUserNames = [] }:
         {/* Loading indicator */}
         {loadingOlder && (
           <div className="flex justify-center py-2">
-            <div className="flex items-center gap-2 text-[10px] text-text-muted">
+            <div className="flex items-center gap-2 text-xs text-text-muted">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               Loading earlier messages…
             </div>
@@ -530,7 +530,7 @@ export default function ChatStream({ messages, threadId, typingUserNames = [] }:
           <div className="flex flex-col items-center justify-center h-full text-center">
             <MessageCircle className="w-10 h-10 text-text-faint/30 mb-2" />
             <p className="text-xs text-text-muted">No messages yet</p>
-            <p className="text-[10px] text-text-faint mt-0.5">Start the conversation below</p>
+            <p className="text-xs text-text-faint mt-0.5">Start the conversation below</p>
           </div>
         )}
 

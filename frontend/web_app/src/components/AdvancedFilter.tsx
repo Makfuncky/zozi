@@ -191,7 +191,7 @@ export default function AdvancedFilter() {
         <Zap className="h-3.5 w-3.5" />
         Advanced filters
         {activeCount > 0 && (
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-on-brand">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-3xs font-bold text-on-brand">
             {activeCount > 9 ? "9+" : activeCount}
           </span>
         )}
@@ -205,13 +205,13 @@ export default function AdvancedFilter() {
           initial={{ opacity: 0, y: 8, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.98 }}
-          className="glass-dropdown absolute top-full z-[999] mt-2 w-[340px] rounded-2xl p-4"
+          className="glass-dropdown absolute top-full z-modal mt-2 w-[340px] rounded-2xl p-4"
         >
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-faint">
               Filters
               {activeCount > 0 && (
-                <span className="ml-2 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                <span className="ml-2 rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-bold text-primary">
                   {activeCount} active
                 </span>
               )}
@@ -407,7 +407,7 @@ function BrandFilter({ brands, selected, onToggle }: BrandFilterProps) {
                 onChange={() => onToggle(item.brand)}
               />
               <span className="flex-1 truncate text-xs text-text">{item.brand}</span>
-              <span className="text-[10px] text-text-faint">{item.count}</span>
+              <span className="text-xs text-text-faint">{item.count}</span>
             </label>
           );
         })}
@@ -442,7 +442,7 @@ function RatingFilter({ ratings, selected, onSelect }: RatingFilterProps) {
               <Star className="h-3 w-3" />
               {item.label}
             </span>
-            <span className="text-[10px] text-text-faint">{item.count}</span>
+            <span className="text-xs text-text-faint">{item.count}</span>
           </button>
         ))}
       </div>
@@ -481,7 +481,7 @@ function AttributeFilter({ attr, selected, onToggle }: AttributeFilterProps) {
               }`}
             >
               {opt.display}
-              <span className="ml-1 text-[10px] text-text-faint">({opt.count})</span>
+              <span className="ml-1 text-xs text-text-faint">({opt.count})</span>
             </button>
           );
         })}

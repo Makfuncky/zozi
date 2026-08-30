@@ -161,7 +161,7 @@ export default function UploadProgressDashboard({
             {compact ? "Upload Activity" : "Real-Time Upload Dashboard"}
           </h2>
           {activeUploads.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 text-[10px] font-semibold text-info">
+            <span className="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 text-xs font-semibold text-info">
               <Loader2 className="h-3 w-3 animate-spin" />
               {activeUploads.length} active
             </span>
@@ -171,7 +171,7 @@ export default function UploadProgressDashboard({
           <button
             onClick={fetchHistory}
             disabled={loading}
-            className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-[10px] font-semibold text-text-muted hover:text-text disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs font-semibold text-text-muted hover:text-text disabled:opacity-50 transition-colors"
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -179,7 +179,7 @@ export default function UploadProgressDashboard({
           {onNewUpload && (
             <button
               onClick={onNewUpload}
-              className="rounded-lg bg-primary px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-primary/90 transition-colors"
+              className="rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
             >
               + New Upload
             </button>
@@ -192,21 +192,21 @@ export default function UploadProgressDashboard({
         <div className="grid grid-cols-4 gap-2 mb-4">
           <div className="rounded-lg bg-surface-2 p-2.5 text-center">
             <p className="text-lg font-bold text-text tabular-nums">{stats.total_today}</p>
-            <p className="text-[10px] text-text-muted">Total Today</p>
+            <p className="text-xs text-text-muted">Total Today</p>
           </div>
           <div className="rounded-lg bg-surface-2 p-2.5 text-center">
             <p className="text-lg font-bold text-success tabular-nums">{stats.completed_today}</p>
-            <p className="text-[10px] text-text-muted">Completed</p>
+            <p className="text-xs text-text-muted">Completed</p>
           </div>
           <div className="rounded-lg bg-surface-2 p-2.5 text-center">
             <p className="text-lg font-bold text-danger tabular-nums">{stats.failed_today}</p>
-            <p className="text-[10px] text-text-muted">Failed</p>
+            <p className="text-xs text-text-muted">Failed</p>
           </div>
           <div className="rounded-lg bg-surface-2 p-2.5 text-center">
             <p className="text-lg font-bold text-primary tabular-nums">
               {formatDuration(stats.avg_upload_time_seconds)}
             </p>
-            <p className="text-[10px] text-text-muted">Avg Time</p>
+            <p className="text-xs text-text-muted">Avg Time</p>
           </div>
         </div>
       )}
@@ -214,7 +214,7 @@ export default function UploadProgressDashboard({
       {/* ── BG Strategy Wins (donut-like mini chart) ── */}
       {stats && !compact && Object.keys(stats.bg_strategy_wins).length > 0 && (
         <div className="mb-4 rounded-lg bg-surface-2 p-3">
-          <p className="text-[10px] font-semibold text-text-muted mb-2">BG Strategy Performance</p>
+          <p className="text-xs font-semibold text-text-muted mb-2">BG Strategy Performance</p>
           <div className="flex items-center gap-3">
             {Object.entries(stats.bg_strategy_wins)
               .sort(([, a], [, b]) => b - a)
@@ -223,7 +223,7 @@ export default function UploadProgressDashboard({
                 const total = Object.values(stats.bg_strategy_wins).reduce((s, c) => s + c, 0);
                 const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                 return (
-                  <div key={strategy} className="flex items-center gap-1.5 text-[10px]">
+                  <div key={strategy} className="flex items-center gap-1.5 text-xs">
                     <span className="h-2 w-2 rounded-full bg-primary/40" style={{ opacity: 0.3 + pct / 100 * 0.7 }} />
                     <span className="text-text-muted capitalize">{strategy.replace(/_/g, " ")}</span>
                     <span className="font-semibold text-text tabular-nums">{pct}%</span>
@@ -237,7 +237,7 @@ export default function UploadProgressDashboard({
       {/* ── Active Uploads Bar ── */}
       {activeUploads.length > 0 && (
         <div className="mb-3 space-y-2">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             In Progress ({activeUploads.length})
           </p>
           {activeUploads.slice(0, compact ? 2 : 3).map((upload) => {
@@ -250,7 +250,7 @@ export default function UploadProgressDashboard({
                     <Icon className={`h-4 w-4 shrink-0 ${cfg.color}`} />
                     <span className="text-xs font-medium text-text truncate">{upload.filename}</span>
                   </div>
-                  <span className={`text-[10px] font-semibold ${cfg.color}`}>{cfg.label}</span>
+                  <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
                 </div>
                 {/* Progress bar */}
                 <div className="h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
@@ -262,8 +262,8 @@ export default function UploadProgressDashboard({
                   />
                 </div>
                 <div className="flex justify-between mt-1">
-                  <span className="text-[9px] text-text-faint">{timeAgo(upload.started_at)}</span>
-                  <span className="text-[9px] text-text-faint tabular-nums">{upload.progress}%</span>
+                  <span className="text-3xs text-text-faint">{timeAgo(upload.started_at)}</span>
+                  <span className="text-3xs text-text-faint tabular-nums">{upload.progress}%</span>
                 </div>
               </div>
             );
@@ -274,7 +274,7 @@ export default function UploadProgressDashboard({
       {/* ── Upload History List ── */}
       {displayUploads.length > 0 && (
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
             History
           </p>
           {displayUploads.map((upload) => {
@@ -309,7 +309,7 @@ export default function UploadProgressDashboard({
                     <p className="text-xs font-medium text-text truncate">
                       {upload.ai_result?.name || upload.filename}
                     </p>
-                    <p className="text-[10px] text-text-muted">
+                    <p className="text-xs text-text-muted">
                       {upload.ai_result?.category && `${upload.ai_result.category} · `}
                       {upload.ai_result?.price && `$${upload.ai_result.price} · `}
                       {timeAgo(upload.started_at)}
@@ -319,12 +319,12 @@ export default function UploadProgressDashboard({
                   {/* Status badge */}
                   <div className="flex items-center gap-1.5 shrink-0">
                     {upload.status === "completed" ? (
-                      <span className="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                      <span className="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
                         <CheckCircle2 className="h-3 w-3" />
                         Done
                       </span>
                     ) : upload.status === "failed" ? (
-                      <span className="flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-semibold text-danger">
+                      <span className="flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">
                         <AlertCircle className="h-3 w-3" />
                         Failed
                       </span>
@@ -343,7 +343,7 @@ export default function UploadProgressDashboard({
                 {isExpanded && (
                   <div className="mx-3 mb-2 rounded-lg bg-surface-2 p-3 space-y-2">
                     {upload.bg_strategy && (
-                      <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="text-text-muted">BG Strategy</span>
                         <span className="font-medium text-text capitalize">
                           {upload.bg_strategy.replace(/_/g, " ")}
@@ -356,7 +356,7 @@ export default function UploadProgressDashboard({
                     {upload.ai_result && (
                       <>
                         {upload.ai_result.variants_count !== undefined && (
-                          <div className="flex items-center justify-between text-[10px]">
+                          <div className="flex items-center justify-between text-xs">
                             <span className="text-text-muted">Variants</span>
                             <span className="font-medium text-text">{upload.ai_result.variants_count}</span>
                           </div>
@@ -364,14 +364,14 @@ export default function UploadProgressDashboard({
                       </>
                     )}
                     {upload.error && (
-                      <div className="rounded bg-danger/5 p-2 text-[10px] text-danger">{upload.error}</div>
+                      <div className="rounded bg-danger/5 p-2 text-xs text-danger">{upload.error}</div>
                     )}
-                    <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between text-xs">
                       <span className="text-text-muted">Started</span>
                       <span className="text-text-faint">{new Date(upload.started_at).toLocaleString()}</span>
                     </div>
                     {upload.completed_at && (
-                      <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="text-text-muted">Completed</span>
                         <span className="text-text-faint">{new Date(upload.completed_at).toLocaleString()}</span>
                       </div>
@@ -405,7 +405,7 @@ export default function UploadProgressDashboard({
       {uploads.length > (compact ? 5 : maxItems) && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="mt-2 w-full rounded-lg py-2 text-[10px] font-semibold text-text-muted hover:text-text hover:bg-surface-2 transition-colors"
+          className="mt-2 w-full rounded-lg py-2 text-xs font-semibold text-text-muted hover:text-text hover:bg-surface-2 transition-colors"
         >
           {showAll ? "Show less" : `Show all (${uploads.length})`}
         </button>

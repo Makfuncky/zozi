@@ -56,7 +56,7 @@ export default function ImageZoom({ images, alt, initialIndex = 0, trigger }: Im
       {/* Lightbox */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center">
+          <div className="fixed inset-0 z-dropdown flex items-center justify-center">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}

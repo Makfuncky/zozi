@@ -191,7 +191,7 @@ export default function CouponsTab() {
             <thead>
               <tr className="border-b border-border">
                 {["Code", "Type", "Value", "Uses", "Expires", "Active", ""].map((h) => (
-                    <th key={h} className={`text-left ${cellPad} text-[10px] font-semibold text-text-faint`}>{h}</th>
+                    <th key={h} className={`text-left ${cellPad} text-xs font-semibold text-text-faint`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -204,7 +204,7 @@ export default function CouponsTab() {
                   <td className={`${cellPad} ${bodyText} text-text-muted`}>{c.uses_count}{c.max_uses ? `/${c.max_uses}` : ""}</td>
                   <td className={`${cellPad} ${bodyText} text-text-muted`}>{c.expires_at ? new Date(c.expires_at).toLocaleDateString() : "\u2014"}</td>
                   <td className={cellPad}>
-                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold ${c.is_active ? "theme-chip-success" : "theme-chip-muted"}`}>
+                    <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${c.is_active ? "theme-chip-success" : "theme-chip-muted"}`}>
                       {c.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>

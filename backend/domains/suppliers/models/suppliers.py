@@ -17,6 +17,7 @@ from decimal import Decimal
 from sqlalchemy import func, UUID
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, text, Numeric, Float
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from infrastructure.database.mixins import TenantMixin, VersionMixin
@@ -28,7 +29,7 @@ __all__ = ['SupplierProfile', 'SupplierDocument', 'SupplierNotificationPreferenc
 class SupplierProfile(Base, TenantMixin):
     __tablename__ = 'supplier_profiles'
     __table_args__ = ({'schema': 'suppliers'},)
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -56,7 +57,7 @@ class SupplierProfile(Base, TenantMixin):
 class SupplierDocument(Base, TenantMixin):
     __tablename__ = 'supplier_documents'
     __table_args__ = ({'schema': 'suppliers'},)
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -85,7 +86,7 @@ class SupplierDocument(Base, TenantMixin):
 class SupplierNotificationPreference(Base, TenantMixin):
     __tablename__ = 'supplier_notification_preferences'
     __table_args__ = (Index('ix_supplier_notification_preferences_country_created', 'country_code', 'created_at'), {'schema': 'suppliers'})
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -116,7 +117,7 @@ class SupplierBadgeCatalog(Base):
         Index('ix_supplier_badge_catalog_benefits_gin', 'benefits'),
         {'schema': 'suppliers'},
     )
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -147,7 +148,7 @@ class SupplierBadge(Base):
         Index('ix_supplier_badges_country_created', 'country_code', 'created_at'),
         {'schema': 'suppliers'},
     )
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -187,7 +188,7 @@ class SupplierBadgeBillingHistory(Base):
         Index('ix_supplier_badge_billing_country_created', 'country_code', 'created_at'),
         {'schema': 'suppliers'},
     )
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)

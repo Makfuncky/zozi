@@ -47,6 +47,18 @@ COUNTRY_AWARE_TABLES: dict[str, str] = _build_country_aware_tables()
 
 
 def instrument_rls(engine: Engine, country_codes: frozenset[str] | None = None, restricted: bool = False) -> None:
+    """Install RLS before_execute interceptor on the engine and populate COUNTRY_AWARE_TABLES.
+
+    This function:
+    1. Inspects the live database for tables with country_code columns
+    2. Populates the COUNTRY_AWARE_TABLES registry
+    3. Installs the rls_before_execute event listener (idempotent)
+    """
+    global COUNTRY_AWARE_TABLES
+
+    from sqlalchemy import inspect as sa_inspect
+
+    insp = sa_inspect(engine)
 
     explicit_columns = {"destination_country", "code"}
     derived: dict[str, str] = {}
@@ -57,7 +69,14 @@ def instrument_rls(engine: Engine, country_codes: frozenset[str] | None = None, 
         elif table_name in COUNTRY_AWARE_TABLES and COUNTRY_AWARE_TABLES[table_name] in explicit_columns:
             # Preserve hand-maintained special-case columns (e.g. destination_country).
             derived[table_name] = COUNTRY_AWARE_TABLES[table_name]
-    return derived
+
+    # Merge: derived takes precedence, then fall back to existing registry
+    COUNTRY_AWARE_TABLES.update(derived)
+    logger.info("RLS: discovered %d country-aware tables", len(COUNTRY_AWARE_TABLES))
+
+    # Install event listener (idempotent - safe to call multiple times)
+    event.listen(engine, "before_execute", rls_before_execute, retval=True)
+    logger.info("RLS interceptor installed on database engine")
 
 
 def validate_rls_coverage(engine=None) -> list[str]:
@@ -268,9 +287,9 @@ def install_rls_policies(engine: Engine, schema: str = "public") -> None:
         for table_name in COUNTRY_AWARE_TABLES.keys():
             safe_table = _quote_ident(table_name)
             conn.execute(
-                text(f"ALTER TABLE {safe_schema}.{safe_table} ENABLE ROW LEVEL SECURITY;")
+                text("ALTER TABLE " + safe_schema + "." + safe_table + " ENABLE ROW LEVEL SECURITY;")
             )
-            conn.execute(text(f"ALTER TABLE {safe_schema}.{safe_table} FORCE ROW LEVEL SECURITY;"))
+            conn.execute(text("ALTER TABLE " + safe_schema + "." + safe_table + " FORCE ROW LEVEL SECURITY;"))
 
         conn.execute(text(policy_sql))
 

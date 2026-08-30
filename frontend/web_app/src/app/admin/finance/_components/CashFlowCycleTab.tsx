@@ -123,7 +123,7 @@ export default function CashFlowCycleTab() {
                 <div className={`rounded-xl border-2 p-4 ${item.color}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-background/80 text-xs font-bold">{item.step}</span>
-                    <span className="text-[10px] font-semibold uppercase text-text-faint">{item.label}</span>
+                    <span className="text-xs font-semibold uppercase text-text-faint">{item.label}</span>
                   </div>
                   <p className="text-[11px] text-text-muted leading-5">{item.detail}</p>
                 </div>
@@ -164,7 +164,7 @@ export default function CashFlowCycleTab() {
                 <div className={`rounded-xl border-2 p-4 ${item.color}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-background/80 text-xs font-bold">{item.step}</span>
-                    <span className="text-[10px] font-semibold uppercase text-text-faint">{item.label}</span>
+                    <span className="text-xs font-semibold uppercase text-text-faint">{item.label}</span>
                   </div>
                   <p className="text-[11px] text-text-muted leading-5">{item.detail}</p>
                 </div>
@@ -196,7 +196,7 @@ export default function CashFlowCycleTab() {
               <div key={item.slug} className="rounded-lg border border-border bg-surface-2 p-3">
                 <p className="text-[11px] text-text-faint uppercase">{item.name}</p>
                 <p className="text-lg font-bold text-text tabular-nums">{formatMoney(item.balance)}</p>
-                <p className="text-[10px] text-text-faint">{item.gl_account_code}</p>
+                <p className="text-xs text-text-faint">{item.gl_account_code}</p>
               </div>
             ))}
           </div>

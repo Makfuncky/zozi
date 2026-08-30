@@ -61,12 +61,12 @@ export default function VersionsTab({
         <tbody>
           {filteredVersions.map((version) => (
             <tr key={version.id} className="border-t border-border/80 hover:bg-surface-2/40 transition" data-version-id={version.id}>
-              <td className="px-3 py-2.5 font-bold uppercase tracking-wide text-text font-mono text-[10px]">
+              <td className="px-3 py-2.5 font-bold uppercase tracking-wide text-text font-mono text-xs">
                 {version.config_type.replace("_", " ")}
               </td>
               <td className="px-3 py-2.5 text-text font-semibold">v{version.version}</td>
               <td className="px-3 py-2.5">
-                <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-bold ${
                   version.status === "published"
                     ? "bg-success/15 text-success border border-success/30"
                     : version.status === "approved"
@@ -86,13 +86,13 @@ export default function VersionsTab({
                     type="button"
                     onClick={() => actOnVersion(version, "approve")}
                     disabled={busyAction === `approve-${version.id}` || version.status !== "draft"}
-                    className="inline-flex items-center gap-1 rounded bg-surface border border-border px-2 py-1 text-[10px] font-bold text-text hover:bg-surface-3 transition disabled:opacity-40"
+                    className="inline-flex items-center gap-1 rounded bg-surface border border-border px-2 py-1 text-xs font-bold text-text hover:bg-surface-3 transition disabled:opacity-40"
                     data-testid={`approve-version-${version.id}`}
                   >
                     <Check className="h-3 w-3 text-success" />
                     Approve
                   </button>
-                  <Button variant="primary" className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-bold transition disabled:opacity-40" type="button"
+                  <Button variant="primary" className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-bold transition disabled:opacity-40" type="button"
                     onClick={() => actOnVersion(version, "publish")}
                     disabled={busyAction === `publish-${version.id}` || !["draft", "approved"].includes(version.status)}
                     data-testid={`publish-version-${version.id}`}
@@ -100,7 +100,7 @@ export default function VersionsTab({
                     <UploadCloud className="h-3 w-3" />
                     Publish
                   </Button>
-                  <Button variant="danger" className="inline-flex items-center gap-1 rounded bg-surface border border-border px-2 py-1 text-[10px] font-bold hover:bg-danger/10 hover:border-danger/20 transition disabled:opacity-40" type="button"
+                  <Button variant="danger" className="inline-flex items-center gap-1 rounded bg-surface border border-border px-2 py-1 text-xs font-bold hover:bg-danger/10 hover:border-danger/20 transition disabled:opacity-40" type="button"
                     onClick={() => actOnVersion(version, "rollback")}
                     disabled={busyAction === `rollback-${version.id}` || version.status !== "published"}
                     data-testid={`rollback-version-${version.id}`}

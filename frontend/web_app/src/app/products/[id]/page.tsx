@@ -425,7 +425,7 @@ export default function ProductDetailPage() {
                 "@type": "Offer",
                 price: product.price,
                 priceCurrency: "USD",
-                availability: product.stock_quantity && product.stock_quantity > 0
+                availability: product.stock && product.stock > 0
                   ? "https://schema.org/InStock"
                   : "https://schema.org/OutOfStock",
               },
@@ -553,7 +553,7 @@ export default function ProductDetailPage() {
                 {productTags.map((tag) => (
                   <span
                     key={tag}
-                    className="cursor-pointer rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[10px] font-medium text-text-muted transition-colors hover:border-primary hover:bg-primary/20 hover:text-primary"
+                    className="cursor-pointer rounded-full border border-border bg-surface-2 px-2 py-0.5 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:bg-primary/20 hover:text-primary"
                     onClick={() => router.push(`/products?search=${encodeURIComponent(tag)}`)}
                   >
                     {tag}
@@ -737,7 +737,7 @@ export default function ProductDetailPage() {
                       >
                         {selectedColor === color && (
                           <span
-                            className={`absolute inset-0 flex items-center justify-center text-[10px] font-bold ${
+                            className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${
                               isLight ? "text-text" : "text-white"
                             }`}
                           >
@@ -912,7 +912,7 @@ export default function ProductDetailPage() {
                     <a href={supplierStoreHref} className="block truncate text-sm font-semibold text-text hover:text-primary transition-colors">
                       {supplierDisplayName}
                     </a>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-text-muted">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
                       {supplierProfile.badge_level && supplierProfile.badge_level !== "none" && (() => {
                         const badge = getPartnerBadgeStyle(supplierProfile.badge_level);
                         return (
@@ -1115,11 +1115,11 @@ export default function ProductDetailPage() {
                          const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
                          return (
                            <div key={star} className="flex items-center gap-2">
-                             <span className="text-[10px] text-text-faint w-4">{star}</span>
+                             <span className="text-xs text-text-faint w-4">{star}</span>
                              <div className="flex-1 h-1.5 rounded-full bg-surface-3 overflow-hidden">
                                <div className="h-full rounded-full bg-warning transition-all" style={{ width: `${pct}%` }} />
                              </div>
-                             <span className="text-[10px] text-text-faint w-5 text-right">{count}</span>
+                             <span className="text-xs text-text-faint w-5 text-right">{count}</span>
                            </div>
                          );
                        })}
@@ -1150,7 +1150,7 @@ export default function ProductDetailPage() {
                          </div>
                          {r.comment && <p className="text-sm text-text-muted leading-relaxed">{r.comment}</p>}
                          {r.is_verified_purchase && (
-                           <span className="theme-chip-success mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold">
+                           <span className="theme-chip-success mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold">
                              <Check className="w-2.5 h-2.5" /> {tr("verifiedPurchase")}
                            </span>
                          )}

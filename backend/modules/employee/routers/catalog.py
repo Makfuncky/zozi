@@ -5,7 +5,7 @@ auth context + require_feature(...) + one service call.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from domains.catalog.services.categories.category_service import list_categories
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v1/employee/catalog", tags=["employee", "catalog
 
 @router.get("/products", status_code=200)
 def list_products(
-    request: Request,
+    response: Response,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     category: str | None = Query(None),
@@ -40,7 +40,7 @@ def list_products(
 ):
     products, total = get_products(
         db,
-        request,
+        response,
         category=category,
         brand=brand,
         min_price=min_price,

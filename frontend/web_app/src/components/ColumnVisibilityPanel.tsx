@@ -47,11 +47,11 @@ export default function ColumnVisibilityPanel({ columns, onToggle, align = "righ
 
       {open && (
         <div
-          className={`glass-dropdown absolute top-full z-[999] mt-2 min-w-52 rounded-xl p-2 ${
+          className={`glass-dropdown absolute top-full z-modal mt-2 min-w-52 rounded-xl p-2 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
-          <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-text-faint">
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-[0.18em] text-text-faint">
             Visible Columns
           </p>
           <div className="space-y-1">
@@ -70,7 +70,7 @@ export default function ColumnVisibilityPanel({ columns, onToggle, align = "righ
                   className="h-3.5 w-3.5 rounded accent-primary"
                 />
                 <span>{column.label}</span>
-                {column.locked ? <span className="ml-auto text-[10px] uppercase text-text-faint">Fixed</span> : null}
+                {column.locked ? <span className="ml-auto text-xs uppercase text-text-faint">Fixed</span> : null}
               </label>
             ))}
           </div>

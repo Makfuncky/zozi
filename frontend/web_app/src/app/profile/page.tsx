@@ -286,7 +286,7 @@ export default function ProfilePage() {
                 setMsg("");
                 setError("");
               }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-semibold transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 tab === t.key
                   ? "theme-btn-primary"
                   : "text-text-muted hover:text-text"
@@ -300,13 +300,13 @@ export default function ProfilePage() {
 
         {/* Messages */}
         {error && (
-          <div className="theme-alert-danger mb-2 flex items-center gap-2 rounded-lg p-2 text-[10px]">
+          <div className="theme-alert-danger mb-2 flex items-center gap-2 rounded-lg p-2 text-xs">
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             {error}
           </div>
         )}
         {msg && (
-          <div className="theme-alert-success mb-2 rounded-lg p-2 text-[10px]">
+          <div className="theme-alert-success mb-2 rounded-lg p-2 text-xs">
             {msg}
           </div>
         )}
@@ -368,7 +368,7 @@ export default function ProfilePage() {
               <div className="flex-1">
                 <p className="text-xs font-semibold text-text">{user?.username}</p>
                 <p className="text-[11px] text-text-muted">{user?.email}</p>
-                <span className="inline-flex items-center gap-1 mt-1 text-[10px]">
+                <span className="inline-flex items-center gap-1 mt-1 text-xs">
                   {user?.email_verified ? (
                     <><CheckCircle className="theme-status-success h-3 w-3" /><span className="theme-status-success">{tr("verified")}</span></>
                   ) : (
@@ -387,7 +387,7 @@ export default function ProfilePage() {
                   const d = await r.json();
                   if (r.ok) setMsg(d.detail); else setError(d.detail || "Error");
                 }}
-                className="theme-chip-warning w-full rounded-xl py-1.5 text-[10px] font-semibold"
+                className="theme-chip-warning w-full rounded-xl py-1.5 text-xs font-semibold"
               >
                 {tr("resendVerification")}
               </button>
@@ -397,7 +397,7 @@ export default function ProfilePage() {
             <div className="theme-panel rounded-xl border border-border p-3">
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-faint">Referral & Sharing Points</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-faint">Referral & Sharing Points</p>
                   <h3 className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-text">
                     <Gift className="h-4 w-4 text-primary" />
                     Promote ZOZI and earn rewards
@@ -417,15 +417,15 @@ export default function ProfilePage() {
                 <>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="rounded-lg border border-border bg-surface-2/70 px-2 py-2">
-                      <p className="text-[10px] text-text-faint">Total</p>
+                      <p className="text-xs text-text-faint">Total</p>
                       <p className="mt-1 text-sm font-bold text-primary">{referralData.total_points}</p>
                     </div>
                     <div className="rounded-lg border border-border bg-surface-2/70 px-2 py-2">
-                      <p className="text-[10px] text-text-faint">Referral</p>
+                      <p className="text-xs text-text-faint">Referral</p>
                       <p className="mt-1 text-sm font-bold text-text">{referralData.referral_points}</p>
                     </div>
                     <div className="rounded-lg border border-border bg-surface-2/70 px-2 py-2">
-                      <p className="text-[10px] text-text-faint">Referred</p>
+                      <p className="text-xs text-text-faint">Referred</p>
                       <p className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-text">
                         <Users className="h-3.5 w-3.5 text-primary" />
                         {referralData.referred_count}
@@ -434,18 +434,18 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="mt-2 rounded-lg border border-border bg-surface-2/60 p-2">
-                    <p className="text-[10px] text-text-faint">Your referral code</p>
+                    <p className="text-xs text-text-faint">Your referral code</p>
                     <p className="mt-0.5 text-xs font-bold tracking-[0.2em] text-primary">{referralData.referral_code}</p>
                     <div className="mt-2 flex gap-1.5">
                       <input
                         value={referralData.referral_link}
                         readOnly
-                        className="theme-input h-8 flex-1 rounded-lg border px-2 text-[10px]"
+                        className="theme-input h-8 flex-1 rounded-lg border px-2 text-xs"
                       />
                       <button
                         type="button"
                         onClick={copyReferralLink}
-                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-border px-2 text-[10px] font-semibold text-text-muted transition-colors hover:text-text"
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-border px-2 text-xs font-semibold text-text-muted transition-colors hover:text-text"
                       >
                         <Copy className="h-3.5 w-3.5" />
                         Copy
@@ -456,7 +456,7 @@ export default function ProfilePage() {
                   {referralData.recent_activity?.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {referralData.recent_activity.slice(0, 3).map((event) => (
-                        <div key={event.id} className="flex items-center justify-between rounded-lg border border-border/70 bg-surface-2/40 px-2 py-1.5 text-[10px]">
+                        <div key={event.id} className="flex items-center justify-between rounded-lg border border-border/70 bg-surface-2/40 px-2 py-1.5 text-xs">
                           <p className="text-text-muted">{event.description || event.event_type}</p>
                           <p className="font-semibold text-success">+{event.points}</p>
                         </div>
@@ -468,7 +468,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => router.push("/profile/referrals")}
-                      className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-[10px] font-semibold text-text-muted transition-colors hover:text-text"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-text-muted transition-colors hover:text-text"
                     >
                       <FileText className="h-3.5 w-3.5" />
                       View full history

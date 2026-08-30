@@ -300,7 +300,7 @@ export default function ComposerDock({ sendAs, setSendAs, threadId, senderId, on
           {attachments.map((att, i) => (
             <div
               key={i}
-              className="flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-[10px] text-text-muted"
+              className="flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs text-text-muted"
             >
               <ImageIcon className="w-3 h-3" />
               <span className="truncate max-w-[120px]">{att.name}</span>
@@ -366,7 +366,7 @@ export default function ComposerDock({ sendAs, setSendAs, threadId, senderId, on
         {/* Right: send-as toggle + send button */}
         <div className="flex items-center gap-1 pb-1.5">
           {/* Send-as mode */}
-          <div className="flex items-center rounded-lg border border-border overflow-hidden text-[10px]">
+          <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs">
             <button
               onClick={() => setSendAs("chat")}
               data-active={sendAs === "chat"}

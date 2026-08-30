@@ -16,6 +16,7 @@ from __future__ import annotations
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, func
 from sqlalchemy.orm import relationship
 from . import Base
+from domains.country.models.countries import CountryConfig  # noqa: F401
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 __all__ = ["Payment", "Payout", "LogisticsPartnerPayout", "PaymentGatewayConnection", "PaymentReconciliationRun"]

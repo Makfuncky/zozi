@@ -1,0 +1,88 @@
+- generic [active] [ref=f8e1]:
+  - link "Skip to main content" [ref=f8e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f8e3]:
+    - banner [ref=f8e5]:
+      - generic [ref=f8e6]:
+        - generic [ref=f8e7]:
+          - link "Go to home" [ref=f8e8] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f8e9]:
+              - img "Zozi logo" [ref=f8e11]
+              - generic [ref=f8e27]: Zozi
+          - generic [ref=f8e28]:
+            - generic [ref=f8e31]:
+              - button "All Products" [ref=f8e33]
+              - button "Price" [ref=f8e40]
+              - button "Rating" [ref=f8e47]
+              - button "Supplier" [ref=f8e53]
+              - textbox "Search products, brands, suppliers..." [ref=f8e64]
+              - button "Search by image" [ref=f8e65]
+              - button "Voice search" [disabled] [ref=f8e69]
+              - button "Search" [ref=f8e73]
+            - button "Choose File" [ref=f8e77]
+          - button "Choose File" [ref=f8e78]
+          - generic [ref=f8e79]:
+            - button "Toggle theme" [disabled] [ref=f8e80]
+            - generic [ref=f8e81]:
+              - generic [ref=f8e82]: OMRAuto detected
+              - button "Choose country" [ref=f8e84]: AUTO
+              - button "Choose language" [ref=f8e88]: EN
+            - link "Wishlist" [ref=f8e91] [cursor=pointer]:
+              - /url: /wishlist
+            - link "Cart" [ref=f8e94] [cursor=pointer]:
+              - /url: /cart
+            - button "Open sign in menu" [ref=f8e99]
+            - button "Open mobile search" [ref=f8e103]
+            - button "Open menu" [ref=f8e107]
+        - navigation [ref=f8e109]:
+          - generic [ref=f8e110]:
+            - link "Shop" [ref=f8e111] [cursor=pointer]:
+              - /url: /products
+            - link "Suppliers" [ref=f8e112] [cursor=pointer]:
+              - /url: /suppliers
+            - link "Offers" [ref=f8e113] [cursor=pointer]:
+              - /url: /offers
+            - link "Help" [ref=f8e114] [cursor=pointer]:
+              - /url: /help
+    - main [ref=f8e116]:
+      - generic [ref=f8e118]:
+        - heading "404" [level=1] [ref=f8e119]
+        - heading "Page Not Found" [level=2] [ref=f8e120]
+        - paragraph [ref=f8e121]: The page you are looking for does not exist or has been moved.
+        - generic [ref=f8e122]:
+          - link "Go Home" [ref=f8e123] [cursor=pointer]:
+            - /url: /
+          - link "Browse Products" [ref=f8e127] [cursor=pointer]:
+            - /url: /products
+    - contentinfo [ref=f8e132]:
+      - generic [ref=f8e134]:
+        - generic [ref=f8e135]:
+          - generic [ref=f8e136]: ZOZI
+          - paragraph [ref=f8e141]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f8e142]:
+            - link "Become a Supplier" [ref=f8e143] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f8e144] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f8e145]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f8e146]
+          - generic [ref=f8e147]:
+            - generic [ref=f8e148]:
+              - heading "Stay in Style" [level=3] [ref=f8e149]
+              - paragraph [ref=f8e150]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f8e151]:
+              - textbox "First name (optional)" [ref=f8e153]
+              - textbox "Enter your email" [ref=f8e155]
+              - button "Subscribe" [disabled] [ref=f8e156]
+      - generic [ref=f8e161]:
+        - paragraph [ref=f8e162]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f8e163]:
+          - link "Terms" [ref=f8e164] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f8e165] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f8e166] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f8e167] [cursor=pointer]:
+            - /url: /admin/login

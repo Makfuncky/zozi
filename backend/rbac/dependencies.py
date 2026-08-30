@@ -11,6 +11,7 @@ from fastapi import Depends, HTTPException, Request, status
 from rbac.catalog import FEATURE_CATALOG
 from rbac.resolution import effective_features
 from infrastructure.security.dependencies import get_current_user  # noqa: F401
+from infrastructure.security.dependencies import get_current_user_optional
 
 _current_user_ctx: ContextVar = ContextVar("_current_user_ctx", default=None)
 
@@ -109,7 +110,7 @@ def require_feature(feature: str):
     called directly in a route handler (``require_feature("x")``).
     Raises HTTPException(403) if the feature is not granted.
     """
-    def _check(user=Depends(_get_current_user)) -> None:
+    def _check(user=Depends(get_current_user_optional)) -> None:
         effective = _resolve_effective_features(user)
         if feature not in effective:
             raise HTTPException(
@@ -139,7 +140,7 @@ def require_module(module: str):
     called directly in a route handler (``require_module("x")``).
     Raises HTTPException(403) if the module is not accessible.
     """
-    def _check(user=Depends(_get_current_user)) -> None:
+    def _check(user=Depends(get_current_user)) -> None:
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -174,7 +175,7 @@ def require_roles(*roles: str):
     Can be used as ``Depends(require_roles("admin", "superadmin"))``.
     Works whether the current user is a JWT dict or an ORM User instance.
     """
-    def _checker(user=Depends(_get_current_user)):
+    def _checker(user=Depends(get_current_user)):
         role = None
         if isinstance(user, dict):
             role = user.get("role")

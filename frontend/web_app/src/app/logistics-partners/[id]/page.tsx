@@ -236,7 +236,7 @@ export default function LogisticsPartnerDetailPage() {
                   <div key={area.id} className="rounded-2xl border border-border bg-surface-2/50 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-semibold text-text">{area.zone_label || area.city_name || area.country_name}</p>
-                      <span className="theme-chip-success rounded-full px-2 py-0.5 text-[10px] font-bold">Approved</span>
+                      <span className="theme-chip-success rounded-full px-2 py-0.5 text-xs font-bold">Approved</span>
                     </div>
                     <p className="mt-2 text-xs text-text-muted">{[area.origin_city ? `Pickup ${area.origin_city}` : null, area.city_name, area.country_name, area.country_code].filter(Boolean).join(" · ")}</p>
                     <p className="mt-2 text-sm font-semibold text-text">{area.currency} {area.charge_amount.toFixed(2)}</p>

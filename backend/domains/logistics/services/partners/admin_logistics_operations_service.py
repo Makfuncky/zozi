@@ -411,5 +411,5 @@ def admin_reset_demo_data(db: Session=Depends(get_db), current_admin: dict=Depen
         pass
     db.commit()
     total = sum((v for v in deleted_counts.values() if v >= 0))
-    return {'detail': 'Demo data reset complete', 'tables_cleared': len(tables_to_clear) + 1, 'total_rows_deleted': total, 'counts': deleted_counts, 'note': 'Admin accounts preserved. Run seed_all.py to re-seed.'}
+    return {'detail': 'Demo data reset complete', 'tables_cleared': len(tables_to_clear) + 1, 'total_rows_deleted': total, 'counts': deleted_counts, 'note': 'Admin accounts preserved. Run "python -m infrastructure.database.init_db --seed" to re-seed.'}
 

@@ -166,21 +166,21 @@ export default function FinanceSection() {
         <div className="theme-card rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Wallet className="h-4 w-4 text-primary" />
-            <span className="text-[10px] font-semibold uppercase text-text-faint">Total Payouts</span>
+            <span className="text-xs font-semibold uppercase text-text-faint">Total Payouts</span>
           </div>
           <p className="text-2xl font-bold text-text">{payouts.length}</p>
         </div>
         <div className="theme-card rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle className="h-4 w-4 text-success" />
-            <span className="text-[10px] font-semibold uppercase text-text-faint">Completed</span>
+            <span className="text-xs font-semibold uppercase text-text-faint">Completed</span>
           </div>
           <p className="text-2xl font-bold text-text">{totalCompleted}</p>
         </div>
         <div className="theme-card rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Send className="h-4 w-4 text-warning" />
-            <span className="text-[10px] font-semibold uppercase text-text-faint">Total Value</span>
+            <span className="text-xs font-semibold uppercase text-text-faint">Total Value</span>
           </div>
           <p className="text-2xl font-bold text-text">{formatMoney(totalValue)}</p>
         </div>
@@ -264,7 +264,7 @@ export default function FinanceSection() {
                     <td className="px-3 py-2 font-mono text-text-muted">{r.bank_reference || "—"}</td>
                     <td className="px-3 py-2 text-text">{r.amount != null ? formatMoney(r.amount) : "—"}</td>
                     <td className="px-3 py-2">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusTone(r.status)}`}>
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${statusTone(r.status)}`}>
                         {r.status}
                       </span>
                     </td>
@@ -300,7 +300,7 @@ export default function FinanceSection() {
                   <td className="p-3 text-right font-semibold">{s.cod_collected != null ? formatMoney(s.cod_collected) : "—"}</td>
                   <td className="p-3 text-right font-semibold">{s.cod_remitted != null ? formatMoney(s.cod_remitted) : "—"}</td>
                   <td className="p-3 text-center">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusTone(s.cod_remittance_status)}`}>
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${statusTone(s.cod_remittance_status)}`}>
                       {s.cod_remittance_status}
                     </span>
                   </td>

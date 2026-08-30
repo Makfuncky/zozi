@@ -134,7 +134,7 @@ function CustomerRegisterPage() {
                   className="theme-input w-full rounded-xl border py-3 pl-10 pr-4 text-sm placeholder:text-text-faint focus:border-primary focus:outline-none"
                 />
               </div>
-              <p className="mt-1 text-[10px] text-text-faint">
+              <p className="mt-1 text-xs text-text-faint">
                 Min. 8 chars, with uppercase, lowercase, number &amp; special character.
               </p>
             </div>

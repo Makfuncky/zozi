@@ -225,7 +225,7 @@ export default function BannerTab() {
               key={b.id ?? idx}
               type="button"
               onClick={() => setActiveBannerId(b.id)}
-              className={`rounded-full border px-3 py-1 text-[10px] font-semibold transition-colors ${
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                 b.id === activeBannerId
                   ? "bg-primary/20 text-primary border-primary/40"
                   : "bg-surface-2/60 text-text-faint border-border hover:text-text"

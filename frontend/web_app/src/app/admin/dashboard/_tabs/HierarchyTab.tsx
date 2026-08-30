@@ -182,7 +182,7 @@ function HierarchyInner() {
   const chainColumns = useMemo<Array<EnterpriseColumn<HierarchyChainNode>>>(() => [
     { key: "user_id", label: "User ID", width: "110px", render: (n) => <span className="font-mono text-xs">{n.user_id}</span> },
     { key: "username", label: "Name", width: "220px", render: (n) => <span className="text-xs font-semibold text-text">{n.username}</span> },
-    { key: "role", label: "Role", width: "180px", render: (n) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold capitalize">{n.role.replace("_", " ")}</span> },
+    { key: "role", label: "Role", width: "180px", render: (n) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-xs font-semibold capitalize">{n.role.replace("_", " ")}</span> },
     { key: "authority_level", label: "Level", width: "100px", align: "right", render: (n) => <span className="font-mono text-xs">{n.authority_level ?? "—"}</span> },
     { key: "org_unit_name", label: "Org Unit", width: "180px", render: (n) => <span className="text-xs text-text-muted">{n.org_unit_name || "—"}</span> },
   ], []);
@@ -190,14 +190,14 @@ function HierarchyInner() {
   const subordinateColumns = useMemo<Array<EnterpriseColumn<HierarchyChainNode>>>(() => [
     { key: "user_id", label: "User ID", width: "110px", render: (n) => <span className="font-mono text-xs">{n.user_id}</span> },
     { key: "username", label: "Subordinate", width: "240px", render: (n) => <span className="text-xs font-semibold text-text">{n.username}</span> },
-    { key: "role", label: "Role", width: "180px", render: (n) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold capitalize">{n.role.replace("_", " ")}</span> },
+    { key: "role", label: "Role", width: "180px", render: (n) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-xs font-semibold capitalize">{n.role.replace("_", " ")}</span> },
     { key: "authority_level", label: "Level", width: "100px", render: (n) => <span className="font-mono text-xs">{n.authority_level ?? "—"}</span> },
   ], []);
 
   const teamColumns = useMemo<Array<EnterpriseColumn<HierarchyChainNode>>>(() => [
     { key: "user_id", label: "User ID", width: "110px", render: (n) => <span className="font-mono text-xs">{n.user_id}</span> },
     { key: "username", label: "Team Member", width: "240px", render: (n) => <span className="text-xs font-semibold text-text">{n.username}</span> },
-    { key: "role", label: "Role", width: "180px", render: (n) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold capitalize">{n.role.replace("_", " ")}</span> },
+    { key: "role", label: "Role", width: "180px", render: (n) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-xs font-semibold capitalize">{n.role.replace("_", " ")}</span> },
     { key: "org_unit_name", label: "Org Unit", width: "200px", render: (n) => <span className="text-xs text-text-muted">{n.org_unit_name || "—"}</span> },
   ], []);
 
@@ -236,12 +236,12 @@ function HierarchyInner() {
                   <div key={unit.id} className="rounded-xl border border-border bg-surface-2/60 p-3">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold text-text">{unit.name}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${unit.is_active ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${unit.is_active ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
                         {unit.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
                     <p className="mt-1 text-[11px] text-text-muted">ID: {unit.id} • Parent: {unit.parent_id ?? "—"}</p>
-                    {unit.path && <p className="mt-1 font-mono text-[10px] text-text-faint">{unit.path}</p>}
+                    {unit.path && <p className="mt-1 font-mono text-xs text-text-faint">{unit.path}</p>}
                   </div>
                 ))}
               </div>

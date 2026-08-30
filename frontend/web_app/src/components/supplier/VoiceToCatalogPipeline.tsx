@@ -355,7 +355,7 @@ export default function VoiceToCatalogPipeline({
                 </span>
               </p>
               {imageFile && (
-                <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-success">
+                <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-success">
                   <Camera className="h-3 w-3" />
                   Image ready for BG A/B test
                 </div>
@@ -386,7 +386,7 @@ export default function VoiceToCatalogPipeline({
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-xs font-semibold text-text">Processing Pipeline</p>
-                  <span className="text-[10px] text-text-muted tabular-nums">{progress}%</span>
+                  <span className="text-xs text-text-muted tabular-nums">{progress}%</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-surface-2 overflow-hidden">
                   <div
@@ -441,7 +441,7 @@ export default function VoiceToCatalogPipeline({
                           {step.label}
                         </p>
                         {step.duration_ms !== undefined && step.status === "done" && (
-                          <p className="text-[9px] text-text-faint tabular-nums">
+                          <p className="text-3xs text-text-faint tabular-nums">
                             {(step.duration_ms / 1000).toFixed(1)}s
                           </p>
                         )}
@@ -466,12 +466,12 @@ export default function VoiceToCatalogPipeline({
               <p className="text-sm font-bold text-text">Pipeline Complete!</p>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1">
                 <Zap className="h-3.5 w-3.5 text-success" />
-                <span className="text-[10px] font-semibold text-success">
+                <span className="text-xs font-semibold text-success">
                   {(totalTime / 1000).toFixed(1)}s total — {completedCount}/{totalSteps} steps
                 </span>
               </div>
               {bgWinner && (
-                <p className="text-[10px] text-text-muted">
+                <p className="text-xs text-text-muted">
                   BG Strategy: <span className="font-medium text-text capitalize">{bgWinner.replace(/_/g, " ")}</span>
                 </p>
               )}
@@ -520,7 +520,7 @@ export default function VoiceToCatalogPipeline({
         {/* Processing indicator */}
         {status === "processing" && (
           <div className="border-t border-border/40 bg-surface-2/50 px-5 py-3">
-            <p className="text-[10px] text-text-muted text-center">
+            <p className="text-xs text-text-muted text-center">
               ⚡ Target: complete in under 30 seconds
             </p>
           </div>

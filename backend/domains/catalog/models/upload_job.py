@@ -17,8 +17,43 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    UUID,
+    func,
 )
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.types import CHAR, TypeDecorator
+
+
+class GUID(TypeDecorator):
+    """Cross-dialect UUID column (PostgreSQL UUID, else CHAR(32))."""
+    impl = CHAR
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PG_UUID(as_uuid=True))
+        return dialect.type_descriptor(CHAR(32))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        import uuid
+        if not isinstance(value, uuid.UUID):
+            value = uuid.UUID(str(value))
+        if dialect.name == "postgresql":
+            return value
+        return value.hex
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        import uuid
+        if dialect.name == "postgresql":
+            return value
+        if isinstance(value, uuid.UUID):
+            return value
+        return uuid.UUID(value)
+
+
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
@@ -28,7 +63,7 @@ class UploadJob(Base):
     __tablename__ = "upload_jobs"
     __table_args__ = {"schema": "catalog"}
 
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default="false", nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)

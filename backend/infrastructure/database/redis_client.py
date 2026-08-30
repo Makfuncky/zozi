@@ -82,7 +82,13 @@ def redis_client() -> redis.Redis | _NoOpRedis:
         return _NoOpRedis()
     if _client is not None:
         return _client
-    client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+    # Use short timeouts so a missing Redis doesn't hang requests
+    client = redis.Redis.from_url(
+        settings.redis_url,
+        decode_responses=True,
+        socket_timeout=2,
+        socket_connect_timeout=2,
+    )
     try:
         client.ping()
     except Exception:

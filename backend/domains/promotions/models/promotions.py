@@ -16,6 +16,7 @@ from sqlalchemy.orm import relationship
 
 from infrastructure.database.base import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
+# CountryConfig relationship resolved lazily via string reference
 
 __all__ = ["Coupon", "Banner", "BOGOPromotion", "FlashSale"]
 

@@ -1,0 +1,102 @@
+# ZOZI backend dependency manifest
+# Core dependencies required to boot and serve the API.
+# Heavy AI SDKs (rembg/opencv/onnxruntime) are OPTIONAL: every provider that
+# uses them degrades gracefully via HAS_* flags (ARCHITECTURE_DIAGRAM.md Laws 30/125),
+# so the app runs without them installed. Uncomment them to enable AI features.
+
+# Core web framework
+fastapi==0.115.2
+uvicorn[standard]==0.51.0
+gunicorn==26.0.0
+starlette
+
+# Database / ORM
+sqlalchemy==2.0.51
+alembic==1.18.5
+asyncpg==0.31.0
+psycopg2-binary==2.9.12
+
+# Redis & caching
+redis==8.0.1
+
+# Auth & security
+python-jose[cryptography]==3.5.0
+pyjwt==2.13.0
+bcrypt==5.0.0
+pyotp==2.10.0
+passlib[bcrypt]==1.7.4
+email-validator==2.3.0
+
+# Jobs / scheduling
+celery==5.4.0
+apscheduler==3.11.3
+
+# HTTP clients
+httpx==0.28.1
+requests==2.34.2
+
+# Validation & settings
+pydantic==2.13.4
+pydantic-settings==2.7.1
+python-dotenv==1.2.2
+
+# Form / multipart
+python-multipart==0.0.32
+
+# File handling
+aiofiles==25.1.0
+python-magic==0.4.27
+
+# Image processing (Pillow is required; opencv is OPTIONAL/guarded)
+Pillow==12.3.0
+# opencv-python-headless==5.0.0.93   # OPTIONAL - HAS_CV2 degrades gracefully
+
+# AI / ML (OPTIONAL - degrade via HAS_* flags)
+# rembg==2.0.69                      # pulls torch (heavy); OPTIONAL
+# onnxruntime==1.23.2                # OPTIONAL
+numpy==2.2.6
+
+# Observability
+structlog==26.1.0
+sentry-sdk==2.66.1
+prometheus-client==0.26.0
+prometheus-fastapi-instrumentator==7.1.0
+opentelemetry-api==1.44.0
+opentelemetry-sdk==1.44.0
+opentelemetry-instrumentation==0.65b0
+opentelemetry-instrumentation-fastapi==0.65b0
+opentelemetry-instrumentation-asgi==0.65b0
+opentelemetry-instrumentation-sqlalchemy==0.65b0
+opentelemetry-exporter-otlp-proto-http==1.44.0
+
+# Rate limiting
+slowapi==0.1.10
+limits==5.8.0
+
+# Utilities
+cachetools==5.5.0
+python-slugify==8.0.4
+pytz==2026.3.post1
+tzlocal==5.4.4
+babel==2.18.0
+phonenumbers==9.0.35
+faker==40.36.0
+python-docx==1.2.0
+openpyxl==3.1.5
+feedparser==6.0.12
+schedule==1.2.2
+text-unidecode==1.3
+
+# Payments
+stripe==15.3.1
+
+# WebSockets
+websockets==16.1.1
+
+# Analytics (optional analytics domain engine)
+duckdb==1.5.5
+duckdb-engine==0.17.0
+
+# Testing
+pytest==9.1.1
+pytest-asyncio==1.4.0

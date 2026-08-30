@@ -1,0 +1,92 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "Go to home" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e8]:
+              - img "Zozi logo" [ref=e10]
+              - generic [ref=e26]: Zozi
+          - generic [ref=e30]:
+            - button "All Products" [ref=e32]
+            - button "Price" [ref=e40]
+            - button "Rating" [ref=e48]
+            - button "Supplier" [ref=e55]
+            - textbox "Search products, brands, suppliers..." [ref=e64]
+            - button "Search by image" [ref=e65]
+            - button "Voice search" [ref=e69]
+            - button "Search" [ref=e73]
+          - generic [ref=e78]:
+            - button "Switch to dark theme" [ref=e210]: 🌙
+            - generic [ref=e80]:
+              - generic [ref=e81]:
+                - generic [ref=e82]: PKR
+                - generic [ref=e83]: Detected PK
+              - button "Choose country" [ref=e85]:
+                - generic [ref=e86]: PK
+              - button "Choose language" [ref=e90]:
+                - generic [ref=e91]: EN
+            - link "Wishlist" [ref=e94] [cursor=pointer]:
+              - /url: /wishlist
+            - link "Cart" [ref=e97] [cursor=pointer]:
+              - /url: /cart
+            - button "Open sign in menu" [ref=e102]
+        - navigation [ref=e106]:
+          - generic [ref=e107]:
+            - link "Shop" [ref=e108] [cursor=pointer]:
+              - /url: /products
+            - link "Suppliers" [ref=e109] [cursor=pointer]:
+              - /url: /suppliers
+            - link "Offers" [ref=e110] [cursor=pointer]:
+              - /url: /offers
+            - link "Help" [ref=e111] [cursor=pointer]:
+              - /url: /help
+    - main [ref=e114]:
+      - generic [ref=e115]:
+        - navigation "Breadcrumb" [ref=e116]:
+          - link "Home" [ref=e117] [cursor=pointer]:
+            - /url: /
+          - generic [ref=e121]: Products
+        - generic [ref=e125]:
+          - button "New Arrivals" [ref=e126]
+          - button "Trending" [ref=e130]
+          - button "Deals" [ref=e134]
+          - button "10%+" [ref=e139]
+          - button "20%+" [ref=e143]
+          - button "30%+" [ref=e147]
+          - button "50%+" [ref=e151]
+        - paragraph [ref=e156]: Searching...
+    - contentinfo [ref=e167]:
+      - generic [ref=e169]:
+        - generic [ref=e170]:
+          - generic [ref=e171]: ZOZI
+          - paragraph [ref=e177]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=e178]:
+            - link "Become a Supplier" [ref=e179] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=e180] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=e181]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=e182]
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - heading "Stay in Style" [level=3] [ref=e185]
+              - paragraph [ref=e186]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=e187]:
+              - textbox "First name (optional)" [ref=e189]
+              - textbox "Enter your email" [ref=e191]
+              - button "Subscribe" [disabled] [ref=e192]
+      - generic [ref=e197]:
+        - paragraph [ref=e198]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=e199]:
+          - link "Terms" [ref=e200] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=e201] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=e202] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=e203] [cursor=pointer]:
+            - /url: /admin/login
+    - button "Chat" [ref=e206]
+  - alert [ref=e260]

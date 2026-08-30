@@ -151,14 +151,14 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
                 b.shape === "pill" ? (
                   <span
                     key={b.label}
-                    className={`text-[7px] sm:text-[8px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded-full uppercase tracking-wider leading-none shadow-md ${isRtl ? "mr-1" : "ml-1"} ${b.cls}`}
+                    className={`text-5xs sm:text-4xs font-extrabold px-1 sm:px-1.5 py-0.5 rounded-full uppercase tracking-wider leading-none shadow-md ${isRtl ? "mr-1" : "ml-1"} ${b.cls}`}
                   >
                     <TranslatedText text={b.label} />
                   </span>
                 ) : (
                   <span
                     key={b.label}
-                    className={`text-[7px] sm:text-[8px] font-extrabold px-1 sm:px-1.5 py-0.5 uppercase tracking-wider leading-none shadow-md ${isRtl ? "pl-2 sm:pl-2.5 rounded-l-full" : "pr-2 sm:pr-2.5 rounded-r-full"} ${b.cls}`}
+                    className={`text-5xs sm:text-4xs font-extrabold px-1 sm:px-1.5 py-0.5 uppercase tracking-wider leading-none shadow-md ${isRtl ? "pl-2 sm:pl-2.5 rounded-l-full" : "pr-2 sm:pr-2.5 rounded-r-full"} ${b.cls}`}
                     style={{ clipPath: isRtl ? "polygon(12% 0, 100% 0, 100% 100%, 0 100%)" : "polygon(0 0, 100% 0, 88% 100%, 0 100%)" }}
                   >
                     <TranslatedText text={b.label} />
@@ -186,7 +186,7 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
           {/* AI description badge */}
           {product.ai_description && (
             <div className={`theme-chip-brand absolute top-1 ${isRtl ? "left-8" : "right-8"} flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 shadow-lg shadow-primary/15`}>
-              <span className="text-[8px] font-bold leading-none">{aiBadgeLabel}</span>
+              <span className="text-4xs font-bold leading-none">{aiBadgeLabel}</span>
             </div>
           )}
 
@@ -202,7 +202,7 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
                   >
                     <Tag className="w-2.5 h-2.5 text-primary-light shrink-0" />
                     {productTags.map((tag) => (
-                      <span key={tag} className="rounded-full border border-primary/20 bg-glass-base px-1.5 py-0.5 text-[8px] font-medium leading-none text-primary-light backdrop-blur-sm">
+                      <span key={tag} className="rounded-full border border-primary/20 bg-glass-base px-1.5 py-0.5 text-4xs font-medium leading-none text-primary-light backdrop-blur-sm">
                         <TranslatedText text={tag} />
                       </span>
                     ))}
@@ -214,7 +214,7 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
         </div>
 
         <div className="flex flex-col gap-0.5 p-2 sm:p-1.5">
-          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.1em] text-primary truncate">{model.brand}</span>
+          <span className="text-3xs sm:text-xs font-extrabold uppercase tracking-[0.1em] text-primary truncate">{model.brand}</span>
 
           <Link href={productUrlFrom(product)}>
             <h3 className={`line-clamp-2 font-bold text-text leading-snug transition-colors group-hover:text-primary ${isFeatured ? "text-sm sm:text-base" : "text-[11px] sm:text-[13px]"} ${isRtl ? "text-right" : "text-left"}`}>
@@ -227,10 +227,10 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
               {formatPrice(Number(product.price))}
             </span>
             {product.compare_price && Number(product.compare_price) > Number(product.price) && (
-              <span className="text-[8px] sm:text-[9px] line-through text-text-faint">{formatPrice(Number(product.compare_price))}</span>
+              <span className="text-4xs sm:text-3xs line-through text-text-faint">{formatPrice(Number(product.compare_price))}</span>
             )}
             {product.offer_discount_pct && Number(product.offer_discount_pct) > 0 && (
-              <span className="text-[7px] sm:text-[8px] font-bold text-accent">
+              <span className="text-5xs sm:text-4xs font-bold text-accent">
                 -{Math.round(Number(product.offer_discount_pct))}%
               </span>
             )}
@@ -238,7 +238,7 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
 
           {/* Flash sale / supplier discount end-time strip */}
           {product.offer_ends_at && (
-            <div className={`flex items-center gap-1 text-[7px] sm:text-[8px] font-semibold mt-0.5 ${
+            <div className={`flex items-center gap-1 text-5xs sm:text-4xs font-semibold mt-0.5 ${
               product.offer_type === "flash_sale" ? "text-accent" : "text-text-muted"
             }`}>
               <span>{product.offer_type === "flash_sale" ? <Zap className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}</span>
@@ -257,8 +257,8 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
           <div className="flex flex-wrap items-center justify-between gap-1 pt-1 mt-auto">
             <div className="flex items-center gap-0.5 min-w-0 flex-1">
               <Star className="w-2.5 h-2.5 text-accent fill-current shrink-0" />
-              <span className="text-[10px] sm:text-[11px] font-bold text-text truncate">{model.rating.toFixed(1)}</span>
-              <span className="text-[8px] sm:text-[9px] text-text-muted truncate">({fmtSold(model.sold)})</span>
+              <span className="text-xs sm:text-[11px] font-bold text-text truncate">{model.rating.toFixed(1)}</span>
+              <span className="text-4xs sm:text-3xs text-text-muted truncate">({fmtSold(model.sold)})</span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <motion.button
@@ -276,7 +276,7 @@ function ProductCard({ product, variant = "default", translatedName }: ProductCa
                 onClick={handleAddToCart}
                 disabled={outOfStock}
                 aria-label={addToCartLabel}
-                className={`min-w-0 rounded-lg! px-2! sm:px-1.5! py-1.5! sm:py-1! flex items-center gap-1 text-[10px] sm:text-[9px] font-bold shrink-0 transition-all ${
+                className={`min-w-0 rounded-lg! px-2! sm:px-1.5! py-1.5! sm:py-1! flex items-center gap-1 text-xs sm:text-3xs font-bold shrink-0 transition-all ${
                   outOfStock
                     ? "bg-surface-2 text-text-faint cursor-not-allowed"
                     : cartAdded

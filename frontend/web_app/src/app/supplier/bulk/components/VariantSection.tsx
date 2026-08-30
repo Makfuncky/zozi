@@ -168,7 +168,7 @@ export function VariantSection({
             <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               Variant Inventory
               {draft.variants.length > 0 ? (
-                <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
                   {draft.variants.length}
                 </span>
               ) : null}
@@ -207,7 +207,7 @@ export function VariantSection({
                         {identityParts.length > 0 ? (
                           <div className="mt-1 flex flex-wrap gap-1">
                             {identityParts.map((part) => (
-                              <span key={part} className="rounded-full border border-border bg-surface-base px-2 py-0.5 text-[10px] text-text-muted">{part}</span>
+                              <span key={part} className="rounded-full border border-border bg-surface-base px-2 py-0.5 text-xs text-text-muted">{part}</span>
                             ))}
                           </div>
                         ) : null}
@@ -216,25 +216,25 @@ export function VariantSection({
                           value={resolvedProductCode}
                           readOnly
                           aria-label={`Product code ${variantIndex + 1}`}
-                          className="theme-input mt-1.5 h-7 min-w-40 rounded-lg border border-primary/20 bg-primary/5 px-2.5 font-mono text-[10px] text-primary focus:outline-none"
+                          className="theme-input mt-1.5 h-7 min-w-40 rounded-lg border border-primary/20 bg-primary/5 px-2.5 font-mono text-xs text-primary focus:outline-none"
                         />
                       </div>
 
                       {/* Price */}
                       <div className="w-full sm:w-28">
-                        <p className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-text-muted">Price</p>
+                        <p className="mb-1 block text-xs font-semibold uppercase tracking-wider text-text-muted">Price</p>
                         <div
                           id={getVariantFieldId(draft.id, variant.id, "price")}
                           className="theme-input flex h-9 w-full items-center rounded-xl border px-3 text-xs text-text-muted"
                         >
                           {variant.price || draft.price || "0.00"}
                         </div>
-                        <p className="mt-0.5 text-[10px] text-text-faint">Inherited from product price in {currencyCode}</p>
+                        <p className="mt-0.5 text-xs text-text-faint">Inherited from product price in {currencyCode}</p>
                       </div>
 
                       {/* Stock */}
                       <div className="w-full sm:w-24">
-                        <label htmlFor={getVariantFieldId(draft.id, variant.id, "stock")} className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-text-muted">Stock</label>
+                        <label htmlFor={getVariantFieldId(draft.id, variant.id, "stock")} className="mb-1 block text-xs font-semibold uppercase tracking-wider text-text-muted">Stock</label>
                         <input
                           id={getVariantFieldId(draft.id, variant.id, "stock")}
                           type="number"

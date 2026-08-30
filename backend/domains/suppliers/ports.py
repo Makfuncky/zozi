@@ -47,6 +47,52 @@ def get_supplier_profile(db: Session, user_id: int) -> Optional[SupplierProfile]
     return get_supplier_profile_by_user(db, user_id)
 
 
+def list_public_suppliers(
+    db: Session,
+    q: str | None = None,
+    country: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> dict:
+    """Return active suppliers for the customer discovery page.
+
+    Sanctioned cross-domain read: customer module calls this instead of querying
+    the supplier tables directly. No PII is exposed — only business-facing fields.
+    """
+    from sqlalchemy import or_
+
+    query = db.query(SupplierProfile).filter(
+        SupplierProfile.verification_status.in_(["approved", "verified"]),
+        SupplierProfile.is_deleted == False,  # noqa: E712
+    )
+    if q:
+        term = f"%{q.strip()}%"
+        query = query.filter(
+            or_(
+                SupplierProfile.business_name.ilike(term),
+                SupplierProfile.bio.ilike(term),
+                SupplierProfile.country_code.ilike(term),
+            )
+        )
+    if country:
+        query = query.filter(SupplierProfile.country_code == country.upper())
+    total = query.count()
+    items = query.order_by(SupplierProfile.created_at.desc()).offset(offset).limit(limit).all()
+    return {
+        "items": [
+            {
+                "id": s.id,
+                "business_name": s.business_name,
+                "country_code": s.country_code,
+                "verification_status": s.verification_status,
+                "credibility_score": float(s.credibility_score) if s.credibility_score else 0,
+            }
+            for s in items
+        ],
+        "total": total,
+    }
+
+
 # ── sanctioned READ surface re-exports (Law 3) ─────────────────────────────
 # Cross-domain consumers import these from ``domains.suppliers.ports`` instead
 # of from the model modules directly. Read-only; no service logic re-exported.
@@ -98,6 +144,7 @@ from domains.suppliers.services.profile.supplier_profile_service import (  # noq
 __all__ = [
     "get_supplier_profile_by_user",
     "get_supplier_profile_by_id",
+    "list_public_suppliers",
     # model re-exports
     "SupplierBadge",
     "SupplierBadgeBillingHistory",

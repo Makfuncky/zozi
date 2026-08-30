@@ -51,7 +51,7 @@ export default function HomeProductShowcase({ products }: Props) {
                   setActive(cat.id);
                   setShowAll(false);
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-semibold uppercase tracking-[0.12em] transition-all duration-300 border whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-3xs font-semibold uppercase tracking-[0.12em] transition-all duration-300 border whitespace-nowrap ${
                   on
                     ? "bg-primary text-on-brand border-primary shadow-glow-primary"
                     : "bg-transparent text-text-muted border-border-light hover:border-primary hover:text-primary"

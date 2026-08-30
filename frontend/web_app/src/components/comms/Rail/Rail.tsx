@@ -151,7 +151,7 @@ function ThreadRow({ thread, onSelect, active, density, onContextMenu }: {
           <span className="text-[13px] font-semibold text-text truncate font-display">
             {thread.title}
           </span>
-          <span className="text-[10px] text-text-faint tabular-nums shrink-0">
+          <span className="text-xs text-text-faint tabular-nums shrink-0">
             {formatRelativeTime(thread.updatedAt)}
           </span>
         </div>
@@ -161,7 +161,7 @@ function ThreadRow({ thread, onSelect, active, density, onContextMenu }: {
             {thread.preview}
           </span>
           {thread.unread > 0 && (
-            <span className="comm-unread-badge shrink-0 min-w-[18px] h-[18px] rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center px-1">
+            <span className="comm-unread-badge shrink-0 min-w-[18px] h-[18px] rounded-full bg-primary text-3xs font-bold text-white flex items-center justify-center px-1">
               {thread.unread > 99 ? "99+" : thread.unread}
             </span>
           )}
@@ -272,7 +272,7 @@ export default function CommRail() {
               key={l}
               onClick={() => setLens(l)}
               data-active={lens === l}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                 lens === l
                   ? "text-primary bg-primary/10"
                   : "text-text-muted hover:text-text hover:bg-surface-2"
@@ -317,14 +317,14 @@ export default function CommRail() {
             </svg>
           </div>
           <p className="text-xs font-semibold text-text mb-1">Failed to load inbox</p>
-          <p className="text-[10px] text-text-faint mb-3 max-w-[160px]">Could not fetch conversations. Check your connection.</p>
+          <p className="text-xs text-text-faint mb-3 max-w-[160px]">Could not fetch conversations. Check your connection.</p>
           <button
             onClick={() => {
               window.dispatchEvent(new CustomEvent("comm-refetch"));
               document.querySelector(".comm-shell")?.classList.remove("comm-threads-error");
               document.querySelector(".comm-shell")?.classList.add("comm-threads-loading");
             }}
-            className="theme-btn-primary rounded-lg px-3 py-1.5 text-[10px] font-semibold"
+            className="theme-btn-primary rounded-lg px-3 py-1.5 text-xs font-semibold"
           >
             Retry
           </button>
@@ -337,7 +337,7 @@ export default function CommRail() {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Inbox className="w-10 h-10 text-text-faint/30 mb-2" />
             <p className="text-xs text-text-muted">No conversations yet</p>
-            <p className="text-[10px] text-text-faint mt-0.5">Select a modality or start a new conversation</p>
+            <p className="text-xs text-text-faint mt-0.5">Select a modality or start a new conversation</p>
           </div>
         ) : (
           <>

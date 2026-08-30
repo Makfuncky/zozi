@@ -69,9 +69,7 @@ function MiniProductCard({ product, formatPrice }: { product: Product; formatPri
   const badges = getProductBadges(product);
   const img = resolveImage(product.image_url);
   const shortDescription = (product.ai_description || product.description || "").trim();
-  const discount = product.compare_price && Number(product.compare_price) > Number(product.price)
-    ? Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)
-    : 0;
+  const discount = product.discount_percent ?? 0;
   return (
     <div
       onClick={() => router.push(`/products/${product.id}`)}
@@ -81,12 +79,12 @@ function MiniProductCard({ product, formatPrice }: { product: Product; formatPri
         <Image src={img} alt={product.name} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" className="object-cover transition-transform duration-500 group-hover:scale-110" />
         <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
         {badges.length > 0 && (
-          <span className={`absolute top-2 left-2 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${badges[0].cls}`}>
+          <span className={`absolute top-2 left-2 text-3xs sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm ${badges[0].cls}`}>
             {badges[0].label}
           </span>
         )}
         {discount > 0 && (
-          <span className="absolute top-2 right-2 rounded-full bg-danger/90 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-sm">
+          <span className="absolute top-2 right-2 rounded-full bg-danger/90 px-2 py-0.5 text-3xs sm:text-xs font-bold text-white shadow-sm">
             -{discount}%
           </span>
         )}
@@ -94,7 +92,7 @@ function MiniProductCard({ product, formatPrice }: { product: Product; formatPri
       <div className="p-2.5 sm:p-3">
         <p className="mb-1 text-[12px] sm:text-[13px] font-semibold text-text line-clamp-2 group-hover:text-primary transition-colors">{product.name}</p>
         {shortDescription && (
-          <p className="mb-1.5 line-clamp-2 text-[10px] leading-[1.4] text-text-faint">{shortDescription}</p>
+          <p className="mb-1.5 line-clamp-2 text-xs leading-[1.4] text-text-faint">{shortDescription}</p>
         )}
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-sm sm:text-base font-extrabold tracking-tight text-text">{formatPrice(Number(product.price))}</span>
@@ -105,7 +103,7 @@ function MiniProductCard({ product, formatPrice }: { product: Product; formatPri
         {product.rating != null && Number(product.rating) > 0 && (
           <div className="mt-1.5 flex items-center gap-1">
             <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-warning fill-warning" />
-            <span className="text-[10px] sm:text-[11px] font-medium text-text-muted">{Number(product.rating).toFixed(1)}</span>
+            <span className="text-xs sm:text-[11px] font-medium text-text-muted">{Number(product.rating).toFixed(1)}</span>
           </div>
         )}
       </div>
@@ -151,7 +149,7 @@ function ReviewCard({
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-semibold text-text">{name}</p>
                 {review.is_verified_purchase && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-[10px] font-semibold text-success">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-xs font-semibold text-success">
                     <CheckCircle className="h-3 w-3" />
                     Verified
                   </span>
@@ -602,7 +600,7 @@ export default function SupplierAboutPage() {
                   <tab.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                   {tab.label}
                   {tab.count !== undefined && (
-                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${isActive ? "bg-primary/12 text-primary" : "bg-surface-2 text-text-faint"}`}>
+                    <span className={`rounded-full px-1.5 py-0.5 text-xs font-bold leading-none ${isActive ? "bg-primary/12 text-primary" : "bg-surface-2 text-text-faint"}`}>
                       {tab.count}
                     </span>
                   )}
@@ -672,7 +670,7 @@ export default function SupplierAboutPage() {
               {/* Badge spotlight */}
               {supplier.badge_level && supplier.badge_level !== "none" && (
                 <div className={`overflow-hidden rounded-2xl border p-4 ${badgeInfo.toneClass}`}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60 mb-3">Partner Status</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-3">Partner Status</p>
                   <div className="flex items-center gap-3.5">
                     <span className="text-4xl leading-none">{badgeInfo.emoji}</span>
                     <div>
@@ -688,7 +686,7 @@ export default function SupplierAboutPage() {
                 <div className="overflow-hidden rounded-2xl border border-border bg-surface p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-sm font-bold text-text">Certifications</h2>
-                    <span className="theme-chip-success rounded-full px-2.5 py-1 text-[10px] font-bold">{supplier.certifications.length}</span>
+                    <span className="theme-chip-success rounded-full px-2.5 py-1 text-xs font-bold">{supplier.certifications.length}</span>
                   </div>
                   <div className="space-y-2.5">
                     {supplier.certifications.map((cert, i) => <CertCard key={i} cert={cert} />)}
@@ -749,7 +747,7 @@ export default function SupplierAboutPage() {
             <div className="space-y-5">
               <section className="overflow-hidden rounded-2xl border border-border bg-surface">
                 <div className="border-b border-border bg-gradient-to-br from-primary/10 via-transparent to-accent/8 px-5 py-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary/80">Brand Story</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary/80">Brand Story</p>
                   <h2 className="mt-2 text-[1.7rem] font-extrabold text-text">About {displayName}</h2>
                   {narrative.intro ? (
                     <p className="mt-2.5 text-sm leading-7 text-text-muted sm:text-base">{narrative.intro}</p>
@@ -846,7 +844,7 @@ export default function SupplierAboutPage() {
           <div ref={productsSectionRef}>
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Storefront Catalog</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Storefront Catalog</p>
                 <h2 className="flex items-center gap-2 text-xl font-bold text-text">
                   Products
                   <span className="theme-chip-info rounded-xl px-2.5 py-0.5 text-sm font-bold">{totalProducts}</span>
@@ -917,7 +915,7 @@ export default function SupplierAboutPage() {
           <div>
             <div className="mb-6 overflow-hidden rounded-2xl border border-border bg-surface">
               <div className="border-b border-border bg-gradient-to-r from-warning/12 via-transparent to-primary/10 px-5 py-5 sm:px-6">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-text-faint">Customer Reviews</p>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-text-faint">Customer Reviews</p>
                 <h2 className="mt-2 text-[1.7rem] font-extrabold text-text">What customers say about {displayName}</h2>
                 <p className="mt-1.5 text-sm text-text-muted">
                   Badge level and trust score reflect order fulfilment history, document verifications, and customer review quality.
@@ -987,7 +985,7 @@ export default function SupplierAboutPage() {
         {activeTab === "video" && hasVideo && (
           <div>
             <div className="mb-5">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Brand Video</p>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Brand Video</p>
               <h2 className="text-xl font-bold text-text">{displayName} — Official Video</h2>
             </div>
 

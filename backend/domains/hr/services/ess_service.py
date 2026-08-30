@@ -46,7 +46,7 @@ def update_employee_profile(
         raise Exception("No fields to update")
     set_clause = ", ".join(updates)
     db.execute(
-        text(f"UPDATE employees SET {set_clause} WHERE id = :eid"),
+        text("UPDATE employees SET " + set_clause + " WHERE id = :eid"),
         params,
     )
     db.commit()

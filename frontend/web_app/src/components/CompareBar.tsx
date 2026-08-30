@@ -22,8 +22,8 @@ export default function CompareBar({ products, onRemove, onClear }: CompareBarPr
   if (products.length === 0) return null;
 
   const handleAddToCart = (product: Product) => {
-    addToCart({ id: product.id, name: product.name, price: product.price, quantity: 1, image_url: product.image_url });
-    addToast({ type: "success", message: `${product.name} added to cart` });
+    addToCart(product);
+    addToast(`${product.name} added to cart`, "success");
   };
 
   return (

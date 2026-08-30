@@ -3351,7 +3351,7 @@ def list_product_commission_overrides(
         term = f"%{search.strip()}%"
         q = q.filter(
             (Product.name.ilike(term)) |
-            (User.username.ilike(term)) |
+            (User.email.ilike(term)) |
             (User.full_name.ilike(term)) |
             (Product.category.ilike(term))
         )
@@ -3380,10 +3380,10 @@ def list_all_supplier_commissions(
     query = db.query(User).filter(User.role == "supplier", User.is_active == True)  # noqa: E712
     if search and search.strip():
         term = f"%{search.strip()}%"
-        query = query.filter(or_(User.username.ilike(term), User.full_name.ilike(term), User.email.ilike(term)))
+        query = query.filter(or_(User.email.ilike(term), User.full_name.ilike(term), User.email.ilike(term)))
     total = query.count()
     suppliers = (
-        query.order_by(User.full_name, User.username, User.id)
+        query.order_by(User.full_name, User.email, User.id)
         .limit(min(resolved_limit, 1000))
         .all()
     )

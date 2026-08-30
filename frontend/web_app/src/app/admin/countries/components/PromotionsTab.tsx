@@ -19,7 +19,7 @@ export default function PromotionsTab({
       <div className="border border-border rounded-lg p-4 bg-surface space-y-3">
         <h4 className="text-xs font-bold text-text">Create New Promotion Rule</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <label className="space-y-1 text-[10px] text-text-muted">
+          <label className="space-y-1 text-xs text-text-muted">
             Slug (URL-safe ID)
             <input
               type="text"
@@ -29,7 +29,7 @@ export default function PromotionsTab({
               placeholder="summer-sale-2024"
             />
           </label>
-          <label className="space-y-1 text-[10px] text-text-muted">
+          <label className="space-y-1 text-xs text-text-muted">
             Promotion Name
             <input
               type="text"
@@ -39,7 +39,7 @@ export default function PromotionsTab({
               placeholder="Summer Festival Sale"
             />
           </label>
-          <label className="space-y-1 text-[10px] text-text-muted">
+          <label className="space-y-1 text-xs text-text-muted">
             Discount Type
             <select
               className="w-full rounded border border-border bg-surface px-2 py-1.5 text-xs text-text"
@@ -50,7 +50,7 @@ export default function PromotionsTab({
               <option value="fixed">Fixed Amount</option>
             </select>
           </label>
-          <label className="space-y-1 text-[10px] text-text-muted">
+          <label className="space-y-1 text-xs text-text-muted">
             Discount Value
             <input
               type="number"
@@ -61,7 +61,7 @@ export default function PromotionsTab({
               placeholder={newPromoType === "percentage" ? "10" : "50"}
             />
           </label>
-          <label className="space-y-1 text-[10px] text-text-muted md:col-span-2">
+          <label className="space-y-1 text-xs text-text-muted md:col-span-2">
             Minimum Order Value (Optional)
             <input
               type="number"
@@ -149,7 +149,7 @@ export default function PromotionsTab({
                     </Button>
                   </div>
                 </div>
-                <div className="text-text-faint mt-1 text-[10px]">
+                <div className="text-text-faint mt-1 text-xs">
                   Slug: <span className="font-mono">{promo.slug}</span> | 
                   Type: <span className="font-mono">{promo.discount_type}</span> | 
                   Status: <span className={promo.is_active ? "text-success" : "text-danger"}>{promo.is_active ? "Active" : "Inactive"}</span>

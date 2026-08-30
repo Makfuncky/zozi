@@ -101,7 +101,7 @@ export default function SupplierDocumentsTab() {
                     <td className="p-4 text-xs text-text-muted">{doc.supplier_username ?? `#${doc.supplier_id}`}</td>
                     <td className="p-4 text-xs text-text-muted capitalize">{doc.document_type.replace(/_/g, " ")}</td>
                     <td className="p-4">
-                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
+                      <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${
                         doc.status === "approved" ? "theme-chip-success" :
                         doc.status === "rejected" ? "theme-chip-danger" :
                         doc.status === "under_review" ? "theme-chip-info" :
@@ -122,16 +122,16 @@ export default function SupplierDocumentsTab() {
                             <button
                               disabled={supplierDocActionId === doc.id}
                               onClick={() => handleReviewDoc(doc.id, "approved")}
-                              className="theme-chip-success rounded-lg px-2.5 py-1 text-[10px] font-semibold flex items-center gap-1 disabled:opacity-50"
+                              className="theme-chip-success rounded-lg px-2.5 py-1 text-xs font-semibold flex items-center gap-1 disabled:opacity-50"
                             ><CheckCircle className="w-3 h-3" />Approve</button>
                             <button
                               disabled={supplierDocActionId === doc.id}
                               onClick={() => handleReviewDoc(doc.id, "rejected")}
-                              className="theme-chip-danger rounded-lg px-2.5 py-1 text-[10px] font-semibold flex items-center gap-1 disabled:opacity-50"
+                              className="theme-chip-danger rounded-lg px-2.5 py-1 text-xs font-semibold flex items-center gap-1 disabled:opacity-50"
                             ><XCircle className="w-3 h-3" />Reject</button>
                           </div>
                         )}
-                        {doc.review_note && <p className="text-[10px] text-text-faint italic">{doc.review_note}</p>}
+                        {doc.review_note && <p className="text-xs text-text-faint italic">{doc.review_note}</p>}
                       </div>
                     </td>
                   </tr>

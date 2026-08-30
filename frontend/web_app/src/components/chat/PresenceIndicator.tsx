@@ -23,14 +23,14 @@ export function PresenceIndicator({ users, currentUserId, showList = false }: Pr
               className="relative h-5 w-5 rounded-full border border-surface-1"
               title={`${u.name} (online)`}
             >
-              <div className="h-full w-full rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary">
+              <div className="h-full w-full rounded-full bg-primary/20 flex items-center justify-center text-4xs font-bold text-primary">
                 {u.name?.charAt(0)?.toUpperCase() ?? "?"}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success border border-surface-1" />
             </div>
           ))}
           {onlineUsers.length > 3 && (
-            <div className="h-5 w-5 rounded-full bg-surface-3 flex items-center justify-center text-[8px] font-bold text-text-muted border border-surface-1">
+            <div className="h-5 w-5 rounded-full bg-surface-3 flex items-center justify-center text-4xs font-bold text-text-muted border border-surface-1">
               +{onlineUsers.length - 3}
             </div>
           )}
@@ -39,17 +39,17 @@ export function PresenceIndicator({ users, currentUserId, showList = false }: Pr
 
       {showList && users.length > 0 && (
         <div className="group relative">
-          <span className="text-[10px] text-text-muted cursor-help">
+          <span className="text-xs text-text-muted cursor-help">
             {onlineUsers.length} online
             {awayUsers.length > 0 ? `, ${awayUsers.length} away` : ""}
           </span>
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
             <div className="bg-surface-2 border border-border rounded-lg p-2 shadow-xl min-w-[160px]">
-              <p className="text-[9px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Room Members</p>
+              <p className="text-3xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Room Members</p>
               {users.map((u) => (
                 <div key={u.user_id} className="flex items-center gap-2 py-1">
                   <div className="relative">
-                    <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary">
+                    <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-4xs font-bold text-primary">
                       {u.name?.charAt(0)?.toUpperCase() ?? "?"}
                     </div>
                     <span
@@ -68,7 +68,7 @@ export function PresenceIndicator({ users, currentUserId, showList = false }: Pr
                     {u.name}
                     {u.user_id === currentUserId ? " (you)" : ""}
                   </span>
-                  <span className={`text-[9px] ${u.status === "online" ? "text-success" : u.status === "away" ? "text-amber-500" : u.status === "busy" ? "text-danger" : "text-gray-400"}`}>
+                  <span className={`text-3xs ${u.status === "online" ? "text-success" : u.status === "away" ? "text-amber-500" : u.status === "busy" ? "text-danger" : "text-gray-400"}`}>
                     {u.status}
                   </span>
                 </div>

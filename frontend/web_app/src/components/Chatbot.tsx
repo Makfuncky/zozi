@@ -74,7 +74,7 @@ function ChatMessageBubble({
         {message.products && message.products.length > 0 && (
           <div className="mt-2 space-y-2">
             {message.resultMode === "close" && closeMatchesLabel && (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-text-faint">{closeMatchesLabel}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-faint">{closeMatchesLabel}</p>
             )}
 
             {message.products.map((product) => (
@@ -99,14 +99,14 @@ function ChatMessageBubble({
                   <p className="text-sm font-semibold text-primary">{formatPrice(product.price)}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {typeof product.rating === "number" && product.rating > 0 && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                         {product.rating.toFixed(1)} star
                       </span>
                     )}
                     {productTags(product).map((tag) => (
                       <span
                         key={`${product.id}-${tag}`}
-                        className="rounded-full border border-border bg-surface-1 px-2 py-0.5 text-[10px] font-medium text-text-muted"
+                        className="rounded-full border border-border bg-surface-1 px-2 py-0.5 text-xs font-medium text-text-muted"
                       >
                         {tag}
                       </span>
@@ -121,7 +121,7 @@ function ChatMessageBubble({
         {message.isBot && message.suggestedPrompts && message.suggestedPrompts.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {message.suggestedPrompts.map((prompt, index) => (
-              <Button variant="primary" className="rounded-full border px-2.5 py-1 text-[10px] font-semibold text-primary transition-colors disabled:opacity-50" key={`${message.id}-${prompt}`}
+              <Button variant="primary" className="rounded-full border px-2.5 py-1 text-xs font-semibold text-primary transition-colors disabled:opacity-50" key={`${message.id}-${prompt}`}
                 type="button"
                 onClick={() => onPromptPress(prompt)}
                 disabled={typing}
@@ -132,7 +132,7 @@ function ChatMessageBubble({
           </div>
         )}
 
-        <p className={`mt-1 text-[10px] ${message.isBot ? "text-text-faint" : "text-text-muted"}`}>
+        <p className={`mt-1 text-xs ${message.isBot ? "text-text-faint" : "text-text-muted"}`}>
           {message.time}
         </p>
       </div>

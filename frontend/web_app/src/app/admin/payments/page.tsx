@@ -239,7 +239,7 @@ export default function PaymentsPage() {
     loadAll();
   }, [isLoading, isLoggedIn, role, loadAll]);
 
-  const bodyText = dc(density, "text-[10px]", "text-xs", "text-sm");
+  const bodyText = dc(density, "text-xs", "text-xs", "text-sm");
 
   // ── Transactions tab ───────────────────────────────────────────────
   const filtered = useMemo(() =>
@@ -263,7 +263,7 @@ export default function PaymentsPage() {
     { key: "payment_method", label: "Method", render: (p: PaymentTx) => <span className={`${bodyText} text-text-muted`}>{p.payment_method}</span> },
     { key: "provider", label: "Provider", render: (p: PaymentTx) => <span className={`${bodyText} text-text-faint`}>{p.provider || "—"}</span> },
     { key: "status", label: "Status", render: (p: PaymentTx) => (
-      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${STATUS_CHIP[p.status] || "theme-chip-muted"}`}>
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_CHIP[p.status] || "theme-chip-muted"}`}>
         {p.status === "completed" ? <CheckCircle2 className="h-3 w-3" /> : p.status === "failed" ? <XCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
         {p.status}
       </span>
@@ -376,7 +376,7 @@ function StatCard({ label, value, tone }: { label: string; value: string | numbe
   const toneCls = tone === "success" ? "text-success" : tone === "warning" ? "text-warning" : "text-text";
   return (
     <div className="theme-card rounded-xl border p-4">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">{label}</p>
       <p className={`mt-1.5 text-2xl font-bold tabular-nums ${toneCls}`}>{value}</p>
     </div>
   );
@@ -479,11 +479,11 @@ function GatewaysTab({
                 </div>
                 <div className="flex items-center gap-2">
                   {gw.adapter_supported ? (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-success/20 text-success">Adapter ready</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-success/20 text-success">Adapter ready</span>
                   ) : (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-warning/20 text-warning">Custom / template</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-warning/20 text-warning">Custom / template</span>
                   )}
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                     gw.test_status === "passed" ? "bg-success/20 text-success" : gw.test_status === "failed" ? "bg-danger/20 text-danger" : "bg-surface-2 text-text-faint"
                   }`}>{gw.test_status}</span>
                   <button onClick={() => test(gw)} disabled={testing === gw.provider_code}
@@ -681,18 +681,18 @@ function GatewayEditor({
           <Field label="extra_config (JSON) — universal redirect mapping">
             <textarea value={extraText} onChange={(e) => setExtraText(e.target.value)} rows={7}
               className="theme-input w-full rounded-lg border px-3 py-2 text-[11px] font-mono" />
-            {extraError && <p className="mt-1 text-[10px] text-status-danger">{extraError}</p>}
-            <p className="mt-1 text-[10px] text-text-faint">
+            {extraError && <p className="mt-1 text-xs text-status-danger">{extraError}</p>}
+            <p className="mt-1 text-xs text-text-faint">
               Keys: <code>redirect_url_template</code>, <code>create_url</code>, <code>create_method</code>, <code>create_auth_header</code>,
               <code>create_body</code>, <code>redirect_url_field</code>, <code>order_id_field</code>, <code>transaction_ref_field</code>, <code>status_field</code>, <code>success_values</code>.
               Template placeholders: <code>{`{order_id} {amount} {currency} {reference} {callback_url} {success_url} {cancel_url}`}</code>
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-semibold text-text-faint">Load example:</span>
+              <span className="text-xs font-semibold text-text-faint">Load example:</span>
               {GATEWAY_TEMPLATES.map((t) => (
                 <button key={t.code} type="button"
                   onClick={() => { setExtraText(t.json); setExtraError(null); }}
-                  className="rounded-lg border border-border px-2.5 py-1 text-[10px] font-semibold text-text-muted hover:text-text hover:border-primary/50">
+                  className="rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-text-muted hover:text-text hover:border-primary/50">
                   {t.label}
                 </button>
               ))}
@@ -856,7 +856,7 @@ function FinanceTab({
             <Row k="Supplier payout" v={quote.supplier_payout_estimate} />
             <Row k="Logistics payout" v={quote.logistics_payout_estimate} />
             <Row k="Platform net" v={quote.platform_net_after_gateway_and_payout_costs} highlight />
-            <p className="pt-2 text-[10px] text-text-faint">Adapter supported: {String(quote.adapter_supported)} · Pass fee to customer: {String(quote.pass_fee_to_customer)}</p>
+            <p className="pt-2 text-xs text-text-faint">Adapter supported: {String(quote.adapter_supported)} · Pass fee to customer: {String(quote.pass_fee_to_customer)}</p>
           </dl>
         ) : (
           <p className="text-sm text-text-muted">Enter amounts and calculate to preview fees and payouts.</p>

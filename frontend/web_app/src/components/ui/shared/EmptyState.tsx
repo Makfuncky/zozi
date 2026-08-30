@@ -50,7 +50,7 @@ export function EmptyTable({
       <Shield className="h-8 w-8 text-text-faint opacity-40 mb-2" />
       <p className="text-xs text-text-faint">{title}</p>
       {description && (
-        <p className="text-[10px] text-text-faint mt-1">{description}</p>
+        <p className="text-xs text-text-faint mt-1">{description}</p>
       )}
       {action}
     </div>

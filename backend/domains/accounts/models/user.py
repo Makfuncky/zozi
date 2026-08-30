@@ -17,6 +17,10 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
+# Lazy imports for cross-domain relationships (avoid circular imports)
+from domains.catalog.models.products import Product, Review, WishlistItem, Wishlist  # noqa: F401
+from domains.customers.models.customer_schema_models import Referral  # noqa: F401
+
 
 class User(Base):
     __tablename__ = "users"
@@ -34,6 +38,7 @@ class User(Base):
     # Law #5: country is the orthogonal scope axis — non-null on every row.
     country_code = Column(String(2), nullable=False, default="US")
     is_active = Column(Boolean, nullable=False, default=True)
+    email_verified = Column(Boolean, nullable=False, default=False)
     # JSON array of country codes for staff users; non-null but may be empty.
     staff_country_codes = Column(Text, nullable=True)
     referred_by_user_id = Column(
@@ -49,6 +54,12 @@ class User(Base):
         nullable=True,
     )
     is_deleted = Column(Boolean, nullable=False, default=False)
+    profile_image = Column(String(512), nullable=True)
+
+    @property
+    def username(self) -> str:
+        """Username is an alias for email (no dedicated username column)."""
+        return self.email
 
     # Relationships — back_populates are wired in the address/cart owning tables.
     addresses = relationship("Address", back_populates="user", lazy="selectin")

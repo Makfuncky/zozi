@@ -146,7 +146,7 @@ export default function ApprovalActionModal({ isOpen, onClose, onConfirm, resour
     () => [
       { key: "distance", label: "Step", width: "80px", render: (r) => <span className="font-mono text-xs">{r.distance}</span> },
       { key: "username", label: "Approver", width: "220px", render: (r) => <span className="text-xs font-semibold text-text">{r.username}</span> },
-      { key: "role", label: "Role", width: "160px", render: (r) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold capitalize">{r.role.replace("_", " ")}</span> },
+      { key: "role", label: "Role", width: "160px", render: (r) => <span className="inline-flex rounded-md border px-1.5 py-0.5 text-xs font-semibold capitalize">{r.role.replace("_", " ")}</span> },
       { key: "authority_level", label: "Level", width: "100px", align: "right", render: (r) => <span className="font-mono text-xs">{r.authority_level}</span> },
     ],
     [],
@@ -164,7 +164,7 @@ export default function ApprovalActionModal({ isOpen, onClose, onConfirm, resour
               {meta.label} {resourceLabel ? resourceLabel : resourceType}
             </h2>
             {eligibility?.can_approve === false && (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-danger/30 bg-danger/10 px-2 py-0.5 text-[10px] font-semibold text-danger">
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-danger/30 bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">
                 <ShieldX className="h-3 w-3" />
                 Requires higher authority
               </span>
@@ -210,7 +210,7 @@ export default function ApprovalActionModal({ isOpen, onClose, onConfirm, resour
                           <p className="text-[11px] font-semibold text-text">Eligible approvers:</p>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {eligibility.approvers.slice(0, 6).map((a) => (
-                              <span key={a.user_id} className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-text-muted">
+                              <span key={a.user_id} className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-xs font-semibold text-text-muted">
                                 {a.username} (L{a.authority_level})
                               </span>
                             ))}
@@ -268,14 +268,14 @@ export default function ApprovalActionModal({ isOpen, onClose, onConfirm, resour
                   <div className="space-y-2">
                     {chain.map((item, idx) => (
                       <div key={`${item.user_id}-${idx}`} className="flex items-center gap-3 rounded-xl border border-border bg-surface-2/60 p-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full theme-chip-brand text-[10px] font-bold text-white">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full theme-chip-brand text-xs font-bold text-white">
                           {item.distance}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-text">{item.username}</p>
                           <p className="text-[11px] text-text-muted capitalize">{item.role.replace("_", " ")} • Level {item.authority_level} • {item.org_unit_name || "—"}</p>
                         </div>
-                        <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold text-text-muted">
+                        <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-text-muted">
                           Step {idx + 1}
                         </span>
                       </div>

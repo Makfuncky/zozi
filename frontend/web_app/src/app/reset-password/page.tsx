@@ -102,7 +102,7 @@ function ResetPasswordContent() {
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="mt-1 text-[10px] text-text-faint">
+                <p className="mt-1 text-xs text-text-faint">
                   At least 8 characters with a number and uppercase letter.
                 </p>
               </div>

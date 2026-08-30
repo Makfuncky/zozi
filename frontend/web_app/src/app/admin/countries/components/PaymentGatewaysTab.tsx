@@ -16,15 +16,15 @@ export default function PaymentGatewaysTab({
       <p className="text-xs text-text-muted">Dynamic payment options configured in the checkout pipeline. Note that credential variables must match backend environment naming.</p>
 
       <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 p-3 rounded-lg border border-border bg-surface">
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Gateway ID
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newGatewayId} onChange={(e) => setNewGatewayId(e.target.value)} placeholder="mada" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Display Name
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newGatewayName} onChange={(e) => setNewGatewayName(e.target.value)} placeholder="Mada Credit/Debit" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Integration Type
           <select className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newGatewayType} onChange={(e) => setNewGatewayType(e.target.value)}>
             <option value="card">Card Payment</option>
@@ -34,24 +34,24 @@ export default function PaymentGatewaysTab({
             <option value="other">Other</option>
           </select>
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Credential Env Reference Key
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newGatewayCredRef} onChange={(e) => setNewGatewayCredRef(e.target.value)} placeholder="MADA_API_KEY" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Fee Percentage
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newGatewayFeePct} onChange={(e) => setNewGatewayFeePct(e.target.value)} />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Fee Fixed Amount
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newGatewayFeeFixed} onChange={(e) => setNewGatewayFeeFixed(e.target.value)} />
         </label>
         <div className="flex items-center gap-4 col-span-2 pt-2">
-          <label className="inline-flex items-center gap-1 text-[10px] font-semibold text-text cursor-pointer">
+          <label className="inline-flex items-center gap-1 text-xs font-semibold text-text cursor-pointer">
             <input type="checkbox" checked={newGatewaySupportsCod} onChange={(e) => setNewGatewaySupportsCod(e.target.checked)} />
             Supports Cash On Delivery (COD)
           </label>
-          <label className="inline-flex items-center gap-1 text-[10px] font-semibold text-text cursor-pointer">
+          <label className="inline-flex items-center gap-1 text-xs font-semibold text-text cursor-pointer">
             <input type="checkbox" checked={newGatewaySupportsInstall} onChange={(e) => setNewGatewaySupportsInstall(e.target.checked)} />
             Supports Installments / BNPL
           </label>
@@ -97,7 +97,7 @@ export default function PaymentGatewaysTab({
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-bold text-text block text-sm">{gw.name}</span>
-                <span className="text-[10px] font-mono text-text-faint uppercase">{gw.gateway_id} | {gw.type}</span>
+                <span className="text-xs font-mono text-text-faint uppercase">{gw.gateway_id} | {gw.type}</span>
               </div>
               <div className="flex items-center gap-2">
                 <label className="inline-flex items-center gap-1 text-[11px] font-semibold text-text-muted cursor-pointer">
@@ -121,7 +121,7 @@ export default function PaymentGatewaysTab({
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/60 pt-2">
-              <div><span className="text-text-muted font-semibold">Cred Variable:</span> <span className="font-mono text-[10px] bg-surface-2 px-1 rounded">{gw.credential_ref || "None Required"}</span></div>
+              <div><span className="text-text-muted font-semibold">Cred Variable:</span> <span className="font-mono text-xs bg-surface-2 px-1 rounded">{gw.credential_ref || "None Required"}</span></div>
               <div><span className="text-text-muted font-semibold">Tx Cost:</span> {gw.fee_percentage}% + {gw.fee_fixed}</div>
               <div><span className="text-text-muted font-semibold">Allow COD:</span> {gw.supports_cod ? "Yes" : "No"}</div>
               <div><span className="text-text-muted font-semibold">Allow Installment:</span> {gw.supports_installments ? "Yes" : "No"}</div>

@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/Button";
 
 interface MediaSectionProps {
   draft: ProductDraft;
-  imgRef: RefObject<HTMLInputElement | null>;
-  videoRef: RefObject<HTMLInputElement | null>;
+  imgRef: RefObject<HTMLInputElement>;
+  videoRef: RefObject<HTMLInputElement>;
   galleryFilePreviews: string[];
   galleryMediaCounts: { images: number; videos: number };
   onUpdate: (patch: Partial<ProductDraft>) => void;
@@ -44,7 +44,7 @@ export function MediaSection({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface-2/40 px-3 py-2">
         <div>
           <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Photos and video</span>
-          <p className="mt-1 text-[10px] text-text-faint">Upload files directly. The first photo becomes the cover automatically.</p>
+          <p className="mt-1 text-xs text-text-faint">Upload files directly. The first photo becomes the cover automatically.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -102,7 +102,7 @@ export function MediaSection({
                 <div className="pointer-events-none px-3 text-center text-text-muted">
                   <ImageIcon className="mx-auto mb-2 h-8 w-8 opacity-50" />
                   <p className="text-xs font-medium">Upload photos</p>
-                  <p className="mt-1 text-[10px]">First photo becomes the cover image.</p>
+                  <p className="mt-1 text-xs">First photo becomes the cover image.</p>
                 </div>
               )}
               <input
@@ -147,7 +147,7 @@ export function MediaSection({
               <label className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 Gallery ({mediaCount} / 19)
               </label>
-              <span className="text-[10px] text-text-faint">{galleryMediaCounts.images} photos, {galleryMediaCounts.videos} videos</span>
+              <span className="text-xs text-text-faint">{galleryMediaCounts.images} photos, {galleryMediaCounts.videos} videos</span>
             </div>
 
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
@@ -162,7 +162,7 @@ export function MediaSection({
                         {isVideo ? (
                           <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-text-muted">
                             <FileJson className="h-5 w-5" />
-                            <span className="text-[9px] font-semibold">Video {index + 1}</span>
+                            <span className="text-3xs font-semibold">Video {index + 1}</span>
                           </div>
                         ) : (
                           <img src={preview} alt={`Extra ${index + 1}`} className="h-full w-full object-cover" />
@@ -176,7 +176,7 @@ export function MediaSection({
                     ) : (
                       <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center text-text-faint transition-colors hover:text-primary">
                         <ImageIcon className="mb-0.5 h-5 w-5" />
-                        <span className="text-[9px]">Upload</span>
+                        <span className="text-3xs">Upload</span>
                         <input
                           type="file"
                           accept="image/*,video/*"
@@ -189,7 +189,7 @@ export function MediaSection({
                         />
                       </label>
                     )}
-                    <span className="absolute bottom-0.5 left-0.5 rounded bg-black/50 px-1 text-[7px] font-bold text-white">{index + 1}</span>
+                    <span className="absolute bottom-0.5 left-0.5 rounded bg-black/50 px-1 text-5xs font-bold text-white">{index + 1}</span>
                   </div>
                 );
               })}
@@ -210,7 +210,7 @@ export function MediaSection({
                   if (file) return null;
                   return (
                     <div key={index} className="flex items-center gap-1.5">
-                      <span className="w-4 shrink-0 text-right text-[10px] text-text-faint">{index + 1}.</span>
+                      <span className="w-4 shrink-0 text-right text-xs text-text-faint">{index + 1}.</span>
                       <input
                         id={getDraftFieldId(draft.id, `gallery-url-${index}`)}
                         type="url"
@@ -234,7 +234,7 @@ export function MediaSection({
           <div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Product Video</p>
-              <p className="mt-1 text-[10px] text-text-faint">Optional MP4, WebM, YouTube, or Vimeo.</p>
+              <p className="mt-1 text-xs text-text-faint">Optional MP4, WebM, YouTube, or Vimeo.</p>
             </div>
           </div>
 
@@ -291,7 +291,7 @@ export function MediaSection({
                 )}
               </div>
             ) : (
-              <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-border text-[10px] text-text-faint">
+              <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-border text-xs text-text-faint">
                 Video preview
               </div>
             )}

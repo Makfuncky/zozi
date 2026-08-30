@@ -13,15 +13,15 @@ import "./hud.css";
 /* ================================================================== */
 
 export const HUD = {
-  cyan: "#22d3ee",
-  teal: "#2dd4bf",
-  green: "#34d399",
-  amber: "#fbbf24",
-  red: "#f87171",
-  blue: "#60a5fa",
-  purple: "#a78bfa",
-  pink: "#f472b6",
-  slate: "#94a3b8",
+  cyan: "var(--zozi-ext-22d3ee)",
+  teal: "var(--zozi-ext-2dd4bf)",
+  green: "var(--zozi-ext-34d399)",
+  amber: "var(--zozi-ext-fbbf24)",
+  red: "var(--zozi-ext-f87171)",
+  blue: "var(--zozi-ext-60a5fa)",
+  purple: "var(--zozi-ext-a78bfa)",
+  pink: "var(--zozi-ext-f472b6)",
+  slate: "var(--zozi-ext-94a3b8)",
 } as const;
 
 export type HudColor = (typeof HUD)[keyof typeof HUD] | string;
@@ -142,13 +142,13 @@ export function Section({ title, subtitle, icon: Icon, accent = "cyan", status, 
           <div className="flex items-center gap-1.5">
             <h3 className="truncate text-[11px] font-bold tracking-tight text-text">{title}</h3>
             {typeof count === "number" && count > 0 && (
-              <span className="theme-chip-danger rounded-full px-1.5 py-[1px] text-[9px] font-bold leading-tight">{count}</span>
+              <span className="theme-chip-danger rounded-full px-1.5 py-[1px] text-3xs font-bold leading-tight">{count}</span>
             )}
           </div>
-          {subtitle && <p className="truncate text-[8px] font-mono uppercase tracking-[0.18em] text-text-faint">{subtitle}</p>}
+          {subtitle && <p className="truncate text-4xs font-mono uppercase tracking-[0.18em] text-text-faint">{subtitle}</p>}
         </div>
         {status && (
-          <span className="flex items-center gap-1.5 text-[9px] font-bold font-mono uppercase" style={{ color: sc }}>
+          <span className="flex items-center gap-1.5 text-3xs font-bold font-mono uppercase" style={{ color: sc }}>
             <span className="relative flex h-2 w-2">
               {status === "live" && <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: sc }} />}
               <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: sc, boxShadow: neon(sc, 5) }} />
@@ -185,15 +185,15 @@ export function Stat({ label, value, format, icon: Icon, accent = "cyan", trend,
       style={{ borderLeft: `2px solid ${c}` }}>
       <div className="pointer-events-none absolute -right-6 -top-6 h-14 w-14 rounded-full opacity-[0.08] blur-2xl" style={{ background: c }} />
       <div className="relative flex items-center justify-between gap-1">
-        <span className="text-[9px] font-bold font-mono uppercase tracking-[0.12em] text-text-faint">{label}</span>
+        <span className="text-3xs font-bold font-mono uppercase tracking-[0.12em] text-text-faint">{label}</span>
         {Icon && <Icon className="h-3 w-3 shrink-0" style={{ color: c, filter: `drop-shadow(0 0 3px ${c})` }} />}
       </div>
       <div className="relative mt-1 flex items-end gap-1.5">
         <span className="text-base font-bold leading-none tracking-tight text-text tabular-nums"
           style={{ textShadow: `0 0 16px ${c}20` }}>{display}</span>
-        {trend && <span className="mb-[1px] text-[10px] font-bold" style={{ color: tc }}>{trend === "up" ? "▲" : trend === "down" ? "▼" : "◆"}</span>}
+        {trend && <span className="mb-[1px] text-xs font-bold" style={{ color: tc }}>{trend === "up" ? "▲" : trend === "down" ? "▼" : "◆"}</span>}
       </div>
-      {delta && <p className="relative mt-[2px] text-[9px] font-bold font-mono" style={{ color: tc }}>{delta}</p>}
+      {delta && <p className="relative mt-[2px] text-3xs font-bold font-mono" style={{ color: tc }}>{delta}</p>}
       {sparkline && sparkline.length > 1 && (
         <div className="relative mt-1">
           <MicroChart data={sparkline} color={c} height={16} width={80} />
@@ -234,7 +234,7 @@ export function AreaChart({ data, color = "cyan", height = 80, loading = false }
   data: { label: string; value: number }[]; color?: HudColor; height?: number; loading?: boolean;
 }) {
   if (loading) return <div className="w-full rounded-lg bg-surface-2/60 animate-pulse" style={{ height }} />;
-  if (!data?.length) return <div className="flex w-full items-center justify-center rounded-lg bg-surface-2/30 text-[9px] text-text-faint" style={{ height }}>NO DATA</div>;
+  if (!data?.length) return <div className="flex w-full items-center justify-center rounded-lg bg-surface-2/30 text-3xs text-text-faint" style={{ height }}>NO DATA</div>;
   const c = hex(color);
   const w = 300;
   const mx = Math.max(...data.map(d => d.value)) || 1;
@@ -294,7 +294,7 @@ export function DonutChart({ segments, centerLabel, centerValue, height = 80, lo
       </svg>
       <div className="flex-1 min-w-0 space-y-1">
         {segments.map((s, i) => (
-          <div key={i} className="flex items-center justify-between gap-1 text-[9px]">
+          <div key={i} className="flex items-center justify-between gap-1 text-3xs">
             <span className="flex min-w-0 items-center gap-1.5">
               <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: hex(s.color), boxShadow: neon(hex(s.color), 3) }} />
               <span className="truncate text-text-muted">{s.label}</span>
@@ -315,7 +315,7 @@ export function Bars({ data, height = 80, loading = false, valueFormat }: {
   height?: number; loading?: boolean; valueFormat?: (n: number) => string;
 }) {
   if (loading) return <div className="w-full rounded-lg bg-surface-2/60 animate-pulse" style={{ height }} />;
-  if (!data?.length) return <div className="flex w-full items-center justify-center rounded-lg bg-surface-2/30 text-[9px] text-text-faint" style={{ height }}>NO DATA</div>;
+  if (!data?.length) return <div className="flex w-full items-center justify-center rounded-lg bg-surface-2/30 text-3xs text-text-faint" style={{ height }}>NO DATA</div>;
   const mx = Math.max(...data.map(d => d.value)) || 1;
   return (
     <div className="flex items-end gap-1.5" style={{ height }}>
@@ -324,14 +324,14 @@ export function Bars({ data, height = 80, loading = false, valueFormat }: {
         const pct = (d.value / mx) * 100;
         return (
           <div key={i} className="group flex flex-1 flex-col items-center justify-end gap-1">
-            <span className="text-[8px] font-bold font-mono text-text tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-4xs font-bold font-mono text-text tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
               {valueFormat ? valueFormat(d.value) : d.value.toLocaleString()}
             </span>
             <div className="relative flex w-full max-w-[24px] items-end justify-center" style={{ height: height - 18 }}>
               <div className="w-full rounded-t-sm transition-all duration-500"
                 style={{ height: `${Math.max(3, pct)}%`, background: `linear-gradient(180deg, ${c}, ${c}10)`, boxShadow: `0 0 8px ${c}30` }} />
             </div>
-            <span className="max-w-full truncate text-[7px] font-mono uppercase tracking-wide text-text-faint">{d.label}</span>
+            <span className="max-w-full truncate text-5xs font-mono uppercase tracking-wide text-text-faint">{d.label}</span>
           </div>
         );
       })}
@@ -359,12 +359,12 @@ export function Gauge({ value, max = 100, label, unit = "%", color = "green", wa
             strokeDasharray={`${pct * circ} ${circ}`} style={{ filter: `drop-shadow(0 0 5px ${c})`, transition: "stroke-dasharray 0.6s ease" }} />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[10px] font-bold leading-none text-text tabular-nums" style={{ textShadow: `0 0 10px ${c}40` }}>
-            {Math.round(value)}<span className="text-[7px] font-medium text-text-faint">{unit}</span>
+          <span className="text-xs font-bold leading-none text-text tabular-nums" style={{ textShadow: `0 0 10px ${c}40` }}>
+            {Math.round(value)}<span className="text-5xs font-medium text-text-faint">{unit}</span>
           </span>
         </div>
       </div>
-      <span className="mt-1 text-[8px] font-bold font-mono uppercase tracking-[0.14em] text-text-faint">{label}</span>
+      <span className="mt-1 text-4xs font-bold font-mono uppercase tracking-[0.14em] text-text-faint">{label}</span>
     </div>
   );
 }
@@ -381,7 +381,7 @@ export function Meter({ value, max = 100, color = "green", warn, crit, label, lo
   if (loading) return <div className="h-2 w-full rounded-full bg-surface-2/60 animate-pulse" />;
   return (
     <div>
-      {label && <div className="mb-[2px] flex items-center justify-between text-[8px] font-mono">
+      {label && <div className="mb-[2px] flex items-center justify-between text-4xs font-mono">
         <span className="font-semibold text-text-muted">{label}</span>
         <span className="font-bold tabular-nums" style={{ color: c, textShadow: `0 0 4px ${c}` }}>
           {typeof value === "number" ? value.toFixed(1) : value}{max > 1 ? `/${max}` : ""}
@@ -405,7 +405,7 @@ export function Ticker({ items, loading = false }: {
   const sc = (s?: string) => s === "positive" ? HUD.green : s === "negative" ? HUD.red : HUD.cyan;
   if (loading) return <div className="h-7 w-full rounded bg-surface-2/60 animate-pulse" />;
   if (!items?.length) return (
-    <div className="theme-elevated flex h-7 items-center gap-2 rounded px-3 text-[9px] text-text-faint">
+    <div className="theme-elevated flex h-7 items-center gap-2 rounded px-3 text-3xs text-text-faint">
       <span className="h-1.5 w-1.5 rounded-full bg-slate-500" /> Awaiting feed…
     </div>
   );
@@ -416,7 +416,7 @@ export function Ticker({ items, loading = false }: {
       <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-10" style={{ background: "linear-gradient(270deg, var(--color-surface-1), transparent)" }} />
       <div className="flex w-max animate-[cc-marquee_40s_linear_infinite] gap-8 pl-3 py-1.5">
         {loop.map((it, i) => (
-          <span key={i} className="flex items-center gap-1.5 whitespace-nowrap text-[9px]">
+          <span key={i} className="flex items-center gap-1.5 whitespace-nowrap text-3xs">
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: sc(it.sentiment), boxShadow: neon(sc(it.sentiment), 3) }} />
             <span className="font-bold font-mono uppercase tracking-wider text-text-faint">[{it.category ?? "INTEL"}]</span>
             <span className="text-text">{it.title}</span>
@@ -445,12 +445,12 @@ export function AlertRow({ alert, onOpen }: {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-[10px] font-bold text-text group-hover:text-primary">{alert.title}</span>
-          {alert.country_code && <span className="rounded bg-surface-2/60 px-1 py-[1px] text-[7px] font-bold font-mono uppercase text-text-faint">{alert.country_code}</span>}
+          <span className="truncate text-xs font-bold text-text group-hover:text-primary">{alert.title}</span>
+          {alert.country_code && <span className="rounded bg-surface-2/60 px-1 py-[1px] text-5xs font-bold font-mono uppercase text-text-faint">{alert.country_code}</span>}
         </div>
-        {alert.message && <p className="mt-[1px] line-clamp-1 text-[9px] text-text-muted">{alert.message}</p>}
+        {alert.message && <p className="mt-[1px] line-clamp-1 text-3xs text-text-muted">{alert.message}</p>}
       </div>
-      <span className="shrink-0 self-start rounded px-1.5 py-[1px] text-[7px] font-bold font-mono uppercase tracking-wider"
+      <span className="shrink-0 self-start rounded px-1.5 py-[1px] text-5xs font-bold font-mono uppercase tracking-wider"
         style={{ background: `${sc}15`, color: sc }}>{alert.severity ?? "info"}</span>
     </button>
   );
@@ -469,13 +469,13 @@ export function FraudRow({ fa, onOpen }: {
     <button type="button" onClick={onOpen}
       className="theme-elevated group flex w-full items-center gap-2 rounded px-2.5 py-2 transition-all hover:bg-surface-2/30"
       style={{ borderLeft: `2px solid ${pc}` }}>
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-[9px] font-bold font-mono"
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-3xs font-bold font-mono"
         style={{ background: `${pc}12`, color: pc, border: `1px solid ${pc}15` }}>{score}</span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[10px] font-bold text-text group-hover:text-primary">Risk #{fa.id}</p>
-        <p className="truncate text-[8px] text-text-muted font-mono">{(fa.triggered_rules ?? []).slice(0, 2).join(" · ") || "—"}</p>
+        <p className="truncate text-xs font-bold text-text group-hover:text-primary">Risk #{fa.id}</p>
+        <p className="truncate text-4xs text-text-muted font-mono">{(fa.triggered_rules ?? []).slice(0, 2).join(" · ") || "—"}</p>
       </div>
-      <span className="shrink-0 text-[7px] font-bold font-mono uppercase tracking-wider" style={{ color: pc }}>{fa.priority ?? "low"}</span>
+      <span className="shrink-0 text-5xs font-bold font-mono uppercase tracking-wider" style={{ color: pc }}>{fa.priority ?? "low"}</span>
     </button>
   );
 }
@@ -492,11 +492,11 @@ export function RankRow({ rank, label, primary, secondary, accent = "cyan", load
   return (
     <div className="theme-elevated group flex items-center gap-2 rounded px-2 py-1.5 transition-all hover:bg-surface-2/30"
       style={{ borderLeft: `1.5px solid ${c}30` }}>
-      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-[8px] font-bold font-mono"
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-4xs font-bold font-mono"
         style={{ background: `${c}12`, color: c }}>{rank}</span>
-      <span className="min-w-0 flex-1 truncate text-[10px] font-medium text-text group-hover:text-primary">{label}</span>
-      {primary && <span className="shrink-0 text-[9px] font-bold font-mono tabular-nums" style={{ color: c }}>{primary}</span>}
-      {secondary && <span className="shrink-0 text-[8px] text-text-muted font-mono">{secondary}</span>}
+      <span className="min-w-0 flex-1 truncate text-xs font-medium text-text group-hover:text-primary">{label}</span>
+      {primary && <span className="shrink-0 text-3xs font-bold font-mono tabular-nums" style={{ color: c }}>{primary}</span>}
+      {secondary && <span className="shrink-0 text-4xs text-text-muted font-mono">{secondary}</span>}
     </div>
   );
 }
@@ -512,7 +512,7 @@ export function EcoNode({ icon: Icon, label, value, accent = "cyan" }: {
     <div className="theme-elevated flex items-center gap-2 rounded px-2.5 py-2" style={{ borderLeft: `2px solid ${c}` }}>
       <Icon className="h-3 w-3 shrink-0" style={{ color: c, filter: `drop-shadow(0 0 3px ${c})` }} />
       <div className="min-w-0">
-        <p className="truncate text-[7px] font-bold font-mono uppercase tracking-[0.12em] text-text-faint">{label}</p>
+        <p className="truncate text-5xs font-bold font-mono uppercase tracking-[0.12em] text-text-faint">{label}</p>
         <p className="text-xs font-bold text-text tabular-nums" style={{ textShadow: `0 0 8px ${c}20` }}>{value.toLocaleString()}</p>
       </div>
     </div>

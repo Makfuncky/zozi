@@ -236,23 +236,23 @@ export default function AdminVideoPanel() {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-text">{room.name}</h3>
-                      <p className="text-[10px] text-text-muted capitalize">{room.purpose} room</p>
+                      <p className="text-xs text-text-muted capitalize">{room.purpose} room</p>
                     </div>
                   </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold ${
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-3xs font-semibold ${
                     room.status === "active" ? "bg-success/10 text-success" : room.status === "scheduled" ? "bg-warning/10 text-warning" : "bg-surface-3 text-text-muted"
                   }`}>{room.status ?? "active"}</span>
                 </div>
 
                 {room.started_at && (
-                  <div className="flex items-center gap-2 text-[10px] text-text-faint">
+                  <div className="flex items-center gap-2 text-xs text-text-faint">
                     <Clock className="h-3 w-3" />
                     Started: {new Date(room.started_at).toLocaleString()}
                     {room.ended_at && <span>· Ended: {new Date(room.ended_at).toLocaleString()}</span>}
                   </div>
                 )}
 
-                <div className="flex items-center gap-3 text-[10px] text-text-muted">
+                <div className="flex items-center gap-3 text-xs text-text-muted">
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" />{room.max_participants} max</span>
                   <span className="flex items-center gap-1"><Lock className="h-3 w-3" />E2EE</span>
                   {room.recording_enabled && <span className="flex items-center gap-1"><Play className="h-3 w-3" />Recording</span>}
@@ -261,7 +261,7 @@ export default function AdminVideoPanel() {
 
                 {room.invite_link && (
                   <button onClick={() => handleCopyLink(room.invite_link!)}
-                    className="flex items-center gap-1.5 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-[10px] font-mono text-text-muted hover:text-text transition truncate">
+                    className="flex items-center gap-1.5 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs font-mono text-text-muted hover:text-text transition truncate">
                     <Copy className="h-3 w-3 shrink-0" />
                     <span className="truncate">{room.invite_link}</span>
                   </button>
@@ -316,12 +316,12 @@ export default function AdminVideoPanel() {
                 <button onClick={() => setShowCreateModal(false)} className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
               </div>
               <div className="space-y-3">
-                <label className="block space-y-1 text-[10px] text-text-muted">
+                <label className="block space-y-1 text-xs text-text-muted">
                   Room Name
                   <input value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" placeholder="e.g. Q3 Board Review" />
                 </label>
-                <label className="block space-y-1 text-[10px] text-text-muted">
+                <label className="block space-y-1 text-xs text-text-muted">
                   Meeting Type
                   <select value={newRoomPurpose} onChange={(e) => setNewRoomPurpose(e.target.value)}
                     className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text">
@@ -331,7 +331,7 @@ export default function AdminVideoPanel() {
                     <option value="training">Training</option>
                   </select>
                 </label>
-                <label className="block space-y-1 text-[10px] text-text-muted">
+                <label className="block space-y-1 text-xs text-text-muted">
                   Max Participants
                   <input type="number" min={2} max={500} value={newRoomParticipants}
                     onChange={(e) => setNewRoomParticipants(e.target.value)}
@@ -361,18 +361,18 @@ export default function AdminVideoPanel() {
                 <button onClick={() => setShowScheduleModal(false)} className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
               </div>
               <div className="space-y-3">
-                <label className="block space-y-1 text-[10px] text-text-muted">
+                <label className="block space-y-1 text-xs text-text-muted">
                   Room Name
                   <input value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" />
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <label className="block space-y-1 text-[10px] text-text-muted">
+                  <label className="block space-y-1 text-xs text-text-muted">
                     Date
                     <input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)}
                       className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" />
                   </label>
-                  <label className="block space-y-1 text-[10px] text-text-muted">
+                  <label className="block space-y-1 text-xs text-text-muted">
                     Time
                     <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)}
                       className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" />
@@ -401,28 +401,28 @@ export default function AdminVideoPanel() {
                 <h3 className="text-sm font-bold text-text flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Transcript</h3>
                 <button onClick={handleCloseTranscript} className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
               </div>
-              <p className="text-[10px] text-text-muted mb-3">Meeting: {transcriptData.meeting_id} · {transcriptData.word_count} words</p>
+              <p className="text-xs text-text-muted mb-3">Meeting: {transcriptData.meeting_id} · {transcriptData.word_count} words</p>
 
               {transcriptData.summary && (
                 <div className="mb-4 p-3 rounded-lg bg-surface-2 border border-border">
-                  <p className="text-[10px] font-semibold text-text-muted mb-1">Summary</p>
+                  <p className="text-xs font-semibold text-text-muted mb-1">Summary</p>
                   <p className="text-xs text-text">{transcriptData.summary}</p>
                 </div>
               )}
 
               <div className="space-y-3 mb-4">
-                <p className="text-[10px] font-semibold text-text-muted">Segments</p>
+                <p className="text-xs font-semibold text-text-muted">Segments</p>
                 {transcriptData.segments.length === 0 ? (
                   <p className="text-xs text-text-faint">No transcript segments recorded</p>
                 ) : (
                   transcriptData.segments.map((seg, i) => (
                     <div key={i} className="p-3 rounded-lg bg-surface-2 border border-border">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-semibold text-primary">Speaker {seg.speaker_id}</span>
-                        <span className="text-[10px] text-text-faint">{new Date(seg.timestamp).toLocaleTimeString()}</span>
+                        <span className="text-xs font-semibold text-primary">Speaker {seg.speaker_id}</span>
+                        <span className="text-xs text-text-faint">{new Date(seg.timestamp).toLocaleTimeString()}</span>
                       </div>
                       <p className="text-xs text-text">{seg.content}</p>
-                      {seg.language && <p className="text-[10px] text-text-faint mt-1">Language: {seg.language}</p>}
+                      {seg.language && <p className="text-xs text-text-faint mt-1">Language: {seg.language}</p>}
                     </div>
                   ))
                 )}
@@ -430,13 +430,13 @@ export default function AdminVideoPanel() {
 
               {transcriptData.action_items.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold text-text-muted mb-2">Action Items</p>
+                  <p className="text-xs font-semibold text-text-muted mb-2">Action Items</p>
                   <div className="space-y-2">
                     {transcriptData.action_items.map((item, i) => (
                       <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-warning/5 border border-warning/20">
-                        <span className="text-[10px] font-medium text-text">{item.action}</span>
-                        <span className="text-[10px] text-text-faint">· {item.entity_type} #{item.entity_id}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        <span className="text-xs font-medium text-text">{item.action}</span>
+                        <span className="text-xs text-text-faint">· {item.entity_type} #{item.entity_id}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                           item.status === "done" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
                         }`}>{item.status}</span>
                       </div>

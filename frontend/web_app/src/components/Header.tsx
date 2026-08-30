@@ -120,7 +120,7 @@ const LocaleToggle = React.memo(function LocaleToggle() {
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] text-text-muted transition-colors hover:border-border-light hover:bg-surface-1/70 hover:text-text"
+        className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-semibold tracking-[0.2em] text-text-muted transition-colors hover:border-border-light hover:bg-surface-1/70 hover:text-text"
         aria-label="Choose language"
         title={activeLanguage.nativeName}
       >
@@ -134,7 +134,7 @@ const LocaleToggle = React.memo(function LocaleToggle() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="absolute right-0 z-[999] mt-2 min-w-44 rounded-lg border border-border bg-surface-1 p-1 shadow-md"
+            className="absolute right-0 z-modal mt-2 min-w-44 rounded-lg border border-border bg-surface-1 p-1 shadow-md"
           >
             {LANGUAGE_OPTIONS.map((language: any) => {
               const selected = language.code === locale;
@@ -255,7 +255,7 @@ const CountryToggle = React.memo(function CountryToggle() {
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-text-muted transition-colors hover:border-border-light hover:bg-surface-1/70 hover:text-text"
+        className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-semibold tracking-[0.18em] text-text-muted transition-colors hover:border-border-light hover:bg-surface-1/70 hover:text-text"
         aria-label="Choose country"
       >
         <span>{selectedCountry || "AUTO"}</span>
@@ -268,7 +268,7 @@ const CountryToggle = React.memo(function CountryToggle() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="absolute right-0 z-[999] mt-2 min-w-52 rounded-lg border border-border bg-surface-1 p-1 shadow-md"
+            className="absolute right-0 z-modal mt-2 min-w-52 rounded-lg border border-border bg-surface-1 p-1 shadow-md"
           >
             <button
               type="button"
@@ -574,8 +574,8 @@ export default React.memo(function Header() {
 
               <div className="hidden md:inline-flex md:items-center md:gap-1 md:sm:gap-2">
                 <div className="inline-flex flex-col items-start rounded-full border border-primary/20 bg-white/64 px-2.5 py-1 text-primary shadow-card-sm backdrop-blur-md dark:border-white/12 dark:bg-slate-950/30 dark:text-white">
-                  <span className="text-[10px] font-semibold tracking-[0.18em]">{currency.code}</span>
-                  <span className="text-[8px] font-medium tracking-[0.08em] text-text-faint dark:text-white/70">{currencySourceLabel}</span>
+                  <span className="text-xs font-semibold tracking-[0.18em]">{currency.code}</span>
+                  <span className="text-4xs font-medium tracking-[0.08em] text-text-faint dark:text-white/70">{currencySourceLabel}</span>
                 </div>
 
                 <CountryToggle />
@@ -594,7 +594,7 @@ export default React.memo(function Header() {
                 >
                   <Bell className="w-5 h-5 text-accent" />
                   {unreadNotifs > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-accent text-[10px] font-bold text-white flex items-center justify-center">
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-accent text-xs font-bold text-white flex items-center justify-center">
                       {unreadNotifs > 9 ? "9+" : unreadNotifs}
                     </span>
                   )}
@@ -609,7 +609,7 @@ export default React.memo(function Header() {
               >
                 <Heart className="w-5 h-5 text-accent" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-accent text-[10px] font-bold text-white flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-accent text-xs font-bold text-white flex items-center justify-center">
                     {wishlistCount > 9 ? "9+" : wishlistCount}
                   </span>
                 )}
@@ -623,7 +623,7 @@ export default React.memo(function Header() {
               >
                 <ShoppingBag className="w-5 h-5 text-primary" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-on-brand flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-xs font-bold text-on-brand flex items-center justify-center">
                     {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
@@ -661,7 +661,7 @@ export default React.memo(function Header() {
                             <p className="text-xs text-text-muted">
                               {user?.email}
                             </p>
-                            <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-primary/15 text-primary">
+                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded-md bg-primary/15 text-primary">
                               {user?.role}
                             </span>
                           </div>
@@ -862,7 +862,7 @@ export default React.memo(function Header() {
                   <p className="truncate text-sm font-semibold text-text">
                     {user.username}
                   </p>
-                  <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-primary/15 text-primary">
+                  <span className="inline-block mt-1 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded-md bg-primary/15 text-primary">
                     {user.role}
                   </span>
                 </div>

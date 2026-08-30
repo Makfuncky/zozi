@@ -82,7 +82,7 @@ export default function ProcessingModal({
               <div className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
                 <ImageIcon className="w-3.5 h-3.5" />
                 Background Removal
-                {bgModel && <span className="px-1.5 py-0.5 bg-primary/5 text-primary text-[10px] rounded">{bgModel}</span>}
+                {bgModel && <span className="px-1.5 py-0.5 bg-primary/5 text-primary text-xs rounded">{bgModel}</span>}
               </div>
               <span className="text-xs font-mono text-text-faint">{bgProgress}%</span>
             </div>

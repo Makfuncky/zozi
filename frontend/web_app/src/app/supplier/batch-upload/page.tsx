@@ -910,7 +910,7 @@ export default function BatchUploadPage() {
                       }`}
                     />
                   </button>
-                  <span className="text-[10px] font-semibold text-text-muted select-none">
+                  <span className="text-xs font-semibold text-text-muted select-none">
                     {tAutoPublishLabel}
                   </span>
                 </label>
@@ -1012,7 +1012,7 @@ export default function BatchUploadPage() {
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                  <p className="mt-4 text-[10px] text-text-faint">
+                  <p className="mt-4 text-xs text-text-faint">
                     {tAIDescription}
                   </p>
                 </div>
@@ -1050,10 +1050,10 @@ export default function BatchUploadPage() {
 
                       {/* Info */}
                       <div className="p-2">
-                        <p className="text-[10px] font-medium text-text truncate">
+                        <p className="text-xs font-medium text-text truncate">
                           {item.editedName || item.file.name}
                         </p>
-                        <p className="text-[9px] text-text-faint">
+                        <p className="text-3xs text-text-faint">
                           {(item.file.size / 1024).toFixed(0)} {tKB}
                         </p>
                       </div>
@@ -1075,7 +1075,7 @@ export default function BatchUploadPage() {
                       className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-surface-2/50 hover:border-primary/40 hover:bg-surface-2 transition-all aspect-square"
                     >
                       <Upload className="h-6 w-6 text-text-faint mb-1" />
-                      <span className="text-[10px] text-text-faint">{tAddMore}</span>
+                      <span className="text-xs text-text-faint">{tAddMore}</span>
                     </button>
                   )}
                 </div>
@@ -1098,7 +1098,7 @@ export default function BatchUploadPage() {
                   </div>
                   <button
                     onClick={clearAll}
-                    className="text-[10px] font-semibold text-danger/70 hover:text-danger transition-colors"
+                    className="text-xs font-semibold text-danger/70 hover:text-danger transition-colors"
                   >
                     {tClearAll}
                   </button>
@@ -1138,8 +1138,8 @@ export default function BatchUploadPage() {
             {/* Progress bar */}
             <div className="w-full max-w-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] text-text-muted">{tProgress}</span>
-                <span className="text-[10px] text-text-muted tabular-nums">{progress}%</span>
+                <span className="text-xs text-text-muted">{tProgress}</span>
+                <span className="text-xs text-text-muted tabular-nums">{progress}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-surface-2 overflow-hidden">
                 <motion.div
@@ -1200,13 +1200,13 @@ export default function BatchUploadPage() {
                       <p className="text-xs font-semibold text-success">
                         {autoPublishedCount} {tAutoPubBanner}
                       </p>
-                      <p className="text-[10px] text-text-muted mt-0.5">
+                      <p className="text-xs text-text-muted mt-0.5">
                         {tAutoPubDesc}
                       </p>
                     </div>
                   </div>
                   {autoPublishError && (
-                    <p className="mt-2 text-[10px] text-warning">{autoPublishError}</p>
+                    <p className="mt-2 text-xs text-warning">{autoPublishError}</p>
                   )}
                 </motion.div>
               )}
@@ -1246,7 +1246,7 @@ export default function BatchUploadPage() {
               {/* Strategy wins */}
               {totalStrategyWins > 0 && (
                 <div className="rounded-xl border border-border bg-surface-2/50 p-3">
-                  <p className="text-[10px] font-semibold text-text-muted mb-2">{tBGStrategy}</p>
+                  <p className="text-xs font-semibold text-text-muted mb-2">{tBGStrategy}</p>
                   <div className="flex flex-wrap gap-3">
                     {Object.entries(strategyWins)
                       .sort(([, a], [, b]) => b - a)
@@ -1258,10 +1258,10 @@ export default function BatchUploadPage() {
                               backgroundColor: `hsl(${Object.keys(strategyWins).indexOf(strategy) * 60}, 70%, 50%)`,
                             }}
                           />
-                          <span className="text-[10px] text-text-muted capitalize">
+                          <span className="text-xs text-text-muted capitalize">
                             {strategy.replace(/_/g, " ")}
                           </span>
-                          <span className="text-[10px] font-semibold text-text tabular-nums">{count}</span>
+                          <span className="text-xs font-semibold text-text tabular-nums">{count}</span>
                         </div>
                       ))}
                   </div>
@@ -1286,7 +1286,7 @@ export default function BatchUploadPage() {
                         <div className="flex items-center gap-1 rounded-lg border border-warning/20 bg-warning/[0.04] p-0.5">
                           <button
                             onClick={() => setSmartMerge(false)}
-                            className={`rounded-md px-2 py-0.5 text-[9px] font-semibold transition-all ${
+                            className={`rounded-md px-2 py-0.5 text-3xs font-semibold transition-all ${
                               !smartMerge
                                 ? "bg-warning/20 text-warning shadow-sm"
                                 : "text-warning/60 hover:text-warning"
@@ -1296,7 +1296,7 @@ export default function BatchUploadPage() {
                           </button>
                           <button
                             onClick={() => setSmartMerge(true)}
-                            className={`rounded-md px-2 py-0.5 text-[9px] font-semibold transition-all ${
+                            className={`rounded-md px-2 py-0.5 text-3xs font-semibold transition-all ${
                               smartMerge
                                 ? "bg-info/20 text-info shadow-sm ring-1 ring-info/40"
                                 : "text-warning/60 hover:text-warning"
@@ -1306,7 +1306,7 @@ export default function BatchUploadPage() {
                           </button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-text-muted mt-0.5">
+                      <p className="text-xs text-text-muted mt-0.5">
                         {duplicateGroups.reduce((s, g) => s + g.indices.length, 0)} {tDuplicatesDesc}
                         {smartMerge && (
                           <span className="ml-1 text-info/70">· {tSmartOn}</span>
@@ -1325,7 +1325,7 @@ export default function BatchUploadPage() {
                               className="group relative"
                             >
                               <span
-                                className={`rounded-full px-2 py-0.5 text-[9px] font-medium transition-colors ${
+                                className={`rounded-full px-2 py-0.5 text-3xs font-medium transition-colors ${
                                   isSmart
                                     ? "bg-info/10 text-info/80"
                                     : "bg-warning/10 text-warning/80"
@@ -1333,14 +1333,14 @@ export default function BatchUploadPage() {
                               >
                                 {name} ×{group.indices.length}
                                 {isSmart && (
-                                  <span className="ml-0.5 text-[7px] opacity-60">✦</span>
+                                  <span className="ml-0.5 text-5xs opacity-60">✦</span>
                                 )}
                               </span>
                               {/* Tooltip showing match reason */}
                               {isSmart && group.matchType && (
                                 <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-20 hidden group-hover:block">
                                   <div className="whitespace-nowrap rounded-lg border border-info/20 bg-surface px-2.5 py-1.5 shadow-lg shadow-black/5">
-                                    <p className="text-[9px] text-info font-medium">
+                                    <p className="text-3xs text-info font-medium">
                                       {group.matchType}
                                     </p>
                                   </div>
@@ -1353,7 +1353,7 @@ export default function BatchUploadPage() {
                     </div>
                     <button
                       onClick={mergeDuplicates}
-                      className="flex items-center gap-1.5 rounded-lg bg-warning px-3 py-1.5 text-[10px] font-semibold text-white hover:bg-warning/90 transition-all active:scale-[0.98] shrink-0"
+                      className="flex items-center gap-1.5 rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-white hover:bg-warning/90 transition-all active:scale-[0.98] shrink-0"
                     >
                       <Zap className="h-3 w-3" />
                       {tMergeBtn} ({duplicateGroups.reduce((s, g) => s + g.indices.length - 1, 0)})
@@ -1413,7 +1413,7 @@ export default function BatchUploadPage() {
                       placeholder={tMinPrice}
                       className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-text placeholder:text-text-faint tabular-nums focus:outline-none focus:ring-1 focus:ring-primary/50"
                     />
-                    <span className="text-[10px] text-text-faint">–</span>
+                    <span className="text-xs text-text-faint">–</span>
                     <input
                       type="number"
                       min="0"
@@ -1435,11 +1435,11 @@ export default function BatchUploadPage() {
                         setPriceMin("");
                         setPriceMax("");
                       }}
-                      className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[10px] font-semibold text-text-muted hover:text-text hover:bg-surface-2 transition-colors"
+                      className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-text-muted hover:text-text hover:bg-surface-2 transition-colors"
                     >
                       <SlidersHorizontal className="h-3 w-3" />
                       {tClearFilters}
-                      <span className="ml-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary tabular-nums">
+                      <span className="ml-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-3xs text-primary tabular-nums">
                         {filteredItems.length}
                       </span>
                     </button>
@@ -1458,7 +1458,7 @@ export default function BatchUploadPage() {
                           onChange={toggleSelectAll}
                           className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary/40 cursor-pointer"
                         />
-                        <span className="text-[9px] text-text-muted font-medium">
+                        <span className="text-3xs text-text-muted font-medium">
                           {allFilteredSelected ? tDeselectAll : tSelectAllLabel}
                         </span>
                       </label>
@@ -1467,7 +1467,7 @@ export default function BatchUploadPage() {
                     {selectableItems.length > 0 && reviewedCount < selectableItems.length && (
                       <button
                         onClick={() => setReviewedIds(selectableItems.map((i) => i.index))}
-                        className="flex items-center gap-1 rounded-lg bg-success/10 px-2 py-1 text-[9px] font-semibold text-success hover:bg-success/20 transition-all active:scale-[0.97]"
+                        className="flex items-center gap-1 rounded-lg bg-success/10 px-2 py-1 text-3xs font-semibold text-success hover:bg-success/20 transition-all active:scale-[0.97]"
                       >
                         <CheckCheck className="h-3 w-3" />
                         {tMarkAllReviewed}
@@ -1476,12 +1476,12 @@ export default function BatchUploadPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {hasActiveFilters && (
-                      <p className="text-[10px] text-text-muted">
+                      <p className="text-xs text-text-muted">
                         {filteredItems.length} {tFiltersActive} · {items.length} {tTotalShort}
                       </p>
                     )}
                     {selectedIds.length > 0 && (
-                      <span className="text-[9px] font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded-full tabular-nums">
+                      <span className="text-3xs font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded-full tabular-nums">
                         {selectedIds.length} {tSelectedCount}
                       </span>
                     )}
@@ -1501,7 +1501,7 @@ export default function BatchUploadPage() {
                           setPriceMin("");
                           setPriceMax("");
                         }}
-                        className="mt-2 text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors"
+                        className="mt-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
                       >
                         {tClearFilters}
                       </button>
@@ -1573,12 +1573,12 @@ export default function BatchUploadPage() {
                         <div className="min-w-0 flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {/* Name */}
                           <div className="col-span-2 sm:col-span-2">
-                            <label className="text-[9px] text-text-muted block mb-0.5">
+                            <label className="text-3xs text-text-muted block mb-0.5">
                               {tName}{item.autoPublished ? ` ${tPublishedSuffix}` : ""}
                             </label>
                             {previewEnabled && selectedIds.includes(item.index) && bulkName.trim() && hoveredField === 'name' && !item.autoPublished && item.mergedInto === undefined ? (
                               <div className="rounded-lg border border-info/20 bg-info/[0.03] px-2 py-1.5">
-                                <div className="flex items-center gap-1.5 text-[10px]">
+                                <div className="flex items-center gap-1.5 text-xs">
                                   <span className="text-text-muted line-through">{item.editedName}</span>
                                   <ArrowRight className="h-3 w-3 shrink-0 text-success" />
                                   <span className="text-xs font-semibold text-success">{bulkName.trim()}</span>
@@ -1602,10 +1602,10 @@ export default function BatchUploadPage() {
 
                           {/* Category */}
                           <div>
-                            <label className="text-[9px] text-text-muted block mb-0.5">{tCategory}</label>
+                            <label className="text-3xs text-text-muted block mb-0.5">{tCategory}</label>
                             {previewEnabled && selectedIds.includes(item.index) && bulkCategory.trim() && hoveredField === 'category' && !item.autoPublished && item.mergedInto === undefined ? (
                               <div className="rounded-lg border border-info/20 bg-info/[0.03] px-2 py-1.5">
-                                <div className="flex items-center gap-1.5 text-[10px]">
+                                <div className="flex items-center gap-1.5 text-xs">
                                   <span className="text-text-muted line-through">{item.editedCategory}</span>
                                   <ArrowRight className="h-3 w-3 shrink-0 text-success" />
                                   <span className="text-xs font-semibold text-success">{bulkCategory.trim()}</span>
@@ -1629,12 +1629,12 @@ export default function BatchUploadPage() {
 
                           {/* Price */}
                           <div>
-                            <label className="text-[9px] text-text-muted block mb-0.5">
+                            <label className="text-3xs text-text-muted block mb-0.5">
                               {tPrice}{item.autoPublished ? ` ${tPublishedSuffix}` : ""}
                             </label>
                             {previewEnabled && selectedIds.includes(item.index) && bulkPrice !== "" && bulkPrice > 0 && hoveredField === 'price' && !item.autoPublished && item.mergedInto === undefined ? (
                               <div className="rounded-lg border border-info/20 bg-info/[0.03] px-2 py-1.5">
-                                <div className="flex items-center gap-1.5 text-[10px]">
+                                <div className="flex items-center gap-1.5 text-xs">
                                   <span className="text-text-muted line-through tabular-nums">{formatMoney(item.editedPrice)}</span>
                                   <ArrowRight className="h-3 w-3 shrink-0 text-success" />
                                   <span className="text-xs font-semibold text-success tabular-nums">{formatMoney(Number(bulkPrice))}</span>
@@ -1660,10 +1660,10 @@ export default function BatchUploadPage() {
 
                           {/* Stock */}
                           <div>
-                            <label className="text-[9px] text-text-muted block mb-0.5">{tStock}</label>
+                            <label className="text-3xs text-text-muted block mb-0.5">{tStock}</label>
                             {previewEnabled && selectedIds.includes(item.index) && bulkStock !== "" && bulkStock >= 0 && hoveredField === 'stock' && !item.autoPublished && item.mergedInto === undefined ? (
                               <div className="rounded-lg border border-info/20 bg-info/[0.03] px-2 py-1.5">
-                                <div className="flex items-center gap-1.5 text-[10px]">
+                                <div className="flex items-center gap-1.5 text-xs">
                                   <span className="text-text-muted line-through tabular-nums">{item.editedStock}</span>
                                   <ArrowRight className="h-3 w-3 shrink-0 text-success" />
                                   <span className="text-xs font-semibold text-success tabular-nums">{bulkStock}</span>
@@ -1694,7 +1694,7 @@ export default function BatchUploadPage() {
                               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-warning/10">
                                 <Copy className="h-3.5 w-3.5 text-warning" />
                               </div>
-                              <span className="text-[7px] text-warning/70 font-medium mt-0.5 whitespace-nowrap">
+                              <span className="text-5xs text-warning/70 font-medium mt-0.5 whitespace-nowrap">
                                 {tMerged}
                               </span>
                             </div>
@@ -1713,7 +1713,7 @@ export default function BatchUploadPage() {
                           )}
                           {item.confidence !== undefined && (
                             <span
-                              className={`text-[8px] font-semibold tabular-nums ${
+                              className={`text-4xs font-semibold tabular-nums ${
                                 item.confidence >= AUTO_PUBLISH_THRESHOLD
                                   ? "text-success"
                                   : item.confidence >= 50
@@ -1725,7 +1725,7 @@ export default function BatchUploadPage() {
                             </span>
                           )}
                           {item.winner_strategy && (
-                            <span className="text-[8px] text-text-faint capitalize">
+                            <span className="text-4xs text-text-faint capitalize">
                               {item.winner_strategy.replace(/_/g, " ")}
                             </span>
                           )}
@@ -1738,7 +1738,7 @@ export default function BatchUploadPage() {
                                 onChange={() => toggleReviewed(item.index)}
                                 className="h-3 w-3 rounded border-border text-success focus:ring-success/40 cursor-pointer"
                               />
-                              <span className={`text-[7px] font-medium ${reviewedIds.includes(item.index) ? 'text-success' : 'text-text-faint'}`}>
+                              <span className={`text-5xs font-medium ${reviewedIds.includes(item.index) ? 'text-success' : 'text-text-faint'}`}>
                                 {tReviewed}
                               </span>
                             </label>
@@ -1752,7 +1752,7 @@ export default function BatchUploadPage() {
                           {item.analysis.suggested_tags.slice(0, 6).map((tag, ti) => (
                             <span
                               key={ti}
-                              className="rounded-full bg-primary/5 px-2 py-0.5 text-[9px] text-primary/70"
+                              className="rounded-full bg-primary/5 px-2 py-0.5 text-3xs text-primary/70"
                             >
                               {tag}
                             </span>
@@ -1770,17 +1770,17 @@ export default function BatchUploadPage() {
                   <Package className="h-4 w-4 text-text-muted" />
                   <span className="font-medium text-text">{publishableCount} {tUnpublished}</span>
                   {reviewedCount > 0 && (
-                    <span className="text-[10px] text-success ml-1">
+                    <span className="text-xs text-success ml-1">
                       · {reviewedCount} {tReviewed}
                     </span>
                   )}
                   {mergedCount > 0 && (
-                    <span className="text-[10px] text-warning/70 ml-1">
+                    <span className="text-xs text-warning/70 ml-1">
                       · {mergedCount} {tMerged}
                     </span>
                   )}
                   {hasActiveFilters && (
-                    <span className="text-[10px] text-text-muted ml-1">
+                    <span className="text-xs text-text-muted ml-1">
                       · {filteredUnpublishedCount} {tFiltersActive}
                     </span>
                   )}
@@ -1811,14 +1811,14 @@ export default function BatchUploadPage() {
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                          <span className="text-[10px] font-bold text-primary tabular-nums">
+                          <span className="text-xs font-bold text-primary tabular-nums">
                             {selectedIds.length}
                           </span>
                         </div>
                         <span className="text-xs font-semibold text-text">
                           {selectedIds.length} {tSelectedCount}
                         </span>
-                        <span className="text-[9px] text-text-muted">
+                        <span className="text-3xs text-text-muted">
                           · {tApplyBulk}
                         </span>
 
@@ -1826,7 +1826,7 @@ export default function BatchUploadPage() {
                         <button
                           onClick={() => setPreviewEnabled((p) => !p)}
                           title={previewEnabled ? "Hide preview" : "Show preview"}
-                          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold transition-all ${
+                          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold transition-all ${
                             previewEnabled
                               ? "bg-info/10 text-info ring-1 ring-info/40"
                               : "text-text-muted hover:bg-surface-2"
@@ -1838,7 +1838,7 @@ export default function BatchUploadPage() {
                       </div>
                       <button
                         onClick={clearSelection}
-                        className="flex items-center gap-1 text-[10px] font-semibold text-text-muted hover:text-danger transition-colors"
+                        className="flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-danger transition-colors"
                       >
                         <X className="h-3 w-3" />
                         {tDeselectAll}
@@ -1916,7 +1916,7 @@ export default function BatchUploadPage() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] text-text-faint">
+                      <span className="text-3xs text-text-faint">
                         {selectedIds.length} {tSelectedCount} · {tApplyBulk}
                         <span className="ml-1 text-text-muted">
                           {bulkName && `${tName}: ${bulkName}`}
@@ -1928,7 +1928,7 @@ export default function BatchUploadPage() {
                       <button
                         onClick={applyBulkEdit}
                         disabled={!hasBulkValues}
-                        className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-[10px] font-semibold text-white hover:bg-primary/90 disabled:opacity-40 transition-all active:scale-[0.98]"
+                        className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-40 transition-all active:scale-[0.98]"
                       >
                         <Zap className="h-3 w-3" />
                         {tApplyBulk} ({selectedIds.length})
@@ -2006,16 +2006,16 @@ export default function BatchUploadPage() {
                         key={product.id}
                         className="flex items-center gap-3 rounded-lg bg-surface-2/50 px-3 py-2"
                       >
-                        <span className="w-5 text-[10px] font-bold text-text-faint tabular-nums">
+                        <span className="w-5 text-xs font-bold text-text-faint tabular-nums">
                           #{idx + 1}
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium text-text truncate">{product.name}</p>
-                          <p className="text-[9px] text-text-faint">
+                          <p className="text-3xs text-text-faint">
                             {product.category} · {formatMoney(product.price)} · {product.variants_count} variants
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-text-muted">
+                        <div className="flex items-center gap-2 text-xs text-text-muted">
                           <Globe className="h-3 w-3" />
                           <span>{tID} {product.id}</span>
                         </div>
@@ -2045,7 +2045,7 @@ export default function BatchUploadPage() {
                   </p>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {publishResponse.errors.map((err, idx) => (
-                      <p key={idx} className="text-[10px] text-danger/80">
+                      <p key={idx} className="text-xs text-danger/80">
                         <span className="font-medium">{err.name}:</span> {err.error}
                       </p>
                     ))}

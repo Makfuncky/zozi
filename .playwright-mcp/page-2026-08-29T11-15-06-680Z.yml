@@ -1,0 +1,17 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e5]:
+    - main [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - heading "Admin Access" [level=1] [ref=e12]
+          - paragraph [ref=e13]: Restricted area. Staff credentials required.
+        - generic [ref=e14]:
+          - generic [ref=e15]:
+            - generic [ref=e16]: Username
+            - textbox "Your username" [ref=e17]
+          - generic [ref=e18]:
+            - generic [ref=e19]: Password
+            - textbox "••••••••" [ref=e20]
+          - button "Sign In" [ref=e21] [cursor=pointer]

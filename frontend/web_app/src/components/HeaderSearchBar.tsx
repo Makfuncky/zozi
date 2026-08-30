@@ -241,10 +241,10 @@ export default function HeaderSearchBar({
                   animate="show"
                   exit="exit"
                   transition={dropTransition}
-                  className="absolute top-full left-0 mt-1 w-52 rounded-xl glass-dropdown overflow-hidden z-[999]"
+                  className="absolute top-full left-0 mt-1 w-52 rounded-xl glass-dropdown overflow-hidden z-modal"
                 >
                   <div className="p-1">
-                    <div className="flex items-center gap-2 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-faint border-b border-border">
+                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-faint border-b border-border">
                       <Filter className="h-3 w-3 text-primary" />
                       Department
                     </div>
@@ -291,10 +291,10 @@ export default function HeaderSearchBar({
                   animate="show"
                   exit="exit"
                   transition={dropTransition}
-                  className="absolute top-full left-0 mt-1 w-52 rounded-xl glass-dropdown overflow-hidden z-[999]"
+                  className="absolute top-full left-0 mt-1 w-52 rounded-xl glass-dropdown overflow-hidden z-modal"
                 >
                   <div className="p-2 space-y-1">
-                    <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-text-faint">
+                    <div className="px-2 py-1 text-xs font-bold uppercase tracking-widest text-text-faint">
                       Sort Direction
                     </div>
                     <div className="flex flex-wrap gap-1 px-2 mb-2">
@@ -305,7 +305,7 @@ export default function HeaderSearchBar({
                         <button
                           key={value}
                           onClick={() => { onSetSort(sort === value ? "default" : value); onResetVisibleCount?.(); }}
-                          className={`rounded-full border px-2.5 py-1 text-[10px] transition-colors ${
+                          className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                             sort === value
                               ? "border-primary/30 bg-primary/20 text-primary"
                               : "border-border text-text-muted hover:text-text"
@@ -316,7 +316,7 @@ export default function HeaderSearchBar({
                       ))}
                     </div>
                     
-                    <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-text-faint">
+                    <div className="px-2 py-1 text-xs font-bold uppercase tracking-widest text-text-faint">
                       Price Range
                     </div>
                     {PRICE_RANGES.map((r) => (
@@ -371,10 +371,10 @@ export default function HeaderSearchBar({
                   animate="show"
                   exit="exit"
                   transition={dropTransition}
-                  className="absolute top-full left-0 mt-1 w-40 rounded-xl glass-dropdown overflow-hidden z-[999]"
+                  className="absolute top-full left-0 mt-1 w-40 rounded-xl glass-dropdown overflow-hidden z-modal"
                 >
                   <div className="p-1">
-                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-text-faint">
+                    <div className="px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-text-faint">
                       Min Rating
                     </div>
                     {["4", "3", "2", "1"].map((r) => (
@@ -419,7 +419,7 @@ export default function HeaderSearchBar({
                   animate="show"
                   exit="exit"
                   transition={dropTransition}
-                  className="absolute top-full left-0 mt-1 w-56 rounded-xl glass-dropdown overflow-hidden z-[999]"
+                  className="absolute top-full left-0 mt-1 w-56 rounded-xl glass-dropdown overflow-hidden z-modal"
                 >
                   <div className="p-2">
                     <input
@@ -501,11 +501,11 @@ export default function HeaderSearchBar({
                   animate="show"
                   exit="exit"
                   transition={dropTransition}
-                  className="absolute top-full left-0 right-0 mt-1 rounded-xl glass-dropdown overflow-hidden z-[999]"
+                  className="absolute top-full left-0 right-0 mt-1 rounded-xl glass-dropdown overflow-hidden z-modal"
                 >
                   {(localSuggestions.length > 0 || suggestions.length > 0) && (
                     <>
-                      <li className="flex items-center gap-2 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-primary border-b border-border">
+                      <li className="flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-primary border-b border-border">
                         <Sparkles className="h-3 w-3" />
                         AI Suggestions
                       </li>
@@ -528,14 +528,14 @@ export default function HeaderSearchBar({
                       {(localSuggestions.length > 0 || suggestions.length > 0) && (
                         <li className="border-t border-border" />
                       )}
-                      <li className="flex items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-faint border-b border-border">
+                      <li className="flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-faint border-b border-border">
                         <span className="flex items-center gap-2">
                           <History className="h-3 w-3" />
                           Recent Searches
                         </span>
                         <button
                           onMouseDown={(e) => { e.preventDefault(); clearHistory(); }}
-                          className="text-[10px] text-danger hover:text-danger/80 transition-colors"
+                          className="text-xs text-danger hover:text-danger/80 transition-colors"
                         >
                           Clear all
                         </button>

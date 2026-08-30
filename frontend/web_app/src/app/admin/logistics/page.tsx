@@ -58,13 +58,13 @@ function LogisticsHubInner() {
         </div>
 
         <section className="theme-card rounded-xl border p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Logistics Admin Cycle</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Logistics Admin Cycle</p>
           <h2 className="mt-1 text-sm font-semibold text-text">Coverage first, one simple charge model second</h2>
           <p className="mt-1 text-[11px] text-text-muted">Approve mapped service areas and route rows first, then manage one customer-charge story: base fee, weight, distance when needed, extra stops, and the highest approved handling fee. Vehicle fit stays operational only.</p>
         </section>
 
         <section className="theme-card rounded-xl border p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Cost Drivers</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Cost Drivers</p>
           <h2 className="mt-1 text-sm font-semibold text-text">Partner registry and service-area review</h2>
           <p className="mt-1 text-[11px] text-text-muted">Review pricing profiles, handling rules and vehicle fit per partner and service area before they go live.</p>
         </section>

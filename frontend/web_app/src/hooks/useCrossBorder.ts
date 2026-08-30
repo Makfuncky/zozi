@@ -90,26 +90,6 @@ export function useCrossBorder(countryCode?: string | null): UseCrossBorderResul
 }
 
 /**
- * Calculate tax for a given amount and country.
- */
-export function calculateTax(amount: number, taxRate: number, inclusive: boolean = false): {
-  taxAmount: number;
-  totalAmount: number;
-  netAmount: number;
-} {
-  if (inclusive) {
-    // Tax is included in the price
-    const netAmount = amount / (1 + taxRate);
-    const taxAmount = amount - netAmount;
-    return { taxAmount, totalAmount: amount, netAmount };
-  } else {
-    // Tax is added to the price
-    const taxAmount = amount * taxRate;
-    return { taxAmount, totalAmount: amount + taxAmount, netAmount: amount };
-  }
-}
-
-/**
  * Format a price with the appropriate currency symbol.
  */
 export function formatPrice(amount: number, currency: string, symbol: string | null = null): string {

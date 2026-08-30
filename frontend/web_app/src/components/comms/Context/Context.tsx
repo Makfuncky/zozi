@@ -83,7 +83,7 @@ function People360() {
         </div>
         <div>
           <p className="text-sm font-semibold text-text">{activeThread?.title || "Unknown"}</p>
-          <p className="text-[10px] text-text-muted">
+          <p className="text-xs text-text-muted">
             {activeThread?.transport === "chat" ? "Direct message" : "Group conversation"}
           </p>
         </div>
@@ -91,19 +91,19 @@ function People360() {
 
       {/* Participant list */}
       <div>
-        <h4 className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
+        <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
           Participants
         </h4>
         <div className="space-y-1.5">
           {["Aisha Al-Mamari", "Karim Benali", "Layla Hassan"].map((name) => (
             <div key={name} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-2 transition-colors cursor-pointer">
               <div className="relative w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center shrink-0">
-                <span className="text-[9px] font-bold text-text-muted">{name.charAt(0)}</span>
+                <span className="text-3xs font-bold text-text-muted">{name.charAt(0)}</span>
                 <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2 border-surface bg-success" />
               </div>
               <div className="min-w-0">
                 <p className="text-[12px] font-medium text-text truncate">{name}</p>
-                <p className="text-[9px] text-text-faint">Online</p>
+                <p className="text-3xs text-text-faint">Online</p>
               </div>
             </div>
           ))}
@@ -112,21 +112,21 @@ function People360() {
 
       {/* Cross-transport stats */}
       <div className="rounded-xl bg-surface-2/30 p-3">
-        <h4 className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
           Conversation History
         </h4>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 rounded-lg bg-surface-2/50">
             <p className="text-sm font-bold text-text">12</p>
-            <p className="text-[9px] text-text-faint">Chats</p>
+            <p className="text-3xs text-text-faint">Chats</p>
           </div>
           <div className="p-2 rounded-lg bg-surface-2/50">
             <p className="text-sm font-bold text-text">3</p>
-            <p className="text-[9px] text-text-faint">Emails</p>
+            <p className="text-3xs text-text-faint">Emails</p>
           </div>
           <div className="p-2 rounded-lg bg-surface-2/50">
             <p className="text-sm font-bold text-text">1</p>
-            <p className="text-[9px] text-text-faint">Calls</p>
+            <p className="text-3xs text-text-faint">Calls</p>
           </div>
         </div>
       </div>
@@ -155,7 +155,7 @@ function SharedFiles() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-medium text-text truncate">{file.name}</p>
-              <p className="text-[9px] text-text-faint">{file.sender} · {file.size}</p>
+              <p className="text-3xs text-text-faint">{file.sender} · {file.size}</p>
             </div>
             <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
               <button className="p-1 rounded hover:bg-surface-3 text-text-muted" title="Preview">
@@ -168,7 +168,7 @@ function SharedFiles() {
           </div>
         ))}
       </div>
-      <p className="text-[9px] text-text-faint text-center mt-2">
+      <p className="text-3xs text-text-faint text-center mt-2">
         {SAMPLE_FILES.length} files shared in this thread
       </p>
     </div>
@@ -220,12 +220,12 @@ function PinnedTasks() {
       <div className={`space-y-3 transition-all ${canDropThread ? "ring-2 ring-primary/40 rounded-xl p-1" : ""}`}>
         {/* Pinned Messages section */}
         <div className="rounded-xl bg-surface-2/30 p-3 space-y-2">
-          <h4 className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Pinned Messages</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Pinned Messages</h4>
           <div className="flex items-start gap-2.5 p-2 rounded-lg bg-surface-2/50">
             <Pin className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
             <div>
               <p className="text-[11px] text-text">Approved the Q3 budget — please proceed with the vendor contracts</p>
-              <p className="text-[9px] text-text-faint mt-0.5">Aisha · 2d ago</p>
+              <p className="text-3xs text-text-faint mt-0.5">Aisha · 2d ago</p>
             </div>
           </div>
         </div>
@@ -238,10 +238,10 @@ function PinnedTasks() {
               : "bg-surface-2/30 border-2 border-transparent"
           }`}
         >
-          <h4 className="flex items-center gap-1.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+          <h4 className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
             <Star className="w-3 h-3" /> Tasks
             {canDropThread && (
-              <span className="ml-auto text-[9px] text-primary font-normal animate-pulse">
+              <span className="ml-auto text-3xs text-primary font-normal animate-pulse">
                 Drop here to create task
               </span>
             )}
@@ -256,7 +256,7 @@ function PinnedTasks() {
               <MessageCircle className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
                 <span className="text-[11px] text-text font-medium">{task.text}</span>
-                <p className="text-[8px] text-text-faint mt-0.5">From: {task.threadTitle}</p>
+                <p className="text-4xs text-text-faint mt-0.5">From: {task.threadTitle}</p>
               </div>
               <input
                 type="checkbox"
@@ -288,7 +288,7 @@ function PinnedTasks() {
 
           {/* Empty state */}
           {allTasks.length === 0 && (
-            <p className="text-[10px] text-text-faint text-center py-4">
+            <p className="text-xs text-text-faint text-center py-4">
               No tasks yet. Drag a thread here to create one.
             </p>
           )}
@@ -305,7 +305,7 @@ function AiDlp() {
       <div className="rounded-xl bg-surface-2/30 p-3 space-y-2">
         <div className="flex items-center gap-1.5 mb-1">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">AI Assistant</span>
+          <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">AI Assistant</span>
         </div>
         <div className="space-y-1">
           {["Summarize thread", "Draft reply", "Extract action items"].map((action) => (
@@ -323,13 +323,13 @@ function AiDlp() {
       <div className="rounded-xl bg-surface-2/30 p-3">
         <div className="flex items-center gap-1.5 mb-1">
           <Shield className="w-3.5 h-3.5 text-success" />
-          <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">DLP Status</span>
+          <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">DLP Status</span>
         </div>
         <div className="flex items-center gap-2 text-[11px] text-success font-medium">
           <span className="w-2 h-2 rounded-full bg-success" />
           No violations detected
         </div>
-        <p className="text-[9px] text-text-faint mt-1">All messages scanned. Content policy compliant.</p>
+        <p className="text-3xs text-text-faint mt-1">All messages scanned. Content policy compliant.</p>
       </div>
     </div>
   );
@@ -348,7 +348,7 @@ function AuditView() {
           <div className="w-1.5 h-1.5 rounded-full bg-text-faint mt-1.5 shrink-0" />
           <div className="min-w-0">
             <p className="text-[11px] text-text">{event.action}</p>
-            <p className="text-[9px] text-text-faint">{event.user} · {event.time}</p>
+            <p className="text-3xs text-text-faint">{event.user} · {event.time}</p>
           </div>
         </div>
       ))}
@@ -367,7 +367,7 @@ export default function CommContext() {
         <div className="flex flex-col items-center justify-center h-full text-center py-12">
           <Users className="w-8 h-8 text-text-faint/30 mb-2" />
           <p className="text-xs text-text-muted">Select a conversation</p>
-          <p className="text-[10px] text-text-faint mt-0.5">to see context</p>
+          <p className="text-xs text-text-faint mt-0.5">to see context</p>
         </div>
       </div>
     );
@@ -382,7 +382,7 @@ export default function CommContext() {
             key={tab.key}
             onClick={() => setCtxTab(tab.key)}
             data-active={ctxTab === tab.key}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-[10px] font-semibold border-b-2 transition-colors shrink-0 ${
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 transition-colors shrink-0 ${
               ctxTab === tab.key
                 ? "border-primary text-primary"
                 : "border-transparent text-text-muted hover:text-text hover:border-text-faint"

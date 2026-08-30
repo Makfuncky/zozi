@@ -61,39 +61,39 @@ export default function LogisticsModelTab({
           <p className="text-[11px] text-text-muted">Create specific delivery zones to override internal vehicle rates and set custom pricing thresholds.</p>
 
           <div className="grid gap-2 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 p-3 rounded-lg border border-border bg-surface">
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Zone Code
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneCode} onChange={(e) => setNewZoneCode(e.target.value)} placeholder="e.g. Z1" />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Zone Name
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneName} onChange={(e) => setNewZoneName(e.target.value)} placeholder="Central Riyadh" />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Description
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneDescription} onChange={(e) => setNewZoneDescription(e.target.value)} placeholder="Metro area" />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Car Rate
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneCarRate} onChange={(e) => setNewZoneCarRate(e.target.value)} />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Van Rate
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneVanRate} onChange={(e) => setNewZoneVanRate(e.target.value)} />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Truck Rate
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneTruckRate} onChange={(e) => setNewZoneTruckRate(e.target.value)} />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Weight Surcharge
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneWeightSurcharge} onChange={(e) => setNewZoneWeightSurcharge(e.target.value)} />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted">
+            <label className="space-y-1 text-xs text-text-muted">
               Weight Threshold
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneWeightThreshold} onChange={(e) => setNewZoneWeightThreshold(e.target.value)} />
             </label>
-            <label className="space-y-1 text-[10px] text-text-muted md:col-span-2">
+            <label className="space-y-1 text-xs text-text-muted md:col-span-2">
               Cities (comma-separated)
               <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newZoneCities} onChange={(e) => setNewZoneCities(e.target.value)} placeholder="Riyadh, Diriyah" />
             </label>
@@ -152,7 +152,7 @@ export default function LogisticsModelTab({
                     <td className="px-3 py-2 text-text font-bold font-mono">{zone.zone_code}</td>
                     <td className="px-3 py-2 text-text">
                       <div className="font-medium">{zone.zone_name}</div>
-                      <div className="text-[10px] text-text-faint">{zone.description || "No description"}</div>
+                      <div className="text-xs text-text-faint">{zone.description || "No description"}</div>
                     </td>
                     <td className="px-3 py-2 text-text font-medium">
                       Car: {zone.car_rate} / Van: {zone.van_rate} / Truck: {zone.truck_rate}

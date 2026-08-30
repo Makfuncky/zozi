@@ -98,7 +98,7 @@ export function PanelHero({
           )}
           <div>
             {eyebrow && (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text-faint">{eyebrow}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-faint">{eyebrow}</p>
             )}
             {title && <div className="mt-1 text-lg font-semibold leading-tight text-text sm:text-[1.35rem]">{title}</div>}
             {description && <div className="mt-1.5 max-w-3xl text-[13px] leading-6 text-text-muted">{description}</div>}
@@ -400,7 +400,7 @@ export function CollapsiblePanelCard({
           </span>
           {/* Count badge */}
           {count !== undefined && (
-            <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-primary/10 text-[10px] font-bold text-primary px-1.5 shrink-0">
+            <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-primary/10 text-xs font-bold text-primary px-1.5 shrink-0">
               {count > 99 ? "99+" : count}
             </span>
           )}
@@ -489,12 +489,12 @@ export function PanelCompactStatCard({
       <div className="flex items-center gap-1.5 mt-1">
         <span className={cn(
           "text-text-muted",
-          ultraCompact ? "text-[10px]" : "text-xs",
+          ultraCompact ? "text-xs" : "text-xs",
         )}>{label}</span>
         {trend && (
           <span className={cn(
             "inline-flex items-center gap-0.5 font-medium",
-            ultraCompact ? "text-[9px]" : "text-[10px]",
+            ultraCompact ? "text-3xs" : "text-xs",
             trend.positive ? "text-success" : "text-danger",
           )}>
             {trend.positive ? "↑" : "↓"}{trend.value}
@@ -681,7 +681,7 @@ export function PanelDivider({ className, label }: PanelDividerProps) {
     return (
       <div className={cn("flex items-center gap-3", className)}>
         <div className="flex-1 h-px bg-border" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-faint flex-shrink-0">{label}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-faint flex-shrink-0">{label}</span>
         <div className="flex-1 h-px bg-border" />
       </div>
     );

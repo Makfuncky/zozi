@@ -101,22 +101,22 @@ export default function CommissionPolicySummary({
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-lg border border-border bg-surface-2 px-3 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Supplier Component</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Supplier Component</p>
           <p className="mt-1 text-lg font-bold text-text">{fmtPct(currentRate)}</p>
           <p className="text-[11px] capitalize text-text-muted">Driven by {labelize(currentMethod)}</p>
         </div>
         <div className="rounded-lg border border-border bg-surface-2 px-3 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Default Base Rate</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Default Base Rate</p>
           <p className="mt-1 text-lg font-bold text-text">{fmtPct(defaultBaseRate)}</p>
           <p className="text-[11px] text-text-muted">Used when no product or category base applies</p>
         </div>
         <div className="rounded-lg border border-border bg-surface-2 px-3 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Combined Default Total</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Combined Default Total</p>
           <p className="mt-1 text-lg font-bold text-text">{fmtPct(combinedDefaultRate)}</p>
           <p className="text-[11px] text-text-muted">Supplier component + default base before guardrails</p>
         </div>
         <div className="rounded-lg border border-border bg-surface-2 px-3 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">Low-value Cap</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-faint">Low-value Cap</p>
           <p className="mt-1 text-sm font-bold text-text">
             {policy.global_config.fixed_cap_enabled ? fmtMoney(policy.global_config.fixed_cap_amount) : "Off"}
           </p>
@@ -126,7 +126,7 @@ export default function CommissionPolicySummary({
 
       <div className="mt-3 rounded-lg border border-border bg-surface px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text-faint">Combined Flow</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-faint">Combined Flow</p>
           {policy.resolution_order.map((step) => (
             <span
               key={`${step.order}-${step.label}`}

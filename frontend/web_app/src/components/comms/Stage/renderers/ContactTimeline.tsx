@@ -26,9 +26,9 @@ export default function ContactTimeline() {
           <h2 className="text-base font-bold text-text">{name}</h2>
           <p className="text-xs text-text-muted">Sales Director · Oman</p>
           <div className="flex items-center gap-3 mt-1.5">
-            <span className="flex items-center gap-1 text-[10px] text-text-muted"><MessageCircle className="w-3 h-3" />12</span>
-            <span className="flex items-center gap-1 text-[10px] text-text-muted"><Mail className="w-3 h-3" />3</span>
-            <span className="flex items-center gap-1 text-[10px] text-text-muted"><Video className="w-3 h-3" />1</span>
+            <span className="flex items-center gap-1 text-xs text-text-muted"><MessageCircle className="w-3 h-3" />12</span>
+            <span className="flex items-center gap-1 text-xs text-text-muted"><Mail className="w-3 h-3" />3</span>
+            <span className="flex items-center gap-1 text-xs text-text-muted"><Video className="w-3 h-3" />1</span>
           </div>
         </div>
       </div>
@@ -47,7 +47,7 @@ export default function ContactTimeline() {
 
       {/* Timeline */}
       <div>
-        <h3 className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-3">
+        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
           Conversation History
         </h3>
         <div className="space-y-2">
@@ -58,9 +58,9 @@ export default function ContactTimeline() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[12px] font-medium text-text">{ev.label}</p>
-                <p className="text-[10px] text-text-faint">{ev.detail}</p>
+                <p className="text-xs text-text-faint">{ev.detail}</p>
               </div>
-              <span className="text-[9px] text-text-faint shrink-0">{ev.time}</span>
+              <span className="text-3xs text-text-faint shrink-0">{ev.time}</span>
             </div>
           ))}
         </div>

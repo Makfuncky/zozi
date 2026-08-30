@@ -402,7 +402,7 @@ export function PermissionsContent() {
                               <div key={perm.id} className="flex items-center justify-between rounded border border-border bg-surface-2 px-3 py-2">
                                 <div>
                                   <span className="text-sm font-medium text-text">{perm.name}</span>
-                                  <code className="ml-2 text-[10px] bg-surface-3 px-1.5 py-0.5 rounded text-text-muted">{perm.slug}</code>
+                                  <code className="ml-2 text-xs bg-surface-3 px-1.5 py-0.5 rounded text-text-muted">{perm.slug}</code>
                                   {perm.description && (
                                     <span className="ml-2 text-xs text-text-muted">{perm.description}</span>
                                   )}
@@ -490,7 +490,7 @@ export function PermissionsContent() {
                           <ToggleRight className="h-3 w-3" />
                           Grant All
                         </Button>
-                        <Button variant="danger" className="flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium disabled:opacity-40" onClick={() => handleBatchToggle(selectedRole, group.permissions, false)}
+                        <Button variant="danger" className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium disabled:opacity-40" onClick={() => handleBatchToggle(selectedRole, group.permissions, false)}
                           disabled={togglingPermission !== null}
                         >
                           <ToggleLeft className="h-3 w-3" />
@@ -507,7 +507,7 @@ export function PermissionsContent() {
                             <div key={perm.id} className="flex items-center justify-between rounded border border-border bg-surface-2 px-3 py-2">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-text">{perm.name}</span>
-                                <code className="text-[10px] bg-surface-3 px-1.5 py-0.5 rounded text-text-muted">{perm.slug}</code>
+                                <code className="text-xs bg-surface-3 px-1.5 py-0.5 rounded text-text-muted">{perm.slug}</code>
                               </div>
                               <button
                                 className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition ${
@@ -603,9 +603,9 @@ export function PermissionsContent() {
                     </h3>
                     <Badge variant="info">Role: {selectedUserInfo?.role || overrideBaseRole}</Badge>
                     <div className="flex items-center gap-1 ml-2">
-                      <span className="text-[10px] text-text-muted">Base role:</span>
+                      <span className="text-xs text-text-muted">Base role:</span>
                       <select
-                        className="rounded border border-border bg-surface px-1.5 py-0.5 text-[10px] text-text"
+                        className="rounded border border-border bg-surface px-1.5 py-0.5 text-xs text-text"
                         value={overrideBaseRole}
                         onChange={(e) => {
                           setOverrideBaseRole(e.target.value);
@@ -635,7 +635,7 @@ export function PermissionsContent() {
                                 <div key={perm.id} className="flex items-center justify-between rounded border border-border bg-surface-2 px-3 py-2">
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm text-text">{perm.name}</span>
-                                    <code className="text-[10px] bg-surface-3 px-1.5 py-0.5 rounded text-text-muted">{perm.slug}</code>
+                                    <code className="text-xs bg-surface-3 px-1.5 py-0.5 rounded text-text-muted">{perm.slug}</code>
                                   </div>
                                   <button
                                     className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition ${

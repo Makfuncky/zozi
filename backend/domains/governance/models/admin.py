@@ -6,6 +6,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy import event
 from sqlalchemy.orm import relationship
 from . import Base
+from domains.country.models.countries import CountryConfig  # noqa: F401
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 # Supplier/LP bank accounts relocated to the accounts domain
@@ -59,7 +60,7 @@ class RolePermissionSetting(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class SystemAlert(Base):
@@ -76,7 +77,7 @@ class SystemAlert(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class AdminChangeAuditLog(Base):
@@ -93,7 +94,7 @@ class AdminChangeAuditLog(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     
     admin = relationship("User", foreign_keys=[admin_id], backref="admin_change_logs")
 
@@ -109,7 +110,7 @@ class AdminActivityLog(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class SystemSetting(Base):
@@ -184,7 +185,7 @@ class BadgeTransaction(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class BadgeTier(Base):
@@ -646,8 +647,6 @@ class RetentionJobRun(Base):
     error_message = Column(Text, nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 

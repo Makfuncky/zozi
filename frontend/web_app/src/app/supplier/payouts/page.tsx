@@ -192,21 +192,21 @@ export default function SupplierPayoutsPage() {
           <div className="theme-card rounded-xl border p-4">
             <div className="flex items-center gap-2 mb-1">
               <Wallet className="h-4 w-4 text-primary" />
-              <span className="text-[10px] font-semibold uppercase text-text-faint">Total Payouts</span>
+              <span className="text-xs font-semibold uppercase text-text-faint">Total Payouts</span>
             </div>
             <p className="text-2xl font-bold text-text">{payouts.length}</p>
           </div>
           <div className="theme-card rounded-xl border p-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-success" />
-              <span className="text-[10px] font-semibold uppercase text-text-faint">Completed</span>
+              <span className="text-xs font-semibold uppercase text-text-faint">Completed</span>
             </div>
             <p className="text-2xl font-bold text-text">{statusCounts.completed || 0}</p>
           </div>
           <div className="theme-card rounded-xl border p-4">
             <div className="flex items-center gap-2 mb-1">
               <Send className="h-4 w-4 text-warning" />
-              <span className="text-[10px] font-semibold uppercase text-text-faint">Total Value</span>
+              <span className="text-xs font-semibold uppercase text-text-faint">Total Value</span>
             </div>
             <p className="text-2xl font-bold text-text">{formatMoney(payouts.reduce((s, p) => s + p.amount, 0))}</p>
           </div>
@@ -235,7 +235,7 @@ export default function SupplierPayoutsPage() {
               </h3>
               <div className="flex flex-wrap items-end gap-3">
                 <div>
-                  <label className="text-[10px] text-text-faint uppercase">Amount</label>
+                  <label className="text-xs text-text-faint uppercase">Amount</label>
                   <input
                     type="number"
                     min="0"
@@ -313,13 +313,13 @@ export default function SupplierPayoutsPage() {
                           <td className="p-3 text-xs text-text-faint">{payout.reference || "—"}</td>
                           <td className="p-3 text-right font-semibold">{formatMoney(payout.amount)}</td>
                           <td className="p-3 text-center">
-                            <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${payoutStatusTone(payout.status)}`}>
+                            <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${payoutStatusTone(payout.status)}`}>
                               {titleCase(payout.status)}
                             </span>
                           </td>
                           <td className="p-3 text-xs text-text-faint">{payout.created_at?.slice(0, 10)}</td>
                           <td className="p-3 text-center">
-                            <button className="text-[10px] text-primary hover:underline" onClick={(e) => { e.stopPropagation(); setExpandedPayoutId(expandedPayoutId === payout.id ? null : payout.id); }}>
+                            <button className="text-xs text-primary hover:underline" onClick={(e) => { e.stopPropagation(); setExpandedPayoutId(expandedPayoutId === payout.id ? null : payout.id); }}>
                               Show detail
                             </button>
                           </td>
@@ -329,24 +329,24 @@ export default function SupplierPayoutsPage() {
                             <td colSpan={6} className="p-3">
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                                 <div>
-                                  <p className="text-text-faint uppercase text-[10px]">Method</p>
+                                  <p className="text-text-faint uppercase text-xs">Method</p>
                                   <p className="font-medium">{titleCase(payout.method) || "Bank Transfer"}</p>
                                 </div>
                                 <div>
-                                  <p className="text-text-faint uppercase text-[10px]">Reference</p>
+                                  <p className="text-text-faint uppercase text-xs">Reference</p>
                                   <p className="font-mono">{payout.reference || "—"}</p>
                                 </div>
                                 <div>
-                                  <p className="text-text-faint uppercase text-[10px]">Created</p>
+                                  <p className="text-text-faint uppercase text-xs">Created</p>
                                   <p>{payout.created_at ? new Date(payout.created_at).toLocaleString() : "—"}</p>
                                 </div>
                                 <div>
-                                  <p className="text-text-faint uppercase text-[10px]">Processed</p>
+                                  <p className="text-text-faint uppercase text-xs">Processed</p>
                                   <p>{payout.processed_at ? new Date(payout.processed_at).toLocaleString() : "—"}</p>
                                 </div>
                                 {payout.notes && (
                                   <div className="col-span-full">
-                                    <p className="text-text-faint uppercase text-[10px]">Notes</p>
+                                    <p className="text-text-faint uppercase text-xs">Notes</p>
                                     <p>{payout.notes}</p>
                                   </div>
                                 )}
@@ -373,7 +373,7 @@ export default function SupplierPayoutsPage() {
               </h3>
               <div className="flex flex-wrap gap-3 items-end">
                 <div>
-                  <label className="text-[10px] text-text-faint uppercase">Order number</label>
+                  <label className="text-xs text-text-faint uppercase">Order number</label>
                   <input
                     placeholder="Order number"
                     value={invoiceForm.order_id}
@@ -382,7 +382,7 @@ export default function SupplierPayoutsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-text-faint uppercase">Shipment ID (optional)</label>
+                  <label className="text-xs text-text-faint uppercase">Shipment ID (optional)</label>
                   <input
                     placeholder="Optional shipment id"
                     value={invoiceForm.shipment_id}
@@ -391,7 +391,7 @@ export default function SupplierPayoutsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-text-faint uppercase">Notes (optional)</label>
+                  <label className="text-xs text-text-faint uppercase">Notes (optional)</label>
                   <input
                     placeholder="Optional invoice note"
                     value={invoiceForm.notes}
@@ -430,7 +430,7 @@ export default function SupplierPayoutsPage() {
                           <td className="p-2 text-text-faint">#{inv.order_id}</td>
                           <td className="p-2 text-right font-semibold">{formatMoney(inv.total_amount)}</td>
                           <td className="p-2 text-center">
-                            <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
                                inv.status === "paid" ? "bg-success/20 text-success" : inv.status === "overdue" ? "bg-danger/20 text-danger" : "bg-warning/20 text-warning"
                             }`}>
                               {titleCase(inv.status)}
@@ -439,8 +439,8 @@ export default function SupplierPayoutsPage() {
                           <td className="p-2 text-xs text-text-faint">{inv.created_at?.slice(0, 10)}</td>
                           <td className="p-2 text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button variant="primary" className="rounded px-2 py-0.5 text-[10px]" onClick={() => updateInvoiceStatus(inv.id, "paid")}>Paid</Button>
-                               <Button variant="danger" className="rounded px-2 py-0.5 text-[10px]" onClick={() => updateInvoiceStatus(inv.id, "overdue")}>Overdue</Button>
+                              <Button variant="primary" className="rounded px-2 py-0.5 text-xs" onClick={() => updateInvoiceStatus(inv.id, "paid")}>Paid</Button>
+                               <Button variant="danger" className="rounded px-2 py-0.5 text-xs" onClick={() => updateInvoiceStatus(inv.id, "overdue")}>Overdue</Button>
                             </div>
                           </td>
                         </tr>

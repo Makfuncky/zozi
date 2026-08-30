@@ -15,17 +15,18 @@ from uuid import uuid4
 
 from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey, Index,
-    Integer, Numeric, String, Text, UniqueConstraint, UUID,
+    Integer, Numeric, String, Text, UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
 
 from infrastructure.database.base import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
 class Warehouse(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -47,7 +48,7 @@ class Warehouse(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class PurchaseOrder(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -63,7 +64,7 @@ class PurchaseOrder(Base):
     supplier_name = Column(String(200), nullable=True)
     order_date = Column(DateTime, server_default=func.now())
     expected_delivery_date = Column(DateTime, nullable=True)
-    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     currency = Column(String(3), default='OMR')
     notes = Column(Text, nullable=True)
     terms = Column(Text, nullable=True)
@@ -82,7 +83,7 @@ class PurchaseOrder(Base):
     lines = relationship('PurchaseOrderLine', backref='po', cascade='all, delete-orphan')
 
 class PurchaseOrderLine(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -94,7 +95,7 @@ class PurchaseOrderLine(Base):
                          {'schema': 'logistics'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    po_id = Column(Integer, ForeignKey('finance.purchase_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    po_id = Column(Integer, ForeignKey('logistics.purchase_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey('catalog.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -114,7 +115,7 @@ class PurchaseOrderLine(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class GoodsReceiptNote(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -127,10 +128,10 @@ class GoodsReceiptNote(Base):
                      )
     id = Column(Integer, primary_key=True, index=True)
     grn_number = Column(String(40), nullable=False, unique=True, index=True)
-    po_id = Column(Integer, ForeignKey('finance.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
+    po_id = Column(Integer, ForeignKey('logistics.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
     supplier_id = Column(Integer, ForeignKey('finance.vendors.id', ondelete='RESTRICT'), nullable=True, index=True)
     receipt_date = Column(DateTime, server_default=func.now())
-    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     status = Column(String(20), default='confirmed')
     notes = Column(Text, nullable=True)
     received_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
@@ -140,7 +141,7 @@ class GoodsReceiptNote(Base):
     lines = relationship('GoodsReceiptLine', backref='grn', cascade='all, delete-orphan')
 
 class GoodsReceiptLine(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -152,8 +153,8 @@ class GoodsReceiptLine(Base):
                          {'schema': 'logistics'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    grn_id = Column(Integer, ForeignKey('finance.goods_receipt_notes.id', ondelete='RESTRICT'), nullable=False, index=True)
-    po_line_id = Column(Integer, ForeignKey('finance.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
+    grn_id = Column(Integer, ForeignKey('logistics.goods_receipt_notes.id', ondelete='RESTRICT'), nullable=False, index=True)
+    po_line_id = Column(Integer, ForeignKey('logistics.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_id = Column(Integer, ForeignKey('catalog.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -169,7 +170,7 @@ class GoodsReceiptLine(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class SalesOrder(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -186,7 +187,7 @@ class SalesOrder(Base):
     customer_po_number = Column(String(80), nullable=True)
     order_date = Column(DateTime, server_default=func.now())
     expected_delivery_date = Column(DateTime, nullable=True)
-    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     currency = Column(String(3), default='OMR')
     shipping_address = Column(Text, nullable=True)
     billing_address = Column(Text, nullable=True)
@@ -205,7 +206,7 @@ class SalesOrder(Base):
     lines = relationship('SalesOrderLine', backref='so', cascade='all, delete-orphan')
 
 class SalesOrderLine(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -217,7 +218,7 @@ class SalesOrderLine(Base):
                          {'schema': 'logistics'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    so_id = Column(Integer, ForeignKey('finance.sales_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    so_id = Column(Integer, ForeignKey('logistics.sales_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey('catalog.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -237,7 +238,7 @@ class SalesOrderLine(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class StockMovement(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -249,7 +250,7 @@ class StockMovement(Base):
                      )
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey('catalog.products.id', ondelete='RESTRICT'), nullable=True, index=True)
-    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     movement_type = Column(String(20), nullable=True)
     reference_type = Column(String(30), nullable=True)
     reference_id = Column(Integer, nullable=True)
@@ -263,7 +264,7 @@ class StockMovement(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class ImportShipment(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -275,7 +276,7 @@ class ImportShipment(Base):
                      )
     id = Column(Integer, primary_key=True, index=True)
     shipment_ref = Column(String(40), nullable=False, unique=True, index=True)
-    po_id = Column(Integer, ForeignKey('finance.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
+    po_id = Column(Integer, ForeignKey('logistics.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
     supplier_id = Column(Integer, ForeignKey('finance.vendors.id', ondelete='RESTRICT'), nullable=True, index=True)
     supplier_name = Column(String(200), nullable=True)
     origin_country = Column(String(10), nullable=True)
@@ -289,7 +290,7 @@ class ImportShipment(Base):
     actual_arrival = Column(DateTime, nullable=True)
     currency = Column(String(3), default='OMR')
     exchange_rate = Column(Numeric(14, 6), default=1)
-    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
@@ -308,7 +309,7 @@ class ImportShipment(Base):
     lines = relationship('ImportShipmentLine', backref='shipment', cascade='all, delete-orphan')
 
 class ImportShipmentLine(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -320,8 +321,8 @@ class ImportShipmentLine(Base):
                          {'schema': 'logistics'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
-    po_line_id = Column(Integer, ForeignKey('finance.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
+    shipment_id = Column(Integer, ForeignKey('logistics.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
+    po_line_id = Column(Integer, ForeignKey('logistics.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_id = Column(Integer, ForeignKey('catalog.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -343,7 +344,7 @@ class ImportShipmentLine(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class LandedCostAllocation(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -355,7 +356,7 @@ class LandedCostAllocation(Base):
                          {'schema': 'logistics'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
+    shipment_id = Column(Integer, ForeignKey('logistics.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
     cost_type = Column(String(30), nullable=True)
     description = Column(Text, nullable=True)
     total_amount = Column(Numeric(14, 2), default=0)
@@ -368,7 +369,7 @@ class LandedCostAllocation(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class CustomsEntry(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')
@@ -380,7 +381,7 @@ class CustomsEntry(Base):
                          {'schema': 'logistics'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
+    shipment_id = Column(Integer, ForeignKey('logistics.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
     customs_declaration_number = Column(String(80), nullable=True)
     customs_broker = Column(String(160), nullable=True)
     entry_date = Column(DateTime, server_default=func.now())
@@ -396,7 +397,7 @@ class CustomsEntry(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class ImportCostTemplate(Base):
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1, nullable=False, server_default='1')

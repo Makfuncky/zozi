@@ -1,6 +1,8 @@
 """Supplier sub-module — imports shared helpers from supplier_shared."""
 
 from domains.suppliers.services.supplier_shared import *
+from domains.suppliers.services.supplier_shared import _build_public_supplier_cache_key
+from infrastructure.utils.cache import cache_get_json
 
 def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict:
     day_map = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}
@@ -2213,8 +2215,6 @@ def _public_storefront_visibility_clause(profile_model, user_model=None):
     visibility_clauses = [
         profile_model.verification_status.in_(["approved", "verified"]),
     ]
-    if user_model is not None:
-        visibility_clauses.append(user_model.is_verified == True)  # noqa: E712
     return or_(*visibility_clauses)
 
 
@@ -2366,7 +2366,7 @@ def list_public_suppliers(
         term = f"%{q.strip()}%"
         base_query = base_query.filter(
             or_(
-                User.username.ilike(term),
+                User.email.ilike(term),
                 SP.business_name.ilike(term),
                 SP.bio.ilike(term),
                 SP.city.ilike(term),
@@ -2381,14 +2381,14 @@ def list_public_suppliers(
             exact_name = supplier_names[0]
             base_query = base_query.filter(
                 or_(
-                    User.username.ilike(exact_name),
+                    User.email.ilike(exact_name),
                     SP.business_name.ilike(exact_name),
                 )
             )
         else:
             base_query = base_query.filter(
                 or_(
-                    User.username.in_(supplier_names),
+                    User.email.in_(supplier_names),
                     SP.business_name.in_(supplier_names),
                 )
             )
@@ -2437,7 +2437,7 @@ def resolve_public_supplier_slug(slug: str, db: Session) -> dict:
 
     row = base_query.filter(
         or_(
-            _supplier_lookup_sql_expression(User.username) == normalized_slug,
+            _supplier_lookup_sql_expression(User.email) == normalized_slug,
             _supplier_lookup_sql_expression(SP.business_name) == normalized_slug,
         )
     ).first()
@@ -2497,7 +2497,7 @@ def get_public_supplier_profile(supplier_id: int, db: Session) -> dict:
             "is_verified_purchase": bool(review.is_verified_purchase),
         }
         for review, product_name, reviewer_name in (
-            db.query(ReviewModel, Product.name, User.username)
+            db.query(ReviewModel, Product.name, User.email)
             .join(Product, ReviewModel.product_id == Product.id)
             .join(User, ReviewModel.user_id == User.id)
             .filter(

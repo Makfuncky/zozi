@@ -24,6 +24,18 @@ WEBHOOK_PATHS = {
     "/email/webhooks",
 }
 
+# Auth endpoints that don't require CSRF protection (public endpoints)
+CSRF_EXEMPT_PATHS = {
+    "/api/v1/auth/login",
+    "/api/v1/auth/register",
+    "/api/v1/auth/refresh",
+    "/api/v1/auth/logout",
+    "/api/v1/auth/forgot-password",
+    "/api/v1/auth/reset-password",
+    "/api/v1/auth/verify-email",
+    "/api/v1/auth/me",
+}
+
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     """
@@ -37,7 +49,17 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     prevents the cookie from being sent on cross-site requests."""
 
     async def dispatch(self, request: Request, call_next):
+        # Allow disabling CSRF for tests and development
+        csrf_disabled = os.environ.get("CSRF_DISABLED", "").lower() in ("true", "1", "yes")
+        logger.info(f"CSRF middleware: CSRF_DISABLED={os.environ.get('CSRF_DISABLED')}, disabled={csrf_disabled}, path={request.url.path}")
+        if csrf_disabled:
+            return await call_next(request)
+
         if request.method == "OPTIONS":
+            return await call_next(request)
+
+        # Exempt auth endpoints from CSRF protection
+        if request.url.path in CSRF_EXEMPT_PATHS:
             return await call_next(request)
 
         if request.method not in STATEFUL_METHODS:

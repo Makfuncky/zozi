@@ -1,0 +1,40 @@
+- generic:
+  - generic [active]:
+    - generic [ref=f4e3]:
+      - generic [ref=f4e4]:
+        - navigation [ref=f4e6]:
+          - button [disabled] [ref=f4e7]:
+            - img "previous" [ref=f4e8]
+          - generic [ref=f4e10]:
+            - generic [ref=f4e11]: 1/
+            - generic [ref=f4e12]: "1"
+          - button [disabled] [ref=f4e13]:
+            - img "next" [ref=f4e14]
+        - link "Next.js 16.3.1 (stale) Webpack" [ref=f4e17] [cursor=pointer]:
+          - /url: https://nextjs.org/docs/messages/version-staleness
+          - generic "There is a newer version (16.3.3) available, upgrade recommended!" [ref=f4e20]: Next.js 16.3.1 (stale)
+          - generic [ref=f4e21]: Webpack
+      - dialog "Build Error" [ref=f4e23]:
+        - generic [ref=f4e26]:
+          - generic [ref=f4e28]:
+            - generic [ref=f4e29]:
+              - generic [ref=f4e30]: Build Error
+              - generic [ref=f4e32]:
+                - button "Copy Error Info" [ref=f4e33] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=f4e36]
+                - button "Attach Node.js inspector" [ref=f4e39] [cursor=pointer]
+            - generic [ref=f4e48]: "Module parse failed: Unexpected character '@' (1:0)"
+          - generic [ref=f4e51]:
+            - generic [ref=f4e53]:
+              - generic [ref=f4e57]: ./src/styles/globals.css
+              - button "Open in editor" [ref=f4e58] [cursor=pointer]
+            - generic [ref=f4e63]:
+              - generic [ref=f4e64]: "Module parse failed: Unexpected character '@' (1:0) > @import \"./tokens.css\"; | @tailwind base; | @tailwind components; Import trace for requested module:"
+              - link "./src/styles/globals.css" [ref=f4e65] [cursor=pointer]
+              - link "./src/app/layout.tsx" [ref=f4e70] [cursor=pointer]
+    - button "Open issues overlay" [ref=f4e81] [cursor=pointer]:
+      - generic [ref=f4e85]:
+        - generic [ref=f4e86]: "0"
+        - generic [ref=f4e87]: "1"
+      - generic [ref=f4e88]: Issue
+  - alert [ref=f4e89]

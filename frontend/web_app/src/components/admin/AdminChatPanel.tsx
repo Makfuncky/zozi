@@ -426,7 +426,7 @@ export default function AdminChatPanel() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search threads..."
-                  className="w-full rounded-lg border border-border bg-surface pl-7 pr-2 py-1.5 text-[10px] text-text outline-none focus:border-primary/50"
+                  className="w-full rounded-lg border border-border bg-surface pl-7 pr-2 py-1.5 text-xs text-text outline-none focus:border-primary/50"
                 />
               </div>
             </div>
@@ -447,19 +447,19 @@ export default function AdminChatPanel() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-text truncate">{thread.title}</span>
                       {(thread.unread_count ?? 0) > 0 && (
-                        <span className="bg-primary text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">
+                        <span className="bg-primary text-white text-3xs px-1.5 py-0.5 rounded-full font-bold">
                           {thread.unread_count}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       {thread.entity_type && (
-                        <span className="text-[9px] font-mono text-text-faint bg-surface-3 px-1 py-0.5 rounded">
+                        <span className="text-3xs font-mono text-text-faint bg-surface-3 px-1 py-0.5 rounded">
                           {thread.entity_type}#{thread.entity_id}
                         </span>
                       )}
                       {thread.last_message_preview && (
-                        <span className="text-[10px] text-text-muted truncate">{thread.last_message_preview}</span>
+                        <span className="text-xs text-text-muted truncate">{thread.last_message_preview}</span>
                       )}
                     </div>
                   </button>
@@ -480,14 +480,14 @@ export default function AdminChatPanel() {
                         {currentThread?.title ?? "Chat"}
                       </span>
                       {currentThread?.entity_type && (
-                        <span className="text-[9px] font-mono text-text-faint bg-surface-3 px-1 py-0.5 rounded">
+                        <span className="text-3xs font-mono text-text-faint bg-surface-3 px-1 py-0.5 rounded">
                           {currentThread.entity_type}#{currentThread.entity_id}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       <PresenceIndicator users={roomUsers} currentUserId={user?.id} showList />
-                      <div className="flex items-center gap-1 text-[9px] text-text-faint">
+                      <div className="flex items-center gap-1 text-3xs text-text-faint">
                         {isConnected ? (
                           <Wifi className="h-3 w-3 text-success" />
                         ) : (
@@ -509,7 +509,7 @@ export default function AdminChatPanel() {
                     <div className="text-center py-8 text-text-muted">
                       <MessageCircle className="h-6 w-6 mx-auto mb-1 opacity-40" />
                       <p className="text-xs">No messages yet</p>
-                      <p className="text-[10px] text-text-faint mt-1">Send a message to start the conversation</p>
+                      <p className="text-xs text-text-faint mt-1">Send a message to start the conversation</p>
                     </div>
                   ) : (
                     <div className="space-y-1">
@@ -547,7 +547,7 @@ export default function AdminChatPanel() {
                                 <div className={`flex items-start gap-2 ${isOwn ? "flex-row-reverse" : ""}`}>
                                   {showAvatar ? (
                                     <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${isOwn ? "bg-primary" : "bg-primary/20"}`}>
-                                      <span className={`text-[10px] font-bold ${isOwn ? "text-white" : "text-primary"}`}>
+                                      <span className={`text-xs font-bold ${isOwn ? "text-white" : "text-primary"}`}>
                                         {msg.sender_name?.charAt(0)?.toUpperCase() ?? "?"}
                                       </span>
                                     </div>
@@ -557,13 +557,13 @@ export default function AdminChatPanel() {
                                   <div className={`flex-1 min-w-0 max-w-[80%] ${isOwn ? "text-right" : ""}`}>
                                     {showAvatar && (
                                       <div className={`flex items-center gap-2 mb-0.5 ${isOwn ? "justify-end" : ""}`}>
-                                        <span className="text-[10px] font-semibold text-text">
+                                        <span className="text-xs font-semibold text-text">
                                           {isOwn ? "You" : msg.sender_name}
                                         </span>
-                                        <span className="text-[8px] text-text-faint">
+                                        <span className="text-4xs text-text-faint">
                                           {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                         </span>
-                                        {msg.edited && <span className="text-[8px] text-text-faint">(edited)</span>}
+                                        {msg.edited && <span className="text-4xs text-text-faint">(edited)</span>}
                                       </div>
                                     )}
 
@@ -584,7 +584,7 @@ export default function AdminChatPanel() {
                                             <button
                                               key={emoji}
                                               onClick={() => handleReaction(msg.id, emoji)}
-                                              className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] border border-border/60 hover:border-primary/30 transition ${users.includes(String(user?.id)) ? "bg-primary/10 border-primary/30" : ""}`}
+                                              className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs border border-border/60 hover:border-primary/30 transition ${users.includes(String(user?.id)) ? "bg-primary/10 border-primary/30" : ""}`}
                                             >
                                               {emoji} {users.length}
                                             </button>
@@ -603,8 +603,8 @@ export default function AdminChatPanel() {
                                             <FileText className="h-5 w-5 text-text-faint" />
                                           )}
                                           <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-medium text-text truncate">{msg.attachment.file_name}</p>
-                                            <p className="text-[9px] text-text-faint">{(msg.attachment.file_size_bytes / 1024).toFixed(1)} KB</p>
+                                            <p className="text-xs font-medium text-text truncate">{msg.attachment.file_name}</p>
+                                            <p className="text-3xs text-text-faint">{(msg.attachment.file_size_bytes / 1024).toFixed(1)} KB</p>
                                           </div>
                                           {msg.attachment.duration_seconds && (
                                             <button className="p-1"><Play className="h-3 w-3 text-primary" /></button>
@@ -678,7 +678,7 @@ export default function AdminChatPanel() {
                 {/* Reply bar */}
                 {replyingTo && (
                   <div className="px-4 py-2 border-t border-border bg-surface-2 flex items-center justify-between">
-                    <span className="text-[10px] text-text-muted">Replying to <strong className="text-text">{replyingTo.sender_name}</strong></span>
+                    <span className="text-xs text-text-muted">Replying to <strong className="text-text">{replyingTo.sender_name}</strong></span>
                     <button onClick={() => setReplyingTo(null)} className="text-text-faint hover:text-text"><X className="h-3 w-3" /></button>
                   </div>
                 )}
@@ -766,18 +766,18 @@ export default function AdminChatPanel() {
                 <button onClick={() => setShowCreateModal(false)} className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
               </div>
               <div className="space-y-3">
-                <label className="block space-y-1 text-[10px] text-text-muted">
+                <label className="block space-y-1 text-xs text-text-muted">
                   Thread Title
                   <input value={newThreadTitle} onChange={(e) => setNewThreadTitle(e.target.value)}
                     className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" placeholder="e.g. Order #1234 Discussion" />
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <label className="block space-y-1 text-[10px] text-text-muted">
+                  <label className="block space-y-1 text-xs text-text-muted">
                     Entity Type (optional)
                     <input value={newThreadEntityType} onChange={(e) => setNewThreadEntityType(e.target.value)}
                       className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" placeholder="order, supplier, ticket" />
                   </label>
-                  <label className="block space-y-1 text-[10px] text-text-muted">
+                  <label className="block space-y-1 text-xs text-text-muted">
                     Entity ID (optional)
                     <input value={newThreadEntityId} onChange={(e) => setNewThreadEntityId(e.target.value)}
                       className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" placeholder="1234" />

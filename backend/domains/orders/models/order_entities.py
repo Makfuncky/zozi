@@ -3,14 +3,16 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint
 from sqlalchemy.orm import relationship, synonym
+from infrastructure.database.types import GUID
 from . import Base
+from domains.country.models.countries import CountryConfig  # noqa: F401
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 __all__ = ['Order', 'OrderItem', 'OrderLogisticsAllocation', 'ReturnRequest', 'OrderNotification']
 
 class Order(Base):
     __tablename__ = 'orders'
     __table_args__ = {"schema": "orders"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
@@ -70,7 +72,7 @@ class Order(Base):
 class OrderItem(Base):
     __tablename__ = 'order_items'
     __table_args__ = {"schema": "orders"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -101,7 +103,7 @@ class OrderItem(Base):
 class OrderLogisticsAllocation(Base):
     __tablename__ = 'order_logistics_allocations'
     __table_args__ = {"schema": "orders"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -143,7 +145,7 @@ class OrderLogisticsAllocation(Base):
 class ReturnRequest(Base):
     __tablename__ = 'return_requests'
     __table_args__ = {"schema": "orders"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -179,7 +181,7 @@ class OrderNotification(Base):
     """Order-related user notification (e.g. status changes, shipment updates)."""
     __tablename__ = 'order_notifications'
     __table_args__ = {"schema": "orders"}
-    uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)

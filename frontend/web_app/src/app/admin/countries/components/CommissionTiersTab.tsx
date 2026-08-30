@@ -16,19 +16,19 @@ export default function CommissionTiersTab({
       <p className="text-xs text-text-muted">Configure order value thresholds where commission rates change based on target sales volume (overrides base category rates).</p>
 
       <div className="grid gap-2 grid-cols-2 md:grid-cols-5 items-end p-3 rounded-lg border border-border bg-surface">
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Min Order Value ({selectedCountry?.currency})
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newTierMin} onChange={(e) => setNewTierMin(e.target.value)} />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Max Order Value (Leave empty for &infin;)
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newTierMax} onChange={(e) => setNewTierMax(e.target.value)} placeholder="Unlimited" />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Commission Percentage
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newTierPct} onChange={(e) => setNewTierPct(e.target.value)} />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Fixed Transaction Fee
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newTierFixed} onChange={(e) => setNewTierFixed(e.target.value)} />
         </label>

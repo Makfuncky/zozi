@@ -184,6 +184,11 @@ async def analyze_product_image_async(
     )
 
 
+def _read_file_bytes(path: str) -> bytes:
+    with open(path, "rb") as f:
+        return f.read()
+
+
 async def batch_analyze_images_async(
     image_paths: List[str],
     concurrency: int = 8,
@@ -202,8 +207,7 @@ async def batch_analyze_images_async(
     async def _analyze_one(path: str) -> Dict[str, Any]:
         async with semaphore:
             try:
-                with open(path, "rb") as f:
-                    data = f.read()
+                data = await asyncio.to_thread(_read_file_bytes, path)
                 return await analyze_product_image_async(
                     data, filename=os.path.basename(path), use_vision=True
                 )

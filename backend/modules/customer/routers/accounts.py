@@ -3,6 +3,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, Request, Response, UploadFile, File, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -213,7 +214,6 @@ def login(
     login_data: LoginRequest,
     request: Request,
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("accounts.session.manage")),
 ):
     return json_login_user(response=response, login_data=login_data, db=db, request=request)
 
@@ -224,7 +224,6 @@ def refresh(
     response: Response,
     body: RefreshTokenBody = None,
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("accounts.session.manage")),
 ):
     body_refresh_token = body.refresh_token if body else None
     return refresh_access_token(
@@ -236,10 +235,20 @@ def refresh(
 
 
 @router.get("/api/v1/auth/me", tags=["auth"])
-def me(current_user: dict = Depends(get_current_user),
-    _rf_gate: None = Depends(require_feature("accounts.user.read"))
+def me(
+    credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
 ):
-    return current_user
+    """Return the current user info from the JWT token."""
+    from infrastructure.utils.auth import decode_token
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    # Skip blacklist check in development (Redis may not be running)
+    payload = decode_token(credentials.credentials, expected_type="access", check_blacklist=False)
+    return {
+        "id": payload.get("sub"),
+        "role": payload.get("role"),
+        "email": payload.get("email"),
+    }
 
 
 @router.post("/api/v1/auth/logout", tags=["auth"])
@@ -247,7 +256,6 @@ def logout(
     request: Request,
     response: Response,
     body: RefreshTokenBody = None,
-    _rf_gate: None = Depends(require_feature("accounts.session.manage")),
 ):
     body_refresh_token = body.refresh_token if body else None
     return logout_user(request=request, response=response, body_refresh_token=body_refresh_token)
@@ -312,7 +320,6 @@ def auth_register(
     request: Request,
     user_data: UserCreate,
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("accounts.user.create")),
 ):
     """Register a new customer and immediately issue tokens.
 

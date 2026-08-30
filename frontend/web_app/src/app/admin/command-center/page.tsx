@@ -145,7 +145,7 @@ function HeroKpi({ label, value, format, accent, spark, loading }: { label: stri
   return (
     <div className="theme-elevated relative flex-1 overflow-hidden rounded-2xl p-3.5" style={{ border: `1px solid color-mix(in srgb, ${color} 22%, transparent)` }}>
       <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: color, boxShadow: `0 0 12px ${color}55` }} />
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-text-faint">{label}</p>
+      <p className="text-3xs font-bold uppercase tracking-[0.18em] text-text-faint">{label}</p>
       <div className="mt-1 flex items-end justify-between gap-2">
         {loading ? <div className="h-7 w-20 rounded bg-surface-2/60 animate-pulse" />
           : <p className="text-2xl font-bold tabular-nums leading-none text-text">{format ? format(value) : value.toLocaleString()}</p>}
@@ -159,8 +159,8 @@ function EmptyBlock({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-1 py-6 text-center">
       <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-2/50"><Inbox className="h-4 w-4 text-text-faint" /></div>
-      <p className="text-[10px] font-semibold text-text-muted">{title}</p>
-      {hint && <p className="max-w-[180px] text-[9px] leading-snug text-text-faint">{hint}</p>}
+      <p className="text-xs font-semibold text-text-muted">{title}</p>
+      {hint && <p className="max-w-[180px] text-3xs leading-snug text-text-faint">{hint}</p>}
     </div>
   );
 }
@@ -286,7 +286,7 @@ export default function AdminCommandCenterPage() {
               <Database className="h-4 w-4 shrink-0 text-warning" />
               <p className="flex-1 text-[11px] font-semibold text-text">Connected, but the telemetry payload doesn&apos;t match the expected schema.</p>
             </div>
-            <p className="mt-1.5 text-[10px] leading-relaxed text-text-muted">
+            <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
               Expected sections: <span className="font-mono">{EXPECTED_KEYS.join(", ")}</span>.<br />
               Missing: <span className="font-mono text-warning">{schemaInfo.missing.join(", ") || "—"}</span>.<br />
               Received top-level keys: <span className="font-mono">{schemaInfo.receivedKeys.join(", ") || "(none)"}</span>.
@@ -297,7 +297,7 @@ export default function AdminCommandCenterPage() {
         {payloadState === "empty" && !loading && (
           <div className="theme-elevated flex items-center gap-2 rounded-xl border border-border p-2.5">
             <Radio className="h-3.5 w-3.5 shrink-0 text-text-faint" />
-            <p className="text-[10px] font-medium text-text-muted">Telemetry healthy — no commercial activity recorded for {countryCode ?? "this scope"} in the current period.</p>
+            <p className="text-xs font-medium text-text-muted">Telemetry healthy — no commercial activity recorded for {countryCode ?? "this scope"} in the current period.</p>
           </div>
         )}
 
@@ -309,16 +309,16 @@ export default function AdminCommandCenterPage() {
             </div>
             <div>
               <h1 className="text-base font-bold tracking-tight text-text">Command Center</h1>
-              <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-text-faint">Mission control · {clock}</p>
+              <p className="font-mono text-3xs uppercase tracking-[0.22em] text-text-faint">Mission control · {clock}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {countryCode && !countryLoading && (
-              <span className="theme-elevated inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold text-text-muted">
+              <span className="theme-elevated inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-muted">
                 <Globe2 className="h-3 w-3" style={{ color: HUD.cyan }} />{countryCode}
               </span>
             )}
-            <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold backdrop-blur-sm"
+            <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold backdrop-blur-sm"
               style={{ color: HUD[wsColor], background: `color-mix(in srgb, ${HUD[wsColor]} 8%, var(--color-glass-mid))`, border: `1px solid color-mix(in srgb, ${HUD[wsColor]} 25%, transparent)` }}>
               <span className="relative flex h-2 w-2">
                 {wsStatus === "connected" && <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-70" style={{ background: HUD[wsColor] }} />}
@@ -335,7 +335,7 @@ export default function AdminCommandCenterPage() {
                 </button>
               ))}
             </div>
-            <button onClick={fetchData} disabled={loading} className="theme-elevated inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold text-text-muted hover:text-text disabled:opacity-50">
+            <button onClick={fetchData} disabled={loading} className="theme-elevated inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-muted hover:text-text disabled:opacity-50">
               <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
             </button>
           </div>
@@ -423,12 +423,12 @@ export default function AdminCommandCenterPage() {
                 const mx = Math.max(...data!.workforce.employees_by_department.map((x) => x.count), 1);
                 return (
                   <div key={d.department} className="flex items-center gap-2">
-                    <span className="w-20 shrink-0 truncate text-[10px] font-medium text-text">{d.department}</span>
+                    <span className="w-20 shrink-0 truncate text-xs font-medium text-text">{d.department}</span>
                     <div className="h-2 flex-1 rounded-full bg-surface-2/50 overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500"
                         style={{ width: `${(d.count / mx) * 100}%`, background: `linear-gradient(90deg, ${HUD.purple}70, ${HUD.purple})`, boxShadow: `0 0 6px ${HUD.purple}30` }} />
                     </div>
-                    <span className="w-6 shrink-0 text-right text-[10px] font-bold font-mono text-text tabular-nums">{d.count}</span>
+                    <span className="w-6 shrink-0 text-right text-xs font-bold font-mono text-text tabular-nums">{d.count}</span>
                   </div>
                 );
               }) : <EmptyBlock title="No workforce data" />}
@@ -446,17 +446,17 @@ export default function AdminCommandCenterPage() {
               <Meter label="Error Rate" value={data?.system.error_rate ?? 0} max={5} color="red" warn={2} crit={4} loading={loading} />
             </div>
             <div className="theme-elevated rounded-xl p-2.5 text-center col-span-2" style={{ border: `1px solid ${HUD.green}18` }}>
-              <p className="text-[8px] font-bold font-mono uppercase tracking-wider text-text-faint">Active Sessions</p>
+              <p className="text-4xs font-bold font-mono uppercase tracking-wider text-text-faint">Active Sessions</p>
               <p className="text-xl font-bold text-text tabular-nums">{data?.system.active_sessions ?? 0}</p>
             </div>
             <div className="theme-elevated rounded-xl p-2.5 text-center" style={{ border: `1px solid ${HUD.green}18` }}>
-              <p className="text-[8px] font-bold font-mono uppercase tracking-wider text-text-faint">Redis Hit</p>
+              <p className="text-4xs font-bold font-mono uppercase tracking-wider text-text-faint">Redis Hit</p>
               <p className="text-base font-bold font-mono" style={{ color: HUD.green }}>
                 {((data?.system.redis_hit_ratio ?? 0) * 100) > 0 ? `${((data?.system.redis_hit_ratio ?? 0) * 100).toFixed(0)}%` : "—"}
               </p>
             </div>
             <div className="theme-elevated rounded-xl p-2.5 text-center" style={{ border: `1px solid ${HUD.blue}18` }}>
-              <p className="text-[8px] font-bold font-mono uppercase tracking-wider text-text-faint">DB Conns</p>
+              <p className="text-4xs font-bold font-mono uppercase tracking-wider text-text-faint">DB Conns</p>
               <p className="text-base font-bold text-text tabular-nums">{data?.system.db_connections ?? 0}</p>
             </div>
           </div>
@@ -469,13 +469,13 @@ export default function AdminCommandCenterPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="md:col-span-2">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-[9px] font-bold font-mono uppercase tracking-wider text-text-faint">Active Alerts <span className="text-text-muted">({(data?.alerts ?? []).length})</span></h4>
+                  <h4 className="text-3xs font-bold font-mono uppercase tracking-wider text-text-faint">Active Alerts <span className="text-text-muted">({(data?.alerts ?? []).length})</span></h4>
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-text-faint" />
-                      <input value={alertFilter} onChange={(e) => setAlertFilter(e.target.value)} placeholder="Filter…" className="theme-input w-28 rounded-lg py-1.5 pl-6 pr-2 text-[10px]" />
+                      <input value={alertFilter} onChange={(e) => setAlertFilter(e.target.value)} placeholder="Filter…" className="theme-input w-28 rounded-lg py-1.5 pl-6 pr-2 text-xs" />
                     </div>
-                    <button onClick={() => router.push("/admin/command-center/alerts")} className="text-[10px] font-bold font-mono text-primary hover:underline">All →</button>
+                    <button onClick={() => router.push("/admin/command-center/alerts")} className="text-xs font-bold font-mono text-primary hover:underline">All →</button>
                   </div>
                 </div>
                 <div className="max-h-28 overflow-y-auto space-y-1 pr-0.5">
@@ -485,13 +485,13 @@ export default function AdminCommandCenterPage() {
                 </div>
               </div>
               <div>
-                <h4 className="text-[9px] font-bold font-mono uppercase tracking-wider text-text-faint mb-2">Fraud <span className="text-text-muted">({(data?.fraud_alerts ?? []).length})</span></h4>
+                <h4 className="text-3xs font-bold font-mono uppercase tracking-wider text-text-faint mb-2">Fraud <span className="text-text-muted">({(data?.fraud_alerts ?? []).length})</span></h4>
                 <div className="max-h-28 overflow-y-auto space-y-1 pr-0.5">
                   {loading ? Array.from({ length: 2 }).map((_, i) => <div key={i} className="h-9 w-full rounded bg-surface-2/60 animate-pulse" />)
                   : (data?.fraud_alerts ?? []).length === 0 ? <EmptyBlock title="No fraud signals" />
                   : (data!.fraud_alerts).slice(0, 3).map((fa) => <FraudRow key={fa.id} fa={fa} onOpen={() => router.push("/admin/command-center/fraud")} />)}
                 </div>
-                <button onClick={() => router.push("/admin/command-center/fraud")} className="mt-1.5 text-[10px] font-bold font-mono text-danger hover:underline">Dashboard →</button>
+                <button onClick={() => router.push("/admin/command-center/fraud")} className="mt-1.5 text-xs font-bold font-mono text-danger hover:underline">Dashboard →</button>
               </div>
             </div>
           </div>
@@ -501,11 +501,11 @@ export default function AdminCommandCenterPage() {
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <button onClick={() => router.push("/admin/command-center/headlines/create")}
-              className="theme-elevated inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-semibold hover:text-text transition-colors">+ Publish News</button>
+              className="theme-elevated inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold hover:text-text transition-colors">+ Publish News</button>
             <button onClick={() => router.push("/admin/dashboard")}
-              className="theme-btn-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-semibold">Dashboard →</button>
+              className="theme-btn-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold">Dashboard →</button>
           </div>
-          <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-text-faint">
+          <p className="font-mono text-3xs uppercase tracking-[0.22em] text-text-faint">
             {lastUpdatedMs ? `SYNC ${relativeSync}` : "INITIALISING…"}
           </p>
         </div>

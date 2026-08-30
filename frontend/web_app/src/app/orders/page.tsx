@@ -158,7 +158,7 @@ export default function OrdersPage() {
                       </span>
                     )}
                     {order.tracking_number && (
-                      <span className="rounded-full bg-surface-2 px-2.5 py-1 text-text-muted font-mono text-[10px]">
+                      <span className="rounded-full bg-surface-2 px-2.5 py-1 text-text-muted font-mono text-xs">
                         {order.tracking_number}
                       </span>
                     )}

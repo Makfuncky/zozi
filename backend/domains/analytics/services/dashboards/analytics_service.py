@@ -92,13 +92,13 @@ def get_customer_insights(db: Session) -> dict:
     top_cust_rows = (
         db.query(
             Order.user_id,
-            User.username,
+            User.email,
             User.email,
             func.count(Order.id).label("order_count"),
             func.sum(Order.total_amount).label("total_spent"),
         )
         .join(User, User.id == Order.user_id)
-        .group_by(Order.user_id, User.username, User.email)
+        .group_by(Order.user_id, User.email, User.email)
         .order_by(desc(func.sum(Order.total_amount)))
         .limit(10)
         .all()

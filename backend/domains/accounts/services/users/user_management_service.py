@@ -477,7 +477,7 @@ def create_staff_account(payload: CreateStaffAccount, acting_user: dict, db: Ses
 
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-    if db.query(User).filter(User.username == payload.username).first():
+    if db.query(User).filter(User.email == payload.username).first():
         raise HTTPException(status_code=400, detail="Username already taken")
 
     assigned_permissions = _sanitize_staff_permissions(payload.permissions)
@@ -1124,7 +1124,7 @@ def list_pending_bank_accounts(kind: str, db: Session, current_user: dict, limit
 
     if kind == "supplier":
         rows = (
-            db.query(SupplierBankAccount, User.username, SupplierProfile.business_name)
+            db.query(SupplierBankAccount, User.email, SupplierProfile.business_name)
             .join(User, SupplierBankAccount.supplier_id == User.id)
             .outerjoin(SupplierProfile, SupplierProfile.user_id == User.id)
             .filter(SupplierBankAccount.verification_status == "pending")

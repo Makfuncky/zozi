@@ -463,7 +463,7 @@ function AdminOrdersHubInner() {
         <div className={bodyText}>
           <p className="font-semibold text-text tabular-nums">{formatMoney(Number(order.total_amount ?? order.total ?? 0))}</p>
           {order.payment_status ? (
-            <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${order.payment_status === "paid" ? "theme-chip-success" : order.payment_status === "pending" ? "theme-chip-warning" : "theme-chip-muted"}`}>
+            <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${order.payment_status === "paid" ? "theme-chip-success" : order.payment_status === "pending" ? "theme-chip-warning" : "theme-chip-muted"}`}>
               {order.payment_status}
             </span>
           ) : null}
@@ -483,7 +483,7 @@ function AdminOrdersHubInner() {
             type="button"
             onClick={() => setStatusDropdownOpenId((id) => id === order.id ? null : order.id)}
             disabled={updatingId === order.id}
-            className={`rounded-full px-2 py-1 text-[10px] font-medium capitalize transition-opacity hover:opacity-75 disabled:opacity-50 ${STATUS_COLORS[order.status] ?? "bg-surface-2 text-text-muted"}`}
+            className={`rounded-full px-2 py-1 text-xs font-medium capitalize transition-opacity hover:opacity-75 disabled:opacity-50 ${STATUS_COLORS[order.status] ?? "bg-surface-2 text-text-muted"}`}
           >
             {updatingId === order.id ? "..." : (order.status_label || order.status.replaceAll("_", " "))}
           </button>
@@ -494,7 +494,7 @@ function AdminOrdersHubInner() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -4, scale: 0.97 }}
                 transition={{ duration: 0.12 }}
-                className="glass-dropdown absolute left-0 top-full z-[999] mt-1 min-w-35 rounded-lg py-1"
+                className="glass-dropdown absolute left-0 top-full z-modal mt-1 min-w-35 rounded-lg py-1"
               >
                 {[...STATUS_UPDATE_OPTIONS, ...(order.status === "refunded" ? ["refunded"] : [])].map((statusValue) => (
                   <button
@@ -532,7 +532,7 @@ function AdminOrdersHubInner() {
           <div className={`space-y-0.5 text-text-muted ${bodyText}`}>
             {hasShipment ? (
               <>
-                <p className="font-mono text-[10px] text-text">{primaryShipment?.tracking_number || tracking?.tracking_numbers?.[0] || "No tracking #"}</p>
+                <p className="font-mono text-xs text-text">{primaryShipment?.tracking_number || tracking?.tracking_numbers?.[0] || "No tracking #"}</p>
                 <p className="text-text-muted">
                   <span className="font-semibold text-text">{tracking?.delivered_shipments ?? 0}/{tracking?.shipment_count ?? 0}</span> delivered
                 </p>
@@ -543,7 +543,7 @@ function AdminOrdersHubInner() {
               </p>
             )}
             {activeReturn ? (
-              <span className="inline-flex rounded-full bg-warning/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-warning">
+              <span className="inline-flex rounded-full bg-warning/10 px-1.5 py-0.5 text-3xs font-semibold uppercase tracking-wide text-warning">
                 {activeReturn.intent}
               </span>
             ) : null}
@@ -872,11 +872,11 @@ function AdminOrdersHubInner() {
               <p><span className="font-medium text-text">Total:</span> {formatMoney(Number(detailOrder.total_amount ?? detailOrder.total ?? 0))}</p>
               <p><span className="font-medium text-text">Placed:</span> {new Date(detailOrder.created_at).toLocaleString()}</p>
               <div className="flex flex-wrap gap-2 pt-1">
-                <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${STATUS_COLORS[detailOrder.status] ?? "theme-chip-muted"}`}>
+                <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide ${STATUS_COLORS[detailOrder.status] ?? "theme-chip-muted"}`}>
                   {detailOrder.status_label || detailOrder.status.replaceAll("_", " ")}
                 </span>
                 {detailOrder.payment_status ? (
-                  <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${detailOrder.payment_status === "paid" ? "theme-chip-success" : detailOrder.payment_status === "pending" ? "theme-chip-warning" : "theme-chip-muted"}`}>
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide ${detailOrder.payment_status === "paid" ? "theme-chip-success" : detailOrder.payment_status === "pending" ? "theme-chip-warning" : "theme-chip-muted"}`}>
                     {detailOrder.payment_status}
                   </span>
                 ) : null}

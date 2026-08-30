@@ -218,19 +218,19 @@ export default function SupplierReportsPage() {
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                       <div className="rounded-lg bg-surface-2 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wide text-text-faint">Groups</p>
+                        <p className="text-xs uppercase tracking-wide text-text-faint">Groups</p>
                         <p className="text-lg font-bold text-text">{audit.curatedGroupCount ?? audit.groupCount ?? 0}</p>
                       </div>
                       <div className="rounded-lg bg-surface-2 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wide text-text-faint">Need attention</p>
+                        <p className="text-xs uppercase tracking-wide text-text-faint">Need attention</p>
                         <p className="text-lg font-bold text-text">{audit.attentionCount ?? 0}</p>
                       </div>
                       <div className="rounded-lg bg-surface-2 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wide text-text-faint">Errors</p>
+                        <p className="text-xs uppercase tracking-wide text-text-faint">Errors</p>
                         <p className="text-lg font-bold text-danger">{audit.errorCount ?? 0}</p>
                       </div>
                       <div className="rounded-lg bg-surface-2 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wide text-text-faint">Warnings</p>
+                        <p className="text-xs uppercase tracking-wide text-text-faint">Warnings</p>
                         <p className="text-lg font-bold text-warning">{audit.warningCount ?? 0}</p>
                       </div>
                     </div>
@@ -273,7 +273,7 @@ export default function SupplierReportsPage() {
                       <span className="w-5 text-xs font-bold text-text-faint tabular-nums">#{i + 1}</span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-text truncate">{product.name}</p>
-                        <p className="text-[10px] text-text-muted">{product.sales} sales</p>
+                        <p className="text-xs text-text-muted">{product.sales} sales</p>
                       </div>
                       <span className="text-xs font-semibold text-text tabular-nums">{formatMoney(product.revenue)}</span>
                     </div>

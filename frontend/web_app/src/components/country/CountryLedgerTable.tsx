@@ -55,7 +55,7 @@ export default function CountryLedgerTable({
       <GhostRowForm onCountryCreated={onRefresh} />
 
       {/* Column Headers */}
-      <div className="hidden md:grid md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_40px] gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted bg-surface-2 rounded-t-lg border border-border">
+      <div className="hidden md:grid md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_40px] gap-3 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-text-muted bg-surface-2 rounded-t-lg border border-border">
         <span>Country</span>
         <span>Code</span>
         <span>Currency</span>
@@ -98,7 +98,7 @@ export default function CountryLedgerTable({
                 <span className="hidden md:inline text-text-muted">{country.commission_count}</span>
                 <span className="hidden md:inline">
                   <span
-                    className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                    className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
                       country.is_active
                         ? "bg-success/10 text-success"
                         : "bg-danger/10 text-danger"
@@ -112,7 +112,7 @@ export default function CountryLedgerTable({
                 </span>
 
                 {/* Mobile summary */}
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-text-faint md:hidden">
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-text-faint md:hidden">
                   <span>{country.code}</span>
                   <span>{country.currency}</span>
                   <span>{country.tax_rate}% tax</span>

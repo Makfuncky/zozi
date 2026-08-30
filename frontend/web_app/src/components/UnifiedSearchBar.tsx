@@ -132,7 +132,7 @@ function SuggestionsDropdown({
       {aiMode && (
         <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/60 bg-primary/5">
           <Cpu className="w-3 h-3 text-primary" />
-          <span className="text-[10px] font-semibold text-primary">AI semantic search active</span>
+          <span className="text-xs font-semibold text-primary">AI semantic search active</span>
         </div>
       )}
       {items.map((item, i) => (
@@ -153,7 +153,7 @@ function SuggestionsDropdown({
           <div className="min-w-0 flex-1">
             <span className="text-[12px] font-medium truncate block">{item.label}</span>
             {item.sublabel && (
-              <span className="text-[9px] text-text-faint truncate block">{item.sublabel}</span>
+              <span className="text-3xs text-text-faint truncate block">{item.sublabel}</span>
             )}
           </div>
         </button>
@@ -332,7 +332,7 @@ export default function UnifiedSearchBar({
             )}
           >
             <Cpu className="w-4 h-4" />
-            <span className="text-[10px] font-semibold hidden sm:inline">AI</span>
+            <span className="text-xs font-semibold hidden sm:inline">AI</span>
           </button>
         )}
 
@@ -445,7 +445,7 @@ export default function UnifiedSearchBar({
               <div className="w-8 h-8 rounded overflow-hidden border border-border">
                 <img src={imagePreview} alt="Search image" className="w-full h-full object-cover" />
               </div>
-              <span className="text-[10px] font-medium text-primary">
+              <span className="text-xs font-medium text-primary">
                 Visual search active
               </span>
               <button

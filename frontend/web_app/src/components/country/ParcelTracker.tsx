@@ -92,7 +92,7 @@ export default function ParcelTracker({ parcelId, isAdminView = false }: ParcelT
             {tracking.delivered_shipments}/{tracking.shipment_count} shipments delivered
           </p>
         </div>
-        <span className={`px-2 py-1 rounded text-[10px] font-semibold uppercase ${statusStyle(tracking.order_status)}`}>
+        <span className={`px-2 py-1 rounded text-xs font-semibold uppercase ${statusStyle(tracking.order_status)}`}>
           {tracking.order_status_label || tracking.order_status?.replaceAll("_", " ")}
         </span>
       </div>
@@ -125,7 +125,7 @@ export default function ParcelTracker({ parcelId, isAdminView = false }: ParcelT
               <p className="text-sm font-semibold text-text">
                 Shipment #{shipment.id}{shipment.supplier_name ? ` · ${shipment.supplier_name}` : ""}
               </p>
-              <span className={`rounded-lg px-2 py-1 text-[10px] font-semibold uppercase ${statusStyle(shipment.status)}`}>
+              <span className={`rounded-lg px-2 py-1 text-xs font-semibold uppercase ${statusStyle(shipment.status)}`}>
                 {shipment.status_label || shipment.status?.replaceAll("_", " ")}
               </span>
             </div>

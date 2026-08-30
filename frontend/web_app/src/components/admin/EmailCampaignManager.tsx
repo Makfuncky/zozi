@@ -149,7 +149,7 @@ export default function EmailCampaignManager() {
                   <td className="p-3 font-medium text-xs">{c.name}</td>
                   <td className="p-3 text-xs text-text-muted max-w-[200px] truncate">{c.subject}</td>
                   <td className="p-3 text-center">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLE[c.status] || "theme-chip-muted"}`}>{c.status}</span>
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[c.status] || "theme-chip-muted"}`}>{c.status}</span>
                   </td>
                   <td className="p-3 text-right text-xs">{c.sent_count ?? 0}</td>
                   <td className="p-3 text-right text-xs">{c.opened_count ?? 0}</td>
@@ -177,11 +177,11 @@ export default function EmailCampaignManager() {
               <button onClick={() => setShowCreate(false)} className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-3">
-              <label className="block space-y-1 text-[10px] text-text-muted">
+              <label className="block space-y-1 text-xs text-text-muted">
                 Campaign Name
                 <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" placeholder="e.g. Summer Sale 2026" />
               </label>
-              <label className="block space-y-1 text-[10px] text-text-muted">
+              <label className="block space-y-1 text-xs text-text-muted">
                 Email Subject
                 <input value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text" placeholder="e.g. Don't miss our summer deals!" />
               </label>

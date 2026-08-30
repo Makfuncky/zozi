@@ -16,7 +16,7 @@ export default function CategoryCommissionsTab({
       <p className="text-xs text-text-muted">Override base commission rates for specific category slugs (e.g. smartphones, fashion, home_appliances).</p>
 
       <div className="grid gap-2 grid-cols-2 md:grid-cols-4 items-end p-3 rounded-lg border border-border bg-surface">
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Category
           <select
             className="w-full rounded border bg-surface px-2 py-1 text-xs text-text"
@@ -29,11 +29,11 @@ export default function CategoryCommissionsTab({
             ))}
           </select>
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted">
+        <label className="space-y-1 text-xs text-text-muted">
           Commission Rate (0 to 1)
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newCategoryRate} onChange={(e) => setNewCategoryRate(e.target.value)} />
         </label>
-        <label className="space-y-1 text-[10px] text-text-muted md:col-span-2">
+        <label className="space-y-1 text-xs text-text-muted md:col-span-2">
           Internal Notes
           <input className="w-full rounded border bg-surface px-2 py-1 text-xs text-text" value={newCategoryNotes} onChange={(e) => setNewCategoryNotes(e.target.value)} placeholder="Low margin category" />
         </label>
@@ -73,7 +73,7 @@ export default function CategoryCommissionsTab({
             </strong>
           </span>
           <span className="ml-auto flex items-center gap-2">
-            <span className="text-text-faint text-[10px]">Bulk fill missing:</span>
+            <span className="text-text-faint text-xs">Bulk fill missing:</span>
             <input
               type="number"
               step="0.01"
@@ -100,7 +100,7 @@ export default function CategoryCommissionsTab({
                   }));
                 setCategoryCommissions([...categoryCommissions, ...newRates]);
               }}
-              className="rounded bg-primary/10 text-primary px-2 py-1 text-[10px] font-semibold hover:bg-primary/20 transition"
+              className="rounded bg-primary/10 text-primary px-2 py-1 text-xs font-semibold hover:bg-primary/20 transition"
             >
               Apply
             </button>

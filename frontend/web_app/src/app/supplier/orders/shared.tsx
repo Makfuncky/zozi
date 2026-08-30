@@ -175,7 +175,7 @@ export function Timeline({
                 </div>
                 <span
                   className={
-                    `mt-1 text-center text-[10px] uppercase tracking-wide ${
+                    `mt-1 text-center text-xs uppercase tracking-wide ${
                       step.completed
                         ? "theme-status-success"
                         : step.active
