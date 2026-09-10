@@ -23,7 +23,9 @@ def _on_governance_incident_created(payload: dict) -> None:
     logger.debug("audit: governance incident payload=%s", payload)
 
 
-subscribe("order.status_changed", _on_order_status_changed)
-subscribe("governance.incident.created", _on_governance_incident_created)
+def register_audit_subscribers() -> None:
+    subscribe("order.status_changed", _on_order_status_changed)
+    subscribe("governance.incident.created", _on_governance_incident_created)
 
-__all__ = ["_on_order_status_changed", "_on_governance_incident_created"]
+
+__all__ = ["_on_order_status_changed", "_on_governance_incident_created", "register_audit_subscribers"]

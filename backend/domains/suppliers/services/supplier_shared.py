@@ -67,6 +67,8 @@ _UNSET = object()
 _PROFILE_JSON_ARRAY_FIELDS = {"certifications"}
 _PROFILE_JSON_OBJECT_FIELDS = {"social_links"}
 _PUBLIC_SUPPLIER_CACHE_TTL = 120
+MIN_RETURN_WINDOW_DAYS = 10
+DEFAULT_MAX_RETURN_WINDOW_DAYS = 30
 
 
 def _build_public_supplier_cache_key(prefix: str, payload: dict[str, Any]) -> str:
@@ -385,8 +387,8 @@ def _parse_optional_return_window_days(value: Optional[object]) -> Optional[int]
         days = int(candidate)
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail="Return window must be an integer") from exc
-    if days < 10:
-        raise HTTPException(status_code=400, detail="Return window must be at least 10 days")
+    if days < MIN_RETURN_WINDOW_DAYS:
+        raise HTTPException(status_code=400, detail=f"Return window must be at least {MIN_RETURN_WINDOW_DAYS} days")
     return days
 
 
@@ -397,8 +399,8 @@ def _get_supplier_max_return_window_days(supplier_id: int, db: Session) -> int:
         candidate: int | str | bytes = raw_value if isinstance(raw_value, (int, str, bytes)) else str(raw_value)
         parsed = int(candidate)
     except (TypeError, ValueError):
-        parsed = 30
-    return max(10, parsed)
+        parsed = DEFAULT_MAX_RETURN_WINDOW_DAYS
+    return max(MIN_RETURN_WINDOW_DAYS, parsed)
 
 
 def _parse_supplier_return_window_days(

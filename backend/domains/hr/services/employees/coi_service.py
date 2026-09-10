@@ -199,14 +199,10 @@ class COIService:
     def log_coi_detection(self, coi_result: dict) -> None:
         """Log COI detection to audit trail."""
         audit = AuditLog(
-            event_type="coi_detection",
-            actor_id=None,
-            action="flag",
-            resource_type="financial_operation",
-            resource_id=coi_result.get("related_id"),
+            action="COI_DETECTED",
+            entity_type="conflict_of_interest",
+            entity_id=coi_result.get("related_id"),
             details=json.dumps(coi_result),
-            severity="warning",
-            occurred_at=_utcnow(),
         )
         self.db.add(audit)
         self.db.commit()

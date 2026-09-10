@@ -21,7 +21,7 @@ class ShiftHandoverLog(Base):
     shift_start = Column(DateTime, nullable=False)
     shift_end = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    handover_to_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    handover_to_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True, index=True)
     handover_notes = Column(Text, nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=False, index=True)

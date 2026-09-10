@@ -26,7 +26,7 @@ class CountryBasics(Base):
     date_format = Column(String(20), default='DD/MM/YYYY')
     status = Column(String(20), default='active')
     is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     is_default = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)

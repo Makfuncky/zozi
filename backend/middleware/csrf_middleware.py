@@ -49,11 +49,12 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     prevents the cookie from being sent on cross-site requests."""
 
     async def dispatch(self, request: Request, call_next):
-        # Allow disabling CSRF for tests and development
-        csrf_disabled = os.environ.get("CSRF_DISABLED", "").lower() in ("true", "1", "yes")
-        logger.info(f"CSRF middleware: CSRF_DISABLED={os.environ.get('CSRF_DISABLED')}, disabled={csrf_disabled}, path={request.url.path}")
-        if csrf_disabled:
-            return await call_next(request)
+        # Allow disabling CSRF for tests and development only
+        app_env = str(getattr(settings, "app_env", "") or "").lower()
+        if app_env in ("test", "development"):
+            csrf_disabled = os.environ.get("CSRF_DISABLED", "").lower() in ("true", "1", "yes")
+            if csrf_disabled:
+                return await call_next(request)
 
         if request.method == "OPTIONS":
             return await call_next(request)

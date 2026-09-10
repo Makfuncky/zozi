@@ -1,0 +1,4 @@
+delivery_completed_sms
+المملكة العربية السعودية (SA) locale variant
+Subject: تم التوصيل بنجاح
+Body: تم توصيل طلبكم رقم {order_id}. شكراً لاختياركم زوزي!

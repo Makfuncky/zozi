@@ -18,7 +18,6 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 class EntityChatThread(Base):
     __tablename__ = "entity_chat_threads"
-    __table_args__ = {"schema": "comms"}
     id = Column(Integer, primary_key=True, index=True)
     entity_type = Column(String, nullable=False)
     entity_id = Column(Integer, nullable=False)
@@ -41,7 +40,7 @@ class VideoRoom(Base):
     room_uuid = Column(String(32), unique=True, nullable=True)
     name = Column(String(200), nullable=False)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
-    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True, index=True)
     is_boardroom = Column(Boolean, default=False)
     status = Column(String(20), default="waiting")
     max_participants = Column(Integer, default=100)
@@ -63,8 +62,8 @@ class VideoRoomParticipant(Base):
     __table_args__ = (
         UniqueConstraint("room_id", "user_id", name="uq_video_participant"), {"schema": "comms"})
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("comms.video_rooms.id", ondelete='CASCADE'), nullable=False)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.video_rooms.id", ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     role = Column(String(20), default="participant")
     joined_at = Column(DateTime, default=_utcnow)
     left_at = Column(DateTime, nullable=True)
@@ -75,11 +74,10 @@ class VideoRoomParticipant(Base):
 
 class DirectChatRoom(Base):
     __tablename__ = "direct_chat_rooms"
-    __table_args__ = {"schema": "comms"}
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(String(64), unique=True, nullable=False, index=True)
-    participant_one_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
-    participant_two_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    participant_one_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    participant_two_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
     is_masked = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
@@ -94,8 +92,8 @@ class GroupChatMember(Base):
     __tablename__ = "group_chat_members"
     __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_group_member"), {"schema": "comms"})
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("comms.group_chat_rooms.id", ondelete='CASCADE'), nullable=False)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.group_chat_rooms.id", ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     role = Column(String(20), default="member")
     joined_at = Column(DateTime, default=_utcnow)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -111,8 +109,8 @@ class EscalationSLALog(Base):
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, nullable=False)
     message_type = Column(String(30), nullable=False)
-    original_recipient_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
-    escalated_to_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    original_recipient_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True, index=True)
+    escalated_to_user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True, index=True)
     escalated_to_role = Column(String(40), nullable=True)
     priority = Column(String(20), nullable=False)
     elapsed_minutes = Column(Integer, default=0)
@@ -127,8 +125,8 @@ class EntityChatMessage(Base):
     __tablename__ = "entity_chat_messages"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    thread_id = Column(Integer, ForeignKey("comms.entity_chat_threads.id", ondelete='CASCADE'), nullable=False)
-    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    thread_id = Column(Integer, ForeignKey("comms.entity_chat_threads.id", ondelete='CASCADE'), nullable=False, index=True)
+    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
@@ -142,8 +140,8 @@ class VideoRoomRecording(Base):
     __tablename__ = "video_room_recordings"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("comms.video_rooms.id", ondelete='CASCADE'), nullable=False)
-    started_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.video_rooms.id", ondelete='CASCADE'), nullable=False, index=True)
+    started_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     recording_url = Column(String(500), nullable=True)
     duration_seconds = Column(Integer, default=0)
     status = Column(String(20), default="recording")
@@ -158,8 +156,8 @@ class DirectChatMessage(Base):
     __tablename__ = "direct_chat_messages"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("comms.direct_chat_rooms.id", ondelete='CASCADE'), nullable=False)
-    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.direct_chat_rooms.id", ondelete='CASCADE'), nullable=False, index=True)
+    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
@@ -178,7 +176,7 @@ class GroupChatRoom(Base):
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
     is_encrypted = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
-    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -190,8 +188,8 @@ class GroupChatMessage(Base):
     __tablename__ = "group_chat_messages"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("comms.group_chat_rooms.id", ondelete='CASCADE'), nullable=False)
-    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.group_chat_rooms.id", ondelete='CASCADE'), nullable=False, index=True)
+    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)

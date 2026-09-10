@@ -28,7 +28,8 @@ def _on_kpi_snapshot_requested(payload: dict) -> None:
     # consolidated analytics service lives in this domain.
 
 
-subscribe(EVENT_ANALYTICS_KPI_SNAPSHOT_REQUESTED, _on_kpi_snapshot_requested)
+def register_analytics_subscribers() -> None:
+    subscribe(EVENT_ANALYTICS_KPI_SNAPSHOT_REQUESTED, _on_kpi_snapshot_requested)
 
 
-__all__ = ["_on_kpi_snapshot_requested"]
+__all__ = ["_on_kpi_snapshot_requested", "register_analytics_subscribers"]

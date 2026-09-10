@@ -11,7 +11,6 @@ __all__ = ['Order', 'OrderItem', 'OrderLogisticsAllocation', 'ReturnRequest', 'O
 
 class Order(Base):
     __tablename__ = 'orders'
-    __table_args__ = {"schema": "orders"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     deleted_by = Column(Integer, nullable=True)
@@ -71,7 +70,6 @@ class Order(Base):
 
 class OrderItem(Base):
     __tablename__ = 'order_items'
-    __table_args__ = {"schema": "orders"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -102,7 +100,6 @@ class OrderItem(Base):
 
 class OrderLogisticsAllocation(Base):
     __tablename__ = 'order_logistics_allocations'
-    __table_args__ = {"schema": "orders"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -144,7 +141,6 @@ class OrderLogisticsAllocation(Base):
 
 class ReturnRequest(Base):
     __tablename__ = 'return_requests'
-    __table_args__ = {"schema": "orders"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -180,7 +176,6 @@ class ReturnRequest(Base):
 class OrderNotification(Base):
     """Order-related user notification (e.g. status changes, shipment updates)."""
     __tablename__ = 'order_notifications'
-    __table_args__ = {"schema": "orders"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

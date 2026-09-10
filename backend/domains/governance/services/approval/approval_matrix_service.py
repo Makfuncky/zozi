@@ -17,6 +17,11 @@ from sqlalchemy.orm import Session
 from domains.hr.models.employee_models import Employee
 from domains.hr.ports import get_all_subordinates, get_authority_level, get_user_chain
 
+EXPENSE_APPROVAL_AMOUNT_THRESHOLD = 5000.0
+EXPENSE_APPROVAL_MIN_AUTHORITY_LEVEL = 4
+REFUND_APPROVAL_AMOUNT_THRESHOLD = 2000.0
+REFUND_APPROVAL_MIN_AUTHORITY_LEVEL = 3
+
 
 def require_approval(
     db: Session,
@@ -160,23 +165,23 @@ def can_approve(
         }
 
     if resource_type == "expense" and amount is not None:
-        if amount > 5000 and authority < 4:
+        if amount > EXPENSE_APPROVAL_AMOUNT_THRESHOLD and authority < EXPENSE_APPROVAL_MIN_AUTHORITY_LEVEL:
             return {
                 "user_id": user_id,
                 "resource_type": resource_type,
                 "can_approve": False,
-                "reason": "Expenses above 5000 require level 4+ authority",
+                "reason": f"Expenses above {EXPENSE_APPROVAL_AMOUNT_THRESHOLD} require level {EXPENSE_APPROVAL_MIN_AUTHORITY_LEVEL}+ authority",
                 "authority_level": authority,
                 "amount": amount,
             }
 
     if resource_type == "refund" and amount is not None:
-        if amount > 2000 and authority < 3:
+        if amount > REFUND_APPROVAL_AMOUNT_THRESHOLD and authority < REFUND_APPROVAL_MIN_AUTHORITY_LEVEL:
             return {
                 "user_id": user_id,
                 "resource_type": resource_type,
                 "can_approve": False,
-                "reason": "Refunds above 2000 require level 3+ authority",
+                "reason": f"Refunds above {REFUND_APPROVAL_AMOUNT_THRESHOLD} require level {REFUND_APPROVAL_MIN_AUTHORITY_LEVEL}+ authority",
                 "authority_level": authority,
                 "amount": amount,
             }

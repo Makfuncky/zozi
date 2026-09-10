@@ -44,7 +44,6 @@ class PayoutRule(Base):
 
 class TaxRule(Base):
     __tablename__ = 'tax_rules'
-    __table_args__ = {"schema": "finance"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -65,7 +64,6 @@ class TaxRule(Base):
 
 class PayoutRuleCategory(Base):
     __tablename__ = 'payout_rule_categories'
-    __table_args__ = {"schema": "finance"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -87,7 +85,6 @@ class PayoutRuleCategory(Base):
 
 class PayoutRuleProduct(Base):
     __tablename__ = 'payout_rule_products'
-    __table_args__ = {"schema": "finance"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

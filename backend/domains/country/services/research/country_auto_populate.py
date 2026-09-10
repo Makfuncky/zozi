@@ -28,6 +28,12 @@ from infrastructure.utils.config import settings
 
 from infrastructure.utils.circuit_breaker import CircuitBreakerWithRetry, retry
 
+CIRCUIT_BREAKER_FAILURE_THRESHOLD = 3
+CIRCUIT_BREAKER_RECOVERY_TIMEOUT = 30.0
+CIRCUIT_BREAKER_RETRY_COUNT = 2
+CIRCUIT_BREAKER_RETRY_DELAY = 0.5
+CIRCUIT_BREAKER_RETRY_BACKOFF = 2.0
+
 
 from .curated_cities import get_cities as get_curated_cities
 
@@ -60,17 +66,11 @@ CACHE_TTL_SECONDS = 172800
 
 
 api_breaker = CircuitBreakerWithRetry(
-
-    failure_threshold=3,
-
-    recovery_timeout=30.0,
-
-    retry_count=2,
-
-    retry_delay=0.5,
-
-    retry_backoff=2.0,
-
+    failure_threshold=CIRCUIT_BREAKER_FAILURE_THRESHOLD,
+    recovery_timeout=CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
+    retry_count=CIRCUIT_BREAKER_RETRY_COUNT,
+    retry_delay=CIRCUIT_BREAKER_RETRY_DELAY,
+    retry_backoff=CIRCUIT_BREAKER_RETRY_BACKOFF,
 )
 
 

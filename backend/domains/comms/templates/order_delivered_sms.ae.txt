@@ -1,0 +1,4 @@
+order_delivered_sms
+الإمارات العربية المتحدة (AE) locale variant
+Subject: تم تسليم طلبك
+Body: تم تسليم طلبك رقم {order_id}. شكراً لك!

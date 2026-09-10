@@ -1,0 +1,4 @@
+order_cancelled_sms
+المملكة العربية السعودية (SA) locale variant
+Subject: تم إلغاء طلبك
+Body: تم إلغاء طلبك رقم {order_id}. المبلغ المسترد: {refund_amount}

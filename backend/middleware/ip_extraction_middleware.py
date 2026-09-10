@@ -7,7 +7,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from infrastructure.utils.ip_utils import set_request_ip
+from infrastructure.security.ip_utils import set_request_ip
 
 
 class IPExtractionMiddleware(BaseHTTPMiddleware):

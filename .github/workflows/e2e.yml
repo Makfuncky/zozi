@@ -1,0 +1,246 @@
+name: E2E Tests — Playwright
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - local
+          - staging
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "24"
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # Job 1: E2E Tests against local stack
+  # ═══════════════════════════════════════════════════════════════
+  e2e-local:
+    name: E2E Tests (Local Stack)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'local' || github.event.inputs.environment == '' }}
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: zozi_test
+          POSTGRES_USER: zozi_test
+          POSTGRES_PASSWORD: zozi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/web_app/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest==9.1.1 pytest-asyncio==1.4.0 pytest-timeout==2.3.1
+
+      - name: Install frontend dependencies
+        working-directory: frontend/web_app
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        working-directory: frontend/web_app
+        run: npx playwright install --with-deps chromium
+
+      - name: Run database migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://zozi_test:zozi_test@localhost:5432/zozi_test
+          SECRET_KEY: e2e-test-secret
+        run: |
+          alembic upgrade head
+
+      - name: Start backend server
+        working-directory: backend
+        env:
+          APP_ENV: test
+          DATABASE_URL: postgresql+asyncpg://zozi_test:zozi_test@localhost:5432/zozi_test
+          VALKEY_URL: valkey://localhost:6379
+          SECRET_KEY: e2e-test-secret
+          CORS_ORIGINS: http://localhost:3000
+        run: |
+          python -m uvicorn main:app --host 0.0.0.0 --port 8001 &
+          echo $! > /tmp/backend.pid
+          sleep 5
+          curl -sf http://localhost:8001/health || (echo "Backend failed to start" && exit 1)
+
+      - name: Start frontend server
+        working-directory: frontend/web_app
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8001
+          AUTH_SECRET: e2e-test-secret
+          NODE_ENV: production
+        run: |
+          npm run build
+          npm start &
+          echo $! > /tmp/frontend.pid
+          sleep 10
+          curl -sf http://localhost:3000 -o /dev/null || (echo "Frontend failed to start" && exit 1)
+
+      - name: Run Playwright tests
+        working-directory: frontend/web_app
+        env:
+          BASE_URL: http://localhost:3000
+        run: |
+          npx playwright test --project=chromium
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/web_app/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: frontend/web_app/test-results/
+          retention-days: 7
+
+      - name: Cleanup servers
+        if: always()
+        run: |
+          if [ -f /tmp/backend.pid ]; then kill $(cat /tmp/backend.pid) 2>/dev/null || true; fi
+          if [ -f /tmp/frontend.pid ]; then kill $(cat /tmp/frontend.pid) 2>/dev/null || true; fi
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 3: Mobile (Expo) e2e against the web build
+  # ═══════════════════════════════════════════════════════════════
+  e2e-mobile:
+    name: Mobile E2E (Expo web build, Pixel 5 emulation)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'local' || github.event.inputs.environment == '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/mobile_app/package-lock.json
+
+      - name: Install mobile_app dependencies
+        working-directory: frontend/mobile_app
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        working-directory: frontend/mobile_app
+        run: npx playwright install --with-deps chromium
+
+      - name: Run mobile e2e suite (run-e2e.ps1 builds + serves + tests)
+        working-directory: frontend/mobile_app
+        env:
+          PW_BASE_URL: http://localhost:8090
+        run: |
+          pwsh -File ./scripts/run-e2e.ps1 -BaseUrl "$PW_BASE_URL"
+          exit $LASTEXITCODE
+
+      - name: Upload mobile playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-playwright-report
+          path: frontend/mobile_app/playwright-report/
+          retention-days: 14
+
+      - name: Upload mobile test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-e2e-test-results
+          path: frontend/mobile_app/test-results/
+          retention-days: 7
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 2: E2E Tests against staging
+  # ═══════════════════════════════════════════════════════════════
+  e2e-staging:
+    name: E2E Tests (Staging)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'staging' || github.event_name == 'push' }}
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/web_app/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend/web_app
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        working-directory: frontend/web_app
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests against staging
+        working-directory: frontend/web_app
+        env:
+          BASE_URL: https://staging.zozi.com
+        run: |
+          npx playwright test --project=chromium --grep-invert "@mobile"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-staging
+          path: frontend/web_app/playwright-report/
+          retention-days: 14

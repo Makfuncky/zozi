@@ -37,11 +37,13 @@ Create Date: 2026-07-29 20:30:00.000000+05:00
 """
 from __future__ import annotations
 
+import sqlalchemy as sa
 from datetime import date
 from typing import Sequence, Union
 
 from alembic import op
 from sqlalchemy.engine import Connection
+from sqlalchemy.sql import quoted_name as sql_identifier
 
 revision: str = "20260729_2030"
 down_revision: Union[str, None] = "20260729_1914"
@@ -58,6 +60,8 @@ PARTITIONED_TABLES: list[str] = [
 PAST_MONTHS: int = 3
 FUTURE_MONTHS: int = 3
 
+SCHEMA_PUBLIC = sql_identifier("public")
+
 
 def _is_postgres(conn: Connection) -> bool:
     return conn.dialect.name == "postgresql"
@@ -65,14 +69,14 @@ def _is_postgres(conn: Connection) -> bool:
 
 def _is_table_partitioned(conn: Connection, table_name: str) -> bool:
     result = conn.execute(
-        """
-        SELECT c.relkind
-        FROM pg_class c
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE c.relname = :table
-          AND n.nspname = 'public'
-        """,
-        {"table": table_name},
+        sa.text(
+            "SELECT c.relkind "
+            "FROM pg_class c "
+            "JOIN pg_namespace n ON n.oid = c.relnamespace "
+            "WHERE c.relname = :table "
+            "  AND n.nspname = :schema"
+        ),
+        {"table": table_name, "schema": "public"},
     )
     row = result.fetchone()
     return bool(row and row[0] == "p")
@@ -80,14 +84,14 @@ def _is_table_partitioned(conn: Connection, table_name: str) -> bool:
 
 def _table_exists(conn: Connection, table_name: str) -> bool:
     result = conn.execute(
-        """
-        SELECT EXISTS (
-            SELECT 1 FROM information_schema.tables
-            WHERE table_schema = 'public'
-              AND table_name = :table
-        )
-        """,
-        {"table": table_name},
+        sa.text(
+            "SELECT EXISTS ("
+            "  SELECT 1 FROM information_schema.tables "
+            "  WHERE table_schema = :schema "
+            "    AND table_name = :table"
+            ")"
+        ),
+        {"schema": "public", "table": table_name},
     )
     row = result.fetchone()
     return bool(row and row[0])
@@ -146,64 +150,89 @@ def upgrade() -> None:
             _ensure_missing_months(conn, table_name, partition_months)
             continue
 
+        old_table = sql_identifier(f"{table_name}_old")
+
         # ── 1. Rename the current table so we can build the parent ────────
         op.execute(
-            f"ALTER TABLE public.{table_name} RENAME TO {table_name}_old"
+            sa.text("ALTER TABLE :schema.:tbl RENAME TO :old_tbl"),
+            {"schema": SCHEMA_PUBLIC, "tbl": sql_identifier(table_name), "old_tbl": old_table},
         )
 
-        # ── 2. Create the empty partitioned parent (same schema as old,
-        #      excluding PRIMARY KEY constraints — PostgreSQL requires
-        #      partitioned PKs to include the partition key column).
-        #      The existing ``index=True`` on ``id`` is carried over and
-        #      augmented with a per-partition (id, created_at) index.
+        parent_table = sql_identifier(table_name)
+
+        # ── 2. Create the empty partitioned parent
         op.execute(
-            f"""
-            CREATE TABLE public.{table_name} (
-                LIKE public.{table_name}_old INCLUDING ALL EXCEPT CONSTRAINTS
-            ) PARTITION BY RANGE (created_at)
-            """
+            sa.text(
+                "CREATE TABLE :schema.:tbl ("
+                "  LIKE :schema.:old_tbl INCLUDING ALL EXCEPT CONSTRAINTS"
+                ") PARTITION BY RANGE (created_at)"
+            ),
+            {
+                "schema": SCHEMA_PUBLIC,
+                "tbl": parent_table,
+                "old_tbl": old_table,
+            },
         )
 
         # ── 3. Create monthly partitions ──────────────────────────────────
         for year, month in partition_months:
             start, end = _month_bounds(year, month)
             pname = _partition_name(table_name, year, month)
+            pname_id = sql_identifier(pname)
             op.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS public.{pname}
-                PARTITION OF public.{table_name}
-                FOR VALUES FROM ('{start}') TO ('{end}')
-                """
+                sa.text(
+                    "CREATE TABLE IF NOT EXISTS :schema.:pname "
+                    "PARTITION OF :schema.:parent "
+                    "FOR VALUES FROM (:start) TO (:end)"
+                ),
+                {
+                    "schema": SCHEMA_PUBLIC,
+                    "pname": pname_id,
+                    "parent": parent_table,
+                    "start": start,
+                    "end": end,
+                },
             )
+            idx_name = sql_identifier(f"ix_{pname}_id_created_at")
             op.execute(
-                f"""
-                CREATE INDEX IF NOT EXISTS ix_{pname}_id_created_at
-                ON public.{pname} (id, created_at)
-                """
+                sa.text(
+                    "CREATE INDEX IF NOT EXISTS :idx "
+                    "ON :schema.:pname (id, created_at)"
+                ),
+                {"idx": idx_name, "schema": SCHEMA_PUBLIC, "pname": pname_id},
             )
 
         # ── 4. Default partition ──────────────────────────────────────────
+        default_name = sql_identifier(f"{table_name}_default")
         op.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS public.{table_name}_default
-            PARTITION OF public.{table_name} DEFAULT
-            """
+            sa.text(
+                "CREATE TABLE IF NOT EXISTS :schema.:dname "
+                "PARTITION OF :schema.:parent DEFAULT"
+            ),
+            {"schema": SCHEMA_PUBLIC, "dname": default_name, "parent": parent_table},
         )
+        default_idx = sql_identifier(f"ix_{table_name}_default_id_created_at")
         op.execute(
-            f"""
-            CREATE INDEX IF NOT EXISTS ix_{table_name}_default_id_created_at
-            ON public.{table_name}_default (id, created_at)
-            """
+            sa.text(
+                "CREATE INDEX IF NOT EXISTS :idx "
+                "ON :schema.:dname (id, created_at)"
+            ),
+            {"idx": default_idx, "schema": SCHEMA_PUBLIC, "dname": default_name},
         )
 
         # ── 5. Migrate existing data into the new partitioned table ───────
-        #    INSERT INTO ... SELECT routes each row to the correct partition.
         op.execute(
-            f"INSERT INTO public.{table_name} SELECT * FROM public.{table_name}_old"
+            sa.text(
+                "INSERT INTO :schema.:tbl SELECT * FROM :schema.:old_tbl"
+            ),
+            {"schema": SCHEMA_PUBLIC, "tbl": parent_table, "old_tbl": old_table},
         )
 
         # ── 6. Drop the shadow table ──────────────────────────────────────
-        op.execute(f"DROP TABLE public.{table_name}_old")
+        op.execute(
+            sa.text("DROP TABLE :schema.:old_tbl"),
+            {"schema": SCHEMA_PUBLIC, "old_tbl": old_table},
+        )
 
 
 def _ensure_missing_months(
@@ -213,21 +242,32 @@ def _ensure_missing_months(
 ) -> None:
     """Idempotently add partitions that don't yet exist (handles partial
     application or new months prepended before the next migration)."""
+    parent_table = sql_identifier(table_name)
     for year, month in partition_months:
         pname = _partition_name(table_name, year, month)
         start, end = _month_bounds(year, month)
+        pname_id = sql_identifier(pname)
         op.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS public.{pname}
-            PARTITION OF public.{table_name}
-            FOR VALUES FROM ('{start}') TO ('{end}')
-            """
+            sa.text(
+                "CREATE TABLE IF NOT EXISTS :schema.:pname "
+                "PARTITION OF :schema.:parent "
+                "FOR VALUES FROM (:start) TO (:end)"
+            ),
+            {
+                "schema": SCHEMA_PUBLIC,
+                "pname": pname_id,
+                "parent": parent_table,
+                "start": start,
+                "end": end,
+            },
         )
+        idx_name = sql_identifier(f"ix_{pname}_id_created_at")
         op.execute(
-            f"""
-            CREATE INDEX IF NOT EXISTS ix_{pname}_id_created_at
-            ON public.{pname} (id, created_at)
-            """
+            sa.text(
+                "CREATE INDEX IF NOT EXISTS :idx "
+                "ON :schema.:pname (id, created_at)"
+            ),
+            {"idx": idx_name, "schema": SCHEMA_PUBLIC, "pname": pname_id},
         )
 
 
@@ -242,46 +282,68 @@ def downgrade() -> None:
 
         # ── Discover actual partition names from the catalog ──────────────
         rows = conn.execute(
-            """
-            SELECT inhrelid::regclass::text AS part_name
-            FROM pg_inherits
-            WHERE inhparent = format('public.%I', :tbl)::regclass
-              AND inhrelid::regclass::text NOT LIKE '%_default'
-            """,
-            {"tbl": table_name},
+            sa.text(
+                "SELECT inhrelid::regclass::text AS part_name "
+                "FROM pg_inherits "
+                "WHERE inhparent = format(:schema_pfx || '.%I', :tbl)::regclass "
+                "  AND inhrelid::regclass::text NOT LIKE '%_default'"
+            ),
+            {"schema_pfx": "public", "tbl": table_name},
         ).fetchall()
         partitions = [r[0] for r in rows]
 
         if not partitions:
             continue
 
+        parent_table = sql_identifier(table_name)
+
         # ── 1. Detach each partition so it becomes a standalone table ──────
-        for p in reversed(partitions):
+        for p in partitions:
+            p_id = sql_identifier(p)
             op.execute(
-                f"ALTER TABLE public.{table_name} "
-                f"DETACH PARTITION public.{p}"
+                sa.text(
+                    "ALTER TABLE :schema.:tbl DETACH PARTITION :schema.:p"
+                ),
+                {"schema": SCHEMA_PUBLIC, "tbl": parent_table, "p": p_id},
             )
 
         # ── 2. Build a flat table with the same schema ─────────────────────
-        flat_name = f"{table_name}_pre_downgrade"
+        flat_name = sql_identifier(f"{table_name}_pre_downgrade")
         op.execute(
-            f"CREATE TABLE public.{flat_name} "
-            f"(LIKE public.{table_name} INCLUDING ALL)"
+            sa.text(
+                "CREATE TABLE :schema.:flat_name "
+                "(LIKE :schema.:tbl INCLUDING ALL)"
+            ),
+            {"schema": SCHEMA_PUBLIC, "flat_name": flat_name, "tbl": parent_table},
         )
 
         # ── 3. Reassemble data into the flat table ─────────────────────────
-        selects = [f"SELECT * FROM public.{p}" for p in partitions]
+        selects = [
+            f"SELECT * FROM public.{p}" for p in partitions
+        ]
         if selects:
             union_all = " UNION ALL ".join(selects)
-            op.execute(f"INSERT INTO public.{flat_name} {union_all}")
+            op.execute(
+                sa.text(f"INSERT INTO :schema.:flat_name {union_all}"),
+                {"schema": SCHEMA_PUBLIC, "flat_name": flat_name},
+            )
 
-        # ── 4. Drop the now-empty partitioned parent (default partition
-        #        is dropped via CASCADE) ────────────────────────────────────
-        op.execute(f"DROP TABLE public.{table_name} CASCADE")
+        # ── 4. Drop the now-empty partitioned parent ────────────────────────
+        op.execute(
+            sa.text("DROP TABLE :schema.:tbl CASCADE"),
+            {"schema": SCHEMA_PUBLIC, "tbl": parent_table},
+        )
 
         # ── 5. Drop the now-empty detached partitions ──────────────────────
         for p in partitions:
-            op.execute(f"DROP TABLE IF EXISTS public.{p} CASCADE")
+            p_id = sql_identifier(p)
+            op.execute(
+                sa.text("DROP TABLE IF EXISTS :schema.:p CASCADE"),
+                {"schema": SCHEMA_PUBLIC, "p": p_id},
+            )
 
         # ── 6. Rename the reassembled flat table to the original name ──────
-        op.execute(f"ALTER TABLE public.{flat_name} RENAME TO {table_name}")
+        op.execute(
+            sa.text("ALTER TABLE :schema.:flat_name RENAME TO :tbl"),
+            {"schema": SCHEMA_PUBLIC, "flat_name": flat_name, "tbl": parent_table},
+        )

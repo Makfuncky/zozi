@@ -13,7 +13,7 @@ import time
 import hashlib
 
 from infrastructure.utils.config import settings
-from infrastructure.utils.ip_utils import get_request_ip
+from infrastructure.security.ip_utils import get_request_ip
 
 logger = logging.getLogger(__name__)
 

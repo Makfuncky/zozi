@@ -186,7 +186,7 @@ def _startup_seed_treasury() -> None:
     Non-critical: failure is logged but does not prevent startup.
     """
     try:
-        from infrastructure.database.treasury_seeder import seed_treasury_system
+        from domains.finance.services.seeders.treasury_seeder import seed_treasury_system
         from infrastructure.database.database import SessionLocal
 
         db = SessionLocal()

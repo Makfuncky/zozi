@@ -15,7 +15,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from infrastructure.utils.config import settings
-from infrastructure.utils.ip_utils import get_request_ip
+from infrastructure.security.ip_utils import get_request_ip
 from infrastructure.utils.redis_client import redis_client
 
 logger = logging.getLogger(__name__)

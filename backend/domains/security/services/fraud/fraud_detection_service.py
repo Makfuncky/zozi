@@ -44,6 +44,12 @@ _LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
 }
 _IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
 
+TOR_RISK_SCORE = 50
+PROXY_RISK_SCORE = 30
+VPN_RISK_SCORE = 25
+HOSTING_RISK_SCORE = 20
+MAX_IP_RISK_SCORE = 100
+
 
 def _get_cross_domain_model(name: str):
     """Lazily import a cross-domain model to avoid import-time coupling."""
@@ -182,14 +188,14 @@ class IPIntelligenceService:
         """Calculate risk score for an IP address."""
         score = 0
         if is_tor:
-            score += 50
+            score += TOR_RISK_SCORE
         if is_proxy:
-            score += 30
+            score += PROXY_RISK_SCORE
         if is_vpn:
-            score += 25
+            score += VPN_RISK_SCORE
         if is_hosting:
-            score += 20
-        return min(score, 100)
+            score += HOSTING_RISK_SCORE
+        return min(score, MAX_IP_RISK_SCORE)
 
 
 class DeviceFingerprintService:

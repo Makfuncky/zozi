@@ -17,6 +17,13 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+DEVELOPED_GDP_THRESHOLD = 30000
+DEVELOPING_GDP_THRESHOLD = 10000
+DEVELOPED_TIER_MULTIPLIER = 1.10
+DEVELOPING_TIER_MULTIPLIER = 1.0
+EMERGING_TIER_MULTIPLIER = 0.85
+GCC_PREMIUM_MARKET_MULTIPLIER = 1.05
+
 try:
     from providers.payments.registry import PaymentGatewayRegistry
 except ImportError:
@@ -313,17 +320,17 @@ def _estimate_commission_ranges(gdp_per_capita: float | None, region: str) -> tu
       4. Clamp to [min_pct, max_pct]
     """
     gdp = gdp_per_capita or 0
-    if gdp > 30000:
+    if gdp > DEVELOPED_GDP_THRESHOLD:
         tier_name = "developed"
-        tier_mult = 1.10
-    elif gdp > 10000:
+        tier_mult = DEVELOPED_TIER_MULTIPLIER
+    elif gdp > DEVELOPING_GDP_THRESHOLD:
         tier_name = "developing"
-        tier_mult = 1.0
+        tier_mult = DEVELOPING_TIER_MULTIPLIER
     else:
         tier_name = "emerging"
-        tier_mult = 0.85
+        tier_mult = EMERGING_TIER_MULTIPLIER
 
-    region_mult = 1.05 if region in ("gcc", "middle_east") else 1.0
+    region_mult = GCC_PREMIUM_MARKET_MULTIPLIER if region in ("gcc", "middle_east") else DEVELOPING_TIER_MULTIPLIER
 
     results: list[dict[str, Any]] = []
     for slug, base in _BASE_COMMISSIONS.items():

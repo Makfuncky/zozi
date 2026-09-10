@@ -16,7 +16,7 @@ class AuditLog(Base):
     action = Column(String(255), nullable=False)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(Integer, nullable=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True, index=True)
     username = Column(String(255), nullable=True)
     user_role = Column(String(50), nullable=True)
     details = Column(JSON, nullable=True)
@@ -31,7 +31,7 @@ class CommandCenterView(Base):
     __tablename__ = "command_center_views"
     __table_args__ = ({"extend_existing": True, "schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     view_name = Column(String(100), nullable=False)
     config = Column(JSON, nullable=True)
     is_default = Column(Boolean, default=False)

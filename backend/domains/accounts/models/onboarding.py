@@ -14,7 +14,7 @@ __all__ = ["OnboardingPipeline", "OnboardingStep", "DocumentVerification", "OCRR
 
 class OnboardingPipeline(Base):
     __tablename__ = "onboarding_pipelines"
-    __table_args__ = ({"schema": "hr", "extend_existing": True},)
+    __table_args__ = ({"schema": "accounts", "extend_existing": True},)
     id = Column(Integer, primary_key=True, index=True)
     # TODO(migration): governance.users is a cross-domain FK (Law 3). After the User
     # model is migrated into the accounts domain, this must become ``accounts.users.id``.
@@ -37,7 +37,7 @@ class OnboardingPipeline(Base):
 
 class OnboardingStep(Base):
     __tablename__ = "onboarding_steps"
-    __table_args__ = ({"schema": "hr", "extend_existing": True},)
+    __table_args__ = ({"schema": "accounts", "extend_existing": True},)
     id = Column(Integer, primary_key=True, index=True)
     pipeline_id = Column(Integer, ForeignKey("hr.onboarding_pipelines.id", ondelete='CASCADE'), nullable=False, index=True)
     step_name = Column(String(255), nullable=False)

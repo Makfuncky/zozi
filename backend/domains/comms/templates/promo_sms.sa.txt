@@ -1,0 +1,4 @@
+promo_sms
+المملكة العربية السعودية (SA) locale variant
+Subject: عرض خاص لكم!
+Body: عرض خاص: {discount_text}. استخدموا الكود {promo_code}. {product_url}

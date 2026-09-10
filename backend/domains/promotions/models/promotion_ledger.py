@@ -13,7 +13,7 @@ class PromotionLedgerEntry(Base):
     id = Column(Integer, primary_key=True, index=True)
     promotion_id = Column(Integer, nullable=True)
     order_id = Column(Integer, nullable=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True, index=True)
     promotion_type = Column(String(50), nullable=True)
     promotion_code = Column(String(100), nullable=True)
     tier_id = Column(Integer, nullable=True)

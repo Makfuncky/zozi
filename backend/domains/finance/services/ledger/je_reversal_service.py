@@ -13,8 +13,6 @@ from sqlalchemy.orm import Session
 
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
-from domains.finance.services.ledger.general_ledger_service import create_journal_entry
-from domains.finance.services.ledger.general_ledger_service import get_journal_entry
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 from infrastructure.utils.datetime_utils import utcnow
 
@@ -72,6 +70,7 @@ def reverse_journal_entry(
         ))
 
     ref = f"REV-{original.reference_number or original_entry_id}"
+    from domains.finance.services.ledger.general_ledger_service import create_journal_entry
     entry_data = JournalEntryCreate(
         entry_date=reversal_date or utcnow(),
         reference_type="reversal",

@@ -1,7 +1,7 @@
 services:
   # PostgreSQL Database
   db:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in root .env}
       POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in root .env}
@@ -16,13 +16,13 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
+  # Valkey Cache
+  valkey:
+    image: valkey:9.0-alpine
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
-      - redis_data:/data
+      - valkey_data:/data
 
   # Backend API
   backend:
@@ -31,18 +31,18 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
-      - REDIS_URL=redis://redis:6379
+      - VALKEY_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env (e.g., SECRET_KEY=openssl rand -hex 32)}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://frontend:3000}
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
       - CELERY_TASK_ALWAYS_EAGER=false
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_started
     volumes:
       - ./backend:/app
@@ -54,15 +54,15 @@ services:
     build: ./backend
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
-      - REDIS_URL=redis://redis:6379
+      - VALKEY_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
       - CELERY_TASK_ALWAYS_EAGER=false
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_started
     volumes:
       - ./backend:/app
@@ -80,15 +80,15 @@ services:
     build: ./backend
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
-      - REDIS_URL=redis://redis:6379
+      - VALKEY_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
       - CELERY_TASK_ALWAYS_EAGER=false
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_started
     volumes:
       - ./backend:/app
@@ -100,15 +100,15 @@ services:
     build: ./backend
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
-      - REDIS_URL=redis://redis:6379
+      - VALKEY_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
       - CELERY_TASK_ALWAYS_EAGER=false
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_started
     volumes:
       - ./backend:/app
@@ -120,15 +120,15 @@ services:
     build: ./backend
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
-      - REDIS_URL=redis://redis:6379
+      - VALKEY_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
       - CELERY_TASK_ALWAYS_EAGER=false
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_started
     volumes:
       - ./backend:/app
@@ -140,15 +140,15 @@ services:
     build: ./backend
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
-      - REDIS_URL=redis://redis:6379
+      - VALKEY_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
       - CELERY_TASK_ALWAYS_EAGER=false
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_started
     volumes:
       - ./backend:/app
@@ -170,4 +170,4 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
+  valkey_data:

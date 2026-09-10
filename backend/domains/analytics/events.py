@@ -29,8 +29,8 @@ def publish_analytics_simulation_completed(simulation_id: int, country_code: str
     publish(EVENT_ANALYTICS_SIMULATION_COMPLETED, {"simulation_id": simulation_id, "country_code": country_code})
 
 
-def publish_analytics_kpi_snapshot_requested(country_code: str, kpi: str | None = None, db: object = None) -> None:
-    publish(EVENT_ANALYTICS_KPI_SNAPSHOT_REQUESTED, {"country_code": country_code, "kpi": kpi, "db": db})
+def publish_analytics_kpi_snapshot_requested(country_code: str, kpi: str | None = None) -> None:
+    publish(EVENT_ANALYTICS_KPI_SNAPSHOT_REQUESTED, {"country_code": country_code, "kpi": kpi})
 
 
 __all__ = [

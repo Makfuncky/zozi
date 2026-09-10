@@ -26,7 +26,7 @@ class ShipmentTrackingProjection(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey("logistics.shipments.id", ondelete="CASCADE"), nullable=False)
+    shipment_id = Column(Integer, ForeignKey("logistics.shipments.id", ondelete="CASCADE"), nullable=False, index=True)
     order_id = Column(Integer, nullable=False)
     status_code = Column(String(50), nullable=False)
     carrier_name = Column(String(255), nullable=True)
@@ -49,7 +49,7 @@ class PartnerPerformanceProjection(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete="CASCADE"), nullable=False)
+    partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete="CASCADE"), nullable=False, index=True)
     country_code = Column(String(2), nullable=True)
     total_shipments = Column(Integer, default=0)
     delivered_shipments = Column(Integer, default=0)

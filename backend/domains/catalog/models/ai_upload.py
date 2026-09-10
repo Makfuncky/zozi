@@ -55,7 +55,7 @@ class AIUploadJob(Base):
     prompt_hash = Column(String(64), nullable=True, index=True)
     tokens_used = Column(Numeric(12, 2), nullable=True)
     source_media_json = Column(Text, nullable=True)
-    created_product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete='SET NULL'), nullable=True)
+    created_product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete='SET NULL'), nullable=True, index=True)
     error_log = Column(Text, nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -74,7 +74,7 @@ class AIStagingProduct(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     job_id = Column(Integer, ForeignKey("catalog.ai_upload_jobs.id", ondelete='CASCADE'), nullable=False, index=True)
-    product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete='SET NULL'), nullable=True)
+    product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete='SET NULL'), nullable=True, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     price = Column(Numeric(10, 2), nullable=True)

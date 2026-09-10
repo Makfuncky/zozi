@@ -21,7 +21,6 @@ __all__ = ["CrossCountryCustomerSession"]
 
 class CrossCountryCustomerSession(Base):
     __tablename__ = 'cross_country_customer_sessions'
-    __table_args__ = {"schema": "customers"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

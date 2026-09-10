@@ -1,0 +1,4 @@
+payment_success_whatsapp
+المملكة العربية السعودية (SA) locale variant
+Subject: تمت عملية الدفع بنجاح 💳
+Body: 💳 تم استلام دفعة بمبلغ {amount} لطلبكم رقم {order_id}.

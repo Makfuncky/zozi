@@ -14,6 +14,7 @@ from typing import Sequence, Union
 
 from alembic import op
 from sqlalchemy import text
+from sqlalchemy.sql import identifier as sql_identifier
 
 
 revision: str = "20260801_0018"
@@ -40,7 +41,9 @@ def upgrade() -> None:
 
     for table_name in ["training_modules", "employee_trainings"]:
         if _table_in_schema(conn, table_name, "public"):
-            op.execute('ALTER TABLE IF EXISTS public."%s" SET SCHEMA "hr"' % table_name)
+            op.execute(
+                text('ALTER TABLE IF EXISTS public."' + sql_identifier(table_name) + '" SET SCHEMA "hr"')
+            )
 
 
 def downgrade() -> None:
@@ -50,4 +53,6 @@ def downgrade() -> None:
 
     for table_name in ["training_modules", "employee_trainings"]:
         if _table_in_schema(conn, table_name, "hr"):
-            op.execute('ALTER TABLE IF EXISTS "hr"."%s" SET SCHEMA "public"' % table_name)
+            op.execute(
+                text('ALTER TABLE IF EXISTS "hr".' + sql_identifier(table_name) + ' SET SCHEMA "public"')
+            )

@@ -36,7 +36,8 @@ class WORMAuditService:
         username: Optional[str] = None,
         user_role: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
-        ip_address: Optional[str] = None
+        ip_address: Optional[str] = None,
+        country_code: Optional[str] = None,
     ) -> AuditLog:
         """Append an immutable audit record."""
         record = AuditLog(
@@ -47,7 +48,8 @@ class WORMAuditService:
             username=username,
             user_role=user_role,
             details=details,
-            ip_address=ip_address
+            ip_address=ip_address,
+            country_code=country_code,
         )
         self.db.add(record)
         self.db.flush()

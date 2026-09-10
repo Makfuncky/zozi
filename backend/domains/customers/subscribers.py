@@ -29,8 +29,9 @@ def _on_payment_refunded(payload: dict) -> None:
     logger.debug("customers: payment refunded payload=%s", payload)
 
 
-subscribe("orders.order.completed", _on_order_completed)
-subscribe("payments.refund.completed", _on_payment_refunded)
+def register_customers_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_completed)
+    subscribe("payments.refund.completed", _on_payment_refunded)
 
 
-__all__ = ["_on_order_completed", "_on_payment_refunded"]
+__all__ = ["_on_order_completed", "_on_payment_refunded", "register_customers_subscribers"]

@@ -1,0 +1,5 @@
+delivery_completed_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: تم التوصيل بنجاح ✅
+Body: ✅ تم توصيل طلبك رقم {order_id}.
+شكراً لتسوقك معنا!

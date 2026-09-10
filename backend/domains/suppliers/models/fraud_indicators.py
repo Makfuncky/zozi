@@ -11,7 +11,7 @@ class SupplierFraudIndicator(Base):
     __tablename__ = "supplier_fraud_indicators"
     __table_args__ = {"schema": "suppliers"}
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     indicator_type = Column(String(50), nullable=False)
     value = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)

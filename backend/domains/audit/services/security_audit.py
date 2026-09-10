@@ -61,6 +61,7 @@ def log_security_event(
     ip_address: str | None = None,
     user_agent: str | None = None,
     status: str = "success",
+    country_code: str | None = None,
 ) -> int | None:
     if action not in SECURITY_EVENTS:
         logger.warning("Unknown security event type: %s", action)
@@ -79,6 +80,7 @@ def log_security_event(
                 ip_address=ip_address,
                 user_agent=user_agent,
                 status=status,
+                country_code=country_code,
             )
             db.add(entry)
             db.refresh(entry)

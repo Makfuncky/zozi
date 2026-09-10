@@ -28,7 +28,7 @@ from infrastructure.utils.auth import decode_token, verify_token
 from infrastructure.utils.config import settings
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from infrastructure.utils.redis_client import redis_client
-from infrastructure.utils.ip_utils import get_request_ip
+from infrastructure.security.ip_utils import get_request_ip
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,5 @@
+product_launch_whatsapp
+المملكة العربية السعودية (SA) locale variant
+Subject: منتج جديد 🆕
+Body: 🆕 منتج جديد: {product_name}
+{product_url}

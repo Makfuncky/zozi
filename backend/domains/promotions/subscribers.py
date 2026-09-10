@@ -23,7 +23,9 @@ def _on_user_registered(payload: dict) -> None:
     logger.debug("promotions: user registered payload=%s", payload)
 
 
-subscribe("orders.order.completed", _on_order_completed)
-subscribe("accounts.user.registered", _on_user_registered)
+def register_promotions_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_completed)
+    subscribe("accounts.user.registered", _on_user_registered)
 
-__all__ = ["_on_order_completed", "_on_user_registered"]
+
+__all__ = ["_on_order_completed", "_on_user_registered", "register_promotions_subscribers"]

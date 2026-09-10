@@ -18,7 +18,7 @@ class CountryEconomics(Base):
     version = Column(Integer, nullable=False, default=1, server_default='1')
     country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=False, unique=True, index=True)
     is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     created_by = Column(Integer, nullable=True)

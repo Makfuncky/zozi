@@ -17,7 +17,6 @@ class CountryEvent:
     """Base class for all country domain events."""
 
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    meta: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -49,8 +48,8 @@ from typing import Any, Dict, Optional
 from uuid import uuid4
 
 # constants merged from services/
-EVENT_COUNTRY_ADDED = "country.added"
-EVENT_COUNTRY_UPDATED = "country.updated"
+EVENT_COUNTRY_ADDED = "country.config.added"
+EVENT_COUNTRY_UPDATED = "country.config.updated"
 EVENT_CROSS_BORDER_DETECTED = "country.cross_border.detected"
 
 # base classes merged from services/

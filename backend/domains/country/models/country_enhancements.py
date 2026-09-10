@@ -13,7 +13,6 @@ __all__ = ['SupplierKYCRequirement', 'LogisticsPartnerKYCRequirement', 'CountryC
 
 class CountryFeatureFlag(Base):
     __tablename__ = 'country_feature_flags'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -36,7 +35,6 @@ class CountryFeatureFlag(Base):
 
 class CountryStaffAssignment(Base):
     __tablename__ = 'country_staff_assignments'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -60,7 +58,6 @@ class CountryStaffAssignment(Base):
 
 class OmanDeliveryZone(Base):
     __tablename__ = 'oman_delivery_zones'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -86,7 +83,6 @@ class OmanDeliveryZone(Base):
 
 class CountryConfigVersion(Base):
     __tablename__ = 'country_config_versions'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -110,7 +106,6 @@ class CountryConfigVersion(Base):
 
 class SupplierKYCRequirement(Base):
     __tablename__ = 'supplier_kyc_requirements'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -131,7 +126,6 @@ class SupplierKYCRequirement(Base):
 
 class LogisticsPartnerKYCRequirement(Base):
     __tablename__ = 'logistics_partner_kyc_requirements'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -154,7 +148,6 @@ class LogisticsPartnerKYCRequirement(Base):
 
 class CountryCommissionRate(Base):
     __tablename__ = 'country_commission_rates'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -181,7 +174,6 @@ class CountryCommissionRate(Base):
 
 class CountryLocalization(Base):
     __tablename__ = 'country_localizations'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -202,7 +194,6 @@ class CountryLocalization(Base):
 
 class CountryPaymentAlias(Base):
     __tablename__ = 'country_payment_aliases'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -222,7 +213,6 @@ class CountryPaymentAlias(Base):
 
 class CountryLegalContract(Base):
     __tablename__ = 'country_legal_contracts'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -242,7 +232,6 @@ class CountryLegalContract(Base):
 
 class CountryCategoryTaxRate(Base):
     __tablename__ = 'country_category_tax_rates'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -271,7 +260,6 @@ class CountryCategoryTaxRate(Base):
 class CountryCity(Base):
     """Normalized cities table — extracted from JSON blob for proper relational queries."""
     __tablename__ = 'country_cities'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -300,7 +288,6 @@ class CountryCity(Base):
 
 class CountryHolidayCalendar(Base):
     __tablename__ = 'country_holiday_calendars'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -321,7 +308,6 @@ class CountryHolidayCalendar(Base):
 
 class CountryGatewayConfig(Base):
     __tablename__ = 'country_gateway_configs'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -347,7 +333,6 @@ class CountryGatewayConfig(Base):
 
 class CountryCommunicationThread(Base):
     __tablename__ = 'country_communication_threads'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -369,7 +354,6 @@ class CountryCommunicationThread(Base):
 
 class CountryCommissionRateHistory(Base):
     __tablename__ = 'country_commission_rate_histories'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -394,7 +378,6 @@ class CountryCommissionRateHistory(Base):
 
 class CountryLogisticsZone(Base):
     __tablename__ = 'country_logistics_zones'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -417,7 +400,6 @@ class CountryLogisticsZone(Base):
 
 class CountryPayoutRule(Base):
     __tablename__ = 'country_payout_rules'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

@@ -1,0 +1,12 @@
+$env:APP_ENV="test"
+$env:CSRF_DISABLED="true"
+$env:BACKEND_PORT="8001"
+$env:SEED_ADMIN_PASSWORD="DevSeed123!"
+$env:SEED_SUPPLIER_PASSWORD="DevSeed123!"
+$env:SEED_CUSTOMER_PASSWORD="DevSeed123!"
+$env:SEED_LOGISTICS_PASSWORD="DevSeed123!"
+$env:SEED_EMPLOYEE_PASSWORD="DevSeed123!"
+$env:SEED_DEMO_PASSWORD="DevSeed123!"
+$env:DATABASE_URL = "sqlite:///./var/zozi.db"
+Set-Location "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend"
+& ".\venv\Scripts\python.exe" -m uvicorn main:app --host 127.0.0.1 --port 8001 --log-level warning

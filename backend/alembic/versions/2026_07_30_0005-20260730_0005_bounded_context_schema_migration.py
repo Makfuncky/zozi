@@ -7,6 +7,8 @@ Create Date: 2026-07-30
 from typing import Sequence, Union
 
 from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.sql import identifier
 
 
 revision: str = "20260730_0005"
@@ -38,7 +40,7 @@ def upgrade() -> None:
         "supplier",
         "treasury",
     ]:
-        op.execute('CREATE SCHEMA IF NOT EXISTS "%s"' % schema_name)
+        op.execute(sa.text('CREATE SCHEMA IF NOT EXISTS :schema').bindparams(schema=sa.sql.identifier(schema_name)))
 
     for table_name, schema_name in [
         ("account_balances", "finance"),
@@ -329,8 +331,8 @@ def upgrade() -> None:
         ("wishlists", "customer"),
     ]:
         op.execute(
-            'ALTER TABLE IF EXISTS public."%s" SET SCHEMA "%s"'
-            % (table_name, schema_name)
+            sa.text('ALTER TABLE IF EXISTS public."' + sa.sql.identifier(table_name) + '" SET SCHEMA :schema')
+            .bindparams(schema=sa.sql.identifier(schema_name))
         )
 
 
@@ -628,8 +630,7 @@ def downgrade() -> None:
         ("wishlists", "customer"),
     ]:
         op.execute(
-            'ALTER TABLE IF EXISTS "%s"."%s" SET SCHEMA public'
-            % (schema_name, table_name)
+            sa.text('ALTER TABLE IF EXISTS "' + sa.sql.identifier(schema_name) + '"."' + sa.sql.identifier(table_name) + '" SET SCHEMA public')
         )
 
     for schema_name in [
@@ -650,4 +651,4 @@ def downgrade() -> None:
         "supplier",
         "treasury",
     ]:
-        op.execute('DROP SCHEMA IF EXISTS "%s" CASCADE' % schema_name)
+        op.execute(sa.text('DROP SCHEMA IF EXISTS :schema CASCADE').bindparams(schema=sa.sql.identifier(schema_name)))

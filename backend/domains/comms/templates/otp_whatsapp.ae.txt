@@ -1,0 +1,5 @@
+otp_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: رمز التحقق 🔐
+Body: 🔐 رمز التحقق الخاص بك هو {code}
+صالح لمدة 5 دقائق.

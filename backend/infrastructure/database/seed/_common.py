@@ -1075,7 +1075,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
         _seed_country_scoped_data(db, admin_id=admin_id)
 
         # Seed treasury system (chart of accounts + buckets)
-        from infrastructure.database.treasury_seeder import seed_treasury_system
+        from domains.finance.services.seeders.treasury_seeder import seed_treasury_system
         seed_treasury_system(db)
 
         db.commit()

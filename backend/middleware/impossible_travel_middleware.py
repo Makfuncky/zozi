@@ -10,7 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import JSONResponse
 
 from infrastructure.utils.redis_client import redis_client as get_redis
-from infrastructure.utils.ip_utils import get_request_ip
+from infrastructure.security.ip_utils import get_request_ip
 from infrastructure.utils.auth import verify_token
 
 from providers.geography.geoip import lookup_coordinates

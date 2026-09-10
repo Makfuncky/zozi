@@ -37,10 +37,11 @@ def _on_logistics_shipment_updated(payload: dict) -> None:
     logger.debug("suppliers: shipment updated payload=%s", payload)
 
 
-subscribe("orders.order.completed", _on_order_completed)
-subscribe("payments.refund.completed", _on_payment_refunded)
-subscribe("catalog.product.moderated", _on_product_moderated)
-subscribe("logistics.shipment.updated", _on_logistics_shipment_updated)
+def register_suppliers_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_completed)
+    subscribe("payments.refund.completed", _on_payment_refunded)
+    subscribe("catalog.product.moderated", _on_product_moderated)
+    subscribe("logistics.shipment.updated", _on_logistics_shipment_updated)
 
 
 __all__ = [
@@ -48,4 +49,5 @@ __all__ = [
     "_on_payment_refunded",
     "_on_product_moderated",
     "_on_logistics_shipment_updated",
+    "register_suppliers_subscribers",
 ]

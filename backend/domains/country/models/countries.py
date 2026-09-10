@@ -14,7 +14,6 @@ __all__ = ['CountryConfig', 'CountryCommunication', 'CountryGatewayCredentials',
 
 class CountryConfig(Base):
     __tablename__ = 'country_configs'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -34,7 +33,7 @@ class CountryConfig(Base):
     date_format = Column(String(20), default='DD/MM/YYYY')
     status = Column(String(20), default='active')
     is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     is_default = Column(Boolean, default=False)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
@@ -129,7 +128,6 @@ class CountryConfig(Base):
 
 class CountryCommunication(Base):
     __tablename__ = 'country_communications'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -159,7 +157,6 @@ class CountryCommunication(Base):
 
 class CountryGatewayCredentials(Base):
     __tablename__ = 'country_gateway_credentials'
-    __table_args__ = {"schema": "country"}
     uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

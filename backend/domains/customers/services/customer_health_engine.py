@@ -12,6 +12,17 @@ from domains.orders.models.orders import Order
 from domains.orders.models.orders import ReturnRequest
 from infrastructure.utils.datetime_utils import utcnow
 
+EXCELLENT_HEALTH_THRESHOLD = 0.8
+GOOD_HEALTH_THRESHOLD = 0.6
+FAIR_HEALTH_THRESHOLD = 0.4
+HEALTH_LIFETIME_VALUE_DIVISOR = 1000
+HEALTH_LIFETIME_VALUE_WEIGHT = 0.25
+HEALTH_FRAUD_RISK_WEIGHT = 0.20
+HEALTH_REFUND_RATIO_WEIGHT = 0.20
+HEALTH_COD_FAILURE_RATE_WEIGHT = 0.15
+HEALTH_PURCHASE_FREQUENCY_WEIGHT = 0.20
+PURCHASE_FREQUENCY_MAX_DAYS = 30
+
 
 class CustomerHealthEngine:
     """Calculate customer health scores based on behavior metrics."""
@@ -39,11 +50,11 @@ class CustomerHealthEngine:
         purchase_frequency = self._calculate_purchase_frequency(orders)
         
         total_score = (
-            min(lifetime_value / 1000, 1.0) * 0.25 +
-            (1 - fraud_risk) * 0.20 +
-            (1 - refund_ratio) * 0.20 +
-            (1 - cod_failure_rate) * 0.15 +
-            min(purchase_frequency / 10, 1.0) * 0.20
+            min(lifetime_value / HEALTH_LIFETIME_VALUE_DIVISOR, 1.0) * HEALTH_LIFETIME_VALUE_WEIGHT +
+            (1 - fraud_risk) * HEALTH_FRAUD_RISK_WEIGHT +
+            (1 - refund_ratio) * HEALTH_REFUND_RATIO_WEIGHT +
+            (1 - cod_failure_rate) * HEALTH_COD_FAILURE_RATE_WEIGHT +
+            min(purchase_frequency / PURCHASE_FREQUENCY_MAX_DAYS, 1.0) * HEALTH_PURCHASE_FREQUENCY_WEIGHT
         )
         
         return {
@@ -109,11 +120,11 @@ class CustomerHealthEngine:
         return len(sorted_orders) / max(days, 1) * 30
     
     def _get_status(self, score: float) -> str:
-        if score >= 0.8:
+        if score >= EXCELLENT_HEALTH_THRESHOLD:
             return "excellent"
-        elif score >= 0.6:
+        elif score >= GOOD_HEALTH_THRESHOLD:
             return "good"
-        elif score >= 0.4:
+        elif score >= FAIR_HEALTH_THRESHOLD:
             return "fair"
         return "at_risk"
 
@@ -149,11 +160,11 @@ def calculate_health_score_from_data(
     purchase_frequency = engine._calculate_purchase_frequency(orders)
 
     total_score = (
-        min(lifetime_value / 1000, 1.0) * 0.25 +
-        (1 - fraud_risk) * 0.20 +
-        (1 - refund_ratio) * 0.20 +
-        (1 - cod_failure_rate) * 0.15 +
-        min(purchase_frequency / 10, 1.0) * 0.20
+        min(lifetime_value / HEALTH_LIFETIME_VALUE_DIVISOR, 1.0) * HEALTH_LIFETIME_VALUE_WEIGHT +
+        (1 - fraud_risk) * HEALTH_FRAUD_RISK_WEIGHT +
+        (1 - refund_ratio) * HEALTH_REFUND_RATIO_WEIGHT +
+        (1 - cod_failure_rate) * HEALTH_COD_FAILURE_RATE_WEIGHT +
+        min(purchase_frequency / PURCHASE_FREQUENCY_MAX_DAYS, 1.0) * HEALTH_PURCHASE_FREQUENCY_WEIGHT
     )
 
     return {

@@ -16,7 +16,7 @@ class IncidentWarRoom(Base):
     title = Column(String(200), nullable=False)
     severity = Column(String(50), default="medium")
     status = Column(String(50), default="active")
-    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False, index=True)
     started_at = Column(DateTime, server_default=func.now())
     resolved_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
@@ -32,8 +32,8 @@ class IncidentThread(Base):
     __tablename__ = "incident_threads"
     __table_args__ = {"schema": "comms"}
     id = Column(Integer, primary_key=True, index=True)
-    war_room_id = Column(Integer, ForeignKey("comms.incident_war_rooms.id", ondelete="SET NULL"), nullable=False)
-    participant_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
+    war_room_id = Column(Integer, ForeignKey("comms.incident_war_rooms.id", ondelete="SET NULL"), nullable=False, index=True)
+    participant_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False, index=True)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -46,8 +46,8 @@ class IncidentActionItem(Base):
     __tablename__ = "incident_action_items"
     __table_args__ = {"schema": "comms"}
     id = Column(Integer, primary_key=True, index=True)
-    war_room_id = Column(Integer, ForeignKey("comms.incident_war_rooms.id", ondelete="SET NULL"), nullable=False)
-    assignee_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    war_room_id = Column(Integer, ForeignKey("comms.incident_war_rooms.id", ondelete="SET NULL"), nullable=False, index=True)
+    assignee_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(50), default="pending")

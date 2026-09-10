@@ -1,0 +1,4 @@
+delivery_picked_up_whatsapp
+المملكة العربية السعودية (SA) locale variant
+Subject: تم استلام طلبكم 📤
+Body: 📤 تم استلام طلبكم رقم {order_id}.

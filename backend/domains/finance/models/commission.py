@@ -10,7 +10,6 @@ __all__ = ["CommissionAgreement", "ProductCommissionOverride", "CommissionLedger
 
 class CommissionAgreement(Base):
     __tablename__ = "commission_agreements"
-    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -34,7 +33,6 @@ class CommissionAgreement(Base):
 
 class ProductCommissionOverride(Base):
     __tablename__ = "product_commission_overrides"
-    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -55,7 +53,6 @@ class ProductCommissionOverride(Base):
 
 class CommissionLedgerEntry(Base):
     __tablename__ = "commission_ledger_entries"
-    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
@@ -96,7 +93,6 @@ class CommissionLedgerEntry(Base):
 
 class CommissionCategoryRate(Base):
     __tablename__ = 'commission_category_rates'
-    __table_args__ = {"schema": "finance"}
     uuid = Column(String(36), unique=True, nullable=False)
     version = Column(Integer, nullable=False, server_default='1')
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)

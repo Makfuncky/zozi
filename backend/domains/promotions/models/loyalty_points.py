@@ -11,7 +11,7 @@ class UserPoints(Base):
     __tablename__ = "user_points"
     __table_args__ = {"schema": "promotions"}
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
     balance = Column(Integer, default=0, nullable=False)
     lifetime_earned = Column(Integer, default=0, nullable=False)
     lifetime_redeemed = Column(Integer, default=0, nullable=False)
@@ -28,7 +28,7 @@ class PointsTransaction(Base):
     __tablename__ = "points_transactions"
     __table_args__ = {"schema": "promotions"}
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="CASCADE"), nullable=False, index=True)
     points = Column(Integer, nullable=False)
     transaction_type = Column(String(50), nullable=False)
     order_id = Column(Integer, nullable=True)

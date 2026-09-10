@@ -184,7 +184,7 @@ def _on_user_registered(payload: Dict[str, Any]) -> None:
 def _register_handlers() -> None:
     """Register all comms event handlers on the canonical event bus."""
     try:
-        from infrastructure.utils.event_bus import subscribe
+        from infrastructure.messaging.events.event_bus import subscribe
 
         # Comms-domain events
         subscribe(EVENT_TICKET_STATUS_CHANGED, _on_ticket_status_changed)
@@ -199,20 +199,8 @@ def _register_handlers() -> None:
         logger.debug("Event bus not available, handlers not registered")
 
 
-# Register handlers on module import
-_register_handlers()
-
-
-def subscribed_types() -> List[str]:
-    """Return all event types that have at least one subscriber."""
-    return sorted([
-        EVENT_TICKET_STATUS_CHANGED,
-        EVENT_TICKET_REPLIED,
-        EVENT_NOTIFICATION_CREATED,
-        EVENT_ESCALATION_TRIGGERED,
-        "order.status_changed",
-        "account.registered",
-    ])
+def register_comms_subscribers() -> None:
+    _register_handlers()
 
 
 __all__ = [
@@ -225,4 +213,5 @@ __all__ = [
     "_on_order_created",
     "_on_order_status_changed",
     "_on_user_registered",
+    "register_comms_subscribers",
 ]

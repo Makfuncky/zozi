@@ -1,0 +1,193 @@
+name: Rollback — Emergency Recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to rollback"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      backend_version:
+        description: "Backend image tag to rollback to (e.g., sha-abc123 or v1.2.3)"
+        required: false
+        type: string
+      frontend_version:
+        description: "Frontend deployment URL to rollback to (Vercel deployment URL)"
+        required: false
+        type: string
+      reason:
+        description: "Reason for rollback"
+        required: true
+        type: string
+
+# Permissions for deployment
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: rollback-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # Job 1: Validate rollback inputs
+  # ═══════════════════════════════════════════════════════════════
+  validate:
+    name: Validate Rollback Inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check inputs
+        run: |
+          if [[ -z "${{ github.event.inputs.backend_version }}" && -z "${{ github.event.inputs.frontend_version }}" ]]; then
+            echo "❌ Must specify at least one of: backend_version, frontend_version"
+            exit 1
+          fi
+          echo "✅ Rollback inputs valid"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Backend version: ${{ github.event.inputs.backend_version }}"
+          echo "Frontend version: ${{ github.event.inputs.frontend_version }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 2: Rollback Backend
+  # ═══════════════════════════════════════════════════════════════
+  rollback-backend:
+    name: Rollback Backend (${{ github.event.inputs.environment }})
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: ${{ github.event.inputs.backend_version != '' }}
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.backend_version }}
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Rollback backend deployment
+        run: |
+          echo "Rolling back backend to: ${{ github.event.inputs.backend_version }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+
+          if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+            railway up --environment production
+            railway run --environment production -- alembic upgrade head
+          else
+            railway up --environment staging
+            railway run --environment staging -- alembic upgrade head
+          fi
+        env:
+          RAILWAY_TOKEN: ${{ secrets[format('RAILWAY_TOKEN_{0}', github.event.inputs.environment == 'production' && 'PRODUCTION' || 'STAGING')] }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+
+      - name: Verify rollback health
+        run: |
+          if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+            HEALTH_URL="https://api.zozi.com/health"
+          else
+            HEALTH_URL="https://staging-api.zozi.com/health"
+          fi
+
+          for i in 1 2 3 4 5; do
+            if curl -sf $HEALTH_URL; then
+              echo "✅ Backend rollback health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ Backend rollback health check failed"
+          exit 1
+
+      - name: Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Backend Rollback: ${{ github.event.inputs.environment }}`,
+              body: `**Rollback executed at:** ${new Date().toISOString()}\n**Environment:** ${{ github.event.inputs.environment }}\n**Version:** ${{ github.event.inputs.backend_version }}\n**Reason:** ${{ github.event.inputs.reason }}\n**Triggered by:** @${{ github.actor }}`,
+              labels: ['rollback', 'incident']
+            })
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 3: Rollback Frontend
+  # ═══════════════════════════════════════════════════════════════
+  rollback-frontend:
+    name: Rollback Frontend (${{ github.event.inputs.environment }})
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: ${{ github.event.inputs.frontend_version != '' }}
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Rollback frontend deployment
+        run: |
+          echo "Rolling back frontend to: ${{ github.event.inputs.frontend_version }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+
+          # Promote the specified deployment URL to production
+          vercel promote ${{ github.event.inputs.frontend_version }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Verify rollback health
+        run: |
+          if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+            HEALTH_URL="https://zozi.com"
+          else
+            HEALTH_URL="https://staging.zozi.com"
+          fi
+
+          for i in 1 2 3 4 5; do
+            if curl -sf $HEALTH_URL -o /dev/null; then
+              echo "✅ Frontend rollback health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ Frontend rollback health check failed"
+          exit 1
+
+      - name: Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Frontend Rollback: ${{ github.event.inputs.environment }}`,
+              body: `**Rollback executed at:** ${new Date().toISOString()}\n**Environment:** ${{ github.event.inputs.environment }}\n**Deployment URL:** ${{ github.event.inputs.frontend_version }}\n**Reason:** ${{ github.event.inputs.reason }}\n**Triggered by:** @${{ github.actor }}`,
+              labels: ['rollback', 'incident']
+            })
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 4: Rollback Status Notification
+  # ═══════════════════════════════════════════════════════════════
+  rollback-status:
+    name: Rollback Status
+    runs-on: ubuntu-latest
+    needs: [rollback-backend, rollback-frontend]
+    if: always()
+    steps:
+      - name: Report rollback status
+        run: |
+          echo "Rollback completed for: ${{ github.event.inputs.environment }}"
+          echo "Backend result: ${{ needs.rollback-backend.result }}"
+          echo "Frontend result: ${{ needs.rollback-frontend.result }}"

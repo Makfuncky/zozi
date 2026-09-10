@@ -1,0 +1,4 @@
+delivery_picked_up_sms
+الإمارات العربية المتحدة (AE) locale variant
+Subject: تم استلام طلبك
+Body: تم استلام طلبك رقم {order_id}.

@@ -188,17 +188,14 @@ class ShiftSchedulingService:
     ) -> dict:
         """Create a shift assignment."""
         audit = AuditLog(
-            event_type="shift",
-            actor_id=None,
-            action="create",
-            resource_type="shift",
-            resource_id=employee_id,
+            action="SHIFT_CREATED",
+            entity_type="shift",
+            entity_id=employee_id,
             details={
                 "start_time": start_time.isoformat(),
                 "end_time": end_time.isoformat(),
                 "shift_type": shift_type,
             },
-            occurred_at=_utcnow(),
         )
         self.db.add(audit)
         self.db.commit()

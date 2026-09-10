@@ -1,0 +1,6 @@
+order_confirmed_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: تم تأكيد طلبك ✅
+Body: ✅ تم تأكيد طلبك رقم {order_id}.
+الإجمالي: {total}
+شكراً لتسوقك معنا!

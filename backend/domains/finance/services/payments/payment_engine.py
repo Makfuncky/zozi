@@ -175,11 +175,14 @@ LOW_STOCK_THRESHOLD = 5
 
 INVENTORY_RELEASE_STATUSES = {"cancelled", "refunded"}
 
-_stripe_breaker = get_circuit_breaker("stripe", failure_threshold=5, recovery_timeout=30)
-_tap_breaker = get_circuit_breaker("tap", failure_threshold=5, recovery_timeout=30)
-_paytabs_breaker = get_circuit_breaker("paytabs", failure_threshold=5, recovery_timeout=30)
-_thawani_breaker = get_circuit_breaker("thawani", failure_threshold=5, recovery_timeout=30)
-_paypal_breaker = get_circuit_breaker("paypal", failure_threshold=5, recovery_timeout=30)
+PAYMENT_CIRCUIT_BREAKER_FAILURE_THRESHOLD = 5
+PAYMENT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT = 30
+
+_stripe_breaker = get_circuit_breaker("stripe", failure_threshold=PAYMENT_CIRCUIT_BREAKER_FAILURE_THRESHOLD, recovery_timeout=PAYMENT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT)
+_tap_breaker = get_circuit_breaker("tap", failure_threshold=PAYMENT_CIRCUIT_BREAKER_FAILURE_THRESHOLD, recovery_timeout=PAYMENT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT)
+_paytabs_breaker = get_circuit_breaker("paytabs", failure_threshold=PAYMENT_CIRCUIT_BREAKER_FAILURE_THRESHOLD, recovery_timeout=PAYMENT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT)
+_thawani_breaker = get_circuit_breaker("thawani", failure_threshold=PAYMENT_CIRCUIT_BREAKER_FAILURE_THRESHOLD, recovery_timeout=PAYMENT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT)
+_paypal_breaker = get_circuit_breaker("paypal", failure_threshold=PAYMENT_CIRCUIT_BREAKER_FAILURE_THRESHOLD, recovery_timeout=PAYMENT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT)
 
 _gateway_call_count = 0
 _gateway_error_count = 0

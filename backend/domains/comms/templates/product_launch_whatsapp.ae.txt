@@ -1,0 +1,5 @@
+product_launch_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: منتج جديد 🆕
+Body: 🆕 منتج جديد: {product_name}
+{product_url}

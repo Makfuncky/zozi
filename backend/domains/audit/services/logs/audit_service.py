@@ -25,6 +25,7 @@ class AuditService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
         status: str = "success",
+        country_code: Optional[str] = None,
     ) -> AuditLog:
         log = AuditLog(
             user_id=user_id,
@@ -35,6 +36,7 @@ class AuditService:
             ip_address=ip_address,
             user_agent=user_agent,
             status=status,
+            country_code=country_code,
         )
         self.db.add(log)
         self.db.commit()
@@ -494,6 +496,7 @@ def audit_log(
         user_role=user_role,
         details=details,
         ip_address=ip_address,
+        country_code=country_code,
     )
     db.add(log)
     db.commit()

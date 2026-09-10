@@ -59,131 +59,132 @@ def _event_base() -> dict:
 
 
 def publish_gov_update_role_permissions_requested(
-    role: str, permissions: List[str], actor: Optional[dict] = None
+    role: str, permissions: List[str], actor_id: Optional[int] = None, actor_role: Optional[str] = None
 ) -> Any:
     """Request a role-permission map update."""
     payload = {
         **_event_base(),
         "role": role,
         "permissions": permissions,
-        "actor": actor,
+        "actor_id": actor_id,
+        "actor_role": actor_role,
     }
     logger.info("gov: update_role_permissions_requested role=%s", role)
     return publish(EVENT_GOV_UPDATE_ROLE_PERMISSIONS_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_delete_products_admin_requested(
-    product_ids: List[int], actor: dict
+    product_ids: List[int], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "product_ids": product_ids, "actor": actor,
+        "product_ids": product_ids, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_delete_products_admin_requested count=%d", len(product_ids))
     return publish(EVENT_GOV_BULK_DELETE_PRODUCTS_ADMIN_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_product_moderation_requested(
-    product_ids: List[int], action: str, note: Optional[str], actor: dict
+    product_ids: List[int], action: str, note: Optional[str], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "product_ids": product_ids, "action": action, "note": note, "actor": actor,
+        "product_ids": product_ids, "action": action, "note": note, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_product_moderation_requested count=%d action=%s", len(product_ids), action)
     return publish(EVENT_GOV_BULK_PRODUCT_MODERATION_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_delete_product_admin_requested(
-    product_id: int, actor: dict
+    product_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "product_id": product_id, "actor": actor,
+        "product_id": product_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: delete_product_admin_requested product_id=%d", product_id)
     return publish(EVENT_GOV_DELETE_PRODUCT_ADMIN_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_restore_product_admin_requested(
-    product_id: int, actor: dict
+    product_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "product_id": product_id, "actor": actor,
+        "product_id": product_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: restore_product_admin_requested product_id=%d", product_id)
     return publish(EVENT_GOV_RESTORE_PRODUCT_ADMIN_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_toggle_product_badge_requested(
-    product_id: int, field: str, value: bool, actor: dict
+    product_id: int, field: str, value: bool, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "product_id": product_id, "field": field, "value": value, "actor": actor,
+        "product_id": product_id, "field": field, "value": value, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: toggle_product_badge_requested product_id=%d field=%s", product_id, field)
     return publish(EVENT_GOV_TOGGLE_PRODUCT_BADGE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_delete_users_admin_requested(
-    user_ids: List[int], actor: dict
+    user_ids: List[int], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_ids": user_ids, "actor": actor,
+        "user_ids": user_ids, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_delete_users_admin_requested count=%d", len(user_ids))
     return publish(EVENT_GOV_BULK_DELETE_USERS_ADMIN_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_toggle_users_active_requested(
-    user_ids: List[int], is_active: bool, actor: dict
+    user_ids: List[int], is_active: bool, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_ids": user_ids, "is_active": is_active, "actor": actor,
+        "user_ids": user_ids, "is_active": is_active, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_toggle_users_active_requested count=%d is_active=%s", len(user_ids), is_active)
     return publish(EVENT_GOV_BULK_TOGGLE_USERS_ACTIVE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_update_users_role_requested(
-    user_ids: List[int], role: str, actor: dict
+    user_ids: List[int], role: str, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_ids": user_ids, "role": role, "actor": actor,
+        "user_ids": user_ids, "role": role, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_update_users_role_requested count=%d role=%s", len(user_ids), role)
     return publish(EVENT_GOV_BULK_UPDATE_USERS_ROLE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_toggle_user_active_requested(
-    user_id: int, actor: dict
+    user_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_id": user_id, "actor": actor,
+        "user_id": user_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: toggle_user_active_requested user_id=%d", user_id)
     return publish(EVENT_GOV_TOGGLE_USER_ACTIVE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_update_user_role_requested(
-    user_id: int, role: str, actor: dict
+    user_id: int, role: str, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_id": user_id, "role": role, "actor": actor,
+        "user_id": user_id, "role": role, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: update_user_role_requested user_id=%d role=%s", user_id, role)
     return publish(EVENT_GOV_UPDATE_USER_ROLE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_force_reset_password_admin_requested(
-    user_id: int, new_password: str, actor: dict
+    user_id: int, new_password: str, actor_id: int, actor_role: str
 ) -> Any:
     # SECURITY FIX: Do NOT include plaintext password in event payload.
     # Instead, hash it before publishing or use a token-based approach.
@@ -191,218 +192,218 @@ def publish_gov_force_reset_password_admin_requested(
     password_hash = get_password_hash(new_password) if new_password else None
     payload = {
         **_event_base(),
-        "user_id": user_id, "password_hash": password_hash, "actor": actor,
+        "user_id": user_id, "password_hash": password_hash, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: force_reset_password_admin_requested user_id=%d", user_id)
     return publish(EVENT_GOV_FORCE_RESET_PASSWORD_ADMIN_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_update_staff_accounts_requested(
-    user_ids: List[int], updates: object, actor: dict
+    user_ids: List[int], updates: object, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_ids": user_ids, "updates": updates, "actor": actor,
+        "user_ids": user_ids, "updates": updates, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_update_staff_accounts_requested count=%d", len(user_ids))
     return publish(EVENT_GOV_BULK_UPDATE_STAFF_ACCOUNTS_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_create_staff_account_requested(
-    payload_data: object, actor: dict
+    payload_data: object, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "payload": payload_data, "actor": actor,
+        "payload": payload_data, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: create_staff_account_requested")
     return publish(EVENT_GOV_CREATE_STAFF_ACCOUNT_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_delete_staff_account_requested(
-    user_id: int, actor: dict
+    user_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_id": user_id, "actor": actor,
+        "user_id": user_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: delete_staff_account_requested user_id=%d", user_id)
     return publish(EVENT_GOV_DELETE_STAFF_ACCOUNT_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_update_staff_account_requested(
-    user_id: int, payload_data: object, actor: dict
+    user_id: int, payload_data: object, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_id": user_id, "payload": payload_data, "actor": actor,
+        "user_id": user_id, "payload": payload_data, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: update_staff_account_requested user_id=%d", user_id)
     return publish(EVENT_GOV_UPDATE_STAFF_ACCOUNT_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_manage_suppliers_requested(
-    supplier_ids: List[int], action: str, note: Optional[str], actor: dict,
+    supplier_ids: List[int], action: str, note: Optional[str], actor_id: int, actor_role: str,
     badge_level: Optional[str] = None,
 ) -> Any:
     payload = {
         **_event_base(),
         "supplier_ids": supplier_ids, "action": action, "note": note,
-        "badge_level": badge_level, "actor": actor,
+        "badge_level": badge_level, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_manage_suppliers_requested count=%d action=%s", len(supplier_ids), action)
     return publish(EVENT_GOV_BULK_MANAGE_SUPPLIERS_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_supplier_verification_requested(
-    supplier_ids: List[int], action: str, note: Optional[str], actor: dict
+    supplier_ids: List[int], action: str, note: Optional[str], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "supplier_ids": supplier_ids, "action": action, "note": note, "actor": actor,
+        "supplier_ids": supplier_ids, "action": action, "note": note, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_supplier_verification_requested count=%d", len(supplier_ids))
     return publish(EVENT_GOV_BULK_SUPPLIER_VERIFICATION_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_verify_supplier_requested(
-    user_id: int, note: Optional[str], actor: dict
+    user_id: int, note: Optional[str], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_id": user_id, "note": note, "actor": actor,
+        "user_id": user_id, "note": note, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: verify_supplier_requested user_id=%d", user_id)
     return publish(EVENT_GOV_VERIFY_SUPPLIER_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_reject_supplier_requested(
-    user_id: int, note: Optional[str], actor: dict
+    user_id: int, note: Optional[str], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "user_id": user_id, "note": note, "actor": actor,
+        "user_id": user_id, "note": note, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: reject_supplier_requested user_id=%d", user_id)
     return publish(EVENT_GOV_REJECT_SUPPLIER_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_order_bulk_delete_requested(
-    order_ids: List[int], actor: dict
+    order_ids: List[int], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "order_ids": order_ids, "actor": actor,
+        "order_ids": order_ids, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: order_bulk_delete_requested count=%d", len(order_ids))
     return publish(EVENT_GOV_ORDER_BULK_DELETE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_order_bulk_status_update_requested(
-    order_ids: List[int], status: str, actor: dict
+    order_ids: List[int], status: str, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "order_ids": order_ids, "status": status, "actor": actor,
+        "order_ids": order_ids, "status": status, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: order_bulk_status_update_requested count=%d status=%s", len(order_ids), status)
     return publish(EVENT_GOV_ORDER_BULK_STATUS_UPDATE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_order_delete_requested(
-    order_id: int, actor: dict
+    order_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "order_id": order_id, "actor": actor,
+        "order_id": order_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: order_delete_requested order_id=%d", order_id)
     return publish(EVENT_GOV_ORDER_DELETE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_order_refund_requested(
-    order_id: int, actor: dict
+    order_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "order_id": order_id, "actor": actor,
+        "order_id": order_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: order_refund_requested order_id=%d", order_id)
     return publish(EVENT_GOV_ORDER_REFUND_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_order_status_update_requested(
-    order_id: int, status: str, actor: dict
+    order_id: int, status: str, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "order_id": order_id, "status": status, "actor": actor,
+        "order_id": order_id, "status": status, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: order_status_update_requested order_id=%d status=%s", order_id, status)
     return publish(EVENT_GOV_ORDER_STATUS_UPDATE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_order_tracking_update_requested(
-    order_id: int, tracking_number: str, actor: dict
+    order_id: int, tracking_number: str, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "order_id": order_id, "tracking_number": tracking_number, "actor": actor,
+        "order_id": order_id, "tracking_number": tracking_number, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: order_tracking_update_requested order_id=%d", order_id)
     return publish(EVENT_GOV_ORDER_TRACKING_UPDATE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_delete_bank_account_record_requested(
-    kind: str, account_id: int, actor: dict
+    kind: str, account_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "kind": kind, "account_id": account_id, "actor": actor,
+        "kind": kind, "account_id": account_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: delete_bank_account_record_requested kind=%s account_id=%d", kind, account_id)
     return publish(EVENT_GOV_DELETE_BANK_ACCOUNT_RECORD_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_entity_archive_requested(
-    entity_type: str, entity_id: int, actor: dict, reason: Optional[str] = None,
+    entity_type: str, entity_id: int, actor_id: int, actor_role: str, reason: Optional[str] = None,
 ) -> Any:
     payload = {
         **_event_base(),
-        "entity_type": entity_type, "entity_id": entity_id, "reason": reason, "actor": actor,
+        "entity_type": entity_type, "entity_id": entity_id, "reason": reason, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: entity_archive_requested %s id=%d", entity_type, entity_id)
     return publish(EVENT_GOV_ENTITY_ARCHIVE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_entity_restore_requested(
-    entity_type: str, entity_id: int, actor: dict
+    entity_type: str, entity_id: int, actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "entity_type": entity_type, "entity_id": entity_id, "actor": actor,
+        "entity_type": entity_type, "entity_id": entity_id, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: entity_restore_requested %s id=%d", entity_type, entity_id)
     return publish(EVENT_GOV_ENTITY_RESTORE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_archive_requested(
-    entity_type: str, entity_ids: List[int], actor: dict, reason: Optional[str] = None,
+    entity_type: str, entity_ids: List[int], actor_id: int, actor_role: str, reason: Optional[str] = None,
 ) -> Any:
     payload = {
         **_event_base(),
-        "entity_type": entity_type, "entity_ids": entity_ids, "reason": reason, "actor": actor,
+        "entity_type": entity_type, "entity_ids": entity_ids, "reason": reason, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_archive_requested %s count=%d", entity_type, len(entity_ids))
     return publish(EVENT_GOV_BULK_ARCHIVE_REQUESTED, payload, propagate=True)
 
 
 def publish_gov_bulk_restore_requested(
-    entity_type: str, entity_ids: List[int], actor: dict
+    entity_type: str, entity_ids: List[int], actor_id: int, actor_role: str
 ) -> Any:
     payload = {
         **_event_base(),
-        "entity_type": entity_type, "entity_ids": entity_ids, "actor": actor,
+        "entity_type": entity_type, "entity_ids": entity_ids, "actor_id": actor_id, "actor_role": actor_role,
     }
     logger.info("gov: bulk_restore_requested %s count=%d", entity_type, len(entity_ids))
     return publish(EVENT_GOV_BULK_RESTORE_REQUESTED, payload, propagate=True)

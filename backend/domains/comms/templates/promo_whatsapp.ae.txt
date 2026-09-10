@@ -1,0 +1,7 @@
+promo_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: عرض خاص! 🎉
+Body: 🎉 عرض خاص!
+{discount_text}
+الكود: {promo_code}
+{product_url}

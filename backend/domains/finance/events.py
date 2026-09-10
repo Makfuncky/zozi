@@ -19,7 +19,6 @@ class FinanceEvent:
     """Base class for all finance domain events."""
 
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    meta: Dict[str, Any] = field(default_factory=dict)
 
 
 # ── Journal / ledger events ─────────────────────────────────────────────────

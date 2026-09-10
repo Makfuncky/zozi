@@ -1,0 +1,66 @@
+# Caddyfile for ZOZI Platform
+# Automatic HTTPS via Let's Encrypt
+# Replace yourdomain.com with your actual domain
+
+{
+    admin off
+    email your-email@example.com
+    acme_ca https://acme-v02.api.letsencrypt.org/directory
+}
+
+# API Backend
+api.yourdomain.com {
+    reverse_proxy backend:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    
+    # Increase timeouts for long-running requests
+    timeout 300s
+    
+    # WebSocket support
+    @websockets {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @websockets backend:8000
+}
+
+# Frontend
+yourdomain.com {
+    reverse_proxy frontend:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    
+    # Compress responses
+    encode zstd gzip
+    
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+}
+
+# Optional: www redirect
+www.yourdomain.com {
+    redir https://yourdomain.com{uri} permanent
+}
+
+# Optional: MinIO console (dev only)
+# minio.yourdomain.com {
+#     reverse_proxy minio:9001
+# }
+
+# Optional: Grafana monitoring
+# grafana.yourdomain.com {
+#     reverse_proxy grafana:3000
+# }

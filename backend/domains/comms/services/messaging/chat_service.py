@@ -694,8 +694,14 @@ class NotificationService:
 
     def send_alert(self, alert_type: str, data: Dict[str, Any], priority: str = "medium") -> dict:
         from domains.governance.ports import AuditLog
-        audit = AuditLog(event_type="fraud_alert", actor_id=None, action=alert_type, resource_type="security", details=data, severity=priority, occurred_at=utcnow())
-        self.db.add(audit); self.db.commit()
+        audit = AuditLog(
+            action=alert_type,
+            entity_type="security_alert",
+            details={"priority": priority, **data},
+            ip_address=data.get("ip_address"),
+        )
+        self.db.add(audit)
+        self.db.commit()
         return {"status": "alert_sent", "type": alert_type, "priority": priority}
 
     def escalate_to_human(self, alert: dict) -> None:
