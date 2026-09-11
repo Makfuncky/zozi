@@ -5,8 +5,8 @@ from typing import Any
 from infrastructure.utils.config import settings
 
 
-class _NoOpRedis:
-    """Fallback Redis client that silently no-ops all operations."""
+class _NoOpValkey:
+    """Fallback Valkey client that silently no-ops all operations."""
 
     def setex(self, *args: Any, **kwargs: Any) -> None:
         return None
@@ -67,19 +67,19 @@ class _NoOpPipeline:
 
 
 try:
-    import redis
+    import valkey
     _redis_available = True
 except ImportError:
     redis = None  # type: ignore
     _redis_available = False
 
-_client: redis.Redis | _NoOpRedis | None = None
+_client: redis.Redis | _NoOpValkey | None = None
 
 
-def redis_client() -> redis.Redis | _NoOpRedis:
+def valkey_client() -> redis.Redis | _NoOpValkey:
     global _client
     if not _redis_available:
-        return _NoOpRedis()
+        return _NoOpValkey()
     if _client is not None:
         return _client
     # Use short timeouts so a missing Redis doesn't hang requests
@@ -94,20 +94,20 @@ def redis_client() -> redis.Redis | _NoOpRedis:
     except Exception:
         # Do NOT cache the NoOp fallback — retry on next call so a
         # temporarily unreachable Redis can recover without a restart.
-        return _NoOpRedis()
+        return _NoOpValkey()
     _client = client
     return _client
 
 
-get_redis = redis_client
+get_redis = valkey_client
 
 
 def get_redis_health_status() -> dict[str, Any]:
     if not _redis_available:
         return {"configured": False, "available": False, "backend": None}
     try:
-        client = redis_client()
-        if isinstance(client, _NoOpRedis):
+        client = valkey_client()
+        if isinstance(client, _NoOpValkey):
             return {"configured": False, "available": False, "backend": None}
         client.ping()
         return {"configured": True, "available": True, "backend": "redis"}

@@ -26,7 +26,7 @@ services:
     environment:
       - APP_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STORAGE_BACKEND=s3
@@ -72,7 +72,7 @@ services:
     environment:
       - APP_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=valkey://valkey:6379
       - STORAGE_BACKEND=s3
       - S3_BUCKET=${S3_BUCKET}
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
@@ -98,7 +98,7 @@ services:
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
-      - redis_data:/data
+      - valkey_data:/data
     networks:
       - zozi_net
     restart: unless-stopped
@@ -109,4 +109,4 @@ networks:
 
 volumes:
   postgres_data:
-  redis_data:
+  valkey_data:

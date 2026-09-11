@@ -5464,3 +5464,15 @@ I need perfect alignment, wiring, codebase management, follow the laws, cleaning
 - Our target is to achieve architecture clean and production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality and etc.
 -----------------------------------------------------
 
+
+[
+"file": 
+"line": 
+"function_name": 
+"problem": 
+"proposed_fix":
+"reason_of_fix":
+"law":
+"violation":
+"severity":
+]

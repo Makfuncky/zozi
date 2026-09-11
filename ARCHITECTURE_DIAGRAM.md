@@ -133,9 +133,9 @@ backend/
 ├── infrastructure/             # PLATFORM — zero business logic; imports nothing above it
 │   ├── database/               # base.py · database.py (get_db/get_read_db) · session.py · transaction.py
 │   │                           #   security.py ← ONE canonical RLS enforcer · seeds/ · create_tables.py (dev-only)
-│   ├── valkey/                # client · cache · token blacklist · pub/sub
+│   ├── valkey/                # client · cache · token blacklist · streams · pub/sub (WS only)
 │   ├── storage/               # Cloudflare R2/S3 · presigned URLs (media blobs never in Postgres)
-│   ├── messaging/              # event_bus (Valkey Pub/Sub for cross-domain/job events; in-proc reserved for synchronous HTTP lifecycles) · ws_manager · webhook ingress
+│   ├── messaging/              # event_bus (Valkey Streams for cross-domain events; Valkey Pub/Sub reserved for ephemeral realtime UI/WebSocket updates; in-proc reserved for synchronous HTTP lifecycles) · ws_manager · webhook ingress
 │   ├── observability/          # structlog · OTEL · Prometheus · Sentry
 │   ├── security/               # JWT · hashing · field encryption (KMS) · zero-trust primitives
 │   └── utils/                  # pure technical helpers: pagination.py · datetime_utils · variant_key
@@ -145,7 +145,7 @@ backend/
 │   ├── ai/                      # AI/ML: chatbot, search, vision, text, sentiment, recommendation, price_intelligence, image_similarity, finance_ai
 │   ├── analytics/               # Admin analytics dashboards
 │   ├── auth/                    # JWT, OAuth, TOTP, Apple Auth
-│   ├── automation/              # Job scheduler (Celery task definitions + Valkey broker wiring)
+│   ├── automation/              # Celery beat scheduling triggers; task definitions live in jobs/
 │   ├── barcode/                 # EAN/UPC/Code128 generation
 │   ├── bg_removal/              # AI background removal (rembg + OpenCV)
 │   ├── comms/                   # Email, SMS (self-hosted), WhatsApp (self-hosted) — Twilio removed
@@ -155,7 +155,7 @@ backend/
 │   ├── media/                   # Media AI services
 │   ├── news/                    # RSS feed parsing
 │   ├── ocr/                     # Document OCR parsing
-│   ├── payments/                # Stripe, PayPal, Tap, PayTabs, Thawani, webhooks, registry, connect
+│   ├── payments/                # 1:1 SDK adapters (stripe, paypal, tap, paytabs, thawani)
 │   ├── qr/                      # QR generation, parcel verification
 │   ├── scanner/                 # QR/barcode scanning from images
 │   ├── security/                # Encryption, threat intel, watchlist
@@ -171,7 +171,7 @@ backend/
 │   ├── fx_revaluation.py  accrual_reversal.py  threat_feed_updater.py  mcp_server.py
 │   └── background_tasks.py
 ├── middleware/                  # flat; orchestrator.py orders the pipeline BEFORE module routers
-│   └── orchestrator.py · api_version · country_context · csrf · database_security · device_binding
+│   └── orchestrator.py · api_version · country_context · csrf · device_binding
 │       · impossible_travel · ip_extraction · logging · pci_dss_compliance · rate_limit
 │       · request_id · security_headers · webhook_ip_whitelist
 │       · webhook_verification · zero_trust_auth
@@ -302,9 +302,7 @@ The laws are organized into 17 sections (Sections 12.1–12.13, 14–17). Each l
    `infrastructure` / `kernel` import nothing above them. `providers ← services/jobs`.
 2. **Module routers stay thin:** auth context + `require_feature(...)` + one domain-service call.
    No DB writes, no business rules.
-3. **Cross-domain writes only via events** (`events.py`/`subscribers.py`);
-   cross-domain *reads* only via `ports.py` / `read_models/`.
-   In-process events must be emitted post-commit to prevent cross-schema transaction locking.
+3. **Cross-domain WRITES via Domain Event Bus (Valkey Streams).** Synchronous in-process events are permitted only for read-model projections within the same transaction.
 4. **Features single-sourced** in `domains/*/features.py`; aggregated by `rbac/catalog.py`;
    CI fails on any `require_feature("…")` literal not in the catalog.
 5. **Country is the orthogonal scope axis:** RLS session context + `country_staff_assignments`
@@ -366,6 +364,8 @@ The laws are organized into 17 sections (Sections 12.1–12.13, 14–17). Each l
         PROV_ALL --> AI
         PROV_ALL --> SMTP
         BEJ --> PROV_ALL
+        BEJ --> BEDOM
+        BEJ --> BEDB
         BEDB --> DBE
         DBE --> DBM
 ```
@@ -411,8 +411,9 @@ flowchart TD
         MODELS[("Domain models — one Postgres schema per domain; e.g. schema=finance; each domain owns its tables")]
     end
     Client --> L1
-    L8 --> H
+    Client --> H
     L8 --> R
+    L8 --> G
     H --> DBL
     R --> AUTH
     R --> FEAT
@@ -568,14 +569,19 @@ flowchart TD
         UI["Dynamic UI Strategy\n(Elements / Redirect / iFrame)"]
     end
 
+    subgraph EXT["EXTERNAL — Payment Gateway"]
+        EXT_GW["External Payment Gateway\n(Stripe / Thawani / etc.)"]
+    end
+
     ADMIN_UI -->|Configures| DB
     FE -->|1. Request Methods?| ORCH
     ORCH -->|2. Query Active Gateway| DB
     ORCH -->|3. Instantiate Adapter| PROV_PAY
     PROV_PAY -->|4. Return Init Payload| FE
-    FE -->|5. User Pays| PROV_PAY
-    PROV_PAY -->|6. Webhook Ingress| ORCH
-    ORCH -->|7. Emit Event| EVT(("events.py\npayment.captured"))
+    FE -->|5. Submit Payment Token| ORCH
+    ORCH -->|6. Charge| PROV_PAY
+    EXT_GW -->|7. Webhook Ingress| ORCH
+    ORCH -->|8. Emit Event| EVT(("events.py\npayment.captured"))
 ```
 
 **Key Rules for Payment Orchestration:**
@@ -633,7 +639,7 @@ sequenceDiagram
 |-----|----------|------|-------------|-----|
 | 1 | Architecture | Arrows point down | Dependencies flow: modules → domains → infrastructure → kernel. Reverse imports FORBIDDEN. | Prevents circular dependencies and unmaintainable coupling between layers. |
 | 2 | Architecture | Thin routers | Router = auth context + require_feature + ONE service call + serialization. No DB writes, no business logic. | Keeps API layer a thin HTTP shim over domain logic. Easy to test and maintain. |
-| 3 | Architecture | Cross-domain events/ports | Cross-domain WRITES via events.py/subscribers.py. Cross-domain READS via ports.py only. | Keeps domains decoupled and independently deployable. |
+| 3 | Architecture | Cross-domain WRITES via Domain Event Bus (Valkey Streams). Synchronous in-process events are permitted only for read-model projections within the same transaction. | Keeps domains decoupled and independently deployable. |
 | 4 | Architecture | Features single-sourced | Permission atoms defined once in domains/*/features.py. Aggregated by rbac/catalog.py. | Prevents permission drift. Frontend and backend share one permission model. |
 | 5 | Architecture | Country is orthogonal | Every data access scoped by country_code via RLS. Independent of feature check. | Ensures multi-tenant data isolation at the database level. |
 | 6 | Architecture | Schema discipline | Every table in a domain Postgres schema. Alembic is the only schema source. | Naming consistency and single source of truth for schema changes. |
@@ -670,7 +676,7 @@ sequenceDiagram
 | 37 | Security | Rate limit fails closed | Valkey unreachable = deny requests (not allow all). | Prevents brute-force and DoS when Valkey is down. |
 | 38 | Security | Password handling | Passwords >72 bytes rejected with error, never truncated. | bcrypt's 72-byte limit. Silent truncation creates security holes. |
 | 39 | Security | No duplicate auth | Auth logic in exactly one canonical location. | Duplicate implementations with divergent behavior create security holes. |
-| 40 | Security | Backend CORS | Backend CORS is strictly DISABLED. All frontend traffic must route through the Next.js API Proxy (Same-Origin). Backend only accepts requests from the Next.js server IP/VPC. | Prevents arbitrary websites from making authenticated requests. |
+| 40 | Security | Backend CORS | Backend CORS is disabled for web browsers (all web traffic routes via Next.js API Proxy). Mobile App traffic is authenticated via mTLS or a dedicated Mobile API Gateway (e.g., Cloudflare Zero Trust / AWS API Gateway) which forwards requests to the Backend VPC. | Prevents arbitrary websites from making authenticated requests; mobile traffic uses dedicated ingress. |
 | 41 | Security | WebSocket auth | WebSocket connections MUST verify JWT type claim equals access. | Prevents stolen refresh tokens from opening WebSocket connections. |
 | 42 | Security | Input validation | All public endpoints use Pydantic schemas. No raw dicts in router signatures. | Prevents malformed data from reaching domain services. |
 | 43 | Security | Security event logging | Auth failures, 403s, rate-limit triggers logged at WARNING+. | Silent security events prevent incident detection. |
@@ -711,7 +717,7 @@ sequenceDiagram
 | 78 | Infrastructure | Middleware ordering | Pipeline order FIXED: Foundation → Auth → Rate → Webhook → Geo → Security → Observe → Compliance. | Reordering changes security posture. |
 | 79 | Infrastructure | Global exception handler | Catches all uncaught exceptions. Returns structured response. No stack traces in prod. | Prevents stack trace leakage and ensures consistent error format. |
 | 80 | Infrastructure | Graceful shutdown | Shutdown disposes DB engine, Valkey, workers via lifespan.py. | Prevents connection leaks on restart. |
-| 81 | Infrastructure | Health checks | /health, /health/deps, /health/ready verify all critical dependencies. | Load balancers use these for routing decisions. |
+| 81 | Infrastructure | Health checks | Health endpoints (/health, /health/deps, /health/ready) MUST be registered BEFORE the middleware pipeline or explicitly exempted from L2-L8 checks. | Load balancers use these for routing decisions. |
 | 82 | Config | No default credentials | Config fallbacks MUST NOT contain real credentials. Empty/null default. | Prevents accidental use of dev credentials in production. |
 | 83 | Config | Environment validation | Required env vars validated at startup. Missing = immediate failure. | Prevents silent fallbacks to development defaults in production. |
 | 84 | Config | Typed feature flags | Flags use pydantic-settings. Raw os.getenv() FORBIDDEN. | String 'false' is truthy in Python. Typed coercion prevents bugs. |
@@ -774,7 +780,7 @@ sequenceDiagram
 | 141 | Infrastructure | Database infra | Base, get_db/get_read_db, sessions, RLS, transactions, seeds. | Single place for DB engine and session management. |
 | 142 | Infrastructure | Valkey infra | Client singleton, cache abstraction, blacklist, pub/sub. | Prevents connection proliferation. |
 | 143 | Infrastructure | Storage infra | Abstraction interface + backup utilities. | Backends in providers/storage/. |
-| 144 | Infrastructure | Messaging infra | WS manager, realtime, email wrappers, event bus. | Event bus uses Valkey Pub/Sub for cross-domain events triggered by background jobs (Celery) and webhooks. In-process emission is reserved strictly for synchronous HTTP request lifecycles. |
+| 144 | Infrastructure | Messaging infra | WS manager, realtime, email wrappers, event bus. | Event bus uses Valkey Streams for guaranteed delivery of cross-domain events (triggered by background jobs/Celery and webhooks). Valkey Pub/Sub is strictly reserved for ephemeral realtime UI updates (WebSockets). In-process emission is reserved strictly for synchronous HTTP request lifecycles. |
 | 145 | Infrastructure | Observability infra | OTEL, Prometheus, structlog, Sentry, circuit breaker. | Wires observability into the app at startup. |
 | 146 | Infrastructure | Security infra | JWT, bcrypt, KMS encryption, rate limiting, CSRF, country access. | Canonical location for auth-related code. |
 | 147 | Infrastructure | Utils infra | Pure technical helpers: pagination, datetime, config, caching, HTTP. | Business primitives belong in kernel/, not here. |
@@ -836,7 +842,7 @@ sequenceDiagram
 | 203 | Config | Typed flags | pydantic-settings. No raw os.getenv(). | String 'false' is truthy. Typed coercion prevents bugs. |
 | 204 | Config | Secrets manager | HashiCorp Vault in production. | .env files are for development only. |
 | 205 | Config | APP_ENV detection | development, test, staging, production. | Behavior changes based on environment. |
-| 206 | Config | CORS allowlist | Backend CORS is disabled. No browser-originated requests reach the backend directly; all traffic flows through the Next.js API Proxy. | Prevents arbitrary websites from making authenticated requests. |
+| 206 | Config | Network ingress config | `CORS_ORIGINS` must be strictly validated (web-only). `MOBILE_GATEWAY_URL` defines the dedicated mobile ingress endpoint (mTLS / API Gateway). | Enforces network-level isolation between web and mobile traffic at the config layer. |
 | 207 | Testing | pytest framework | pytest + pytest-asyncio. Files in tests/domains/ and tests/architecture/. | Standard Python testing stack. |
 | 208 | Testing | Fixtures | db_session, client/admin_client/supplier_client/customer_client, JWT tokens. | Pre-authenticated test clients speed up test writing. |
 | 209 | Testing | Demo users | admin@zozi.com, supplier@zozi.com, customer@zozi.com. | Consistent test users across environments. |
@@ -869,7 +875,7 @@ sequenceDiagram
 | 236 | API | RFC 7807 errors | Problem Details. No stack traces in production. | Standard error format enables client-side handling. |
 | 237 | API | Pagination format | items + next_cursor + has_more. No count on hot lists. | Count is expensive on large tables. |
 | 238 | API | Filtering/sorting | filter[field]=value, sort=-created_at. Complex: POST body. | Flexible querying without endpoint proliferation. |
-| 239 | API | Idempotency | Idempotency-Key header. 24h expiry. (stored in Valkey with 24h TTL) | Duplicate requests don't cause duplicate operations. |
+| 239 | API | Idempotency | Idempotency-Key header. 24h expiry. Stored in DB (finance.idempotency_keys table) as source of truth; Valkey used as fast-path distributed cache only. | Duplicate requests don't cause duplicate operations. |
 | 240 | Git | Branching | main, feature/*, fix/*, release/*, hotfix/*. | Git Flow convention. |
 | 241 | Git | Conventional Commits | type(scope): description. feat, fix, refactor, docs, test, chore, perf, security. | Automated changelog generation. |
 | 242 | Git | PR process | All via PR. CI + review. No direct main pushes. | Code review catches issues before merge. |

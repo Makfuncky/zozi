@@ -1,4 +1,4 @@
-﻿"""Flexible application settings used across mixed recovery-era modules."""
+"""Flexible application settings used across mixed recovery-era modules."""
 from __future__ import annotations
 
 import json
@@ -71,7 +71,7 @@ class Settings:
         "encryption_key": "",
         "twilio_account_sid": os.getenv("TWILIO_ACCOUNT_SID", ""),
         "twilio_auth_token": os.getenv("TWILIO_AUTH_TOKEN", ""),
-        "redis_url": "redis://localhost:6379",
+        "valkey_url": "valkey://localhost:6379",
         "default_currency": "OMR",
         "resend_api_key": "",
         "resend_webhook_secret": "",
@@ -87,8 +87,8 @@ class Settings:
         "background_job_workers": 2,
         "background_job_ttl_seconds": 3600,
         "background_jobs_enabled": False,
-        "celery_broker_url": os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/1"),
-        "celery_result_backend": os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/2"),
+        "celery_broker_url": os.getenv("CELERY_BROKER_URL", "valkey://localhost:6379/1"),
+        "celery_result_backend": os.getenv("CELERY_RESULT_BACKEND", "valkey://localhost:6379/2"),
         "celery_task_always_eager": str(os.getenv("CELERY_TASK_ALWAYS_EAGER", "false")).lower() in {"1", "true", "yes", "on"},
         "ml_workers": int(os.getenv("ML_WORKERS", "2")),
         "bootstrap_schema_on_startup": False,
@@ -493,7 +493,7 @@ class Settings:
         key = self._normalize(name)
         if key in self._DEFAULTS:
             logger.warning(
-                "Accessing undefined setting '%s' â€” returning default value. "
+                "Accessing undefined setting '%s' — returning default value. "
                 "This setting may not exist.", name
             )
         return self._resolve(name)

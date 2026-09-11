@@ -48,7 +48,7 @@ aiofiles==25.1.0
 python-magic==0.4.27
 
 # Image processing (Pillow is required; opencv is OPTIONAL/guarded)
-Pillow==12.3.0
+Pillow==12.2.0
 # opencv-python-headless==5.0.0.93   # OPTIONAL - HAS_CV2 degrades gracefully
 
 # AI / ML (OPTIONAL - degrade via HAS_* flags)
