@@ -1,0 +1,36 @@
+{
+  "audit": "Zozi Codebase Forensic Audit",
+  "spec": "CODEBASE_AUDIT_BY_ASHER.md",
+  "rules": "_audit/MASTER_RULES.md",
+  "orchestrator_model": "Claude Opus 4.8 (GitHub Copilot)",
+  "waves": {
+    "1": { "phases": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "status": "completed", "agents_completed": 10 },
+    "2": { "phases": [11, 12, 13, 14, 15, 16], "status": "pending" },
+    "3": { "phases": [17, 18], "status": "pending" }
+  },
+  "aggregate_wave1": {
+    "reports_kb": 337,
+    "reports_lines": 2588,
+    "findings_total_approx": 366,
+    "evidence_citations_approx": 856,
+    "severity": { "blocker": 8, "high": 27, "medium": 49, "low": 39 }
+  },
+  "agents": [
+    { "phase": 1, "name": "Repository Inventory", "wave": 1, "status": "COMPLETED", "files_examined": 95, "evidence_items": 68, "findings": { "verified": 36, "inferred": 4, "unknown": 1 }, "severity": { "blocker": 0, "high": 0, "medium": 0, "low": 0, "info": 41 }, "self_skepticism": 5, "orchestrator_review": 5, "report": "_audit/findings/PHASE_01_REPOSITORY_INVENTORY.md" },
+    { "phase": 2, "name": "Technology Stack", "wave": 1, "status": "COMPLETED", "files_examined": 40, "evidence_items": 78, "findings": { "verified": 71, "inferred": 33, "unknown": 14 }, "severity": { "blocker": 0, "high": 3, "medium": 6, "low": 5, "info": 8 }, "self_skepticism": 4, "orchestrator_review": 4, "report": "_audit/findings/PHASE_02_TECHNOLOGY_STACK.md" },
+    { "phase": 3, "name": "Dependency Forensics", "wave": 1, "status": "COMPLETED", "files_examined": 46, "evidence_items": 85, "findings": { "verified": 24, "inferred": 3, "unknown": 2 }, "severity": { "blocker": 3, "high": 2, "medium": 10, "low": 8, "info": 6 }, "self_skepticism": 5, "orchestrator_review": 5, "report": "_audit/findings/PHASE_03_DEPENDENCY_FORENSICS.md" },
+    { "phase": 4, "name": "Import Map", "wave": 1, "status": "COMPLETED", "files_examined": 40, "evidence_items": 95, "findings": { "verified": 24, "inferred": 3, "unknown": 0 }, "severity": { "blocker": 0, "high": 3, "medium": 6, "low": 5, "info": 13 }, "self_skepticism": 4, "orchestrator_review": 4, "report": "_audit/findings/PHASE_04_IMPORT_MAP.md" },
+    { "phase": 5, "name": "Code Surface Map", "wave": 1, "status": "COMPLETED", "files_examined": 55, "evidence_items": 120, "findings": { "verified": 24, "inferred": 6, "unknown": 1 }, "severity": { "blocker": 0, "high": 4, "medium": 9, "low": 6, "info": 12 }, "self_skepticism": 4, "orchestrator_review": 4, "report": "_audit/findings/PHASE_05_CODE_SURFACE_MAP.md" },
+    { "phase": 6, "name": "Business Domain Map", "wave": 1, "status": "COMPLETED", "files_examined": 70, "evidence_items": 140, "findings": { "capabilities": 41, "risks": 9 }, "severity": { "blocker": 1, "high": 2, "medium": 4, "low": 1, "info": 1 }, "self_skepticism": 4, "orchestrator_review": 4, "report": "_audit/findings/PHASE_06_BUSINESS_DOMAIN_MAP.md" },
+    { "phase": 7, "name": "Database Forensics", "wave": 1, "status": "COMPLETED", "files_examined": 40, "evidence_items": 70, "findings": { "verified": 19, "inferred": 4, "unknown": 1 }, "severity": { "blocker": 1, "high": 6, "medium": 9, "low": 4, "info": 4 }, "self_skepticism": 4, "orchestrator_review": 4, "report": "_audit/findings/PHASE_07_DATABASE_FORENSICS.md" },
+    { "phase": 8, "name": "API Forensics", "wave": 1, "status": "COMPLETED", "files_examined": 34, "evidence_items": 85, "findings": { "verified": 21, "inferred": 5, "unknown": 1 }, "severity": { "blocker": 2, "high": 6, "medium": 9, "low": 6, "info": 4 }, "self_skepticism": 4, "orchestrator_review": 4, "report": "_audit/findings/PHASE_08_API_FORENSICS.md" },
+    { "phase": 9, "name": "Auth Security", "wave": 1, "status": "COMPLETED", "files_examined": 18, "evidence_items": 55, "findings": { "verified": 12, "inferred": 1, "unknown": 1 }, "severity": { "blocker": 1, "high": 1, "medium": 5, "low": 4, "info": 3 }, "self_skepticism": 5, "orchestrator_review": 5, "report": "_audit/findings/PHASE_09_AUTH_SECURITY.md" },
+    { "phase": 10, "name": "Payment Security", "wave": 1, "status": "COMPLETED", "files_examined": 22, "evidence_items": 60, "findings": { "verified": 12, "inferred": 3, "unknown": 0 }, "severity": { "blocker": 1, "high": 4, "medium": 6, "low": 4, "info": 0 }, "self_skepticism": 4, "orchestrator_review": 4, "report": "_audit/findings/PHASE_10_PAYMENT_SECURITY.md" }
+  ],
+  "cross_phase_corroboration": [
+    { "finding": "Inventory finalization crash (.limit(1000) on Product instance, payment_engine.py:~4182)", "confirmed_by_phases": [6, 7, 10], "confidence": "very high", "needs": "runtime confirmation vs deployed source" },
+    { "finding": "RBAC db_grants=[] hardcoded, DB grants never enforced (rbac/dependencies.py:47-53)", "confirmed_by_phases": [5, 8], "confidence": "high" },
+    { "finding": "Default SECRET_KEY not in prod placeholder blocklist (config.py:31 vs 214)", "confirmed_by_phases": [8, 9], "confidence": "high" },
+    { "finding": "Fail-open payment gating / webhook trust", "confirmed_by_phases": [5, 10], "confidence": "high" }
+  ]
+}
