@@ -1,0 +1,162 @@
+:root {
+  --zozi-logo-z-top: #EEFF99;
+  --zozi-logo-z-mid-1: #CCEE38;
+  --zozi-logo-z-mid-2: #97D01A;
+  --zozi-logo-z-mid-3: #55B010;
+  --zozi-logo-z-bottom: #2A7006;
+  --zozi-logo-shadow-opacity: 0.45;
+  --zozi-logo-pin-shadow-fill: white;
+  --zozi-logo-pin-shadow-opacity: 0.14;
+  --zozi-logo-pin-hole-stroke: rgba(255,255,255,0.15);
+  --zozi-logo-flare-color: #FFD740;
+  --zozi-logo-flare-opacity: 0.85;
+  --zozi-logo-pin-reflection: #FFCC22;
+  --zozi-logo-wordmark: #FFFFFF;
+  --color-brand: #2ecc4f;
+  --color-brand-rgb: 46 204 79;
+  --color-brand-light: #5fe57a;
+  --color-brand-dark: #1f9e3c;
+  --color-accent: #FFD700;
+  --color-accent-rgb: 255 215 0;
+  --color-accent-light: #FFEA00;
+  --color-accent-dark: #C09000;
+  --color-surface-0: #000000;
+  --gradient-logo: var(--color-brand);
+  --gradient-brand-text: var(--color-brand);
+  --gradient-banner: var(--color-brand);
+  --gradient-banner-alt: var(--color-brand);
+  --gradient-brand-alt: var(--color-brand);
+  --gradient-banner-luxe: var(--color-brand);
+  --gradient-banner-festive: var(--color-brand);
+  --gradient-banner-nocturne: var(--color-brand);
+  --gradient-banner-royal: var(--color-brand);
+  --gradient-banner-coral: var(--color-brand);
+  --gradient-banner-midnight: var(--color-brand);
+  --gradient-card: var(--color-surface-1);
+  --gradient-banner-accent: var(--color-brand);
+  --gradient-brand-to-success: var(--color-brand);
+  --gradient-brand-to-brand-dark: var(--color-brand);
+  --gradient-brand-to-brand-light: var(--color-brand);
+  --gradient-shimmer: var(--color-surface-1);
+  --gradient-logo-text: var(--color-brand);
+
+  /* -- Radius scale (DS09) ----------------------------------------- */
+  --zozi-radius-sm: 4px;
+  --zozi-radius-md: 8px;
+  --zozi-radius-lg: 12px;
+  --zozi-radius-xl: 16px;
+  --zozi-radius-2xl: 24px;
+  --zozi-radius-pill: 9999px;
+
+  /* -- Elevation (DS11) -------------------------------------------- */
+  --zozi-elevation-sm: 0 1px 2px rgb(0 0 0 / 0.08);
+  --zozi-elevation-md: 0 4px 10px rgb(0 0 0 / 0.10);
+  --zozi-elevation-lg: 0 12px 28px rgb(0 0 0 / 0.14);
+  --zozi-elevation-xl: 0 24px 48px rgb(0 0 0 / 0.18);
+
+  /* -- Focus ring (DS11 — keeps focus visibility distinct from elevation) -- */
+  --zozi-ring: 0 0 0 3px rgb(50 205 50 / 0.5);
+
+  /* -- Motion duration (DS16) -------------------------------------- */
+  --zozi-duration-fast: 120ms;
+  --zozi-duration-base: 180ms;
+  --zozi-duration-normal: 200ms;
+  --zozi-duration-slow: 300ms;
+  --zozi-duration-slower: 500ms;
+  --zozi-duration-slowest: 700ms;
+
+  /* -- Overlay bases (DS03/DS04) ----------------------------------- */
+  /* RGB channels extracted from globals.css glass/overlay layer so literals
+     become rgb(var(--zozi-ov-<name>-rgb) / <alpha>). Colors are unchanged. */
+  --zozi-ov-white-rgb: 255 255 255;
+  --zozi-ov-black-rgb: 0 0 0;
+  --zozi-ov-olive-rgb: 74 93 53;
+  --zozi-ov-slate900-rgb: 15 23 42;
+  --zozi-ov-brand-rgb: 47 180 61;
+  --zozi-ov-gold-rgb: 242 201 76;
+  --zozi-ov-lime-rgb: 89 188 97;
+  --zozi-ov-mist-rgb: 247 250 243;
+  --zozi-ov-sky-rgb: 14 165 233;
+  --zozi-ov-pine-rgb: 50 90 36;
+  --zozi-ov-foam-rgb: 248 251 244;
+  --zozi-ov-pearl-rgb: 251 252 248;
+  --zozi-ov-ink900-rgb: 8 13 24;
+  --zozi-ov-sun-rgb: 250 204 21;
+  --zozi-ov-leaf-rgb: 50 205 50;
+  --zozi-ov-indigo-rgb: 79 70 229;
+  --zozi-ov-sprout-rgb: 111 214 72;
+  --zozi-ov-slate400-rgb: 148 163 184;
+  --zozi-ov-milk-rgb: 249 251 245;
+  --zozi-ov-fern-rgb: 47 148 64;
+  --zozi-ov-blue900-rgb: 30 58 138;
+  --zozi-ov-azure-rgb: 79 142 247;
+  --zozi-ov-teal-rgb: 45 212 191;
+  --zozi-ov-lilac-rgb: 167 139 250;
+  --zozi-ov-brass-rgb: 212 175 55;
+  --zozi-ov-frost-rgb: 248 250 252;
+  --zozi-ov-amber-rgb: 245 158 11;
+  --zozi-ov-ink-rgb: 17 17 17;
+  --zozi-ov-coal-rgb: 26 26 26;
+  --zozi-ov-gunmetal-rgb: 17 24 39;
+  --zozi-ov-cream-rgb: 248 250 245;
+  --zozi-ov-void-rgb: 2 6 23;
+  --zozi-ov-frostmint-rgb: 243 248 238;
+  --zozi-ov-butter-rgb: 245 249 239;
+  --zozi-ov-snow-rgb: 250 252 246;
+  --zozi-ov-meadow-rgb: 35 129 44;
+  --zozi-ov-ochre-rgb: 163 126 14;
+  --zozi-ov-linen-rgb: 248 252 243;
+  --zozi-ov-seafoam-rgb: 244 248 238;
+  --zozi-ov-ivory-rgb: 248 252 244;
+  --zozi-ov-chiffon-rgb: 245 250 240;
+  --zozi-ov-forest-rgb: 16 33 15;
+  --zozi-ov-olivedrab-rgb: 47 37 2;
+  --zozi-ov-bark-rgb: 26 21 2;
+
+  /* -- Standard palette aliases used literally in globals.css (DS03) -- */
+  --zozi-pal-yellow400: #facc15;
+  --zozi-pal-slate300: #cbd5e1;
+  --zozi-pal-slate600: #475569;
+  --zozi-pal-gray200: #e5e7eb;
+  --zozi-pal-ink950: #060e1c;
+  --zozi-pal-cream100: #fff7bf;
+  --zozi-pal-cyan50: #ecfeff;
+  --zozi-pal-indigo700: #4338ca;
+  --zozi-pal-slate800: #1e293b;
+  --zozi-pal-slate100: #e8edf5;
+  --zozi-pal-sky100: #dce7f9;
+  --zozi-pal-green50: #f0fdf0;
+  --zozi-pal-green100: #dcfce7;
+  --zozi-pal-emerald100: #d1fae5;
+  --zozi-pal-green800: #166534;
+
+  /* -- Spacing scale (DS08) -- Tailwind-aligned; px kept identical -- */
+  --zozi-space-px: 1px;
+  --zozi-space-050: 2px;
+  --zozi-space-075: 3px;
+  --zozi-space-1: 4px;
+  --zozi-space-150: 6px;
+  --zozi-space-2: 8px;
+  --zozi-space-250: 10px;
+  --zozi-space-3: 12px;
+  --zozi-space-350: 14px;
+  --zozi-space-4: 16px;
+  --zozi-space-450: 18px;
+  --zozi-space-5: 20px;
+  --zozi-space-550: 22px;
+  --zozi-space-6: 24px;
+  --zozi-space-650: 26px;
+  --zozi-space-7: 28px;
+  --zozi-space-750: 30px;
+  --zozi-space-8: 32px;
+  --zozi-space-850: 34px;
+  --zozi-space-9: 36px;
+  --zozi-space-950: 38px;
+  --zozi-space-10: 40px;
+  --zozi-space-11: 44px;
+  --zozi-space-12: 48px;
+  --zozi-space-13: 52px;
+  --zozi-space-14: 56px;
+  --zozi-space-15: 60px;
+  --zozi-space-16: 64px;
+}

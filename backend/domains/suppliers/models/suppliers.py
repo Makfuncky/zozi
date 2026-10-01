@@ -1,0 +1,273 @@
+"""suppliers domain â€” ORM model package (Law 6 schema discipline).
+
+Supplier-entity definitions live here on the ``supplier`` Postgres schema.
+Cross-domain consumers import these via ``domains.suppliers.models`` or read
+them through ``domains.suppliers.ports`` (the sanctioned READ surface).
+
+Future JSONB/GIN indexes (uncomment once the corresponding columns are added
+via Alembic migration):
+  - ix_supplier_profiles_certifications    ON (certifications::jsonb) GIN
+  - ix_supplier_profiles_social_links_json ON (social_links_json::jsonb) GIN
+  - ix_supplier_profiles_operating_regions ON (operating_regions::jsonb) GIN
+  - ix_supplier_profiles_verified_documents ON (verified_documents::jsonb) GIN
+"""
+from __future__ import annotations
+from uuid import uuid4
+from decimal import Decimal
+from sqlalchemy import func, UUID
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, text, Numeric, Float
+from sqlalchemy.orm import relationship
+from infrastructure.database.types import GUID
+from . import Base
+from infrastructure.utils.datetime_utils import utcnow as utcnow
+from infrastructure.database.mixins import TenantMixin, VersionMixin
+
+__all__ = ['SupplierProfile', 'SupplierDocument', 'SupplierNotificationPreference',
+           'SupplierBadgeCatalog', 'SupplierBadge', 'SupplierBadgeBillingHistory']
+
+
+class SupplierProfile(Base, TenantMixin):
+    __tablename__ = 'supplier_profiles'
+    __table_args__ = ({'schema': 'suppliers'},)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by = Column(Integer, nullable=True)
+    created_by = Column(Integer, nullable=True, index=True)
+    updated_by = Column(Integer, nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=False, index=True)
+    business_name = Column(String(200), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
+    address = Column(String(255), nullable=True)
+    website = Column(String(255), nullable=True)
+    bio = Column(Text, nullable=True)
+    about_us = Column(Text, nullable=True)
+    business_type = Column(String(50), nullable=True)
+    verified_documents = Column(Text, nullable=True)
+    is_verified = Column(Boolean, default=False)
+    verification_status = Column(String(30), default='unverified')
+    credibility_score = Column(Numeric(5, 2), default=Decimal('0'))
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    user = relationship('User', foreign_keys=[user_id])
+
+
+class SupplierDocument(Base, TenantMixin):
+    __tablename__ = 'supplier_documents'
+    __table_args__ = ({'schema': 'suppliers'},)
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by = Column(Integer, nullable=True)
+    created_by = Column(Integer, nullable=True, index=True)
+    updated_by = Column(Integer, nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    doc_type = Column(String(50), nullable=False)
+    document_name = Column(String(255), nullable=True)
+    file_url = Column(String(500), nullable=False)
+    status = Column(String(30), default='pending', nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    review_note = Column(Text, nullable=True)
+    reviewed_by = Column(Integer, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    verified = Column(Boolean, default=False)
+    verified_by = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    supplier = relationship('SupplierProfile', foreign_keys=[supplier_id])
+
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'expired', 'revoked')", name='chk_supplier_documents_status_valid'), {'schema': 'suppliers'})
+
+
+class SupplierNotificationPreference(Base, TenantMixin):
+    __tablename__ = 'supplier_notification_preferences'
+    __table_args__ = (Index('ix_supplier_notification_preferences_country_created', 'country_code', 'created_at'), {'schema': 'suppliers'})
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by = Column(Integer, nullable=True)
+    created_by = Column(Integer, nullable=True, index=True)
+    updated_by = Column(Integer, nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    notify_new_order = Column(Boolean, default=True)
+    notify_low_stock = Column(Boolean, default=True)
+    notify_payout_processed = Column(Boolean, default=True)
+    notify_doc_expiry = Column(Boolean, default=True)
+    notify_return_updates = Column(Boolean, default=True)
+    notify_dispute_updates = Column(Boolean, default=True)
+    in_app_enabled = Column(Boolean, default=True)
+    email_enabled = Column(Boolean, default=True)
+    push_enabled = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class SupplierBadgeCatalog(Base):
+    """Catalogue of badge levels a supplier can purchase/earn."""
+
+    __tablename__ = 'supplier_badge_catalogs'
+    __table_args__ = (
+        Index('ix_supplier_badge_catalog_country_created', 'country_code', 'created_at'),
+        Index('ix_supplier_badge_catalog_benefits_gin', 'benefits'),
+        {'schema': 'suppliers'},
+    )
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by = Column(Integer, nullable=True)
+    created_by = Column(Integer, nullable=True, index=True)
+    updated_by = Column(Integer, nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False, unique=True)
+    badge_level = Column(String(30), nullable=False, default='bronze')
+    description = Column(Text, nullable=True)
+    benefits = Column(JSON, nullable=True)
+    price = Column(Numeric(12, 2), nullable=False, default=Decimal('0'))
+    currency = Column(String(3), nullable=False, default='USD')
+    validity_days = Column(Integer, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    credibility_weight = Column(Float, nullable=False, default=10.0)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+
+
+class SupplierBadge(Base):
+    """A badge held by a supplier (purchased or admin-assigned)."""
+
+    __tablename__ = 'supplier_badges'
+    __table_args__ = (
+        UniqueConstraint('supplier_id', 'catalog_id', name='uq_supplier_badge'),
+        Index('ix_supplier_badges_country_created', 'country_code', 'created_at'),
+        {'schema': 'suppliers'},
+    )
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by = Column(Integer, nullable=True)
+    created_by = Column(Integer, nullable=True, index=True)
+    updated_by = Column(Integer, nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalogs.id', ondelete='RESTRICT'), nullable=True, index=True)
+    badge_name = Column(String(100), nullable=False)
+    badge_level = Column(String(30), nullable=False, default='bronze')
+    status = Column(String(20), nullable=False, default='active')
+    issued_at = Column(DateTime, default=utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    assigned_by = Column(Integer, nullable=True, index=True)
+    billing_reference = Column(String(120), nullable=True)
+    credibility_weight = Column(Float, nullable=False, default=10.0)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+    supplier = relationship('SupplierProfile', foreign_keys=[supplier_id])
+    catalog = relationship('SupplierBadgeCatalog', foreign_keys=[catalog_id])
+
+    __table_args__ = (
+        UniqueConstraint('supplier_id', 'catalog_id', name='uq_supplier_badge'),
+        Index('ix_supplier_badges_country_created', 'country_code', 'created_at'),
+        CheckConstraint("status IN ('active', 'inactive', 'suspended', 'expired', 'revoked')", name='chk_supplier_badges_status_valid'),
+        {'schema': 'suppliers'},
+    )
+
+
+class SupplierBadgeBillingHistory(Base):
+    """Billing events generated when a supplier purchases a badge."""
+
+    __tablename__ = 'supplier_badge_billing_histories'
+    __table_args__ = (
+        Index('ix_supplier_badge_billing_country_created', 'country_code', 'created_at'),
+        {'schema': 'suppliers'},
+    )
+    uuid = Column(GUID(), default=uuid4, unique=True, nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by = Column(Integer, nullable=True)
+    created_by = Column(Integer, nullable=True, index=True)
+    updated_by = Column(Integer, nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    badge_id = Column(Integer, ForeignKey('suppliers.supplier_badges.id', ondelete='RESTRICT'), nullable=True, index=True)
+    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalogs.id', ondelete='RESTRICT'), nullable=True, index=True)
+    billing_reference = Column(String(120), unique=True, nullable=True)
+    charge_type = Column(String(30), nullable=True)
+    amount = Column(Numeric(12, 2), nullable=False, default=Decimal('0'))
+    currency = Column(String(3), nullable=False, default='USD')
+    status = Column(String(20), nullable=False, default='pending')
+    period_start = Column(DateTime, nullable=True)
+    period_end = Column(DateTime, nullable=True)
+    due_at = Column(DateTime, nullable=True)
+    billed_at = Column(DateTime, nullable=True)
+    paid_at = Column(DateTime, nullable=True)
+    payment_method = Column(String(30), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+    supplier = relationship('SupplierProfile', foreign_keys=[supplier_id])
+
+    __table_args__ = (
+        Index('ix_supplier_badge_billing_country_created', 'country_code', 'created_at'),
+        CheckConstraint("status IN ('pending', 'completed', 'failed', 'refunded', 'cancelled')", name='chk_supplier_badge_billing_history_status_valid'),
+        {'schema': 'suppliers'},
+    )
+
+
+def __getattr__(name: str):
+    """Lazy re-export of governance-owned models used by supplier routers.
+
+    Law 3: cross-domain model references are brokered here rather than imported
+    directly at module top-level (avoids import cycles while keeping the
+    supplier package the single import site for callers).
+    """
+    from domains.governance import models as _gov_models
+
+    _MAP = {
+        "SupplierBankAccount": "SupplierBankAccount",
+        "LogisticsPartnerBankAccount": "LogisticsPartnerBankAccount",
+        "SupplierDispute": "SupplierDispute",
+    }
+    if name in _MAP and hasattr(_gov_models, _MAP[name]):
+        return getattr(_gov_models, _MAP[name])
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+# Supplier/LP bank accounts now live in the accounts domain
+# (domains.accounts.models.banking). Re-export them here so the historical
+# ``from domains.suppliers.models.suppliers import SupplierBankAccount`` sites keep
+# working (Law 3 sanctioned broker).
+def __getattr__(name: str):
+    from domains.accounts.models.banking import (
+        LogisticsPartnerBankAccount,
+        SupplierBankAccount,
+    )
+
+    _ACCOUNTS = {
+        "SupplierBankAccount": SupplierBankAccount,
+        "LogisticsPartnerBankAccount": LogisticsPartnerBankAccount,
+    }
+    if name in _ACCOUNTS:
+        return _ACCOUNTS[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+class SupplierDispute(Base):
+    __tablename__ = "supplier_disputes"
+    __table_args__ = {"schema": "suppliers"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    supplier_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True, index=True)
+    order_id = Column(Integer, nullable=True, index=True)
+    reason = Column(Text, nullable=True)
+    status = Column(String(32), default="open")
+    country_code = Column(String(2), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now())

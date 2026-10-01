@@ -1,0 +1,29 @@
+{
+  "authored_rule_count": 1745,
+  "authored_px_values": 679,
+  "authored_px_distinct": 73,
+  "authored_hex_values": 241,
+  "authored_hex_distinct": 111,
+  "authored_shadow_decls": 124,
+  "authored_radius_decls": 42,
+  "authored_durations_distinct": [
+    150,
+    200,
+    300,
+    500,
+    700,
+    1000
+  ],
+  "authored_fontsize_px_distinct": [
+    "10",
+    "11",
+    "12",
+    "13",
+    "15",
+    "7",
+    "8",
+    "9"
+  ],
+  "custom_class_count": 0,
+  "custom_class_sample": []
+}

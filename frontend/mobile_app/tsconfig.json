@@ -1,0 +1,40 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "types": [
+      "react",
+      "react-native",
+      "jest",
+      "node"
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@/types": [
+        "../shared/dist/types"
+      ],
+      "@shared/*": [
+        "../shared/dist/*"
+      ],
+      "@shared/theme.native": [
+        "../shared/dist/theme.native"
+      ],
+      "react-native-svg": [
+        "./node_modules/react-native-svg"
+      ],
+      "react-native": [
+        "./node_modules/react-native/types/index.d.ts"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.d.ts",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ]
+}

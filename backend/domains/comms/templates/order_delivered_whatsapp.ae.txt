@@ -1,0 +1,5 @@
+order_delivered_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: تم تسليم طلبك 📦
+Body: 📦 تم تسليم طلبك رقم {order_id}.
+شكراً لتسوقك معنا!

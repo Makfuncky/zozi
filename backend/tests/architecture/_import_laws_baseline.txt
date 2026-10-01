@@ -1,0 +1,5 @@
+# Static upward imports (Law 1: arrows point down only).
+# Baseline frozen by the architecture gate; the count must only DECREASE.
+# Regenerate with scripts/_gen_import_laws_baseline.py after an intentional move.
+infrastructure/utils/category_tree.py
+infrastructure/utils/country_rls.py

@@ -1,0 +1,74 @@
+FILE 2: backend/domains/catalog/services/commission_service.py
+
+
+
+- **Phase:** logic
+- **Depends on:** none
+- **Findings:** 1
+- **Effort:** S (1h)
+- **Resolution status:** ☑ RESOLVED
+- **Blast radius:** Commission display, admin commission management
+
+### Architectural
+
+- **Confirmation:** ✔️
+
+### Technological
+
+- **Confirmation:** ✔️
+
+### Logical
+
+- **Confirmation:** ❌
+- **Problem:**
+     1. `db.query(CommissionGroup)`, `db.query(CommissionProfile)`, `db.query(CommissionRule)` without explicit columns at lines 25, 97, 160 (PERF-028)
+     2. `list_commission_groups`, `list_commission_profiles`, `list_commission_rules` return unbounded `.all()` with no pagination at lines 25, 97, 160 (PERF-040)
+- **Solution:**
+  1. 1. 1. Select explicit column lists — verify: `grep -n "db.query(Commission" backend/domains/catalog/services/commission_service.py` returns 0 — test: `pytest tests/domains/catalog/test_commission_service.py`
+  1. 1. 2. Add pagination to list functions — verify: `grep -n "\.all()" backend/domains/catalog/services/commission_service.py` returns 0 — test: `pytest tests/domains/catalog/test_commission_service.py`
+
+### Database Wiring
+
+- **Confirmation:** ✔️
+
+### Table
+
+- **Confirmation:** ✔️
+
+### Frontend Web
+
+- **Confirmation:** ✔️
+
+### Frontend Mobile
+
+- **Confirmation:** ✔️
+
+### Test File
+
+- **Confirmation:** ✔️
+
+### Environmental
+
+- **Confirmation:** ✔️
+
+### Over All
+
+- **Confirmation:** ✔️
+
+### Feature Relation
+
+- **Upstream features:** [F-030]
+- **Downstream features:** []
+- **Chains touched:** []
+- **Events emitted / consumed:** []
+- **Ports exposed / called:** []
+
+### Resolution
+
+- **Verify (all problems):** `grep -n "db.query(Commission" backend/domains/catalog/services/commission_service.py` returns 0 && `grep -n "\.all()" backend/domains/catalog/services/commission_service.py` returns 0
+- **Paired test (all problems):** `tests/domains/catalog/test_commission_service.py`
+- **Rollback:** revert
+- **Browser test:** N/A
+
+---
+

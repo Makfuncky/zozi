@@ -1,0 +1,1005 @@
+﻿# ZOZI Platform — System Architecture Diagram
+
+> Companion to `documents/TECHNOLOGY_USED.md` and the architecture rules.
+> This document is the visual and organizational description of the backend.
+> The rules and laws are maintained with it; the technology stack lives in
+> `documents/TECHNOLOGY_USED.md`. All stay in lock-step.
+>
+> The codebase is organized around three orthogonal axes — **Modules, Domains,
+> Features**. Every package, dependency arrow and naming rule below is the single
+> organization the code follows. Code that does not fit this picture violates the
+> dependency laws and is reported by the architecture audit.
+
+---
+
+## 1 · Technology Stack (from `documents/TECHNOLOGY_USED.md`)
+
+### Backend — FastAPI / Python
+| Concern | Technology |
+|---|---|
+| Framework / runtime | FastAPI `0.115.2`, Python `3.13` (Docker) / `3.10` (dev), Uvicorn `0.34.0`, Gunicorn `26.0.0` |
+| Database / ORM | **Neon PostgreSQL `18`** (prod & local Docker), SQLAlchemy `2.0.52` (async), Alembic `1.19.2`, asyncpg `0.31.0` (canonical async driver), DuckDB `1.5.5` + duckdb-engine `0.17.0` (embedded OLAP for local analytics and heavy aggregations), read replicas (`get_read_db()`) |
+| Search / Pooling | OpenSearch (catalog search), PgBouncer (transaction pooling) |
+| Auth / security | python-jose `3.5.0` (JWT, `jti` blacklist), bcrypt `5.0.0`, pyotp `2.10.0` (TOTP), cryptography `50.0.1`, slowapi `0.1.10` (rate limit, limits `5.8.0`), CSRF + security-headers + PCI-DSS middleware |
+| Cache / sessions | **Valkey `9.0`** server + **`valkey` `6.1.1`** Python client (auth cache, catalog cache, sessions, realtime, rate-limit) |
+| Jobs | Celery + Celery Beat + Valkey broker (`jobs/`) |
+| Payments / APIs | Universal Payment Orchestration Layer (Database-driven routing), httpx `0.28.1`, `cryptography` (Application-Level Envelope Encryption for DB fields) |
+| Observability | structlog `26.1.0`, OpenTelemetry (api / sdk / otlp, fastapi / asgi / sqlalchemy instrumentation), Prometheus (`prometheus-client` + `prometheus-fastapi-instrumentator`), Sentry (`sentry-sdk[fastapi]`), Grafana (dashboards), ELK/Loki (log aggregation), pybreaker (circuit breaker, resilience) |
+| Media / AI | aiofiles `25.1.0`, Pillow `11.3.0`, python-magic `0.4.27`, rembg `2.0.69`, opencv-python `5.0.0`, onnxruntime `1.23.2` |
+| Email / comms | SMTP (stdlib) + `email-validator` `2.3.0`, **SMS via `providers/comms/sms.py`**, **WhatsApp via `providers/comms/whatsapp_selfhosted.py`** (self-hosted, Twilio removed), WebSockets `16.1.1` |
+| Validation / utils | Pydantic `2.14.0`, pydantic-settings, python-dotenv `1.2.2`, python-slugify `8.0.4`, pytz `2026.3`, tzlocal `5.4.4`, babel `2.18.0`, phonenumbers `9.0.35`, numpy / scipy / scikit-image, python-docx `1.2.0`, openpyxl `3.1.5`, feedparser `6.0.12` |
+| Testing | pytest `9.2.0` + pytest-asyncio `1.4.0`, httpx |
+ 
+### Frontend — Next.js / React
+| Concern | Technology |
+|---|---|
+| Framework | Next.js `16.3.4` (App Router, RSC), React `19.2.8`, TypeScript `5.9.3` (strict) |
+| Styling | Tailwind CSS `4.3.3` + design tokens, class-variance-authority `0.7.1`, clsx `2.1.1`, tailwind-merge `3.5.0`, lucide-react `0.563.0`, framer-motion `11.18.2` |
+| State | Zustand `5.0.12` |
+| Forms | React Hook Form + Zod |
+| Payments | Dynamic Payment Strategy UI (Stripe Elements for supported regions, Hosted Pages/iFrames for local gateways) |
+| Charts | chart.js `4.5.1` + react-chartjs-2 `5.3.1` |
+| Maps | leaflet `1.9.4` + react-leaflet `5.0.0` |
+| Utilities | jose `6.2.10` (browser JWT), dompurify `3.4.0` (XSS), qrcode `1.5.4`, jspdf `4.2.1`, @zxing/library `0.21.3` |
+| Quality | ESLint `9` + typescript-eslint `8.62.0`, Prettier `3.3.3`, eslint-config-next `16.3.4`, Playwright `1.62.1`, jest `29.7.0` + ts-jest + RTL `16.3.0` + jest-axe `10.0.0` |
+| Build / deploy | Node.js `20` (Alpine), multi-stage Docker, Next.js rewrites for API proxying |
+ 
+### Infrastructure / DevOps
+- Docker Compose (local), multi-stage Dockerfiles
+- Railway (backend), Vercel (frontend)
+- **All seed data is directly inserted into Neon PostgreSQL `18`** via migration/seed scripts — no local JSON/TXT/CSV seed files in production; data structured in proper database tables
+- Alembic multi-schema migrations (public, analytics, audit, commerce, …)
+- `.env` (compose) / `backend/.env` / `frontend/web_app/.env.local` / `.env.example` (source of truth)
+- **HashiCorp Vault** (prod secret rotation); `.env` files dev-only
+- Monorepo `root/`: `docker-compose.yml`, `Makefile`, `pnpm-workspace.yaml`,
+  `.github/workflows/*` (`ci.yml` · `import-lint.yml` · `schema-drift.yml` · `e2e.yml`),
+  `_extra_files/` (temporary audit / migration working files)
+ 
+### Key Architectural Patterns
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| API | FastAPI + auto-discovered routers | RESTful endpoints with versioning |
+| Auth | JWT (HS256) + refresh tokens + `jti` blacklisting | Stateless auth with revocation |
+| Middleware | 8-layer pipeline (Foundation → Auth → Rate → Webhook → Geo → Security → Observe → Compliance) | Cross-cutting concerns |
+| Database | **Neon PostgreSQL `18` + RLS (Row Level Security)** | Multi-tenant data isolation |
+| Caching | **Valkey + in-memory** | Performance |
+| Real-time | WebSockets (native + custom manager) | Live updates |
+| Observability | OpenTelemetry + Prometheus + Sentry + structlog | Full-stack monitoring |
+ 
+### Shared Package
+- `@zozi/shared` (`frontend/shared`) — TS types / utils shared between web and mobile;
+  `permissions.ts` is **generated** from `GET /rbac/catalog`.
+
+### Key Architecture Decision: Seed Data in Neon PostgreSQL
+**Seed data is directly inserted into Neon PostgreSQL `18`** instead of being stored in local file fixtures under `backend/infrastructure/database/seed_data/`. This ensures:
+
+1. **Production consistency**: Data is standardized across all Neon PostgreSQL environments
+2. **Eliminated local seed-file dependency**: No more JSON/TXT/CSV seed fixtures — data lives in proper relational tables managed by Alembic migrations
+3. **Migration-ready**: Data is properly structured for Neon PostgreSQL `18` multi-tenant architecture with RLS
+4. **Cleaner architecture**: Removes file-based fixtures that were a legacy artifact from earlier development
+
+All seed/reference data is inserted via SQL migration scripts directly into Neon PostgreSQL tables, leveraging the established database-first approach. The old local seed-file system (`backend/infrastructure/database/seed_data/`) has been removed.
+
+---
+
+## 2 · The Three Orthogonal Axes
+
+A folder tree can only express **one** axis. The other two live in **naming +
+registration + configuration**. The three axes map to three different mechanisms:
+
+| Axis | What it is | Where it lives | Mechanism |
+|---|---|---|---|
+| **Module** (customer, supplier, logistics, admin, employee) | *Who* is acting — login, session, route prefix, UI shell | `modules/{module}/` | Separate auth + thin API surface |
+| **Domain** (finance, accounts, catalog, orders, logistics, suppliers, customers, hr, comms, country, governance, analytics, audit, security, promotions) | *What* the business does — logic + data | `domains/{domain}/` | Services, models, schemas, policies, events |
+| **Feature** (`finance.ledger`, `finance.reporting`, …) | *What may be done* — permission atoms | `rbac/` + `domains/*/features.py` | Data/config, enforced by `require_feature()` |
+
+**The rule that makes it coherent:** Modules compose. Domains own. Features gate.
+
+---
+
+## 3 · Backend Package Layout
+
+```
+backend/
+├── main.py                     # boots app; registers module routers per actor prefix
+├── config.py                   # settings, env, feature gates
+├── DOMAIN_ALLOWLIST.yaml       # temporary cross-domain imports (may only shrink)
+│
+├── modules/                    # AXIS 1 — MODULE (who)
+│   ├── customer/  supplier/  logistics/  admin/  employee/
+│   │     ├── auth/             # per-actor login/OTP/social → that actor's own tables; sessions; device binding
+│   │     ├── routers/          # THIN per-actor routers (auth + require_feature + ONE service call)
+│   │     │                     #   modules/{m}/routers/{d}.py — one file per domain (15 files per module)
+│   │     │                     #   modules/{m}/routers/__init__.py lists routers/public_routers for main.py
+│   │     └── serializers/      # per-actor view models (customer-facing response shaping)
+│   │
+├── domains/                    # AXIS 2 — DOMAIN (what)
+│   ├── finance/  accounts/  catalog/  orders/  logistics/  suppliers/
+│   ├── customers/  hr/  comms/  analytics/  audit/  country/  governance/  security/  promotions/
+│   │     ├── services/  models/  schemas/  policies/   # heavy domains may instead slice:
+│   │     ├── events.py  subscribers.py                  #   ledger/ payouts/ treasury/ … (one sub-capability = one folder)
+│   │     ├── ports.py        # SANCTIONED cross-domain READ path (the only thing another domain may import)
+│   │     ├── read_models/    # CQRS-lite projections for this domain's own dashboards
+│   │     └── features.py      # AXIS 3 seed: this domain's permission atoms
+│   │
+├── rbac/                       # AXIS 3 — FEATURE (may)
+│   ├── catalog.py               # aggregates domains/*/features.py → single source of truth
+│   ├── roles.py                 # (module, role) → feature sets
+│   ├── resolution.py            # actor × role × country → effective set (Valkey-cached)
+│   ├── dependencies.py          # require_feature(...), require_module(...)
+│   ├── service.py               # grant/revoke, delegation, maker-checker
+│   └── models.py                # permission_categories, role_permission_assignments, user_permission_overrides
+│
+├── infrastructure/             # PLATFORM — zero business logic; imports nothing above it
+│   ├── database/               # base.py · database.py (get_db/get_read_db) · session.py · transaction.py
+│   │                           #   security.py ← ONE canonical RLS enforcer · seeds/ · create_tables.py (dev-only)
+│   ├── valkey/                # client · cache · token blacklist · pub/sub
+│   ├── storage/               # Cloudflare R2/S3 · presigned URLs (media blobs never in Postgres)
+│   ├── messaging/              # event_bus (Valkey Pub/Sub for cross-domain/job events; in-proc reserved for synchronous HTTP lifecycles) · ws_manager · webhook ingress
+│   ├── observability/          # structlog · OTEL · Prometheus · Sentry
+│   ├── security/               # JWT · hashing · field encryption (KMS) · zero-trust primitives
+│   └── utils/                  # pure technical helpers: pagination.py · datetime_utils · variant_key
+├── kernel/                     # SHARED KERNEL — pure business primitives: money, currency, numbering, country, period
+│                             #   import rule: domains → kernel → (nothing); kernel may use platform primitives only
+├── providers/                  # 3rd-party/AI adapters (called ONLY by services/jobs; never by modules directly)
+│   ├── ai/                      # AI/ML: chatbot, search, vision, text, sentiment, recommendation, price_intelligence, image_similarity, finance_ai
+│   ├── analytics/               # Admin analytics dashboards
+│   ├── auth/                    # JWT, OAuth, TOTP, Apple Auth
+│   ├── automation/              # Job scheduler (Celery task definitions + Valkey broker wiring)
+│   ├── barcode/                 # EAN/UPC/Code128 generation
+│   ├── bg_removal/              # AI background removal (rembg + OpenCV)
+│   ├── comms/                   # Email, SMS (self-hosted), WhatsApp (self-hosted) — Twilio removed
+│   ├── finance/                 # Bank API integration
+│   ├── geography/               # Geo utilities · IP geolocation, country, maps, currency rates
+│   ├── image/                   # Pillow processing, OCR, bg_remover, parcel verification
+│   ├── media/                   # Media AI services
+│   ├── news/                    # RSS feed parsing
+│   ├── ocr/                     # Document OCR parsing
+│   ├── payments/                # Stripe, PayPal, Tap, PayTabs, Thawani, webhooks, registry, connect
+│   ├── qr/                      # QR generation, parcel verification
+│   ├── scanner/                 # QR/barcode scanning from images
+│   ├── security/                # Encryption, threat intel, watchlist
+│   ├── shipping/                # Rate calculator, carrier comparison
+│   ├── storage/                 # Cloudflare R2/S3/local storage backends
+│   ├── voice/                   # Speech-to-text, voice commands
+│   ├── async_workers/           # Thread/process pool executors for CPU-bound work
+│   ├── observability/           # Provider health monitoring
+│   └── _base.py                 # BaseProvider / BaseAIProvider + health_check()
+├── jobs/                        # background workers/consumers (→ domains → infrastructure)
+│   ├── fraud_monitoring.py  ghost_order_detector.py  data_retention.py
+│   ├── payroll_run.py  payout_sweep.py  reconciliation_cron.py  bank_statement_importer.py
+│   ├── fx_revaluation.py  accrual_reversal.py  threat_feed_updater.py  mcp_server.py
+│   └── background_tasks.py
+├── middleware/                  # flat; orchestrator.py orders the pipeline BEFORE module routers
+│   └── orchestrator.py · api_version · country_context · csrf · database_security · device_binding
+│       · impossible_travel · ip_extraction · logging · pci_dss_compliance · rate_limit
+│       · request_id · security_headers · webhook_ip_whitelist
+│       · webhook_verification · zero_trust_auth
+├── alembic/                     # SINGLE schema source of truth
+├── scripts/                     # analyze_tables.py, rewrite_imports.py, seed helpers (dev)
+└── tests/
+    ├── architecture/            # test_import_laws.py (layer direction + cross-domain ban), test_feature_catalog.py
+    └── domains/                 # per-domain unit/integration tests
+```
+
+> **Provider Availability Flags.** All providers expose `HAS_<SDK>` boolean flags (e.g., `HAS_STRIPE`, `HAS_OPENCV`, `HAS_REMBG`). Twilio has been replaced with self-hosted SMS (`providers/comms/sms.py`) and WhatsApp (`providers/comms/whatsapp_selfhosted.py`). Domains must gracefully degrade when a provider SDK is not installed — never crash.
+
+> **Provider-to-Domain Wiring.** Providers are wired into domain services via direct function calls (never via imports from domains into providers). Each provider tool serves specific domains:
+
+| Provider Tool | Served Domains | Use Case |
+|---|---|---|
+| `ai/chatbot` | Analytics | Intent classification, session management |
+| `ai/search` + `ai/text` (embeddings) | Catalog, Customers | Semantic product search, autocomplete |
+| `ai/vision` + `ai/image_similarity` | Catalog | Product image analysis, duplicate detection |
+| `ai/sentiment` | Reviews, Security, Analytics | Review moderation, fraud signals |
+| `ai/recommendation` | Customers, Promotions, Analytics | Personalized product feeds |
+| `ai/price_intelligence` | Promotions, Analytics | Dynamic pricing, competitor tracking |
+| `ai/finance_ai` | Finance | Transaction categorization |
+| `ai/huggingface` | Catalog | Fallback ML inference |
+| `analytics/analytics` | Analytics | Dashboard metrics, sales trends |
+| `auth/jwt` + `auth/oauth` + `auth/totp` + `auth/apple` | Security, Accounts | Session management, 2FA, social login |
+| `automation/scheduler` | Finance, Logistics, Promotions, Governance, Audit, Analytics | Recurring jobs, flash sale timing |
+| `barcode/` + `qr/` + `scanner/` | Logistics, Catalog, Suppliers | Shipping labels, SKU barcodes, parcel verification |
+| `bg_removal/` + `image/` + `ocr/` | Catalog, Reviews, Finance, Accounts, Suppliers, Audit | Image preprocessing, document extraction |
+| `comms/email` + `comms/sms` + `comms/whatsapp_selfhosted` | Orders, Comms, Promotions, Accounts, HR, Suppliers, Logistics | Transactional messaging, notifications |
+| `finance/bank_api` | Finance, Orders, Suppliers | Bank verification, payouts |
+| `geography/` (ip, country, rates, maps) | Orders, Logistics, Country, Security, Accounts, Analytics | Localization, tax rules, shipping eligibility |
+| `news/` | Governance, Audit | Regulatory monitoring |
+| `payments/` (1:1 SDK adapters: stripe, paypal, tap, paytabs, thawani) | Finance, Orders | Dumb API wrappers. Routing logic lives in `domains/finance/services/payment_orchestrator.py` |
+| `security/encryption` + `security/threat_intel` + `security/watchlist` | Security, Accounts, HR, Governance, Audit, Comms | PII protection, AML screening, fraud feeds |
+| `shipping/` | Orders, Customers (cart), Logistics | Rate calculation, carrier comparison |
+| `storage/` + `storage/r2_client` | Catalog, Audit, Analytics, Suppliers | File persistence, audit archival |
+| `voice/` | *(future use)* | Speech-to-text, voice commands |
+
+> **Note:** This wiring table is abbreviated. See `backend/providers/` for the full list of 24 provider packages.
+
+> **Wiring Pattern.** Domain services import providers at the top of the service file, call provider functions with primitive parameters, and handle results. Example:
+> ```python
+> # Inside domains/catalog/services/ai_upload_service.py
+> from providers.media.services.ai import ai_service
+> from providers.image.free_image_tools import magic_erase, HAS_REMBG
+>
+> def process_upload(img_bytes: bytes) -> bytes:
+>     if HAS_REMBG:
+>         img_bytes = magic_erase(img_bytes)
+>     name = ai_service.infer_product_name(image_bytes=img_bytes)
+>     return img_bytes
+> ```
+
+> **Async Provider Calls.** CPU-bound provider work (image processing, embedding generation) runs through `providers.async_workers`:
+> ```python
+> from providers.async_workers import remove_background_async, embed_text_async
+>
+> async def process_image(img_bytes: bytes) -> bytes:
+>     return await remove_background_async(img_bytes, strategy="auto")
+> ```
+
+---
+
+## 3.1 · Shared kernel (`kernel/`)
+> (Decimal, never float), `currency`, `numbering` (centralized ORD-/INV-/PAY-/BATCH-),
+> `country`, `period` — live here as first-class residents so they are not smuggled into
+> `infrastructure/utils/` or duplicated per domain. **Dependency rule: `domains → kernel → (nothing)`.**
+> `kernel/` must not import `modules/`, `domains/`, `rbac/`, `providers/`, `jobs/`, or `middleware/`.
+> It may import `infrastructure/` platform primitives only.
+
+> **Canonical top-level packages.** The backend root contains **only**:
+> `main.py`, `config.py`, `DOMAIN_ALLOWLIST.yaml`, `modules/`, `domains/`,
+> `rbac/`, `kernel/`, `infrastructure/`, `providers/`, `jobs/`, `middleware/`,
+> `alembic/`, `scripts/`, `tests/`. A root-level `utils/` is **forbidden** — its
+> contents split into `infrastructure/utils/` (technical: pagination, datetime,
+> variant keys, slugs) and `kernel/` (business primitives: money, currency,
+> numbering, country, period). Likewise `routers/`, `controllers/`, `services/`,
+> `models/`, `db/` are **not** top-level packages; they live inside `modules/`,
+> `domains/`, or `infrastructure/` as shown above.
+
+> **Cross-domain contract (Law 3).** Writes across domains go *only* through `events.py`/`subscribers.py`.
+> Reads across domains go *only* through the publishing domain's `ports.py` (e.g.
+> `domains/catalog/ports.py → get_price(db, product_id, country)`). `read_models/` hold each domain's
+> own CQRS-lite projections; cross-domain dashboards live in `domains/governance/read_models/`.
+> `DOMAIN_ALLOWLIST.yaml` tracks the *temporary* cross-domain imports still permitted and must only shrink.
+
+> **Deployment model.** Shipped initially as a **modular monolith** (one deployable, one Postgres
+> ecosystem, shared Valkey) — modules and domains are boundaries inside one process, not separate servers.
+> Module boundaries make later extraction to independent services possible *without* redesigning domains.
+
+### Frontend layout
+```
+frontend/
+├── web_app/                     # Next.js 16.3.4 (App Router, RSC)
+│   ├── src/app/                 # route tree: (customer), auth/, admin/*, supplier/*, logistics-partner/*,
+│   │                             #   employee/*, wishlist/, profile/, chatbot/, tracking/; app/api/ = Next server routes
+│   ├── src/components/          # ui/ (design system), admin/, auth/, chat/, comms/, country/, ems/, map/, supplier/
+│   ├── src/hooks/               # useApi, useAuth, WebSocket hooks
+│   ├── src/lib/                 # api/ (client.ts, auth.ts, country.ts, errors.ts), rbac.ts (fetches /rbac/catalog)
+│   ├── src/services/            # localizationService, crossBorderService, addressFormatService
+│   ├── src/theme/  src/styles/  src/types/  src/utils/
+│   ├── tests/  e2e/             # mocks + Playwright
+│   └── root/                    # next.config.ts (rewrites), middleware.ts, tailwind.config, playwright.config
+├── mobile_app/                  # Expo RN
+│   ├── app/                     # Expo Router: (auth)/(tabs) + admin/ supplier/ logistics/ employee/ tracking/ returns/
+│   ├── components/ui/           # design-system
+│   ├── lib/                     # api.ts, Zustand stores, authPrompt, countryContext, geo, paymentService,
+│   │                             #   expoSecureStorage, errorReporter
+│   └── theme/  assets/  android/  mocks/  e2e/  scripts/  root/
+└── shared/                      # cross-platform TS, imported by BOTH apps
+    └── src/                     # api-core.ts (apiFetch), money.ts, i18n.ts, cart/checkout/order/product/returns/
+                                  #   wishlist/notification helpers, statusColors.ts, requestCache.ts, realtime.ts,
+                                  #   chatbot.ts, types.ts, theme.ts + theme.native.ts,
+                                  #   permissions.ts  ← GENERATED from backend /rbac/catalog
+```
+
+---
+
+## 4 · The Laws (325 total, enforced by the audit)
+
+The laws are organized into 17 sections (Sections 12.1–12.13, 14–17). Each law is numbered for reference in audit findings and CI failures.
+
+### 4.1 Architecture Laws (Laws 1–7)
+
+1. **Arrows point down only:** `modules → domains → infrastructure`.
+   Domains never import modules. `rbac` is imported by modules + middleware only.
+   `infrastructure` / `kernel` import nothing above them. `providers ← services/jobs`.
+2. **Module routers stay thin:** auth context + `require_feature(...)` + one domain-service call.
+   No DB writes, no business rules.
+3. **Cross-domain writes only via events** (`events.py`/`subscribers.py`);
+   cross-domain *reads* only via `ports.py` / `read_models/`.
+   In-process events must be emitted post-commit to prevent cross-schema transaction locking.
+4. **Features single-sourced** in `domains/*/features.py`; aggregated by `rbac/catalog.py`;
+   CI fails on any `require_feature("…")` literal not in the catalog.
+5. **Country is the orthogonal scope axis:** RLS session context + `country_staff_assignments`
+   — independent of the feature check.
+6. **Schema discipline:** every table in a domain Postgres schema; Alembic is the only
+   schema source; naming lint (`snake_case`, plural, `<thing>_id`, `created_at/updated_at`,
+   `country_code`, `is_deleted`).
+7. **Allowlist rule:** temporary cross-domain imports are tracked in `DOMAIN_ALLOWLIST.yaml`
+   and may only shrink; direct cross-domain writes outside `events.py` are forbidden.
+
+---
+
+## 5 · System Context
+
+```mermaid
+    flowchart LR
+        subgraph FE["FRONTEND — Next.js (frontend/web_app)"]
+            FEA["App Router (src/app/*)"]
+            FEL["API client (src/lib/api/*) — fetches /rbac/catalog"]
+            FES["Zustand stores (cart/currency/wishlist/...)"]
+        end
+        subgraph BE["BACKEND — FastAPI (backend/) — N stateless replicas"]
+            BEM["middleware/ pipeline (orchestrator.py)"]
+            BEMOD["modules/*/routers/ (thin: auth + require_feature + 1 service call)"]
+            BEDOM["domains/*/services/ (business logic + DB access)"]
+            BEFEAT["rbac/ (catalog · roles · resolution · dependencies)"]
+            BEK["kernel/ (money · numbering · country · period)"]
+            BEJ["jobs/ + events (background consumers)"]
+        end
+        subgraph PROV["providers/ — external SDK wrappers (24 packages)"]
+            PROV_ALL["See Section 3 for full provider tree"]
+        end
+        subgraph INF["infrastructure/ (platform — zero business logic)"]
+            BEDB["database/ (get_db · RLS enforcer)"]
+        end
+        subgraph VALKEY["Valkey 9.0"]
+            RED[(valkey: auth cache · catalog cache · sessions · realtime)]
+        end
+        subgraph DB["DATA — PostgreSQL (domain schemas: finance/catalog/orders/…; one schema per domain)"]
+            DBE[("Pooled via PgBouncer")]
+            DBM[("Models — domains/*/models/ (schema per domain)")]
+        end
+        subgraph EXT["EXTERNAL"]
+            PG[(Payment gateway)]
+            AI[("AI/ML models")]
+            SMTP[("SMTP / email")]
+            CDN[("CDN / static + images")]
+        end
+        CDN --> FE
+        FEA --> FEL --> BEM --> BEMOD
+        FES -. state .- FEA
+        BEMOD --> BEFEAT
+        BEMOD --> BEDOM
+        BEDOM --> BEK
+        BEDOM --> BEDB
+        BEDOM --> RED
+        BEDOM --> PROV_ALL
+        PROV_ALL --> PG
+        PROV_ALL --> AI
+        PROV_ALL --> SMTP
+        BEJ --> PROV_ALL
+        BEDB --> DBE
+        DBE --> DBM
+```
+
+> **Provider-to-Domain Connection Map.** The diagram above shows providers as a separate subgraph. Domain services call providers via function calls (arrows from `BEDOM` to `PROV_ALL`). Providers never import from domains — data flows through parameters and return values only.
+
+---
+
+## 6 · Backend Circuit (request lifecycle)
+
+```mermaid
+flowchart TD
+    Client([Client / Load Balancer])
+    subgraph BE["BACKEND — FastAPI + Middleware (middleware/orchestrator.py)"]
+        direction TB
+        L1["1 FOUNDATION: GZip · CORS · IP extract · RequestID · API-Version"]
+        L2["2 AUTH / ZERO-TRUST: AuthenticationMiddleware · DeviceBinding"]
+        L3["3 RATE LIMIT: Sliding-window /path"]
+        L4["4 WEBHOOK VERIFICATION: WebhookIPWhitelist · WebhookVerification"]
+        L5["5 GEO/COUNTRY: CountryContext · ImpossibleTravel"]
+        L6["6 SECURITY: SecurityHeaders · CSRF · FraudDetection"]
+        L7["7 OBSERVABILITY: RequestLogging · Metrics"]
+        L8["8 COMPLIANCE: PCI-DSS (prod only)"]
+        L1 --> L2 --> L3 --> L4 --> L5 --> L6 --> L7 --> L8
+    end
+    subgraph MOD["modules/*/routers/ — thin; require_feature gate; NO db writes"]
+        H["GET /health · /health/deps · /health/ready"]
+        R["Module routers: modules/admin/routers/finance_*, modules/customer/routers/checkout_*, ..."]
+        G["AUTO-GENERATED public routers (emitted from domain route contracts)"]
+    end
+    subgraph SEC["SECURITY / AUTH (modules/{m}/auth/ + rbac/dependencies.py)"]
+        AUTH["get_current_user<br/>verify_token(JWT jti) → Valkey cache → db lookup"]
+        FEAT["require_feature(finance.ledger.post) → rbac/resolution.py"]
+    end
+    subgraph SVC["domains/*/services/ → infrastructure"]
+        S["domains/finance/services/* (owns DB access + transactions)"]
+        K["kernel/ (money · numbering · country · period)"]
+    end
+    subgraph DBL["infrastructure/database/ (single RLS enforcer)"]
+        POOL[("Engine + Pool (PgBouncer in front)")]
+        GETDB["get_db() dep — open → yield → rollback/close"]
+        KEYS["Keyset pagination (cursor), NEVER OFFSET on hot lists"]
+        MODELS[("Domain models — one Postgres schema per domain; e.g. schema=finance; each domain owns its tables")]
+    end
+    Client --> L1
+    L8 --> H
+    L8 --> R
+    H --> DBL
+    R --> AUTH
+    R --> FEAT
+    G --> AUTH
+    G --> FEAT
+    AUTH --> GETDB
+    FEAT --> S
+    R --> S
+    S --> K
+    S --> GETDB
+```
+
+---
+
+## 7 · RBAC / Feature axis (AXIS 3)
+
+- Feature atoms are **defined once** in `domains/{domain}/features.py` (e.g.
+  `finance.ledger.post`, `finance.reporting.read`).
+- `rbac/catalog.py` aggregates every domain's `features.py` via package scan →
+  single source of truth. It is served to the frontend at `GET /rbac/catalog`.
+- `rbac/roles.py` grants per **(module, role)**; `rbac/resolution.py` resolves
+  `actor × role × country → effective feature set` (Valkey-cached).
+- `rbac/dependencies.py` provides `require_feature(...)` / `require_module(...)`
+  gates used by every module router.
+- Frontend `shared/src/permissions.ts` is **generated** from `/rbac/catalog` so
+  UI gating and backend gating share one source.
+
+---
+
+## 8 · Schema discipline (Law 6)
+
+- Every ORM model declares `__table_args__ = {"schema": "<domain>"}`
+  (slice tables use the parent domain's schema).
+- Alembic is the only schema source (`create_all` is dev-only).
+- Naming lint: `snake_case`, plural tables, `<thing>_id` FKs,
+  `created_at`/`updated_at`, `country_code`, `is_deleted`.
+- Forbidden schemas: `core` / `platform` / `identity` — every actor's `user`
+  table lives in its own domain schema (e.g. `customer.user`, `supplier.user`).
+
+---
+
+## 9 · Database organization (Law 6)
+
+Every domain owns one Postgres schema; the model classes live in
+`domains/{domain}/models/`. Cross-domain **writes** travel only through
+`events.py` / `subscribers.py`; cross-domain **reads** travel only through the
+owning domain's `ports.py` (or `read_models/`). The country scope is enforced by
+RLS on every schema.
+
+```mermaid
+flowchart TD
+    ALE["alembic/ — SINGLE schema source of truth"]
+    subgraph SCHEMAS["PostgreSQL — one schema per domain"]
+        direction LR
+        SF["schema: finance<br/>domains/finance/models/*"]
+        SA["schema: accounts<br/>domains/accounts/models/*"]
+        SC["schema: catalog<br/>domains/catalog/models/*"]
+        SO["schema: orders<br/>domains/orders/models/*"]
+        SL["schema: logistics<br/>domains/logistics/models/*"]
+        SS["schema: suppliers<br/>domains/suppliers/models/*"]
+        SCU["schema: customers<br/>domains/customers/models/*"]
+        SH["schema: hr<br/>domains/hr/models/*"]
+        SCO["schema: comms<br/>domains/comms/models/*"]
+        SCA["schema: analytics<br/>domains/analytics/models/*"]
+        SCN["schema: country<br/>domains/country/models/*"]
+        SG["schema: governance<br/>domains/governance/models/*"]
+        SE["schema: security<br/>domains/security/models/*"]
+        SP["schema: promotions<br/>domains/promotions/models/*"]
+        SAU["schema: audit<br/>domains/audit/models/*"]
+    end
+    RLS["infrastructure/database/ RLS enforcer<br/>country_code session context (Law 5)"]
+    PORTS["ports.py — sanctioned cross-domain READ<br/>e.g. catalog.ports.get_price(db, product_id, country)"]
+    EVT["events.py / subscribers.py — cross-domain WRITE bus"]
+    ALE --> SCHEMAS
+    SCHEMAS --> RLS
+    SC -. read via .-> PORTS
+    PORTS -. resolves .-> SC
+    SO -. write via .-> EVT
+    EVT -. consumed by .-> SF
+    EVT -. consumed by .-> SP
+```
+
+---
+
+## 10 · Security architecture
+
+Authentication and authorization follow the axes: **modules** carry the actor
+(who), **features** gate the action (may), and **country RLS** scopes the data.
+The 8-layer middleware pipeline runs before any module router.
+
+```mermaid
+flowchart TD
+    subgraph CLIENT["Client (Browser / Mobile)"]
+        REQ["HTTPS request + Bearer JWT"]
+    end
+    subgraph MW["Middleware pipeline (middleware/orchestrator.py)"]
+        L1["1 FOUNDATION: GZip · CORS · IP extract · RequestID · API-Version"]
+        L2["2 TOKEN / DEVICE: Token Extraction & Device Binding"]
+        L3["3 RATE LIMIT: Sliding-window /path"]
+        L4["4 WEBHOOK VERIFICATION: WebhookIPWhitelist · WebhookVerification"]
+        L5["5 GEO/COUNTRY: CountryContext · ImpossibleTravel"]
+        L6["6 SECURITY: SecurityHeaders · CSRF · FraudDetection"]
+        L7["7 OBSERVABILITY: RequestLogging · Metrics"]
+        L8["8 COMPLIANCE: PCI-DSS (prod only)"]
+    end
+    subgraph AUTH["JWT Cryptographic Verification — modules/{m}/auth/"]
+        VER["verify_token(jti) → Valkey cache → db lookup"]
+        RT["refresh token rotation + device binding"]
+    end
+    subgraph RBAC["Authorization — rbac/dependencies.py"]
+        RF["require_feature(finance.ledger.post)"]
+        RES["rbac/resolution.py → actor × role × country<br/>(Valkey-cached effective set)"]
+        RM["require_module(customer)"]
+    end
+    subgraph DATA["Data scope"]
+        RLSC["RLS enforcer — country_code session (Law 5)"]
+    end
+    REQ --> L1 --> L2 --> L3 --> L4 --> L5 --> L6 --> L7 --> L8
+    L8 --> VER
+    VER --> RT
+    RT --> RF
+    RF --> RES
+    RES --> RM
+    RM --> RLSC
+```
+
+---
+
+## 10.1 · Payment Orchestration Architecture (Dynamic Gateway Routing)
+
+The platform utilizes a **Database-Driven Payment Orchestration Layer** allowing Admins to dynamically attach, configure, and route payment gateways on a per-country basis without code deployments.
+
+```mermaid
+flowchart TD
+    subgraph ADMIN_UI["Admin Dashboard"]
+        A1["Attach Gateway (e.g., Thawani)"]
+        A2["Input API Keys & Webhooks"]
+        A3["Assign to Country (OM)"]
+    end
+    
+    subgraph FIN_DOM["domains/finance (Orchestration)"]
+        DB[("finance.payment_gateways\n(KMS Encrypted Credentials)")]
+        ORCH["payment_orchestrator.py\n(Routes by country_code)"]
+    end
+    
+    subgraph PROV_PAY["providers/payments/ (1:1 Adapters)"]
+        P_STRIPE["stripe_adapter.py"]
+        P_THAWANI["thawani_adapter.py"]
+        P_PAYTABS["paytabs_adapter.py"]
+    end
+    
+    subgraph FE["Frontend Checkout"]
+        UI["Dynamic UI Strategy\n(Elements / Redirect / iFrame)"]
+    end
+
+    ADMIN_UI -->|Configures| DB
+    FE -->|1. Request Methods?| ORCH
+    ORCH -->|2. Query Active Gateway| DB
+    ORCH -->|3. Instantiate Adapter| PROV_PAY
+    PROV_PAY -->|4. Return Init Payload| FE
+    FE -->|5. User Pays| PROV_PAY
+    PROV_PAY -->|6. Webhook Ingress| ORCH
+    ORCH -->|7. Emit Event| EVT(("events.py\npayment.captured"))
+```
+
+**Key Rules for Payment Orchestration:**
+1. **Credential Security:** Admin-entered API keys and webhook secrets are NEVER stored in plain text. They are encrypted using `infrastructure/security/kms.py` before being saved to the `finance.payment_gateways` table.
+2. **Frontend Agnosticism:** The frontend requests available payment methods via `GET /api/v1/finance/checkout/options`. The backend returns a standardized payload dictating the UI strategy (`stripe_elements`, `hosted_redirect`, or `iframe`).
+3. **Universal Webhook Ingress:** All gateways send webhooks to a single ingress route: `POST /api/v1/webhooks/payments/{gateway_slug}`. The orchestrator verifies the signature using the DB-stored secret and translates the payload into a canonical `payment.captured` domain event.
+
+---
+
+## 11 · End-to-end flow (frontend ↔ backend)
+
+The frontend route tree under `frontend/web_app/src/app/*` is grouped per actor
+(module). On boot it fetches `GET /rbac/catalog` once to build
+`shared/src/permissions.ts`; every later action calls a thin module router that
+authenticates, gates on a feature, and delegates to one domain service.
+
+```mermaid
+sequenceDiagram
+    participant P as Page (src/app/*)
+    participant S as Zustand + API client (src/lib)
+    participant C as /rbac/catalog (once)
+    participant M as Module router (modules/{m}/routers)
+    participant A as Auth + rbac/dependencies
+    participant D as Domain service (domains/*/services)
+    participant K as Kernel (money/numbering/country)
+    participant DB as infrastructure/database (RLS)
+
+    Note over P,C: Boot — permissions resolved once
+    P->>S: mount actor route group
+    S->>C: GET /rbac/catalog
+    C-->>S: feature catalog → shared/permissions.ts
+
+    Note over P,DB: Action — e.g. post ledger entry
+    P->>S: call api.finance.ledger.post(...)
+    S->>M: POST /api/v1/admin/finance/ledger (Bearer JWT)
+    M->>A: get_current_user() + require_feature(finance.ledger.post)
+    A-->>M: actor × role × country resolved
+    M->>D: one service call (no db write in router)
+    D->>K: money/numbering primitives
+    D->>DB: get_db() → transaction (schema=finance, RLS country)
+    DB-->>D: rows
+     D-->>M: result
+     M-->>S: 200 + payload
+     S-->>P: update store → render
+```
+
+---
+
+
+## 12 — Project Rules & Decisions (Laws 1-325)
+
+> All 325 laws in a single scannable matrix. Each law appears **once**.
+
+| Law | Category | Rule | Description | Why |
+|-----|----------|------|-------------|-----|
+| 1 | Architecture | Arrows point down | Dependencies flow: modules → domains → infrastructure → kernel. Reverse imports FORBIDDEN. | Prevents circular dependencies and unmaintainable coupling between layers. |
+| 2 | Architecture | Thin routers | Router = auth context + require_feature + ONE service call + serialization. No DB writes, no business logic. | Keeps API layer a thin HTTP shim over domain logic. Easy to test and maintain. |
+| 3 | Architecture | Cross-domain events/ports | Cross-domain WRITES via events.py/subscribers.py. Cross-domain READS via ports.py only. | Keeps domains decoupled and independently deployable. |
+| 4 | Architecture | Features single-sourced | Permission atoms defined once in domains/*/features.py. Aggregated by rbac/catalog.py. | Prevents permission drift. Frontend and backend share one permission model. |
+| 5 | Architecture | Country is orthogonal | Every data access scoped by country_code via RLS. Independent of feature check. | Ensures multi-tenant data isolation at the database level. |
+| 6 | Architecture | Schema discipline | Every table in a domain Postgres schema. Alembic is the only schema source. | Naming consistency and single source of truth for schema changes. |
+| 7 | Architecture | Allowlist only shrinks | DOMAIN_ALLOWLIST.yaml tracks temporary cross-domain imports. May only shrink. | Ensures migration toward clean domain boundaries makes forward progress. |
+| 8 | Structure | Router structure | modules/{m}/routers/{d}.py — one file per domain per module (15 per module). | Makes endpoints discoverable by actor+domain combination. |
+| 9 | Structure | Tools in providers | All tools code in providers/ai, providers/image. | tools is an external concern, not a business domain. |
+| 10 | Structure | Kernel is pure | kernel/ contains ONLY pure business primitives. No imports from domains/modules/rbac. | Ensures business primitives are consistent and reusable across all domains. |
+| 11 | Structure | Providers wrap SDKs | A provider wraps exactly one external SDK. No business logic, no domain imports. | External dependencies are isolated and swappable. |
+| 12 | Structure | 15 domains | Fixed set: accounts, analytics, audit, catalog, comms, country, customers, finance, governance, hr, logistics, orders, promotions, security, suppliers. | Prevents domain sprawl and ensures clear ownership boundaries. |
+| 13 | Structure | 5 modules | Fixed set: admin, customer, employee, logistics, supplier. | Ensures the actor model stays coherent and manageable. |
+| 14 | File Placement | Business logic → domains/ | All business logic in domain services/services/. No logic in routers or modules. | Business logic is colocated with the data it operates on (DDD). |
+| 15 | File Placement | API endpoints → modules/routers/ | Every HTTP endpoint in a module router file named after the domain. | Endpoints grouped by business capability, not CRUD operation. |
+| 16 | File Placement | SDK wrappers → providers/ | Every third-party integration under providers/{category}/. | Trivial to find every external dependency and swap implementations. |
+| 17 | File Placement | Cross-domain → events/ports only | events.py (writes) and ports.py (reads) are the ONLY sanctioned cross-domain channels. | Creates a clear, auditable boundary contract between domains. |
+| 18 | File Placement | Root forbidden folders | utils/, routers/, controllers/, services/, models/, db/ FORBIDDEN at backend/ root. | Prevents the 'god directory' anti-pattern. |
+| 19 | Code Quality | No float for money | Monetary values MUST use Decimal or Numeric. Float FORBIDDEN for money. | Floating-point arithmetic introduces rounding errors causing financial discrepancies. |
+| 20 | Code Quality | country_code = String(2) | Always String(2) following ISO 3166-1 alpha-2. | Consistency across all 15 domains simplifies joins, indexes, and RLS filtering. |
+| 21 | Code Quality | Timestamps = server_default | created_at/updated_at use server_default=func.now() (DB-side), not Python-side. | Timestamps survive clock skew and are consistent in the database. |
+| 22 | Code Quality | FK have ondelete | Every ForeignKey MUST declare explicit ondelete behavior. | Prevents unpredictable behavior across PostgreSQL versions. |
+| 23 | Code Quality | Audit columns | Every model MUST include created_at, updated_at, country_code, is_deleted. | Required for RLS, debugging, compliance, and data recovery. |
+| 24 | Code Quality | No forbidden schemas | core, platform, identity are FORBIDDEN as Postgres schema names. | Prevents monolithic shared-schema architecture. |
+| 25 | Migration | Shift files first | All files to correct domains before reorganization. Never replace working code with stubs. | Ensures agents have complete file context for each domain. |
+| 26 | Migration | Backward-compat shims | Temporary re-exports in infrastructure/utils/ for relocated files. | Enables gradual migration without breaking existing imports. |
+| 27 | Migration | Delete temp scripts | Root-level fix_*.py, debug_*.py should be removed after use. | Keeps root clean and architecture clear. |
+| 28 | Migration | _auto_stubs ≠ architecture | _auto_stubs.py are migration scaffolding, not architecture components. | Distinguishes temporary scaffolding from permanent architecture. |
+| 29 | Migration | registry.py ≠ architecture | Service Registry and auto_wire.py were removed from architecture. | Prevents confusion about what is permanent architecture. |
+| 30 | Provider | Graceful degradation | Domains handle missing SDKs via HAS_<SDK> flags. Never crash. | System runs in development without all production dependencies. |
+| 31 | Provider | No domain imports | Providers MUST NOT import from domains, modules, rbac, jobs, middleware. | Data flows through parameters only. Ensures providers remain pure wrappers. |
+| 32 | Security | No hardcoded secrets | JWT keys, API keys, passwords from env vars or secrets manager only. | Attackers can clone repo. Committed secrets = token forgery. |
+| 33 | Security | Token type verification | All JWT decoders MUST verify the type claim (access vs refresh). | Prevents refresh tokens from being used as access tokens. |
+| 34 | Security | Parameterized SQL | Use SQLAlchemy text() with bound parameters or ORM. No f-string interpolation. | Prevents SQL injection attacks. |
+| 35 | Security | CSRF active | CSRF middleware MUST be active in all environments. | Prevents CSRF attacks in misconfigured deployments. |
+| 36 | Security | Security headers | CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy in production. | Prevents XSS, clickjacking, and other browser-based attacks. |
+| 37 | Security | Rate limit fails closed | Valkey unreachable = deny requests (not allow all). | Prevents brute-force and DoS when Valkey is down. |
+| 38 | Security | Password handling | Passwords >72 bytes rejected with error, never truncated. | bcrypt's 72-byte limit. Silent truncation creates security holes. |
+| 39 | Security | No duplicate auth | Auth logic in exactly one canonical location. | Duplicate implementations with divergent behavior create security holes. |
+| 40 | Security | Backend CORS | Backend CORS is strictly DISABLED. All frontend traffic must route through the Next.js API Proxy (Same-Origin). Backend only accepts requests from the Next.js server IP/VPC. | Prevents arbitrary websites from making authenticated requests. |
+| 41 | Security | WebSocket auth | WebSocket connections MUST verify JWT type claim equals access. | Prevents stolen refresh tokens from opening WebSocket connections. |
+| 42 | Security | Input validation | All public endpoints use Pydantic schemas. No raw dicts in router signatures. | Prevents malformed data from reaching domain services. |
+| 43 | Security | Security event logging | Auth failures, 403s, rate-limit triggers logged at WARNING+. | Silent security events prevent incident detection. |
+| 44 | Security | Dependency scanning | All deps scanned for CVEs in CI. High/critical block deployment. | Prevents supply-chain attacks via compromised dependencies. |
+| 45 | Database | No N+1 queries | All relationships declare lazy=selectin or joined. Default lazy=select FORBIDDEN. | N+1 queries bring the database to its knees at 100K+ users. |
+| 46 | Database | No SELECT * | Application queries MUST select explicit columns. | Wastes memory/I/O. Prevents covering indexes. Breaks on column reorder. |
+| 47 | Database | Connection pool sizing | pool_size ≥ 10, max_overflow ≥ 20. Environment-configurable. | Connection exhaustion causes cascading failures under load. |
+| 48 | Database | Read replica separation | Replica connections use independent pool settings. Read-heavy uses get_read_db(). | Without replicas, every read competes with writes for connections. |
+| 49 | Database | Linear migration history | Alembic history MUST remain linear. Resolve divergent heads immediately. | Divergent heads break alembic upgrade head and cause deployment failures. |
+| 50 | Database | Explicit transactions | All writes use explicit transaction management. Autocommit FORBIDDEN. | Ensures multi-step operations can roll back on failure. |
+| 51 | Database | Single table ownership | Each table defined in exactly one domain. Duplicate __tablename__ FORBIDDEN. | Duplicate tables cause MetaData conflicts and runtime crashes. |
+| 52 | Database | FK constraints | All FK columns have explicit ForeignKey with ondelete. | Prevents orphan rows and ensures referential integrity. |
+| 53 | Database | Index FK columns | All FK columns have explicit index. PostgreSQL does NOT auto-index FKs. | Without indexes, JOINs degrade to sequential scans. |
+| 54 | Database | Soft delete | All user-facing tables use is_deleted (boolean, default false). | Enables data recovery, audit trails, and safe cascading. |
+| 55 | Database | Schema-per-domain | Every model declares __table_args__ = {schema: <domain>}. | Tables without schema land in public, breaking multi-tenant isolation. |
+| 56 | Database | No forbidden schemas | core, platform, identity FORBIDDEN as schema names. | Prevents accidental coupling through shared schema namespace. |
+| 57 | Database | Migration safety | Destructive migrations include backward-compatible strategy (expand-contract). | Enables zero-downtime rollback. |
+| 58 | Code Quality | No print() in production | print() FORBIDDEN in production code. Use structlog logger. | print() bypasses log formatting and cannot be filtered by level. |
+| 59 | Code Quality | No silent exceptions | All except blocks MUST log at minimum DEBUG level. | Silent exception swallowing makes debugging impossible. |
+| 60 | Code Quality | No blocking in async | Async functions MUST NOT call blocking I/O. Use asyncio.sleep, httpx. | Blocking calls freeze the event loop, preventing other requests. |
+| 61 | Code Quality | Bounded caches | All in-memory caches have max size and/or TTL. Unbounded dict FORBIDDEN. | Unbounded caches cause OOM at scale. |
+| 62 | Code Quality | TODO/FIXME hygiene | TODO/FIXME must include ticket reference and expiration date. | Ensures technical debt is tracked and doesn't accumulate invisibly. |
+| 63 | Code Quality | Type hints required | All public function signatures MUST have type hints. | Enables static analysis, IDE autocompletion, inline documentation. |
+| 64 | Code Quality | Function length ≤50 | Functions SHOULD NOT exceed 50 lines (excl. docstrings/blanks). | Long functions are hard to test, debug, and reason about. |
+| 65 | Code Quality | Indentation ≤4 levels | Maximum 4 levels of indentation per function. | Deeper nesting signals complex control flow needing refactoring. |
+| 66 | Code Quality | No magic numbers | Numeric constants MUST be named constants or config values. | Named constants make business rules self-documenting and easy to change. |
+| 67 | Code Quality | DRY principle | Duplicate code blocks (>5 lines) MUST be extracted into shared functions. | Copy-paste creates maintenance nightmares. |
+| 68 | Code Quality | Consistent errors | All service functions use consistent error pattern (exceptions or Result). | Mixed patterns make error handling unpredictable for callers. |
+| 69 | Testing | Domain smoke tests | Every domain MUST have at least one smoke test. | Catches circular imports, missing deps, broken __init__.py, syntax errors. |
+| 70 | Testing | Architecture law tests | Every statically checkable law MUST have a corresponding test. | Ensures laws are actually enforced, not just documented. |
+| 71 | Testing | No broken tests in CI | Collection-time failures MUST block CI. Fix within 24h. | Broken tests hide real failures. |
+| 72 | Testing | Cross-domain integration | Cross-domain flows MUST have integration tests. | Unit tests verify single services; integration tests verify wiring. |
+| 73 | Testing | Performance regression | Critical paths MUST have perf regression tests. Fail on >20% latency. | Prevents slow queries or missing indexes from shipping to production. |
+| 74 | Testing | Test isolation | All tests use transaction-rolled-back sessions. No data leaks. | Each test is independent and order-independent. |
+| 75 | Infrastructure | Graceful degradation | External failures MUST degrade gracefully AND log WARNING. | Silent fallbacks hide degradation from ops. |
+| 76 | Infrastructure | Session lifecycle | Sessions managed via FastAPI dependency injection only. | Ensures sessions are properly closed even on exceptions. |
+| 77 | Infrastructure | Async resource safety | Async resources use asyncio.Lock for init and disposal. | Prevents race conditions that create multiple engines. |
+| 78 | Infrastructure | Middleware ordering | Pipeline order FIXED: Foundation → Auth → Rate → Webhook → Geo → Security → Observe → Compliance. | Reordering changes security posture. |
+| 79 | Infrastructure | Global exception handler | Catches all uncaught exceptions. Returns structured response. No stack traces in prod. | Prevents stack trace leakage and ensures consistent error format. |
+| 80 | Infrastructure | Graceful shutdown | Shutdown disposes DB engine, Valkey, workers via lifespan.py. | Prevents connection leaks on restart. |
+| 81 | Infrastructure | Health checks | /health, /health/deps, /health/ready verify all critical dependencies. | Load balancers use these for routing decisions. |
+| 82 | Config | No default credentials | Config fallbacks MUST NOT contain real credentials. Empty/null default. | Prevents accidental use of dev credentials in production. |
+| 83 | Config | Environment validation | Required env vars validated at startup. Missing = immediate failure. | Prevents silent fallbacks to development defaults in production. |
+| 84 | Config | Typed feature flags | Flags use pydantic-settings. Raw os.getenv() FORBIDDEN. | String 'false' is truthy in Python. Typed coercion prevents bugs. |
+| 85 | Config | Secret rotation | Secrets rotatable without deployment via env var updates. | Enables response to credential leaks without full redeployment. |
+| 86 | Config | Env-specific configs | Prod, staging, dev have separate config profiles. No inheritance. | Prevents prod from inheriting dev defaults like debug=True. |
+| 87 | Router | Auth on protected endpoints | All non-public endpoints MUST use get_current_user or equivalent. | Prevents accidental exposure of sensitive endpoints. |
+| 88 | Router | Feature gate on protected | All non-public endpoints MUST use require_feature() or require_module(). | Ensures every protected endpoint has explicit authorization. |
+| 89 | Router | Response serialization | Routers return serialized responses (Pydantic/dicts), never raw ORM models. | Prevents accidental exposure of internal model fields. |
+| 90 | Router | No business logic | Routers contain ONLY: auth, gate, parsing, ONE service call, serialization. | Keeps API layer a thin HTTP shim. |
+| 91 | Router | Documentation | All endpoints MUST have OpenAPI-compatible docstrings. | The OpenAPI spec is the API contract. |
+| 92 | Observability | Structured logging | All logs use structlog with context (user_id, request_id, domain, action). | Enables log aggregation, filtering by field, cross-service correlation. |
+| 93 | Observability | Request tracing | All requests carry request_id propagated through service calls. | Enables end-to-end request tracing for debugging. |
+| 94 | Observability | Metrics emission | Critical paths emit Prometheus metrics (latency, error rate, throughput). | Unmonitored critical paths hide degradation. |
+| 95 | Observability | Error tracking | Unhandled exceptions reported to Sentry with fallback to logger. | Prevents silent exception swallowing in production. |
+| 96 | Observability | Audit trail | State-changing operations write to domains/audit/. | WORM audit log enables compliance investigations. |
+| 97 | Wiring | Import direction | Imports MUST follow modules → domains → infrastructure → kernel. | Prevents reverse dependencies. |
+| 98 | Wiring | No circular imports | Circular chains between any two packages FORBIDDEN. | Circular imports cause ImportError at module load time. |
+| 99 | Wiring | No layer crossing | Modules don't import infrastructure directly. Domains don't import modules. | Prevents tight coupling across layers. |
+| 100 | Wiring | Provider isolation | Providers don't import from domains/modules/rbac/jobs/middleware. | Ensures providers remain pure wrappers. |
+| 101 | Wiring | Kernel isolation | kernel/ doesn't import from domains/modules/rbac/providers/jobs/middleware. | Kernel is the universal foundation layer. |
+| 102 | Wiring | Infrastructure isolation | infrastructure/ doesn't import from domains/modules/rbac/providers. | Provides platform primitives to all layers. |
+| 103 | Wiring | Job wiring | Jobs import from domains/, infrastructure/, and providers/ only. Jobs MUST NOT import modules/ or middleware/. | Jobs are decoupled from HTTP layer but may consume provider services. |
+| 104 | Wiring | Middleware wiring | Middleware imports from infrastructure/ + rbac/ only. | Middleware operates at HTTP layer, needs only platform primitives. |
+| 105 | Wiring | Shared package wiring | @zozi/shared doesn't import from web_app or mobile_app. | Shared is consumed BY apps, never imports FROM them. |
+| 106 | Wiring | Frontend-backend wiring | Frontend communicates via API proxy only. No direct backend imports. | Ensures frontend and backend are decoupled deployables. |
+| 107 | Technology | PostgreSQL in prod | Production uses **Neon PostgreSQL 18**. SQLite for dev/test only. | PostgreSQL provides RLS, proper concurrency, JSONB, full-text search. Neon serverless PostgreSQL 18 is the canonical target for both prod and local Docker. |
+| 108 | Technology | SQLite in dev | SQLite for zero-config startup. File in .gitignore. | Enables fast local development without DB server. |
+| 109 | Technology | Valkey usage | Sessions, catalog cache, rate limiting, blacklist, pub/sub, Celery broker. | Valkey is an ephemeral cache, not a primary data store. Server: Valkey 9.0, Python client: valkey 6.1.1. |
+| 110 | Technology | Valkey failure handling | Sessions→DB fallback, caching pass-through, rate limit fails closed. | System degrades gracefully when Valkey is unreachable. |
+| 111 | Technology | Next.js App Router | Web uses Next.js App Router, not Pages Router. | Different routing and rendering models. |
+| 112 | Technology | React Server Components | Data-fetching = Server Components. Client = interactivity/hooks. | RSC reduces JS bundle and enables server-side data access. |
+| 113 | Technology | Expo Router | Mobile uses Expo Router with file-based routing. | Native navigation with deep linking. |
+| 114 | Technology | WebSocket for realtime | WebSocket only for real-time (notifications, chat, tracking). | All other communication uses REST. |
+| 115 | Technology | Celery for jobs | CPU-bound and async jobs use Celery with Valkey broker. | Request handlers never block on CPU-bound work. |
+| 116 | Technology | Email via SMTP | Transactional email via providers/comms/email.py. Async sending. | Prevents SMTP latency from blocking request handlers. |
+| 117 | Technology | SMS / WhatsApp via self-hosted | SMS via `providers/comms/sms.py` and WhatsApp via `providers/comms/whatsapp_selfhosted.py`. Async sending. Twilio removed. | Prevents SMS latency from blocking request handlers. Self-hosted removes external dependency. |
+| 118 | Technology | Payment Orchestration | Gateways are database-driven. Admins attach/configure gateways per country via UI. `domains/finance/services/payment_orchestrator.py` routes to the active 1:1 provider adapter. | Enables dynamic country-wise gateway switching without code deployments. |
+| 119 | Technology | AI/ML backends | Ollama, OpenAI, HuggingFace via providers/ai/. CPU via async_workers. | Isolates AI dependencies and prevents event loop blocking. |
+| 120 | Technology | Cloudflare R2 storage | S3-compatible object storage: **Cloudflare R2** (prod) or local (dev). Media blobs never in PostgreSQL. Presigned URLs for direct upload/download. | DB stays small. R2 is S3-compatible with no egress fees. |
+| 121 | Technology | Image processing | Pillow, rembg, OpenCV. Heavy processing via async_workers. | Prevents image processing from blocking the event loop. |
+| 122 | Technology | Leaflet maps | Leaflet + react-leaflet. Geocoding via providers/geography/. | Map tiles from CDN, not bundled. |
+| 123 | Provider | Single SDK per provider | Each provider adapter in `providers/payments/` wraps exactly one external SDK. Orchestration/routing logic belongs in the Finance domain, NOT the provider. | Keeps providers dumb, testable, and swappable. |
+| 124 | Provider | HAS_ flags | Every provider exposes HAS_<SDK> boolean flags. | Enables graceful degradation when SDK is absent. |
+| 125 | Provider | Degrade gracefully | When HAS_<SDK> = False, return defaults. Never crash. | System runs without all production dependencies. |
+| 126 | Provider | No business logic | Providers contain ONLY SDK wrapping: auth, formatting, parsing, error mapping. | Business rules belong in domain services, not providers. |
+| 127 | Provider | Config in providers/ | API keys, endpoints, timeouts in providers/config.py. | Enables per-environment config without code changes. |
+| 128 | Provider | Async workers for CPU | CPU-bound provider work via providers/async_workers. | Prevents blocking the event loop. |
+| 129 | Provider | Health checks | All providers expose health_check() via BaseProvider. | Enables /health/deps to verify external dependency health. |
+| 130 | Provider | Error mapping | SDK errors mapped to domain exceptions. Raw SDK errors don't leak. | Decouples API from specific SDK error types. |
+| 131 | Provider | Mock in tests | Provider tests mock the external SDK. No real API calls. | Tests are fast, reliable, and don't depend on external services. |
+| 132 | Module | Module structure | modules/{name}/ with auth/, routers/, serializers/. | Each module is a complete actor context. |
+| 133 | Module | Per-module auth | Each module has its own auth dependency in auth/dependencies.py. | Different actors may need different auth strategies. |
+| 134 | Module | Router file naming | modules/{module}/routers/{domain}.py — one file per domain. | Makes endpoints discoverable by actor+domain. |
+| 135 | Module | Router registration | All router files listed in routers/__init__.py. | Unregistered routers are invisible to FastAPI (dead code). |
+| 136 | Module | Public vs protected | public_routers (no auth) vs routers (auth required). | Enables unauthenticated access to specific endpoints. |
+| 137 | Module | Serializers location | Response serializers in modules/{module}/serializers/. | Different actors may serialize the same model differently. |
+| 138 | Module | 5 modules fixed | admin, customer, employee, logistics, supplier. New requires review. | Prevents module sprawl. |
+| 139 | Module | Route prefixes | /admin/*, /customer/*, /employee/*, /logistics-partner/*, /supplier/*. | Prevents route collisions between modules. |
+| 140 | Infrastructure | 7 subpackages | database/, valkey/, storage/, messaging/, observability/, security/, utils/. | Each subpackage has a single responsibility. |
+| 141 | Infrastructure | Database infra | Base, get_db/get_read_db, sessions, RLS, transactions, seeds. | Single place for DB engine and session management. |
+| 142 | Infrastructure | Valkey infra | Client singleton, cache abstraction, blacklist, pub/sub. | Prevents connection proliferation. |
+| 143 | Infrastructure | Storage infra | Abstraction interface + backup utilities. | Backends in providers/storage/. |
+| 144 | Infrastructure | Messaging infra | WS manager, realtime, email wrappers, event bus. | Event bus uses Valkey Pub/Sub for cross-domain events triggered by background jobs (Celery) and webhooks. In-process emission is reserved strictly for synchronous HTTP request lifecycles. |
+| 145 | Infrastructure | Observability infra | OTEL, Prometheus, structlog, Sentry, circuit breaker. | Wires observability into the app at startup. |
+| 146 | Infrastructure | Security infra | JWT, bcrypt, KMS encryption, rate limiting, CSRF, country access. | Canonical location for auth-related code. |
+| 147 | Infrastructure | Utils infra | Pure technical helpers: pagination, datetime, config, caching, HTTP. | Business primitives belong in kernel/, not here. |
+| 148 | Infrastructure | Canonical Base | infrastructure.database.base.Base is THE base. Others FORBIDDEN. | Multiple bases cause MetaData conflicts and migration failures. |
+| 149 | Infrastructure | Session lifecycle | Sessions via FastAPI Depends(get_db) only. | Ensures sessions are closed even on exceptions. |
+| 150 | Domain | Domain structure | services/, models/, schemas/, events.py, subscribers.py, ports.py, features.py, read_models/, policies/. | Standardized structure across all 15 domains. |
+| 151 | Domain | Service patterns | Services take primitives, own DB access and transactions. | Services are the entry point for business logic. |
+| 152 | Domain | Model patterns | __tablename__ + __table_args__ = {schema: <domain>}. Canonical Base. | Every model knows its schema and inherits from one base. |
+| 153 | Domain | Schema patterns | Pydantic models for validation. Used by routers (in) and serializers (out). | Schemas are NOT ORM models — different purposes. |
+| 154 | Domain | Event patterns | Named {domain}.{entity}.{action}. Minimal data (IDs, not objects). | Minimizes coupling between event publisher and subscribers. |
+| 155 | Domain | Port patterns | Sanctioned cross-domain READ path. Take db + primitives, return results. | Ports are the ONLY importable thing from another domain. |
+| 156 | Domain | Subscriber patterns | Handle events from other domains. Resolve context, call services. | Subscribers MUST NOT import from other domains directly. |
+| 157 | Domain | Feature patterns | FEATURES = {key: description}. Consistent format across domains. | Enables rbac/catalog.py to aggregate all features. |
+| 158 | Domain | Read model patterns | CQRS-lite projections for this domain's dashboards. | Cross-domain dashboards live in governance/read_models/. |
+| 159 | Domain | Policy patterns | Authorization policies. Enforced by require_feature() and service checks. | Policies are business rules about access, distinct from auth. |
+| 160 | Domain | 15 domains fixed | New domains require architecture review. | Prevents domain sprawl. |
+| 161 | RBAC | Catalog single source | Aggregates all features.py via package scan. | CI fails on any require_feature() literal not in catalog. |
+| 162 | RBAC | Role definitions | (module, role) → feature sets. Static code, not DB-driven. | Enables code review of permission grants. |
+| 163 | RBAC | Resolution | actor × role × country → effective set. Valkey-cached. | Fast permission checks on every request. |
+| 164 | RBAC | Dependencies | require_feature(...) and require_module(...) FastAPI dependencies. | The gates used by every module router. |
+| 165 | RBAC | Service | Grant/revoke, delegation, maker-checker. All changes audited. | Runtime permission management with full audit trail. |
+| 166 | RBAC | Permission models | Categories, permissions, assignments, overrides, audit log. | Stored in security Postgres schema. |
+| 167 | RBAC | Frontend permissions | permissions.ts GENERATED from GET /rbac/catalog. | UI gating and backend gating share one source. |
+| 168 | Frontend | Monorepo | web_app/ (Next.js), mobile_app/ (Expo), shared/ (cross-platform). | Code sharing while keeping platform-specific code separate. |
+| 169 | Frontend | Next.js version | 16.3.4+ with App Router. | Specific CSS processing requirements. |
+| 170 | Frontend | TypeScript strict | strict: true. any requires justification. | Catches null/undefined errors and missing properties at compile time. |
+| 171 | Frontend | State management | Zustand (global), React (local), Query/SWR (server). | Clear separation of state concerns. |
+| 172 | Frontend | Data fetching | Server Components fetch directly. Client Components use API client. | Frontend knows backend only through the API. |
+| 173 | Frontend | API proxy | Next.js rewrites /api/*, /admin/*, etc. to NEXT_PUBLIC_API_URL. | All API traffic through Next.js server routes. No CORS. |
+| 174 | Frontend | Styling | Tailwind CSS + CVA + tailwind-merge + clsx. | Consistent, type-safe styling with design tokens. |
+| 175 | Frontend | Forms | React Hook Form + Zod. | Server validation authoritative; client for UX. |
+| 176 | Frontend | Error handling | API errors → toasts/boundaries. Unhandled → console (dev) / Sentry (prod). | Users never see raw error objects. |
+| 177 | Frontend | Route groups | Organized by actor: (customer), auth/, admin/*, supplier/*, etc. | Each group has its own layout. |
+| 178 | Web App | Route structure | page.tsx, layout.tsx, loading.tsx, error.tsx per route. | Next.js App Router convention. |
+| 179 | Web App | Component structure | ui/ (design system), admin/, auth/, chat/, comms/, country/, etc. | Organized by area for discoverability. |
+| 180 | Web App | Hook patterns | useXxx prefix. No JSX in hooks. | Hooks encapsulate logic; components render UI. |
+| 181 | Web App | Lib patterns | api/ (client, auth, country, errors), rbac.ts. | Pure functions and utilities. |
+| 182 | Web App | Service patterns | localizationService, crossBorderService, addressFormatService. | Client-side services are NOT backend domain services. |
+| 183 | Web App | Theme/styling | Design tokens, Tailwind config, global CSS. | Consistent theme across the app. |
+| 184 | Web App | Types | From @zozi/shared + local definitions. | Shared types prevent drift between frontend and backend. |
+| 185 | Web App | Utils | Pure utility functions. | Business logic belongs in services or hooks. |
+| 186 | Web App | Build | next build passes with no errors. | Build failures block deployment. |
+| 187 | Mobile | Expo SDK 51+ | Expo Router with file-based routing. | Native navigation with deep linking. |
+| 188 | Mobile | Route groups | (auth), (tabs), admin/, supplier/, logistics/, employee/. | Each group has its own layout and navigation. |
+| 189 | Mobile | Components | components/ui/ design system. Shared from @zozi/shared. | Consistent design system across platforms. |
+| 190 | Mobile | Lib patterns | api, stores, authPrompt, countryContext, geo, payment, secureStorage. | Same patterns as web where possible. |
+| 191 | Mobile | Platform-specific | .native.ts (RN) / .ts (web) suffixes. | Enables sharing logic while customizing per-platform. |
+| 192 | Mobile | State | Zustand (same stores as web). | Consistent state management across platforms. |
+| 193 | Mobile | Storage | expo-secure-storage for secrets. AsyncStorage for non-sensitive. | Never store secrets in plain AsyncStorage. |
+| 194 | Mobile | Build | EAS Build. Expo Go for dev. App stores for production. | Automated build and submission pipeline. |
+| 195 | Shared | Structure | api-core, money, i18n, domain helpers, statusColors, requestCache, etc. | Cross-platform TypeScript consumed by both apps. |
+| 196 | Shared | No app imports | MUST NOT import from web_app/ or mobile_app/. | Prevents circular dependency. |
+| 197 | Shared | Permissions generated | permissions.ts GENERATED from backend /rbac/catalog. | UI and backend gating share one source. |
+| 198 | Shared | Cross-platform types | Platform-agnostic. .native.ts for platform adaptations. | Type safety across web and mobile. |
+| 199 | Shared | API core | apiFetch base client with auth, errors, retry. | Consistent API client across platforms. |
+| 200 | Shared | Money formatting | Intl.NumberFormat with locale support. | Consistent monetary display across platforms. |
+| 201 | Config | Env hierarchy | .env.example → .env → backend/.env → frontend/.env.local. | Each environment has its own file. |
+| 202 | Config | Required vars | SECRET_KEY, DATABASE_URL, VALKEY_URL MUST be set in prod. | Missing vars cause immediate startup failure. |
+| 203 | Config | Typed flags | pydantic-settings. No raw os.getenv(). | String 'false' is truthy. Typed coercion prevents bugs. |
+| 204 | Config | Secrets manager | HashiCorp Vault in production. | .env files are for development only. |
+| 205 | Config | APP_ENV detection | development, test, staging, production. | Behavior changes based on environment. |
+| 206 | Config | CORS allowlist | Backend CORS is disabled. No browser-originated requests reach the backend directly; all traffic flows through the Next.js API Proxy. | Prevents arbitrary websites from making authenticated requests. |
+| 207 | Testing | pytest framework | pytest + pytest-asyncio. Files in tests/domains/ and tests/architecture/. | Standard Python testing stack. |
+| 208 | Testing | Fixtures | db_session, client/admin_client/supplier_client/customer_client, JWT tokens. | Pre-authenticated test clients speed up test writing. |
+| 209 | Testing | Demo users | admin@zozi.com, supplier@zozi.com, customer@zozi.com. | Consistent test users across environments. |
+| 210 | Testing | Test environment | APP_ENV=test. CSRF/rate disabled. SQLite. | Optimized for speed, not production fidelity. |
+| 211 | Testing | Frontend tests | Jest + RTL. E2E: Playwright. | Standard React testing stack. |
+| 212 | Testing | Architecture tests | test_import_laws.py (Laws 1, 4, 97, 98), test_feature_catalog.py (Law 4). | Ensures laws are actually enforced. |
+| 213 | Testing | Coverage | Per-domain smoke tests. Per-law tests. CI-enforced. | Minimum viable test coverage. |
+| 214 | Testing | Isolation | Transaction-rolled-back. No leaks. Independent. | Tests don't affect each other. |
+| 215 | Deployment | Docker Compose | db (Neon PG18), valkey, backend, frontend, Celery workers, beat. | Local development mirrors production architecture. |
+| 216 | Deployment | Production targets | Backend: Railway. Frontend: Vercel. Mobile: EAS Build. | Each platform has its own deployment pipeline. |
+| 217 | Deployment | Migration on deploy | Migrations are run via a dedicated CI/CD pre-deployment step (or a single init container/job) before new web replicas are provisioned. Web replicas NEVER auto-migrate on boot. | Schema is always up-to-date before traffic arrives. |
+| 218 | Deployment | Health checks | /health, /health/deps, /health/ready return 200. | Load balancers use these for routing. |
+| 219 | Deployment | Rollback | MUST support rollback. Migrations backward-compatible. | Zero-downtime rollback on failure. |
+| 220 | Deployment | Env promotion | development → staging → production. | Each environment has its own config and database. |
+| 221 | Performance | Caching strategy | Valkey with TTL. Event-driven invalidation. | Stale cache preferable to cache stampede. |
+| 222 | Performance | Keyset pagination | cursor_paginate_asc. OFFSET FORBIDDEN on hot lists. | OFFSET degrades to O(n) on large tables. |
+| 223 | Performance | Connection pooling | pool_size ≥ 10, max_overflow ≥ 20. PgBouncer. | Connection exhaustion causes cascading failures. |
+| 224 | Performance | Query optimization | Indexes on queried columns. No N+1. No SELECT *. | Slow queries are logged and reviewed. |
+| 225 | Performance | CDN | Static assets, images via CDN. Presigned URLs. | Reduces origin bandwidth by 40-60%. |
+| 226 | Performance | Async processing | CPU-bound work to Celery. Request handlers never block. | Event loop stays responsive under load. |
+| 227 | Data | RLS enforcement | set_rls_context() sets country_code. All queries filtered. | Data isolation at the database level. |
+| 228 | Data | Soft delete | is_deleted (boolean, default false). Queries filter by default. | Enables data recovery and audit trails. |
+| 229 | Data | Audit columns | created_at/updated_at via TimestampMixin. DB-side defaults. | Required for debugging and compliance. |
+| 230 | Data | Audit trail | WORM log. Actor, action, entity, timestamp, before/after. | Forensic integrity for compliance investigations. |
+| 231 | Data | Data residency | MAY shard by country_code. | Enables compliance with country-specific data laws. |
+| 232 | Data | Backup & recovery | Daily backups. Tested for recovery. PITR. 30-day retention. | Disaster recovery capability. |
+| 233 | API | REST conventions | GET (list/detail), POST (create), PUT (update), DELETE. | Standard REST mapping. |
+| 234 | API | Versioning | URL prefix /api/v1/. Breaking = new version. Old deprecated. | Enables API evolution without breaking clients. |
+| 235 | API | JSON format | Request/response JSON. Pydantic validation. Serializer output. | Consistent, validated, serialized. |
+| 236 | API | RFC 7807 errors | Problem Details. No stack traces in production. | Standard error format enables client-side handling. |
+| 237 | API | Pagination format | items + next_cursor + has_more. No count on hot lists. | Count is expensive on large tables. |
+| 238 | API | Filtering/sorting | filter[field]=value, sort=-created_at. Complex: POST body. | Flexible querying without endpoint proliferation. |
+| 239 | API | Idempotency | Idempotency-Key header. 24h expiry. (stored in Valkey with 24h TTL) | Duplicate requests don't cause duplicate operations. |
+| 240 | Git | Branching | main, feature/*, fix/*, release/*, hotfix/*. | Git Flow convention. |
+| 241 | Git | Conventional Commits | type(scope): description. feat, fix, refactor, docs, test, chore, perf, security. | Automated changelog generation. |
+| 242 | Git | PR process | All via PR. CI + review. No direct main pushes. | Code review catches issues before merge. |
+| 243 | Git | Hooks | Pre-commit: ruff. Pre-push: architecture tests. | Automated quality gates. |
+| 244 | Git | Worktrees | Agent Manager uses worktrees. Cleaned up after merge. | Parallel work without branch switching. |
+| 245 | Docs | Architecture docs | ARCHITECTURE_DIAGRAM.md is authoritative. Lock-step with code. | Single source of truth for architecture. |
+| 246 | Docs | Agent docs | AGENTS.md quick reference. Not the full architecture. | Agent onboarding without overwhelming detail. |
+| 247 | Docs | API docs | FastAPI auto-generates at /docs and /redoc. | Always up-to-date with code. |
+| 248 | Docs | Runbooks | docs/runbooks/. Deployment, rollback, incident response. | Tested in staging quarterly. |
+| 249 | Docs | Code comments | Docstrings + WHY comments. Outdated removed. | Comments explain why, not what. |
+| 250 | Docs | Changelog | CHANGELOG.md. Per-release: features, breaking changes, fixes. | User-facing, plain language. |
+| 251 | Scalability | Horizontal scaling | N stateless replicas. Sessions in Valkey. | Add replicas to handle more traffic. |
+| 252 | Scalability | Auto-scaling | CPU > 70% scale up. Min 2, max 20. | Handles traffic spikes without manual intervention. |
+| 253 | Scalability | Partitioning | Range partition by created_at (monthly). | Query time constant as data grows. |
+| 254 | Scalability | CQRS | Commands write. Events update read models. | Prevents write contention from slowing reads. |
+| 255 | Scalability | Write-behind cache | Buffer in Valkey, flush async. | 10-100x reduction in DB write pressure. |
+| 256 | Scalability | Tenant quotas | Per-country limits. 429 on exceed. | Prevents one tenant from monopolizing resources. |
+| 257 | Scalability | Full-text search | OpenSearch for catalog. | Sub-100ms search across millions of products. |
+| 258 | Scalability | Image pipeline | Async resize, WebP, metadata strip. | 60-80% bandwidth reduction. |
+| 259 | Scalability | API caching | ETag, Last-Modified, Cache-Control. CDN. | 40-60% origin load reduction. |
+| 260 | Scalability | PgBouncer | Transaction pooling. max_client_conn=10000. | Multiplexes thousands of client connections. |
+| 261 | Scalability | Read replicas | Auto-route reads. Fallback if lag > 1s. | Offloads primary. Automatic failover. |
+| 262 | Scalability | Archiving | Old data to Cloudflare R2 Glacier. | Keeps operational tables small and fast. |
+| 263 | Scalability | Write buffering | Celery queue for bursty writes. | Prevents DB overload during spikes. |
+| 264 | Scalability | Static assets | Minify, compress, hash, CDN. | Reduces bandwidth and improves cache hit rate. |
+| 265 | Scalability | DB monitoring | Alerts on connections, lag, deadlocks, slow queries. | Early warning of capacity issues. |
+| 266 | Scalability | Synthetic monitoring | Every 60s from multiple regions. | Detects issues before users report them. |
+| 267 | Scalability | Endpoint limits | Max body (10MB), query (100 items), time (30s). | Prevents resource exhaustion. |
+| 268 | Scalability | Load shedding | Shed non-critical first. | Critical paths always served under load. |
+| 269 | Scalability | Cost optimization | Right-size, spot instances, coalescing. | Efficient resource usage at scale. |
+| 270 | Scalability | Chaos engineering | Regular failure experiments. | Validates resilience assumptions. |
+| 271 | Security | AI-agent security | Prompt injection prevention. | AI endpoints are new attack surface. |
+| 272 | Security | Data exfiltration | Per-user export limits. | Prevents AI agents from bulk-extracting data. |
+| 273 | Security | Model poisoning | ML input validation before training. | Prevents adversarial training data. |
+| 274 | Security | Adversarial detection | Signature + anomaly detection. | Catches known and novel attack patterns. |
+| 275 | Security | Encryption at rest | AES-256 Envelope Encryption. Master keys managed via HashiCorp Vault Transit / AWS KMS. | Protects data if storage is compromised. |
+| 276 | Security | Encryption in transit | TLS 1.3. Certificate pinning. | Protects data from interception. |
+| 277 | Security | Key rotation | Every 90 days. Zero-downtime. | Limits exposure window of compromised keys. |
+| 278 | Security | WORM audit | Write Once Read Many. Tamper-proof. | Forensic integrity for compliance. |
+| 279 | Security | Session binding | Device fingerprint. Concurrent limits. | Prevents session hijacking and abuse. |
+| 280 | Security | Brute force DB level | 5 fails = lock. 10 = admin. | Database-level enforcement beyond app. |
+| 281 | Security | Bot detection | Score + block/CAPTCHA. | Prevents automated abuse. |
+| 282 | Security | PII masking | In logs, errors, non-admin responses. | Prevents PII leakage to unauthorized viewers. |
+| 283 | Security | MFA | TOTP for admin/employee. | Second factor prevents credential abuse. |
+| 284 | Security | Zero-trust | mTLS service-to-service. | No implicit trust based on network location. |
+| 285 | Security | CSP | Strict + nonces. | Prevents XSS via injected scripts. |
+| 286 | Security | SRI | Integrity hashes. | Prevents CDN compromise from injecting code. |
+| 287 | Security | All headers | Permissions-Policy, COOP, CORP. | Defense in depth against browser attacks. |
+| 288 | Security | Disclosure process | SECURITY.md. 24h SLA for critical. | Enables responsible vulnerability reporting. |
+| 289 | Security | Pen testing | Annual third-party. OWASP + logic. | Independent security validation. |
+| 290 | Security | Dep pinning | Exact + hashes. | Prevents supply chain attacks via dep substitution. |
+| 291 | Security | SBOM | For every release. | Know what's in the software. |
+| 292 | Security | License compliance | CI-enforced. | Prevents legal issues from incompatible licenses. |
+| 293 | Security | Incident automation | Auto-isolate, revoke, capture. | Fast response limits blast radius. |
+| 294 | Security | Training | Annual. OWASP + social engineering. | Developers are the first line of defense. |
+| 295 | Security | Supply chain | Image scanning + signing. | Prevents compromised containers. |
+| 296 | Resilience | Circuit breaker | All external calls wrapped. | Prevents cascade failures. |
+| 297 | Resilience | Retry + backoff | 1-2-4-8s. Jitter. Max 5. | Handles transient failures without thundering herd. |
+| 298 | Resilience | Dead letter queue | Failed events to DLQ. Replayable. | No event silently dropped. |
+| 299 | Resilience | Feature health | Per-feature in /health/deps. | Granular health visibility. |
+| 300 | Resilience | Per-feature fallback | Each feature defines degradation. | Users always see a usable UI. |
+| 301 | Resilience | Error budget | Exhaustion = freeze. | Balances velocity and reliability. |
+| 302 | Resilience | On-call | PagerDuty/Opsgenie. 5min SLA. | Fast human response to critical issues. |
+| 303 | Resilience | Runbooks | Per-alert. Tested quarterly. | Reduces MTTR for known issues. |
+| 304 | Resilience | DR | RPO=5min, RTO=1hr. Multi-region. | Survives regional failures. |
+| 305 | Resilience | DB failover | 30s promotion. | Minimal data loss on primary failure. |
+| 306 | Resilience | Multi-region | ≥2 regions. Cross-region replication. | Survives regional failures. |
+| 307 | Resilience | Backup verify | Daily restore test. | A backup that can't be restored is worthless. |
+| 308 | Resilience | Drift detection | IaC daily checks. | Prevents configuration surprises. |
+| 309 | Resilience | Dep monitoring | External status pages. Auto-fallback. | Fast response to external degradation. |
+| 310 | Resilience | Post-incident reviews | Blameless. Action items tracked. | Prevents repeat incidents. |
+| 311 | Operations | Feature flags | Gradual rollout. Instant rollback. | Decouples deployment from release. |
+| 312 | Operations | A/B testing | Hash-based. Sticky. | Data-driven feature decisions. |
+| 313 | Operations | PCI-DSS Compliance | PCI-DSS managed via Tokenization/Hosted Pages for local gateways, and Stripe Elements where applicable. Admin-entered API keys are AES-256 encrypted at rest. | Automated compliance reduces legal risk and secures tenant credentials. |
+| 314 | Operations | IaC | Terraform/Pulumi. Manual FORBIDDEN. | Reproducible, auditable infrastructure. |
+| 315 | Operations | Log aggregation | ELK/Loki. 30d hot, 1y cold. | Centralized visibility. |
+| 316 | Operations | Dashboards | Grafana. p50/p95/p99. | Real-time system health visibility. |
+| 317 | Operations | Alerting tiers | P1/P2/P3. | Right urgency for right issues. |
+| 318 | Operations | Capacity planning | Monthly. 3-month projection. | Prevents surprises. |
+| 319 | Operations | Release mgmt | Canary → full. Rollback < 5min. | Safe, fast deployments. |
+| 320 | Operations | DevX | < 10min setup. Hot reload. | Fast onboarding and iteration. |
+| 321 | Operations | Doc freshness | Quarterly reviews. | Outdated docs are worse than no docs. |
+| 322 | Operations | Cost allocation | By domain/team via tagging. | Visibility into cost drivers. |
+| 323 | Operations | Human access | Least-privilege. 24h offboarding. | Limits blast radius of compromised accounts. |
+| 324 | Operations | Change mgmt | All via PR + CI. | Auditable, reviewable changes. |
+| 325 | Operations | Sustainability | Right-size. Carbon tracking. | Environmental responsibility. |
+
+---
+## 13 — Law Quick-Reference Index
+
+| Range | Category | Rows |
+|-------|----------|------|
+| 1-7 | Architecture | 1-7 |
+| 8-13 | Structure | 8-13 |
+| 14-18 | File Placement | 14-18 |
+| 19-24 | Code Quality | 19-24 |
+| 25-29 | Migration | 25-29 |
+| 30-31 | Provider | 30-31 |
+| 32-44 | Security | 32-44 |
+| 45-57 | Database | 45-57 |
+| 58-68 | Code Quality | 58-68 |
+| 69-74 | Testing | 69-74 |
+| 75-81 | Infrastructure | 75-81 |
+| 82-86 | Config | 82-86 |
+| 87-91 | Router | 87-91 |
+| 92-96 | Observability | 92-96 |
+| 97-106 | Wiring | 97-106 |
+| 107-122 | Technology | 107-122 |
+| 123-131 | Provider Laws | 123-131 |
+| 132-139 | Module Laws | 132-139 |
+| 140-149 | Infrastructure Laws | 140-149 |
+| 150-160 | Domain Laws | 150-160 |
+| 161-167 | RBAC | 161-167 |
+| 168-177 | Frontend | 168-177 |
+| 178-186 | Web App | 178-186 |
+| 187-194 | Mobile | 187-194 |
+| 195-200 | Shared | 195-200 |
+| 201-206 | Config | 201-206 |
+| 207-214 | Testing | 207-214 |
+| 215-220 | Deployment | 215-220 |
+| 221-226 | Performance | 221-226 |
+| 227-232 | Data | 227-232 |
+| 233-239 | API | 233-239 |
+| 240-244 | Git | 240-244 |
+| 245-250 | Documentation | 245-250 |
+| 251-270 | Scalability | 251-270 |
+| 271-295 | Security Hardening | 271-295 |
+| 296-310 | Resilience | 296-310 |
+| 311-325 | Operations | 311-325 |
+
+---
+
+*End of ARCHITECTURE_DIAGRAM.md — 325 laws, each defined once in section 12.*

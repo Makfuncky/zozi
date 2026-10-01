@@ -1,0 +1,13 @@
+﻿/* BannerCanvasEditor celebration / season background effect layer.
+   Relocated from an inline <style> block (DS02) so styles live in the design system. */
+
+.bcu-confetti { position: absolute; top: 0; border-radius: 1px; animation: bcu-fall linear infinite; }
+.bcu-snow { position: absolute; top: 0; border-radius: 999px; animation: bcu-snow linear infinite; }
+.bcu-spark { position: absolute; border-radius: 999px; animation: bcu-twinkle ease-in-out infinite; }
+.bcu-balloon { position: absolute; bottom: 0; width: 42px; height: 54px; border-radius: 50% 50% 48% 48%; animation: bcu-balloon ease-in infinite; box-shadow: inset -6px -8px 12px rgba(0,0,0,.18); }
+.bcu-balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 26px; background: rgba(255,255,255,.5); transform: translateX(-50%); }
+.bcu-fw { position: absolute; border-radius: 999px; animation: bcu-fw ease-out infinite; }
+.bcu-aurora { position: absolute; top: -20%; height: 140%; width: 60%; filter: blur(26px); opacity: .7; animation: bcu-aurora ease-in-out infinite; mix-blend-mode: screen; }
+.bcu-lantern { position: absolute; top: 8%; width: 26px; height: 34px; border-radius: 40% 40% 46% 46%; background: linear-gradient(#f59e0b,#b45309); box-shadow: 0 0 18px rgba(245,158,11,.8); animation: bcu-glow ease-in-out infinite; }
+.bcu-lantern::before { content: ""; position: absolute; left: 50%; top: -22%; width: 2px; height: 30%; background: #92400e; transform: translateX(-50%); }
+.bcu-crescent { position: absolute; border-radius: 999px; background: radial-gradient(circle at 35% 35%, #fff7d6, #fde68a); box-shadow: 0 0 30px rgba(253,230,138,.9); }

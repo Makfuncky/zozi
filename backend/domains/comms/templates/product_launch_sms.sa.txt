@@ -1,0 +1,4 @@
+product_launch_sms
+المملكة العربية السعودية (SA) locale variant
+Subject: منتج جديد متوفر الآن
+Body: منتج جديد: {product_name} أصبح متوفراً الآن! {product_url}

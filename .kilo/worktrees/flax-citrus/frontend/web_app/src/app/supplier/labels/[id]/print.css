@@ -1,0 +1,33 @@
+/* Print stylesheet for the supplier parcel-label sheet — relocated from an inline
+   <style jsx global> block (DS02). Selectors are higher-specificity than the
+   app-chrome Tailwind rules, so the print overrides win on selector specificity
+   alone (no important flag needed — DS06). */
+
+@media print {
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
+
+  html,
+  body {
+    background: #ffffff;
+  }
+
+  body.supplier-label-print [data-app-header],
+  body.supplier-label-print [data-app-footer],
+  body.supplier-label-print .theme-layout-shell,
+  body.supplier-label-print [data-app-body] > :not(.supplier-label-print-root) {
+    display: none;
+  }
+
+  body.supplier-label-print [data-app-body],
+  body.supplier-label-print [data-app-frame] {
+    display: block;
+    background: #ffffff;
+  }
+
+  body.supplier-label-print .supplier-label-print-root {
+    display: block;
+  }
+}

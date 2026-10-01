@@ -1,0 +1,60 @@
+# Dependencies (too large for GitHub)
+node_modules/
+.pnp/
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+
+# Environment secrets (NEVER push real credentials)
+.env
+.env.local
+.env.production
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Build outputs (regeneratable)
+.next/
+dist/
+build/
+*.tsbuildinfo
+
+# Expo
+.expo/
+
+# Logs (regeneratable)
+*.log
+
+# Database files (regeneratable locally)
+*.db
+*.db-shm
+*.db-wal
+*.db.bak
+*.sqlite
+*.sqlite3
+.data/
+.quarantine/
+
+# Build/audit artifacts that must not be committed (see SYSTEM_AUDIT_REPORT F4)
+backend/schema-audit-report.json
+backend/alembic_test.json
+backend/requirements.lock
+backend/schema_mapping.json
+
+# Playwright test artifacts
+backend/tests/playwright/test-results/
+backend/tests/playwright/auth-*.png
+# Browser-test secrets (local only; copy from stack.env.ps1.example)
+config/stack.env.ps1

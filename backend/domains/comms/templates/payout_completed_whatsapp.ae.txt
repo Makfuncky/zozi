@@ -1,0 +1,5 @@
+payout_completed_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: تم صرف الأرباح بنجاح ✅
+Body: ✅ تم صرف مبلغ {amount} بنجاح.
+الرقم المرجعي: {payout_id}

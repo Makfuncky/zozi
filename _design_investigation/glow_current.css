@@ -1,0 +1,43 @@
+﻿/* DS05 remediation — token-based replacements for arbitrary Tailwind gradient / solid utilities.
+   Each class carries the EXACT same colors as the original arbitrary value, so visuals are unchanged.
+   Created (not edited) to keep the 9000+ line globals.css untouched. */
+
+.bg-partner-hero {
+  background:
+    radial-gradient(circle at top, rgba(14, 165, 233, 0.10), transparent 40%),
+    linear-gradient(180deg, var(--color-surface-0), var(--color-surface-1));
+}
+
+.bg-partner-card-glow {
+  background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.20), transparent 45%);
+}
+
+.bg-footer-glow {
+  background:
+    radial-gradient(circle at top left, rgba(47, 180, 61, 0.1), transparent 32%),
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.08), transparent 30%);
+}
+
+.bg-tracking-glow {
+  background: radial-gradient(circle at top, rgba(14, 165, 233, 0.18), transparent 55%);
+}
+
+.bg-label-gradient {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-surface-2) 84%, transparent) 0%,
+    color-mix(in srgb, var(--color-surface-0) 92%, transparent) 45%,
+    color-mix(in srgb, var(--color-brand) 14%, transparent) 100%
+  );
+}
+
+/* The original label block used `print:bg-none`; replicate it here so print stays clean. */
+@media print {
+  .bg-label-gradient {
+    background: none;
+  }
+}
+
+.bg-logo-dark {
+  background: #080d18;
+}

@@ -1,0 +1,108 @@
+default_language_version:
+  python: python3.13
+  node: 24
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.6
+    hooks:
+      - id: ruff
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+      - id: check-case-conflict
+      - id: check-docstring-first
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.10.1
+    hooks:
+      - id: pip-audit
+        stages: [commit]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+        additional_dependencies: ['pydantic', 'sqlalchemy', 'fastapi']
+        exclude: ^backend/tests/
+
+  - repo: https://github.com/samuelcolvin/import-linter
+    rev: v2.14.0
+    hooks:
+      - id: import-linter
+        args: ['--config', 'backend/tests/architecture/import_linter.ini']
+        files: ^backend/
+
+  - repo: local
+    hooks:
+      - id: check-migration-naming
+        name: Check Alembic migration filenames match file_template
+        entry: python backend/alembic/check_migration_naming.py
+        language: system
+        files: ^backend/alembic/versions/.*\.py$
+        pass_filenames: true
+        always_run: false
+
+      - id: check-docs-drift
+        name: Check canonical docs are in lock-step with code
+        entry: |
+          python -c "
+          import pathlib, sys, re;
+          root = pathlib.Path('.');
+          arch_path = root / '_most_imp_docx/ARCHITECTURE_STACK.md';
+          tech_path = root / '_most_imp_docx/TECHNOLOGY_STACK.md';
+          E = [];
+          missing = [str(p) for p in [arch_path, tech_path] if not p.exists()];
+          E += ['missing canonical doc: ' + p for p in missing];
+          if missing:
+              sys.stdout.write('docs-drift: ' + '; '.join(E) + chr(10));
+              sys.exit(1);
+          arch = arch_path.read_text(encoding='utf-8');
+          tech = tech_path.read_text(encoding='utf-8');
+          law_ids = [int(m) for m in re.findall(r'^\| (\d+) \|', arch, re.M)];
+          expected_ids = list(range(1,326));
+          if set(law_ids) != set(expected_ids):
+              E.append('law matrix drift: docs declare 325 laws, parsed ' + str(len(set(law_ids))) + ' unique ids');
+          if re.search(r'[0-9]+[.][0-9]+[.][0-9]+', arch):
+              E.append('version literal in ARCHITECTURE_STACK.md');
+          declared_domains = set(re.findall(r'schema: (\w+)', arch));
+          declared_modules = {'customer', 'supplier', 'logistics', 'admin', 'employee'};
+          actual_domains = {d.name for d in (root / 'backend/domains').iterdir() if d.is_dir() and d.name != '__pycache__'};
+          actual_modules = {m.name for m in (root / 'backend/modules').iterdir() if m.is_dir() and m.name != '__pycache__'};
+          allowed_non_canonical = {'media'};
+          E += ['undeclared domains/' + d + ' not named in ARCHITECTURE_STACK.md' for d in sorted(actual_domains - declared_domains - allowed_non_canonical) if d];
+          E += ['undeclared modules/' + m + ' not named in ARCHITECTURE_STACK.md' for m in sorted(actual_modules - declared_modules) if m];
+          sys.stdout.write('docs-drift: ' + ('canonical docs in lock-step with code' if not E else '; '.join(E)) + chr(10));
+          sys.exit(1 if E else 0)
+          "
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [commit]
+
+  - repo: https://github.com/python/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        types_or: [python, pyi]
+        exclude: ^backend/tests/

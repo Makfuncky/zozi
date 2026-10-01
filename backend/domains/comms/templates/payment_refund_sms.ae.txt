@@ -1,0 +1,4 @@
+payment_refund_sms
+الإمارات العربية المتحدة (AE) locale variant
+Subject: تمت معالجة الاسترداد
+Body: تمت معالجة استرداد بمبلغ {amount} لطلبك رقم {order_id}.

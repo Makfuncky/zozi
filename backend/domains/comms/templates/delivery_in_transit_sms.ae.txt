@@ -1,0 +1,4 @@
+delivery_in_transit_sms
+الإمارات العربية المتحدة (AE) locale variant
+Subject: طلبك في الطريق
+Body: طلبك رقم {order_id} في الطريق. الوصول المتوقع: {eta}

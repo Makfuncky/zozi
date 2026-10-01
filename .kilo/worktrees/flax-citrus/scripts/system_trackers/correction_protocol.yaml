@@ -1,0 +1,110 @@
+version: 1
+description: |
+  Correction protocol for ZOZI feature pipeline.
+  generate_corrections.py applies these rules when diffing
+  FEATURE_IMPLEMENTATION_CHECKER.json against FEATURE_TRACKER.json.
+
+correction_types:
+  missing_file:
+    severity: HIGH
+    label: Missing file
+    action: scaffold
+    guidance: |
+      Create the missing file following the P1 naming convention and the
+      feature's `expected:` description. For routers: thin router only
+      (parse/validate, call controller). For controllers: orchestrate
+      routes, import no FastAPI, delegate DB to services. For services:
+      own DB writes via get_db(), implement business logic.
+
+  missing_db_table:
+    severity: HIGH
+    label: Missing DB table
+    action: create_alembic_migration
+    guidance: |
+      Add the missing table via a new Alembic migration in backend/alembic/versions/.
+      Ensure the model file defines __tablename__ and inherits db/base.Base.
+      Run migration against dev DB, verify with check_connection_health().
+
+  missing_api_route:
+    severity: HIGH
+    label: Missing API route
+    action: add_route
+    guidance: |
+      Add the missing endpoint in the appropriate thin router file.
+      Router must delegate to a controller; controller must delegate to a service.
+      Never place business logic in routers.
+
+  missing_model_class:
+    severity: HIGH
+    label: Missing DB model class
+    action: create_model
+    guidance: |
+      Create the SQLAlchemy model in the correct domain subfolder under
+      backend/models/{domain}/. Inherit from db/base.Base, define __tablename__,
+      and use only domain-appropriate schemas (no core/platform schemas).
+
+  unwired_route:
+    severity: MED
+    label: Unwired route
+    action: wire_handler
+    guidance: |
+      The route exists in a router but its handler has no backend call.
+      Wire it to the correct controller/service function. If the handler
+      is a stub (health/status), confirm it is intentional.
+
+  architecture_violation:
+    severity: HIGH
+    label: Architecture violation
+    action: refactor
+    guidance: |
+      The file violates P1 architecture rules. See `violation` field for
+      the specific rule broken. Common fixes:
+      - controller_imports_fastapi: Remove APIRouter/Depends/HTTPException;
+        move DB writes to service.
+      - controller_does_db_writes: Extract DB logic into service layer.
+      - fat_router: Split into thin router + controller + service.
+      - router_imports_fastapi: Ensure thin router only calls controller.
+
+  dead_file:
+    severity: LOW
+    label: Dead / unimported file
+    action: remove_or_wire
+    guidance: |
+      The file exists but is not imported anywhere (no inbound references).
+      Either wire it into the feature's import graph or remove it to avoid
+      confusion. Exception: page.tsx, screen.tsx, and e2e tests are exempt.
+
+  capability_gap:
+    severity: MED
+    label: Capability not found in codebase
+    action: implement_capability
+    guidance: |
+      The described capability from the feature spec has no code evidence.
+      Implement the capability in the appropriate service/controller/router
+      following the workflow defined in the feature's `workflow:` block.
+
+  test_gap:
+    severity: LOW
+    label: Missing test coverage
+    action: add_tests
+    guidance: |
+      Add tests for the feature under tests/backend/, tests/frontend/web_app/,
+      and tests/frontend/mobile_app/. Follow existing test patterns.
+
+  section_gap:
+    severity: MED
+    label: Panel section not implemented
+    action: implement_section
+    guidance: |
+      The feature's §I–§V panel section has no frontend or backend evidence.
+      Implement the section according to the prose in the feature's `sections:`
+      block and the workflow diagram.
+
+  out_of_scope:
+    severity: INFO
+    label: Out-of-scope file detected
+    action: review_and_classify
+    guidance: |
+      A file was found that matches this feature's terms but belongs to a
+      different feature or is a shared utility. Review and reclassify if
+      needed. No code change required.

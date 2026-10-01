@@ -1,0 +1,743 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\frontend\\mobile_app\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--list",
+      "--project=mobile-web"
+    ],
+    "configFile": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\frontend\\mobile_app\\playwright.config.ts",
+    "rootDir": "D:/Projects/10- E-COMMERCE WEBSITE/zozi/frontend/mobile_app/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Projects/10- E-COMMERCE WEBSITE/zozi/frontend/mobile_app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "mobile-web",
+        "name": "mobile-web",
+        "testDir": "D:/Projects/10- E-COMMERCE WEBSITE/zozi/frontend/mobile_app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.spec.ts",
+      "file": "auth.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Authentication Flow",
+          "file": "auth.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "login page renders correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-c86215ce62c9fae90271",
+              "file": "auth.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "login form has email and password fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-289d3c4427568793df7b",
+              "file": "auth.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "login form is accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-71f053e45a43b6687882",
+              "file": "auth.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "register page renders correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-4e020014b7d7996bf6ce",
+              "file": "auth.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "forgot password page renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-b5f188efd8ab293df3b0",
+              "file": "auth.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "edit profile page renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-2379fd795b94c5e0b2a7",
+              "file": "auth.spec.ts",
+              "line": 51,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "customer-flow.spec.ts",
+      "file": "customer-flow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Customer Flow — login, browse, cart",
+          "file": "customer-flow.spec.ts",
+          "line": 15,
+          "column": 6,
+          "specs": [
+            {
+              "title": "home renders with bottom tab bar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-1d5276a5f6a620332e55",
+              "file": "customer-flow.spec.ts",
+              "line": 16,
+              "column": 7
+            },
+            {
+              "title": "Shop tab navigates to products list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-e0c5028d6508ddacc283",
+              "file": "customer-flow.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "Cart tab navigates to cart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-b43b1c63414e371147d1",
+              "file": "customer-flow.spec.ts",
+              "line": 32,
+              "column": 7
+            },
+            {
+              "title": "login form is reachable and renders email + password fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-e2101201d6038562334b",
+              "file": "customer-flow.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "login flow with demo customer (when API reachable)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-03c6e5104b25ada6d238",
+              "file": "customer-flow.spec.ts",
+              "line": 48,
+              "column": 7
+            },
+            {
+              "title": "browse to a product detail page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-ed80db3e25b8745bf967",
+              "file": "customer-flow.spec.ts",
+              "line": 70,
+              "column": 7
+            },
+            {
+              "title": "wishlist screen is reachable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-3a4a9e3076aada21b6bb",
+              "file": "customer-flow.spec.ts",
+              "line": 84,
+              "column": 7
+            },
+            {
+              "title": "orders screen is reachable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d3bcc71a72d8ae4d3d-e7372eaddbde89be360a",
+              "file": "customer-flow.spec.ts",
+              "line": 90,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "mobile-smoke.spec.ts",
+      "file": "mobile-smoke.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Mobile App Smoke Tests",
+          "file": "mobile-smoke.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "home screen renders with header and navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-8e97178f647fc4d7273a",
+              "file": "mobile-smoke.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "Wishlist tab is visible after parity fix F-7",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-18b5193a4465cdd2adec",
+              "file": "mobile-smoke.spec.ts",
+              "line": 15,
+              "column": 7
+            },
+            {
+              "title": "Orders tab is visible after parity fix F-7",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-8eb54f1e8e40b75daf91",
+              "file": "mobile-smoke.spec.ts",
+              "line": 19,
+              "column": 7
+            },
+            {
+              "title": "Shop tab is visible and clickable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-f834a5bab0baf273687d",
+              "file": "mobile-smoke.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "Cart tab is visible and clickable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-091481bfc1f086f3fbe5",
+              "file": "mobile-smoke.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "Account/Sign In tab is visible and clickable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-1ff47b4ae4ebc05646d8",
+              "file": "mobile-smoke.spec.ts",
+              "line": 37,
+              "column": 7
+            },
+            {
+              "title": "bottom tab bar has exactly 5 tabs (Shop/Wishlist/Orders/Cart/Account)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-eee129feef45f5e952c4",
+              "file": "mobile-smoke.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "no console errors on initial load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-d3f3d273cb8369d579e5",
+              "file": "mobile-smoke.spec.ts",
+              "line": 50,
+              "column": 7
+            },
+            {
+              "title": "no page errors on initial load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ea674203dc68a2d7f340-f796dbebc1d6feec420a",
+              "file": "mobile-smoke.spec.ts",
+              "line": 61,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "navigation.spec.ts",
+      "file": "navigation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Navigation and Deep Routes",
+          "file": "navigation.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "wishlist page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5d2868f7d23420c27cca-a6a87dc27f4ee9c39904",
+              "file": "navigation.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "notifications page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5d2868f7d23420c27cca-300dc276aff85fd64469",
+              "file": "navigation.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "offers page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5d2868f7d23420c27cca-19fd3e9aa61ce83c4b81",
+              "file": "navigation.spec.ts",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "flash sales page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5d2868f7d23420c27cca-93808698c650e0855e01",
+              "file": "navigation.spec.ts",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "coupons page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5d2868f7d23420c27cca-33918de5343cdd2b8fe6",
+              "file": "navigation.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "profile page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5d2868f7d23420c27cca-9d80c1bc3617a6ae5f11",
+              "file": "navigation.spec.ts",
+              "line": 36,
+              "column": 7
+            },
+            {
+              "title": "settings page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-web",
+                  "projectName": "mobile-web",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5d2868f7d23420c27cca-261828cb1a000c531fdf",
+              "file": "navigation.spec.ts",
+              "line": 42,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-03T12:41:32.154Z",
+    "duration": 48.48299999999995,
+    "expected": 0,
+    "skipped": 30,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

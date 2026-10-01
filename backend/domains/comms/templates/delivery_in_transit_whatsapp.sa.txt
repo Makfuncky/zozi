@@ -1,0 +1,5 @@
+delivery_in_transit_whatsapp
+المملكة العربية السعودية (SA) locale variant
+Subject: طلبكم في الطريق 🚦
+Body: 🚦 طلبكم رقم {order_id} في الطريق.
+الوصول المتوقع: {eta}

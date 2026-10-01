@@ -1,0 +1,49 @@
+groups:
+  - name: zozi-critical
+    rules:
+      - alert: DatabaseConnectionPoolExhausted
+        expr: db_connections.checkedout / db_connections.size > 0.9
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of DB connections in use ({{ $labels.instance }})"
+
+      - alert: BackendErrorRateHigh
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend 5xx error rate exceeds 5%"
+          description: "Current 5xx rate is {{ $value | humanizePercentage }} on {{ $labels.endpoint }}"
+
+  - name: zozi-warning
+    rules:
+      - alert: APIHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API latency p95 exceeds 800ms"
+          description: "p95 latency for {{ $labels.endpoint }} is {{ $value | humanize }}s"
+
+      - alert: SentryNewErrors
+        expr: increases(sentry_event_total{environment="production"}[1h]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "New Sentry error events detected"
+          description: "{{ $value }} new error events in the last hour"
+
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "p95 DB query time for {{ $labels.query_type }} is {{ $value | humanize }}s"

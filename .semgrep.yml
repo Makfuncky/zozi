@@ -1,0 +1,84 @@
+# Semgrep configuration for ZOZI security scanning
+# Documentation: https://semgrep.dev/docs/
+
+# Include auto-discovered rules from Semgrep registry
+include:
+  - "p/default"
+  - "p/python"
+  - "p/fastapi"
+  - "p/sqlalchemy"
+  - "p/owasp-top-ten"
+  - "p/security-audit"
+  - "p/secrets"
+
+# Exclude paths that should not be scanned
+exclude:
+  - "node_modules"
+  - "venv"
+  - "__pycache__"
+  - "*.pyc"
+  - "dist"
+  - "build"
+  - ".git"
+  - "test_*"
+  - "*_test.py"
+  - "tests/"
+  - "migrations/"
+  - "*.min.js"
+  - "*.bundle.js"
+
+# Severity thresholds
+severity: WARNING
+
+# Max file size to scan (1MB)
+max-target-bytes: 1000000
+
+# Timeout per file (30 seconds)
+timeout: 30
+
+# Custom rules for ZOZI-specific patterns
+rules:
+  # Detect hardcoded secrets in Python
+  - id: hardcoded-secret-python
+    pattern: |
+      $VAR = "..."
+      if "secret" in $VAR.lower() or "key" in $VAR.lower() or "password" in $VAR.lower()
+    message: "Possible hardcoded secret detected"
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python]
+
+  # Detect SQL injection risks in raw queries
+  - id: sql-injection-risk
+    pattern: |
+      $DB.execute("..." % ...)
+    message: "Potential SQL injection via string formatting"
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, sqlalchemy]
+
+  # Detect debug mode in production configs
+  - id: debug-mode-enabled
+    pattern: |
+      DEBUG = True
+    message: "Debug mode should be disabled in production"
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python]
+
+  # Detect insecure HTTP usage
+  - id: insecure-http
+    pattern: |
+      requests.get("http://...")
+    message: "Insecure HTTP detected, prefer HTTPS"
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python]

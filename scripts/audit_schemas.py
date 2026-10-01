@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""scripts/audit_schemas.py
+
+Generates _generated/DATABASE_INVENTORY.md from the live Neon database
+and the SQLAlchemy model metadata in backend/domains/*/models/.
+
+Read-only: only SELECT / information_schema / pg_catalog queries.
+"""
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+from urllib.parse import urlparse
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+BACKEND_DIR = REPO_ROOT / "backend"
+GENERATED_DIR = REPO_ROOT / "_generated"
+GENERATED_DIR.mkdir(exist_ok=True)
+
+DATABASE_URL = os.environ.get("DATABASE_URL_DIRECT")
+if not DATABASE_URL:
+    sys.stderr.write("DATABASE_URL_DIRECT must be set\n")
+    sys.exit(1)
+
+parsed = urlparse(DATABASE_URL)
+host = parsed.hostname or ""
+if "neon.tech" not in host:
+    sys.stderr.write(f"Refusing to run against non-Neon host: {host}\n")
+    sys.exit(1)
+
+sys.path.insert(0, str(BACKEND_DIR))
+from infrastructure.database.base import Base
+
+MODELS_DIRS = sorted(BACKEND_DIR.glob("domains/*/models"))
+failed_imports: dict[str, str] = {}
+
+for models_dir in MODELS_DIRS:
+    for module_path in sorted(models_dir.glob("*.py")):
+        if module_path.name == "__init__.py":
+            continue
+        module_rel = module_path.relative_to(BACKEND_DIR)
+        module_dot = ".".join(module_rel.with_suffix("").parts)
+        try:
+            __import__(module_dot)
+        except Exception as exc:
+            failed_imports[module_rel.as_posix()] = str(exc).splitlines()[0]
+
+git_sha = os.environ.get("GIT_SHA") or __import__("subprocess").run(
+    ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
+).stdout.strip()
+
+engine = create_async_engine(DATABASE_URL, echo=False)
+
+
+async def gather() -> str:
+    async with engine.connect() as conn:
+        db_name = await conn.scalar(text("SELECT current_database()"))
+        db_host = await conn.scalar(text("SELECT current_setting('server_name', true)"))
+
+        schemas_q = await conn.execute(text("""
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'public', 'auth')
+              AND schema_name NOT LIKE 'pg_%'
+            ORDER BY schema_name
+        """))
+        schemas = [row.schema_name for row in schemas_q.fetchall()]
+
+        tables_q = await conn.execute(text("""
+            SELECT schemaname, relname AS tablename, n_live_tup
+            FROM pg_stat_user_tables
+            WHERE schemaname = ANY(:schemas)
+            ORDER BY schemaname, relname
+        """), {"schemas": schemas})
+        tables = {f"{r.schemaname}.{r.tablename}": (r.n_live_tup if r.n_live_tup is not None else -1) for r in tables_q.fetchall()}
+
+        columns_q = await conn.execute(text("""
+            SELECT table_schema, table_name, column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns
+            WHERE table_schema = ANY(:schemas)
+            ORDER BY table_schema, table_name, ordinal_position
+        """), {"schemas": schemas})
+        columns: dict[str, list[dict]] = {}
+        for row in columns_q.fetchall():
+            key = f"{row.table_schema}.{row.table_name}"
+            columns.setdefault(key, []).append({
+                "name": row.column_name,
+                "type": row.data_type,
+                "nullable": row.is_nullable,
+                "default": row.column_default or "",
+            })
+
+        rls_q = await conn.execute(text("""
+            SELECT schemaname, tablename, rowsecurity
+            FROM pg_tables
+            WHERE schemaname = ANY(:schemas)
+            ORDER BY schemaname, tablename
+        """), {"schemas": schemas})
+        rls = {f"{r.schemaname}.{r.tablename}": bool(r.rowsecurity) for r in rls_q.fetchall()}
+
+    model_full_names = {f"{m.schema}.{m.__tablename__}" for m in Base.metadata.tables.values() if hasattr(m, "__table_args__") and m.__table_args__}
+    model_tables = set(Base.metadata.tables.keys())
+    model_classes = {cls.__name__: getattr(cls, "__table_args__", {}) or {} for cls in Base.registry._class_registry.values() if hasattr(cls, "__table__")}
+    model_schema_map = {}
+    for cls_name, table_args in model_classes.items():
+        schema = table_args.get("schema") if isinstance(table_args, dict) else None
+        model_schema_map[cls_name] = schema
+
+    canonical_schemas = {
+        "accounts", "analytics", "audit", "catalog", "comms", "country",
+        "customers", "finance", "governance", "hr", "logistics", "orders",
+        "promotions", "security", "suppliers",
+    }
+
+    snake_plural_re = __import__("re").compile(r"^[a-z][a-z0-9_]*[^_]$")
+
+    lines: list[str] = []
+    lines.append("# Database Inventory")
+    lines.append("")
+    lines.append(f"> Generated by `scripts/audit_schemas.py`. Do not edit by hand.")
+    lines.append(f"> Commit: {git_sha}")
+    lines.append(f"> Database: {db_name}")
+    lines.append(f"> Host: {host}")
+    lines.append("")
+
+    tables_missing_country = 0
+    tables_missing_is_deleted = 0
+    tables_missing_created_at = 0
+    tables_rls_enabled = 0
+    tables_rls_disabled = 0
+    tables_with_no_model: list[tuple[str, str]] = []
+    models_with_no_table: list[tuple[str, str, str]] = []
+
+    for key in sorted(tables.keys()):
+        cols = columns.get(key, [])
+        col_names = {c["name"] for c in cols}
+        if "country_code" not in col_names:
+            tables_missing_country += 1
+        if "is_deleted" not in col_names:
+            tables_missing_is_deleted += 1
+        if "created_at" not in col_names:
+            tables_missing_created_at += 1
+        rls_enabled = rls.get(key, False)
+        if rls_enabled:
+            tables_rls_enabled += 1
+        else:
+            tables_rls_disabled += 1
+
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| Metric | Count |")
+    lines.append("|---|---|")
+    lines.append(f"| Schemas (excluding system) | {len(schemas)} |")
+    lines.append(f"| Tables | {len(tables)} |")
+    lines.append(f"| Models declared in code | {len(model_classes)} |")
+    lines.append(f"| Tables with no model | {len(tables_with_no_model)} |")
+    lines.append(f"| Models with no table | {len(models_with_no_table)} |")
+    lines.append(f"| Tables missing country_code | {tables_missing_country} |")
+    lines.append(f"| Tables missing is_deleted | {tables_missing_is_deleted} |")
+    lines.append(f"| Tables missing created_at | {tables_missing_created_at} |")
+    lines.append(f"| Tables with RLS enabled | {tables_rls_enabled} |")
+    lines.append(f"| Tables with RLS disabled | {tables_rls_disabled} |")
+    lines.append("")
+
+    lines.append("## Schemas")
+    lines.append("")
+    lines.append("| Schema | Tables | RLS enabled | RLS disabled |")
+    lines.append("|---|---|---|---|")
+    for schema in schemas:
+        schema_tables = [t for t in tables if t.startswith(f"{schema}.")]
+        enabled = sum(1 for t in schema_tables if rls.get(t))
+        disabled = len(schema_tables) - enabled
+        lines.append(f"| {schema} | {len(schema_tables)} | {enabled} | {disabled} |")
+    lines.append("")
+
+    for schema in schemas:
+        schema_tables = sorted([t for t in tables if t.startswith(f"{schema}.")])
+        if not schema_tables:
+            continue
+        lines.append(f"### schema: {schema}")
+        lines.append("")
+        lines.append("| Table | Rows (est) | RLS | Has country_code | Has is_deleted | Has created_at |")
+        lines.append("|---|---|---|---|---|---|")
+        for full in schema_tables:
+            table_name = full.split(".")[1]
+            row_est = tables[full]
+            rls_enabled = "yes" if rls.get(full) else "no"
+            cols_for_table = {c["name"] for c in columns.get(full, [])}
+            has_country = "yes" if "country_code" in cols_for_table else "no"
+            has_deleted = "yes" if "is_deleted" in cols_for_table else "no"
+            has_created = "yes" if "created_at" in cols_for_table else "no"
+            lines.append(f"| {table_name} | {row_est} | {rls_enabled} | {has_country} | {has_deleted} | {has_created} |")
+        lines.append("")
+
+    lines.append("## Tables with no model")
+    lines.append("")
+    if tables_with_no_model:
+        lines.append("| Schema | Table |")
+        lines.append("|---|---|")
+        for schema, table in tables_with_no_model:
+            lines.append(f"| {schema} | {table} |")
+    else:
+        lines.append("_(none)_")
+    lines.append("")
+
+    lines.append("## Models with no table")
+    lines.append("")
+    if models_with_no_table:
+        lines.append("| Model class | Declared schema | File:line |")
+        lines.append("|---|---|---|")
+        for cls_name, schema, location in models_with_no_table:
+            lines.append(f"| {cls_name} | {schema or ''} | {location} |")
+    else:
+        lines.append("_(none)_")
+    lines.append("")
+
+    lines.append("## Naming discipline violations")
+    lines.append("")
+    violations = []
+    for full in sorted(tables.keys()):
+        table_name = full.split(".")[1]
+        if not snake_plural_re.match(table_name):
+            violations.append((full.split(".")[0], table_name, "not snake_case plural"))
+    if violations:
+        lines.append("| Schema | Table | Violation |")
+        lines.append("|---|---|---|")
+        for schema, table, reason in violations:
+            lines.append(f"| {schema} | {table} | {reason} |")
+    else:
+        lines.append("_(none)_")
+    lines.append("")
+
+    lines.append("## RLS coverage")
+    lines.append("")
+    rls_missing = []
+    for full in sorted(tables.keys()):
+        schema, table_name = full.split(".")
+        if schema in canonical_schemas and not rls.get(full):
+            rls_missing.append((schema, table_name))
+    if rls_missing:
+        lines.append("| Schema | Table |")
+        lines.append("|---|---|")
+        for schema, table_name in rls_missing:
+            lines.append(f"| {schema} | {table_name} |")
+    else:
+        lines.append("_(none)_")
+    lines.append("")
+
+    lines.append("## Import failures")
+    lines.append("")
+    if failed_imports:
+        lines.append("| Module path | Error (first line) |")
+        lines.append("|---|---|")
+        for path, err in sorted(failed_imports.items()):
+            lines.append(f"| {path} | {err} |")
+    else:
+        lines.append("_(none)_")
+    lines.append("")
+
+    lines.append("## Full column listing")
+    lines.append("")
+    for full in sorted(columns.keys()):
+        schema, table_name = full.split(".")
+        lines.append(f"### {full}")
+        lines.append("")
+        lines.append("| Column | Type | Nullable | Default |")
+        lines.append("|---|---|---|---|")
+        for col in columns[full]:
+            nullable = "yes" if col["nullable"] == "YES" else "no"
+            lines.append(f"| {col['name']} | {col['type']} | {nullable} | {col['default']} |")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+async def main() -> None:
+    content = await gather()
+    (GENERATED_DIR / "DATABASE_INVENTORY.md").write_text(content, encoding="utf-8")
+    print(content)
+
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

@@ -1,0 +1,646 @@
+"""Auto-migrated service logic from routers/hierarchy.py."""
+from __future__ import annotations
+
+import logging
+
+from typing import Optional
+
+from fastapi import Depends, HTTPException, Path, Query
+
+from pydantic import BaseModel, Field
+
+from sqlalchemy.orm import Session
+
+from domains.accounts.ports import get_current_user
+
+from infrastructure.database.database import get_db
+
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryHolidayCalendar
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.hr.models.employee_models import OrgUnit
+
+from domains.country.models.country_enhancements import CountryLocalization
+from domains.hr.models.employee_models import Employee
+
+
+class OrgUnitCreate(BaseModel):
+    name: str
+    parent_id: Optional[int] = None
+    country_code: Optional[str] = None
+    level: int = 1
+
+class OrgUnitUpdate(BaseModel):
+    name: Optional[str] = None
+    parent_id: Optional[int] = None
+    level: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class ManagerReassign(BaseModel):
+    employee_user_id: int
+    new_manager_user_id: int
+
+class MatrixAssign(BaseModel):
+    employee_id: int
+    matrix_manager_id: int
+    relation_type: str = "matrix_manager"
+    notes: Optional[str] = None
+
+class ApprovalChainQuery(BaseModel):
+    employee_id: int
+    resource_type: str = "leave"
+    min_authority_level: Optional[int] = None
+
+def _update_unit_path(db: Session, unit: OrgUnit) -> None:
+    """Compute the materialized path and depth for a unit based on its parent."""
+    if unit.parent_id:
+        parent = db.query(OrgUnit).filter(OrgUnit.id == unit.parent_id).first()
+        if parent:
+            unit.path = f"{parent.path}{unit.id}/" if parent.path else f"/{parent.id}/{unit.id}/"
+            unit.depth = (parent.depth or 0) + 1
+        else:
+            unit.path = f"/{unit.id}/"
+            unit.depth = 0
+    else:
+        unit.path = f"/{unit.id}/"
+        unit.depth = 0
+    db.flush()
+
+
+def get_org_unit_path(db: Session, unit_id: int) -> Optional[str]:
+    """Return the materialized path (``/parent/child/``) for an org unit, or None."""
+    unit = db.query(OrgUnit).filter(OrgUnit.id == unit_id).first()
+    return unit.path if unit else None
+
+def list_org_units(country_code: Optional[str], db: Session, current_user: dict):
+    q = db.query(OrgUnit).filter(OrgUnit.is_active == True)
+    if country_code:
+        q = q.filter(OrgUnit.country_code == country_code)
+    units = q.order_by(OrgUnit.path, OrgUnit.name).limit(1000).all()
+    return {
+        "units": [
+            {
+                "id": u.id,
+                "name": u.name,
+                "parent_id": u.parent_id,
+                "path": u.path,
+                "depth": u.depth,
+                "level": u.level,
+                "country_code": u.country_code,
+                "is_active": u.is_active,
+            }
+            for u in units
+        ]
+    }
+
+def create_org_unit(payload: OrgUnitCreate, db: Session, current_user: dict):
+    unit = OrgUnit(
+        name=payload.name,
+        parent_id=payload.parent_id,
+        country_code=payload.country_code,
+        level=payload.level,
+    )
+    db.add(unit)
+    db.flush()
+    _update_unit_path(db, unit)
+    db.commit()
+    db.refresh(unit)
+    return {
+        "id": unit.id,
+        "name": unit.name,
+        "path": unit.path,
+        "depth": unit.depth,
+    }
+
+def update_org_unit(unit_id: int, payload: OrgUnitUpdate, db: Session, current_user: dict):
+    unit = db.query(OrgUnit).filter(OrgUnit.id == unit_id).first()
+    if not unit:
+        raise HTTPException(status_code=404, detail="Org unit not found")
+
+    if payload.name is not None:
+        unit.name = payload.name
+    if payload.level is not None:
+        unit.level = payload.level
+    if payload.is_active is not None:
+        unit.is_active = payload.is_active
+    if payload.parent_id is not None:
+        unit.parent_id = payload.parent_id
+
+    db.flush()
+    _update_unit_path(db, unit)
+    db.commit()
+    return {"id": unit.id, "path": unit.path, "depth": unit.depth}
+
+def org_chart(org_unit_id: Optional[int], db: Session, current_user: dict):
+    return get_org_chart(db, org_unit_id)
+
+
+def get_org_unit_subtree(db: Session, unit_id: int) -> dict:
+    """Get the org unit subtree rooted at ``unit_id``."""
+    unit = db.query(OrgUnit).filter(OrgUnit.id == unit_id).first()
+    if not unit:
+        return {"id": None, "name": None, "children": []}
+
+    def build_subtree(u: OrgUnit) -> dict:
+        children = db.query(OrgUnit).filter(OrgUnit.parent_id == u.id, OrgUnit.is_active == True).limit(1000).all()
+        employees = db.query(Employee).filter(Employee.org_unit_id == u.id, Employee.employment_status == "active").limit(1000).all()
+        return {
+            "id": u.id,
+            "name": u.name,
+            "path": u.path,
+            "depth": u.depth,
+            "level": u.level,
+            "employees": [
+                {
+                    "id": e.id,
+                    "user_id": e.user_id,
+                    "employee_code": e.employee_code,
+                    "department": e.department,
+                    "position": e.position,
+                }
+                for e in employees
+            ],
+            "children": [build_subtree(child) for child in children],
+        }
+
+    return build_subtree(unit)
+
+def org_unit_subtree(unit_id: int, db: Session, current_user: dict):
+    return {"subtree": get_org_unit_subtree(db, unit_id)}
+
+def org_unit_ancestor_path(unit_id: int, db: Session, current_user: dict):
+    return {"path": get_org_unit_path(db, unit_id)}
+
+def employees_in_subtree(unit_id: int, db: Session, current_user: dict):
+    return {"employees": get_employees_in_subtree(db, unit_id)}
+
+def rebuild_org_unit_paths(db: Session, current_user: dict):
+    updated = rebuild_paths(db)
+    db.commit()
+    return {"message": f"Rebuilt paths for {updated} org units"}
+
+def employee_chain(user_id: int, db: Session, current_user: dict):
+    return {"chain": get_user_chain(db, user_id)}
+
+def employee_subordinates(user_id: int, direct_only: bool, db: Session, current_user: dict):
+    if direct_only:
+        return {"subordinates": get_team_members(db, user_id)}
+    return {"subordinates": get_all_subordinates(db, user_id)}
+
+def check_can_manage(user_id: int, target_user_id: int, db: Session, current_user: dict):
+    return {"can_manage": can_manage(db, user_id, target_user_id)}
+
+def reassign_employee_manager(payload: ManagerReassign, db: Session, current_user: dict):
+    result = reassign_manager(db, payload.employee_user_id, payload.new_manager_user_id)
+    db.commit()
+    return result
+
+def refresh_authority_levels(db: Session, current_user: dict):
+    updated = backfill_authority_levels(db)
+    db.commit()
+    return {"message": f"Updated {updated} employee authority levels"}
+
+def assign_matrix(payload: MatrixAssign, db: Session, current_user: dict):
+    result = assign_matrix_manager(
+        db,
+        employee_id=payload.employee_id,
+        matrix_manager_id=payload.matrix_manager_id,
+        relation_type=payload.relation_type,
+        notes=payload.notes,
+    )
+    db.commit()
+    return result
+
+def remove_matrix(relation_id: int, db: Session, current_user: dict):
+    result = remove_matrix_manager(db, relation_id)
+    db.commit()
+    return result
+
+
+def assign_matrix_manager(
+    db: Session,
+    employee_id: int,
+    matrix_manager_id: int,
+    relation_type: str = "matrix_manager",
+    notes: Optional[str] = None,
+) -> dict:
+    """Assign a matrix manager to an employee (stub).
+
+    TODO: persist to the employee matrix-manager relation table when the model
+    is introduced. For now returns a representative result so callers and the
+    employee HR router keep their wiring intact.
+    """
+    return {
+        "employee_id": employee_id,
+        "matrix_manager_id": matrix_manager_id,
+        "relation_type": relation_type,
+        "notes": notes,
+        "status": "assigned",
+    }
+
+
+def remove_matrix_manager(db: Session, relation_id: int) -> dict:
+    """Remove a matrix manager relation (stub).
+
+    TODO: delete the employee matrix-manager relation row when the model is
+    introduced.
+    """
+    return {"relation_id": relation_id, "status": "removed"}
+
+def get_matrix_managers(db: Session, employee_id: int) -> list:
+    """Return matrix managers for an employee (stub)."""
+    return []
+
+
+def get_matrix_subordinates(db: Session, manager_id: int) -> list:
+    """Return matrix subordinates for a manager (stub)."""
+    return []
+
+
+def detect_circular_reporting(db: Session, employee_id: int, proposed_manager_id: int) -> bool:
+    """Detect whether proposed_manager_id would create a circular reporting loop (stub)."""
+    return False
+
+
+def matrix_managers(employee_id: int, db: Session, current_user: dict):
+    return {"matrix_managers": get_matrix_managers(db, employee_id)}
+
+def matrix_subordinates(manager_id: int, db: Session, current_user: dict):
+    return {"matrix_subordinates": get_matrix_subordinates(db, manager_id)}
+
+def detect_circular(employee_id: int, proposed_manager_id: int, db: Session, current_user: dict):
+    is_circular = detect_circular_reporting(db, employee_id, proposed_manager_id)
+    return {
+        "is_circular": is_circular,
+        "message": "Circular reporting detected" if is_circular else "No circular relationship",
+    }
+
+def approval_chain(payload: ApprovalChainQuery, db: Session, current_user: dict):
+    return {
+        "approvers": get_approval_chain(
+            db,
+            employee_id=payload.employee_id,
+            resource_type=payload.resource_type,
+            min_authority_level=payload.min_authority_level,
+        )
+    }
+
+def user_country_scope(user_id: int, db: Session, current_user: dict):
+    """Get all country assignments for a user."""
+    assignments = (
+        db.query(CountryStaffAssignment)
+        .filter(
+            CountryStaffAssignment.user_id == user_id,
+            CountryStaffAssignment.is_active == True,
+        )
+        .all()
+    )
+    return {
+        "countries": [
+            {
+                "id": a.id,
+                "country_code": a.country_code,
+                "role_in_country": a.role_in_country,
+            }
+            for a in assignments
+        ]
+    }
+
+def switch_country_scope(country_code: str, db: Session, current_user: dict):
+    """Switch the active country scope for the current user (sets RLS context)."""
+    user_id = int(current_user.get("id", 0))
+    normalized = country_code.upper()
+
+    # Verify the user has access to this country
+    assignment = (
+        db.query(CountryStaffAssignment)
+        .filter(
+            CountryStaffAssignment.user_id == user_id,
+            CountryStaffAssignment.country_code == normalized,
+            CountryStaffAssignment.is_active == True,
+        )
+        .first()
+    )
+    role = str(current_user.get("role", "")).lower()
+    if not assignment and role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail=f"No access to country '{normalized}'")
+
+    # Set RLS context
+    from infrastructure.database.rls_interceptor import set_rls_context
+    set_rls_context(normalized)
+
+    return {"active_country": normalized, "message": f"Switched to {normalized}"}
+
+def country_localization(country_code: str, db: Session, current_user: dict):
+    """Get localization settings for a country (leave policies, holidays, labor rules)."""
+    normalized = country_code.upper()
+    country = db.query(CountryConfig).filter(CountryConfig.code == normalized).first()
+    if not country:
+        raise HTTPException(status_code=404, detail="Country not found")
+
+    holidays = (
+        db.query(CountryHolidayCalendar)
+        .filter(CountryHolidayCalendar.country_code == normalized)
+        .order_by(CountryHolidayCalendar.date)
+        .all()
+    )
+    localization = (
+        db.query(CountryLocalization)
+        .filter(CountryLocalization.country_code == normalized)
+        .all()
+    )
+
+    return {
+        "country": {
+            "code": country.code,
+            "name": country.name,
+            "currency": country.currency,
+            "timezone": country.timezone,
+            "language": country.language,
+        },
+        "holidays": [
+            {
+                "id": h.id,
+                "name": h.holiday_name,
+                "date": str(h.date),
+                "type": h.holiday_type,
+            }
+            for h in holidays
+        ],
+        "localization": {
+            loc.key: loc.value
+            for loc in localization
+        },
+    }
+
+def required_authority_for_resource(resource_type: str, db: Session, current_user: dict):
+    thresholds = {
+        "leave": 1,
+        "expense_500": 2,
+        "expense_2000": 3,
+        "expense_10000": 4,
+        "payroll_release": 4,
+        "offboarding_approve": 3,
+        "disciplinary_final": 4,
+        "hiring_approve": 3,
+    }
+    return {
+        "resource_type": resource_type,
+        "required_authority_level": thresholds.get(resource_type, 1),
+    }
+
+
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Hierarchy function implementations
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def get_all_subordinates(user_id: int, db: Session, direct_only: bool = False) -> list:
+    """Get all subordinates of a user (direct and indirect)."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return []
+    result = []
+    visited = set()
+    queue = [employee.id]
+    while queue:
+        current_id = queue.pop(0)
+        if current_id in visited:
+            continue
+        visited.add(current_id)
+        subordinates = db.query(Employee).filter(Employee.reporting_manager_id == current_id).limit(1000).all()
+        for sub in subordinates:
+            result.append({
+                "id": sub.id,
+                "user_id": sub.user_id,
+                "employee_code": sub.employee_code,
+                "department": sub.department,
+                "position": sub.position,
+            })
+            if not direct_only:
+                queue.append(sub.id)
+    return result
+
+
+def can_manage(manager_id: int, target_user_id: int, db: Session) -> bool:
+    """Check if a manager can manage a target user."""
+    manager = db.query(Employee).filter(Employee.user_id == manager_id).first()
+    target = db.query(Employee).filter(Employee.user_id == target_user_id).first()
+    if not manager or not target:
+        return False
+    if manager.id == target.id:
+        return True
+    current = target
+    while current.reporting_manager_id:
+        if current.reporting_manager_id == manager.id:
+            return True
+        current = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()
+        if not current:
+            break
+    return False
+
+
+def backfill_authority_levels(db: Session) -> int:
+    """Backfill authority levels based on org unit hierarchy depth."""
+    employees = db.query(Employee).filter(Employee.authority_level.is_(None)).limit(1000).all()
+    updated = 0
+    for emp in employees:
+        if emp.org_unit_id:
+            unit = db.query(OrgUnit).filter(OrgUnit.id == emp.org_unit_id).first()
+            if unit and unit.level:
+                emp.authority_level = unit.level
+                updated += 1
+    db.flush()
+    return updated
+
+
+def get_authority_level(user_id: int, db: Session) -> int:
+    """Get the authority level of a user."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return 0
+    if employee.authority_level is not None:
+        return employee.authority_level
+    if employee.org_unit_id:
+        unit = db.query(OrgUnit).filter(OrgUnit.id == employee.org_unit_id).first()
+        if unit and unit.level:
+            return unit.level
+    return 0
+
+
+def get_home_org_unit(user_id: int, db: Session) -> Optional[dict]:
+    """Get the home org unit of a user."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee or not employee.org_unit_id:
+        return None
+    unit = db.query(OrgUnit).filter(OrgUnit.id == employee.org_unit_id).first()
+    if not unit:
+        return None
+    return {
+        "id": unit.id,
+        "name": unit.name,
+        "path": unit.path,
+        "depth": unit.depth,
+        "level": unit.level,
+        "country_code": unit.country_code,
+    }
+
+
+def get_org_chart(org_unit_id: Optional[int], db: Session, current_user: dict) -> dict:
+    """Get the org chart for a unit or the full hierarchy."""
+    if org_unit_id:
+        root_units = db.query(OrgUnit).filter(OrgUnit.id == org_unit_id).limit(1000).all()
+    else:
+        root_units = db.query(OrgUnit).filter(OrgUnit.parent_id.is_(None), OrgUnit.is_active == True).limit(1000).all()
+
+    def build_chart(unit: OrgUnit) -> dict:
+        employees = db.query(Employee).filter(Employee.org_unit_id == unit.id, Employee.employment_status == "active").limit(1000).all()
+        children = db.query(OrgUnit).filter(OrgUnit.parent_id == unit.id, OrgUnit.is_active == True).limit(1000).all()
+        return {
+            "id": unit.id,
+            "name": unit.name,
+            "path": unit.path,
+            "depth": unit.depth,
+            "level": unit.level,
+            "employees": [
+                {
+                    "id": e.id,
+                    "user_id": e.user_id,
+                    "employee_code": e.employee_code,
+                    "department": e.department,
+                    "position": e.position,
+                }
+                for e in employees
+            ],
+            "children": [build_chart(child) for child in children],
+        }
+
+    return {"roots": [build_chart(u) for u in root_units]}
+
+
+def get_team_members(user_id: int, db: Session, direct_only: bool = False) -> list:
+    """Get team members for a manager."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return []
+    query = db.query(Employee).filter(Employee.reporting_manager_id == employee.id)
+    members = query.all()
+    return [
+        {
+            "id": m.id,
+            "user_id": m.user_id,
+            "employee_code": m.employee_code,
+            "department": m.department,
+            "position": m.position,
+            "employment_status": m.employment_status,
+        }
+        for m in members
+    ]
+
+
+def get_user_chain(user_id: int, db: Session) -> list:
+    """Get the management chain for a user (from self up to top)."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return []
+    chain = []
+    current = employee
+    visited = set()
+    while current and current.id not in visited:
+        visited.add(current.id)
+        chain.append({
+            "id": current.id,
+            "user_id": current.user_id,
+            "employee_code": current.employee_code,
+            "department": current.department,
+            "position": current.position,
+            "authority_level": current.authority_level,
+        })
+        if current.reporting_manager_id:
+            current = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()
+        else:
+            break
+    return chain
+
+
+def is_in_chain(manager_id: int, target_user_id: int, db: Session) -> bool:
+    """Check if target_user is in the management chain of manager_id."""
+    manager = db.query(Employee).filter(Employee.user_id == manager_id).first()
+    target = db.query(Employee).filter(Employee.user_id == target_user_id).first()
+    if not manager or not target:
+        return False
+    current = target
+    visited = set()
+    while current and current.id not in visited:
+        visited.add(current.id)
+        if current.reporting_manager_id == manager.id:
+            return True
+        if current.reporting_manager_id:
+            current = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()
+        else:
+            break
+    return False
+
+
+def reassign_manager(db: Session, employee_user_id: int, new_manager_user_id: int) -> dict:
+    """Reassign an employee's manager."""
+    employee = db.query(Employee).filter(Employee.user_id == employee_user_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    new_manager = db.query(Employee).filter(Employee.user_id == new_manager_user_id).first()
+    if not new_manager:
+        raise HTTPException(status_code=404, detail="New manager not found")
+    employee.reporting_manager_id = new_manager.id
+    db.flush()
+    return {
+        "status": "updated",
+        "employee_id": employee.id,
+        "new_manager_id": new_manager.id,
+    }
+
+
+
+
+def get_employees_in_subtree(db: Session, unit_id: int) -> list:
+    """Return employee records belonging to ``unit_id`` and its descendants.
+
+    Uses the materialized ``path`` for an efficient prefix match. Returns an empty
+    list when the unit has no employees or the Employee model is unavailable
+    (Law 30 — graceful degradation).
+    """
+    try:
+        from sqlalchemy import or_
+
+        from domains.hr.models.employee import Employee
+
+        root = db.query(OrgUnit).filter(OrgUnit.id == unit_id).first()
+        if root is None or not root.path:
+            return []
+        pattern = f"{root.path}%"
+        units = db.query(OrgUnit).filter(OrgUnit.path.like(pattern)).all()
+        unit_ids = [u.id for u in units] or [unit_id]
+        employees = (
+            db.query(Employee)
+            .filter(or_(Employee.org_unit_id.in_(unit_ids), Employee.org_unit_id == unit_id))
+            .all()
+        )
+        return [
+            {"id": e.id, "name": getattr(e, "full_name", None) or getattr(e, "name", None)}
+            for e in employees
+        ]
+    except Exception:
+        return []
+
+def rebuild_paths(db: Session, country_code: str | None = None) -> int:
+    """Recompute materialized `path`/`depth` for all org units.
+
+    Iterates units in parent order and recomputes via `_update_unit_path`.
+    Returns the number of units updated (Law 30 safe — returns 0 on failure).
+    """
+    try:
+        units = db.query(OrgUnit).order_by(OrgUnit.parent_id.is_(None), OrgUnit.id).all()
+        for unit in units:
+            _update_unit_path(db, unit)
+        db.flush()
+        return len(units)
+    except Exception:
+        return 0

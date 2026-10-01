@@ -1,0 +1,63 @@
+{
+ "SYS_001": {
+  "files": [
+   "backend/models/communication/communication.py",
+   "backend/models/communication/core.py",
+   "backend/services/communication/chat_admin_service.py",
+   "backend/services/communication/chat_enrichment.py",
+   "backend/services/communication/chat_read_service.py",
+   "backend/services/communication/communication_audit.py",
+   "backend/services/communication/communication_write_service.py",
+   "backend/services/communication/entity_chat_service.py",
+   "backend/services/communication/internal_communication.py",
+   "backend/services/communication/proxy_communication.py",
+   "backend/services/communication/video_conferencing.py",
+   "backend/services/communication/websocket_chat.py",
+   "backend/services/core/chat_system.py",
+   "backend/services/hr/employee_communication_service.py",
+   "frontend/web_app/e2e/admin-communication-hub.spec.ts",
+   "frontend/web_app/src/app/admin/employees/_tabs/CommunicationsTab.tsx",
+   "frontend/web_app/src/components/admin/AdminChatPanel.tsx",
+   "frontend/web_app/src/components/admin/AdminVideoPanel.tsx",
+   "frontend/web_app/src/components/comms/CommShell.tsx",
+   "frontend/web_app/src/components/comms/Stage/Stage.tsx",
+   "frontend/web_app/src/components/comms/Stage/renderers/ChatStream.tsx",
+   "frontend/web_app/src/components/comms/Stage/renderers/VideoRoom.tsx",
+   "frontend/web_app/src/hooks/useChatWebSocket.ts",
+   "frontend/web_app/src/hooks/useWebSocket.ts"
+  ],
+  "pct": 59.8
+ },
+ "SYS_002": {
+  "files": [
+   "backend/controllers/catalog/admin_products_controller.py",
+   "backend/controllers/catalog/flash_sale_controller.py",
+   "backend/controllers/catalog/products.py",
+   "backend/controllers/catalog/products_controller.py",
+   "backend/controllers/catalog/search_controller.py",
+   "backend/services/catalog/products_read_service.py",
+   "backend/services/catalog/products_write_service.py",
+   "backend/services/catalog/search_service.py",
+   "frontend/mobile_app/app/flash-sales.tsx",
+   "frontend/mobile_app/app/offers.tsx"
+  ],
+  "pct": 61.9
+ },
+ "SYS_031": {
+  "files": [
+   "backend/models/treasury/finance.py",
+   "backend/services/finance/bank_transaction_service.py",
+   "backend/services/finance/cash_management_service.py",
+   "backend/services/finance/finance_automation.py",
+   "backend/services/finance/finance_transfer_service.py",
+   "backend/services/finance/general_ledger_service.py",
+   "backend/services/finance/payments_gateway_service.py",
+   "backend/services/finance/refund_posting_service.py",
+   "backend/services/finance/treasury_adapter.py",
+   "backend/services/treasury/auto_payout_scheduler.py",
+   "backend/services/treasury/payout_admin_service.py",
+   "backend/services/treasury/payout_batch_service.py"
+  ],
+  "pct": 75.2
+ }
+}

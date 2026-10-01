@@ -1,0 +1,6 @@
+flash_sale_whatsapp
+المملكة العربية السعودية (SA) locale variant
+Subject: عرض خاطف! 🔥
+Body: 🔥 عرض خاطف!
+{discount_text} على {product_name}.
+تسوّقوا الآن: {product_url}

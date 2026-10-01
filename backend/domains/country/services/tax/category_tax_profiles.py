@@ -1,0 +1,1 @@
+"""Category tax profiles."""

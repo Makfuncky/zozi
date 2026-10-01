@@ -1,0 +1,5 @@
+{
+  "_comment": "Ratchet baseline for tests/test_circuit_contract.py. CIR1 must stay at 0. CIR2 is the advisory routers->services / routers->models / controllers->models migration backlog; lower this number as the migration proceeds, never raise it.",
+  "max_cir1_violations": 0,
+  "max_cir2_bypasses": 82
+}

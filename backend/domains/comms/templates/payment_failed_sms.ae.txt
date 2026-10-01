@@ -1,0 +1,4 @@
+payment_failed_sms
+الإمارات العربية المتحدة (AE) locale variant
+Subject: فشلت عملية الدفع
+Body: فشلت عملية الدفع لطلبك رقم {order_id}. يرجى المحاولة مرة أخرى.

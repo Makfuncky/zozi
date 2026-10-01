@@ -1,0 +1,5 @@
+welcome_whatsapp
+المملكة العربية السعودية (SA) locale variant
+Subject: مرحباً بكم في زوزي 👋
+Body: 👋 مرحباً بكم في زوزي!
+ابدأوا التسوق الآن.

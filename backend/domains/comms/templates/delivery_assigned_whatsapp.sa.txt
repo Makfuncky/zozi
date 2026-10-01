@@ -1,0 +1,5 @@
+delivery_assigned_whatsapp
+المملكة العربية السعودية (SA) locale variant
+Subject: تم تعيين سائق للتوصيل 🚛
+Body: 🚛 تم تعيين سائق لتوصيل طلبكم رقم {order_id}.
+السائق: {driver_name}

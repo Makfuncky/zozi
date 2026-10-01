@@ -1,0 +1,1 @@
+# promotions domain — banners service

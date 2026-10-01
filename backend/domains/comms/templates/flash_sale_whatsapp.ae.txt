@@ -1,0 +1,6 @@
+flash_sale_whatsapp
+الإمارات العربية المتحدة (AE) locale variant
+Subject: عرض خاطف! 🔥
+Body: 🔥 عرض خاطف!
+{discount_text} على {product_name}.
+تسوّق الآن: {product_url}

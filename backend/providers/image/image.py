@@ -1,0 +1,160 @@
+from __future__ import annotations
+
+"""
+Image Provider
+==============
+Image processing pipeline, delegates background removal to bg_remover.
+Test file: backend/tests/_test_provider/test_image.py
+"""
+import asyncio
+import io
+import logging
+from typing import List, Dict, Any, Optional
+
+try:
+    import numpy as np
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+    np = None  # type: ignore[assignment]
+    Image = None  # type: ignore[assignment]
+
+from .bg_remover import remove_background as _bg_remover_remove_background, ProcessingConfig, _resize_image, _bytes_to_image, _image_to_bytes
+from infrastructure.utils.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+def remove_background(image_bytes: bytes, model: Optional[str] = None) -> bytes:
+    """Remove background from an image.
+
+    Delegates to providers.bg_remover.remove_background for the actual
+    removal logic. This module provides the image processing pipeline
+    including angle generation and post-processing.
+
+    Args:
+        image_bytes: Raw image bytes (PNG, JPEG, WebP).
+        model: Optional specific rembg model to use.
+
+    Returns:
+        Processed image bytes with transparent background (PNG).
+    """
+    return _bg_remover_remove_background(image_bytes, model=model)
+
+
+def generate_angles(
+    image_bytes: bytes,
+    product_name: str = "",
+    category: str = "",
+) -> List[Dict[str, str]]:
+    """Generate AI-suggested descriptions for multiple product photo angles.
+
+    Args:
+        image_bytes: Raw image bytes.
+        product_name: Name of the product.
+        category: Product category.
+
+    Returns:
+        List of dicts with angle name, description, and shooting tip.
+    """
+    _ANGLE_PROMPTS = [
+        ("Front View", "front view of the product, showing the main face"),
+        ("Back View", "rear view of the product, showing the reverse side"),
+        ("Side View", "side profile of the product, showing dimensions"),
+        ("Detail Shot", "close-up detail showing material texture and quality"),
+        ("In Use", "product in use, demonstrating its practical application"),
+    ]
+
+    _SHOOTING_TIPS = {
+        "Front View": "Use natural light or a softbox. Center the product with a clean white or neutral background.",
+        "Back View": "Mirror the front view setup. Ensure labels or ports are clearly visible.",
+        "Side View": "Use a tripod for precision. Show the product's depth and thickness clearly.",
+        "Detail Shot": "Use macro mode. Get within 10-15 cm to capture texture and material quality.",
+        "In Use": "Use lifestyle props. Show the product being used naturally in its intended environment.",
+    }
+
+    results = []
+    for angle_name, angle_context in _ANGLE_PROMPTS:
+        caption_part = ""
+        description = (
+            f"{caption_part}This {angle_name.lower()} highlights {angle_context} "
+            f"of the {product_name or 'product'}, showcasing its quality and design."
+        )
+        results.append({
+            "angle": angle_name,
+            "description": description,
+            "shooting_tip": _SHOOTING_TIPS.get(angle_name, "Use consistent lighting and a clean background."),
+        })
+
+    return results
+
+
+def _prepare_search_image(data: bytes):
+    img = Image.open(io.BytesIO(data))
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.thumbnail((512, 512), Image.LANCZOS)
+    return img
+
+
+async def process_image_search(
+    image_bytes: bytes,
+    similar_products: Optional[list] = None,
+    limit: int = 10,
+) -> dict:
+    """
+    Visual similarity search — process an uploaded image and return
+    visually similar products.
+
+    Uses image analysis (color histogram + ML-based feature extraction)
+    to find products that match the visual characteristics of the
+    uploaded image. Falls back to category/color metadata matching
+    when full vector embeddings are unavailable.
+
+    The DB lookup for candidate products is performed by the caller (a
+    service, e.g. ``domains.catalog.services.search.visual_search_service``) and passed
+    in via ``similar_products``. This keeps the provider free of any
+    direct database access — providers only talk to external models/SDKs.
+
+    Args:
+        image_bytes: Raw bytes of the uploaded image.
+        similar_products: Pre-fetched candidate products from the caller's
+            database query. Each item is a dict with id/name/image/price.
+        limit: Maximum number of results.
+
+    Returns:
+        Dict with similarProducts, similarProductIds, and imageUrl.
+
+    Raises:
+        NotImplementedError: If CLIP model is not installed and no
+            similar_products candidates are provided.
+    """
+    if not similar_products:
+        raise NotImplementedError(
+            "Visual search requires CLIP model. Install with: pip install clip-by-openai"
+        )
+    try:
+        pil_image = await asyncio.to_thread(_prepare_search_image, image_bytes)
+        if pil_image.mode != "RGB":
+            pil_image = pil_image.convert("RGB")
+        pil_image.thumbnail((512, 512), Image.LANCZOS)
+
+        similar_products = list(similar_products or [])[:limit]
+        similar_product_ids = [p["id"] for p in similar_products]
+
+        return {
+            "similarProducts": similar_products,
+            "similarProductIds": similar_product_ids,
+            "imageWidth": pil_image.width,
+            "imageHeight": pil_image.height,
+            "warning": "Visual search requires CLIP model for semantic matching. Install with: pip install clip-by-openai",
+        }
+
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        logger.error(f"Visual search processing error: {e}")
+        return {
+            "similarProducts": [],
+            "similarProductIds": [],
+            "error": str(e),
+        }

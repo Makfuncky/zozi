@@ -1,0 +1,4 @@
+payout_initiated_sms
+المملكة العربية السعودية (SA) locale variant
+Subject: تم بدء صرف الأرباح
+Body: تم بدء صرف مبلغ {amount}. الرقم المرجعي: {payout_id}

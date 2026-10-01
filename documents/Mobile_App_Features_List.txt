@@ -1,0 +1,438 @@
+# ZOZI Mobile App — Complete Feature & UI/UX Analysis
+
+## Goal
+Comprehensive analysis of the entire `frontend/mobile_app` codebase to understand feature implementation patterns and identify UI/UX improvements needed for the Expo/React Native mobile application.
+
+## Constraints & Preferences
+- **Hard dependency on `@zozi/shared`** via `file:../shared` symlink — local development only, not publishable to npm without restructuring.
+- **Android-emulator-bound API host** (`10.0.2.2:8000`) with no environment-configurable override for native builds beyond `EXPO_PUBLIC_API_URL`.
+- **React 19.2** + **React Native 0.83** — very recent, cutting-edge versions; some peer-dependency ranges in `shared` don't strictly cover RN 0.83 (`^0.76.0` max).
+- **New Architecture** enabled (`newArchEnabled: true` in app.json).
+- **Test environment is Node/JSDOM-based** (not React Native), so tests rely on heavy mocking.
+
+## Progress
+### Done
+- Analyzed app config (`app.json`, `package.json`, `tsconfig.json`, `metro.config.js`, `jest.config.js`)
+- Read root `_layout.tsx`, tab `_layout.tsx`, and `index.tsx` (entry redirect)
+- Cataloged all screen files under `app/`
+- Read all key `lib/*.ts` stores (auth, cart, wishlist, notifications, locale, currency, theme, recently viewed, search history, background jobs, user realtime)
+- Inspected shared package (`frontend/shared/src/`) — types, theme, api-core, i18n, business helpers, stores
+- Read representative screens from all four roles: customer, supplier, admin, logistics-partner
+- Inspected component library (`components/ui/`, `components/`)
+
+### In Progress
+- None.
+
+### Blocked
+- None.
+
+## Key Decisions
+- **Expo Router (file-based routing)** with a root `Stack` containing four major branch stacks: `(auth)`, `(tabs)`, `supplier`, `logistics-partner`, plus standalone modals (`checkout`, `wishlist`, `chatbot`).
+- **Zustand** as the sole state-management library (6+ stores).
+- **`@zozi/shared` as single source of truth** for types, theme tokens, API client factory, i18n, business helpers, and some shared Zustand stores (notifications).
+- **SecureStore + in-memory token cache** for auth; bearer-token auth with no CSRF cookie.
+- **Country/currency context** injected via React Context at root, persisted cross-session, and sent as `X-Country-Code` header on every request.
+- **Batch-debounced backend translation API** (`/translate`) with a 2000-entry in-memory cache for Arabic/English dynamic UI text.
+- **Real-time updates** via shared `@shared/realtime` WebSocket helper, consumed by admin dashboard, notifications, tickets, and order tracking.
+
+## Next Steps
+- Perform a feature-parity audit against `frontend/web_app` to identify missing screens (e.g., supplier storefront customization, admin user management detail, barcode scanning flows).
+- Validate accessibility: many screens lack `accessibilityLabel`, `accessibilityRole`, focus management, and screen-reader testing.
+- Add skeleton/loading/empty states consistently across list screens that currently show bare `ActivityIndicator` or nothing.
+- Extract inline `StyleSheet.create` blocks into shared style helpers to reduce duplication.
+- Add integration tests for checkout flow and screen-level navigation scenarios beyond the current unit-test focus.
+- Consider splitting `lib/api.ts` into domain modules (auth, products, orders, logistics, supplier, admin) — it is now ~1800 lines.
+
+## Relevant Files
+```
+frontend/mobile_app/app/_layout.tsx
+frontend/mobile_app/app/(tabs)/_layout.tsx
+frontend/mobile_app/app/(tabs)/home.tsx
+frontend/mobile_app/app/(tabs)/products/index.tsx
+frontend/mobile_app/app/(tabs)/products/[id].tsx
+frontend/mobile_app/app/(tabs)/cart.tsx
+frontend/mobile_app/app/(tabs)/orders/index.tsx
+frontend/mobile_app/app/(tabs)/profile.tsx
+frontend/mobile_app/app/checkout.tsx
+frontend/mobile_app/app/tracking/[id].tsx
+frontend/mobile_app/app/chatbot.tsx
+frontend/mobile_app/app/flash-sales.tsx
+frontend/mobile_app/app/search.tsx
+frontend/mobile_app/app/wishlist.tsx
+frontend/mobile_app/app/admin/dashboard.tsx
+frontend/mobile_app/app/supplier/dashboard.tsx
+frontend/mobile_app/app/supplier/orders.tsx
+frontend/mobile_app/app/supplier/products/index.tsx
+frontend/mobile_app/app/supplier/products/new.tsx
+frontend/mobile_app/app/logistics-partner/dashboard.tsx
+frontend/mobile_app/app/logistics-partner/scan.tsx
+frontend/mobile_app/lib/api.ts
+frontend/mobile_app/lib/authStore.ts
+frontend/mobile_app/lib/cartStore.ts
+frontend/mobile_app/lib/wishlistStore.ts
+frontend/mobile_app/lib/notificationStore.ts
+frontend/mobile_app/lib/localeStore.ts
+frontend/mobile_app/lib/currencyStore.ts
+frontend/mobile_app/lib/themeStore.ts
+frontend/mobile_app/lib/recentlyViewedStore.ts
+frontend/mobile_app/lib/searchHistoryStore.ts
+frontend/mobile_app/lib/backgroundJobStore.ts
+frontend/mobile_app/lib/effectStore.ts
+frontend/mobile_app/lib/userRealtime.ts
+frontend/mobile_app/lib/useTranslate.ts
+frontend/mobile_app/lib/homeInsights.ts
+frontend/mobile_app/lib/productRouteFilters.ts
+frontend/mobile_app/lib/supplierShipmentWorkspace.ts
+frontend/mobile_app/lib/supplierProductForm.ts
+frontend/mobile_app/lib/supplierProductAi.ts
+frontend/mobile_app/lib/adminManagementUtils.ts
+frontend/mobile_app/lib/logisticsPayoutInsights.ts
+frontend/mobile_app/lib/globalErrorHandler.ts
+frontend/mobile_app/lib/toastStore.ts
+frontend/mobile_app/components/ui/index.ts
+frontend/mobile_app/components/ui/ProductCard.tsx
+frontend/mobile_app/components/ui/ProductGrid.tsx
+frontend/mobile_app/components/ui/EmptyState.tsx
+frontend/mobile_app/components/ui/LoadingSpinner.tsx
+frontend/mobile_app/components/ui/LoadingSkeleton.tsx
+frontend/mobile_app/components/ui/SearchBar.tsx
+frontend/mobile_app/components/ui/QuickFilters.tsx
+frontend/mobile_app/components/Header.tsx
+frontend/mobile_app/components/HeroBanner.tsx
+frontend/mobile_app/components/Recommendations.tsx
+frontend/mobile_app/components/RecentlyViewed.tsx
+frontend/mobile_app/theme/index.ts
+frontend/mobile_app/theme/animations.ts
+frontend/shared/src/types.ts
+frontend/shared/src/theme.ts
+frontend/shared/src/api-core.ts
+frontend/shared/src/i18n.ts
+frontend/shared/src/checkoutHelpers.ts
+frontend/shared/src/cartHelpers.ts
+frontend/shared/src/realtime.ts
+frontend/shared/src/realtime.ts
+frontend/shared/src/adminPermissions.ts
+frontend/shared/src/notificationStore.ts
+frontend/shared/src/productQuery.ts
+frontend/shared/src/utils.ts
+frontend/mobile_app/app.json
+frontend/mobile_app/package.json
+frontend/mobile_app/tsconfig.json
+frontend/mobile_app/metro.config.js
+frontend/mobile_app/jest.config.js
+```
+
+---
+
+## Detailed Findings
+
+### 1. Architecture & Structure
+
+#### Folder Layout
+```
+frontend/mobile_app/
+├── app/                        # Expo Router screens (file-based routing)
+│   ├── _layout.tsx             # Root Stack
+│   ├── index.tsx               # Redirects to (tabs)/home
+│   ├── (auth)/                 # Auth stack
+│   ├── (tabs)/                 # Main bottom-tab navigator
+│   │   ├── _layout.tsx         # Tabs layout with animated icons + badges
+│   │   ├── home.tsx
+│   │   ├── products/
+│   │   ├── orders/
+│   │   ├── search.tsx
+│   │   ├── cart.tsx
+│   │   └── profile.tsx
+│   ├── admin/
+│   ├── supplier/
+│   ├── logistics-partner/
+│   ├── checkout.tsx
+│   ├── wishlist.tsx
+│   ├── chatbot.tsx
+│   └── tracking/[id].tsx
+├── components/
+│   ├── ui/                     # Reusable primitive components
+│   └── [feature components]
+├── lib/                        # Stores, API client, utilities
+├── theme/
+├── assets/
+├── e2e/                        # Detox end-to-end tests
+├── .env
+├── app.json
+└── package.json
+```
+
+#### Routing & Navigation
+- **Root Stack** (`app/_layout.tsx`): A single `expo-router/Stack` with named branch routes: `(auth)`, `(tabs)`, `checkout`, `wishlist`, `chatbot`, `supplier`, `logistics-partner`.
+- **Tab Navigator** (`app/(tabs)/_layout.tsx`): 5 tabs: Home, Shop (hidden from tab bar but routable), Search, Cart, Profile.
+- **Supplier Stack**: Purple header (`#7C3AED`). Guards with `useAuthStore` — redirects non-suppliers.
+- **Logistics Stack**: Blue header (`#0369a1`). Allows admin, sub_admin, and logistics_partner roles.
+- **Auth Stack**: `headerShown: false` for seamless auth flow.
+- **`app/index.tsx`**: Simple `<Redirect href="/(tabs)/home" />`.
+
+#### State Management
+- **Zustand** (v5) as the only state-management library.
+- **Mobile-local stores**: auth, cart, wishlist, theme, locale, currency, recently viewed, search history, notification, background job, effect.
+- **Context**: `CountryProvider` wraps the app in root layout.
+
+#### API Communication
+- **`lib/api.ts`** is the single API module (~1800 lines).
+- Built on `createApiClient` from `@shared/api-core`, which handles token refresh, auth expiry callbacks, and interceptors.
+- Token storage: `expo-secure-store` on native, `localStorage` on web, with an **in-memory cache** for the access token.
+- Base URL: defaults to `http://10.0.2.2:8000` (Android emulator), overridable via `EXPO_PUBLIC_API_URL`.
+- Auto-injects `X-Country-Code` header from persisted country selection.
+
+#### Auth
+- **`lib/authStore.ts`** (Zustand): `initialize()`, `login()`, `logout()`, `refresh()`.
+- **Social login**: UI shows Google/Facebook capability status fetched from `/auth/oauth/providers`, but the actual social sign-in flow is not implemented in mobile.
+
+---
+
+### 2. Feature Inventory
+
+#### Customer Screens
+- Home — curated content, flash sales, recommendations
+- Products — full catalog with filters (category, price, rating, brand, color, in-stock, supplier, trending, new arrivals, discount)
+- Product Detail — images, sizes, colors, variants, supplier info, add to cart/wishlist, reviews
+- Search — products + suppliers, history suggestions, quick filters, sort chips
+- Cart — quantity controls, promo code, free-shipping progress, availability warnings
+- Checkout — multi-step modal (cart → delivery → payment), address management, coupon validation, multiple payment methods
+- Orders — list with filter tabs (all, active, delivered, cancelled), pagination, cancel
+- Order Detail / Tracking — timeline, shipment events, return eligibility, receipt
+- Wishlist — sorting, bulk add-to-cart, share, move-to-cart, remove
+- Profile — avatar, orders summary, referral program, change password, addresses, logout
+- Returns — list return/replacement requests with status badges
+- Referrals — code, link, history, share bonus claiming
+- Tickets — support tickets list + create form with file attachment
+- Chatbot — AI chat modal with product result cards
+- Flash Sales — countdown timers, product listings
+- Coupons — copy-to-clipboard, expiry warnings
+- Notifications — feed, mark read/delete, realtime refresh
+- Settings — country, currency, language pickers
+- Barcode Scan — barcode/QR entry point
+- Write Review — product review form
+- Newsletter — subscribe form
+
+#### Supplier Screens
+- Dashboard — stats, onboarding checklist, stock alerts, revenue/orders/products/pending counts
+- Orders — list with hub-grouped sections, parcel photo upload, invoice workspace summary
+- Products — CRUD, AI suggestions, bulk actions
+- Create/Edit Product — media picker, AI description generation, variant templates
+- Payouts — history + finance summary + settlements
+- Reports — analytics/reporting
+- Profile — view/edit
+- Upload — document upload flow
+- Returns — return management
+- Support — ticket creation
+- Notification Preferences
+- Regions — service regions management
+- Logistics — partner logistics selection
+- Login/Register — dedicated supplier auth
+
+#### Admin Screens
+- Dashboard — tabbed hub (analytics, users, suppliers, orders, products, moderation, coupons, tickets, flash-sales, audit, staff, compare, insights, banners)
+- Orders — list with status update modal, search, filter by status
+- Products — soft-delete/restore
+- Users — user management
+- Suppliers — pending supplier approval/rejection
+- Analytics — revenue, orders, users, products KPIs + chatbot analytics
+- Coupons, Flash-Sales, Promotions, Banners, Returns, Invoices, Exports, Audit Logs, Product Verification, Barcode, Email, Bank Accounts
+- Login — dedicated admin login
+
+#### Logistics Partner Screens
+- Dashboard — stats, analytics, channel breakdown, active shipments, live map, route plan, SLA alerts
+- Shipments — paginated list with status filters, inline status update modal, map link
+- Scan — barcode scan, status action buttons, signature pad for delivery
+- Analytics — partner-specific analytics
+- Payouts — history + finance summary
+- Profile — profile + service areas + document upload
+- Register/Login — partner auth
+
+---
+
+### 3. Component Patterns
+
+#### Reusable Primitive UI Library (`components/ui/`)
+- `Button`, `Input` — form primitives with theme-aware styling
+- `Badge` — status/pill with variants (default, warning, info, success, danger)
+- `Card`, `GlassCard` — surface containers
+- `ProductCard` / `ProductGrid` — product rendering in grid/list
+- `LoadingSpinner`, `LoadingSkeleton` (with `ProductCardSkeleton`, `ProductGridSkeleton`)
+- `EmptyState` — reusable empty list placeholder
+- `ErrorAlert` — inline error display
+- `ErrorBoundary` — class-based error boundary
+- `SearchBar`, `QuickFilters` — search/filter UI
+- `SearchableSelect` — dropdown with search
+- `ThemeToggle` — sun/moon toggle
+- `TranslatedText` — translation-aware text wrapper
+- `CurrencyInit`, `ErrorHandlerInit` — bootstrapping components
+- `Logo` — ZOZI logo
+
+#### Feature Components
+- `HeroBanner` — carousel/banner slider
+- `HomeProductShowcase` — product showcase widget
+- `Recommendations` — AI recommendation feed
+- `RecentlyViewed` — recently viewed products carousel
+- `NewsletterSignup` — newsletter capture
+- `CartItem` — cart line item
+- `OrderCard` — order summary card
+- `QuickViewModal` — quick product preview
+- `AuthRequiredModal` — gate for unauthenticated actions
+- `SignaturePad` — touch signature capture
+- `MobileBackgroundEffect` — animated background effect
+- `UserRealtimeBridge` — WebSocket connection manager
+- `BackgroundJobCenter` — background job tracker UI
+- `ToastContainer` / `Toast` — global toast notifications
+- `MobileSeasonalBanner`, `LimitedTimeOfferBanner` — promotional banners
+
+#### Common Patterns
+- `makeStyles(theme)` returns shared style tokens (`container`, `surface`, `text`, `btnPrimary`, etc.)
+- `createStyles(theme)` inside each screen for screen-specific styles — **heavy repetition** of `card`, `section`, `row` patterns
+- `useTranslateText` / `useTranslateTexts` hooks batch backend translation calls with 16ms debounce
+- `useThemeStore` + `useLocaleStore` + `useCurrencyStore` are virtually universal in every screen
+- `ActivityIndicator` + `FlatList` + `RefreshControl` + `useCallback` is the standard list pattern
+- `Alert.alert` is used for confirmations (delete, cancel order)
+- `LinearGradient` is conditionally required with `try/catch` fallback in many screens
+
+---
+
+### 4. UI/UX Analysis
+
+#### What's Working Well
+- **Cohesive dark-first design language** with coral (`#FF5C3A`) brand accent and consistent `surface0/surface1/surface2` layering
+- **Animated tab bar** with spring-scaled icons and badge counts is polished
+- **Comprehensive role-based navigation** — separate stacks for customer, supplier, admin, logistics partner with distinct header branding
+- **Real-time updates** integrated at the store/socket level
+- **Multi-currency + multi-language** deeply integrated
+- **Checkout flow** is the most elaborate screen, handling multiple payment methods, delivery details validation, tax/VAT breakdowns
+- **Supplier product form** includes AI-assisted description/media generation and variant templates
+- **Logistics partner scan screen** includes camera barcode scanning, signature pad, and state-machine-driven status action buttons
+- **Error boundary**, **global error handler init**, and **toast system** are wired at root layout
+
+#### What Needs Improvement
+
+**Style & Theming**
+- **Inline style explosion**: Most screens define 50–200 lines of `StyleSheet.create` locally. `makeStyles` only covers ~15 generic tokens. Significant repetition of `borderWidth: 1`, `borderRadius`, `padding`, `gap` patterns.
+- **Hardcoded colors** beyond theme palette: `#FF5C3A`, `#7CFC00`, `#32CD32`, `#f59e0b`, `#ef4444`, `#3b82f6` appear inline in dozens of places.
+
+**Loading & Error States**
+- **Inconsistent loading states**: Some screens use `LoadingSpinner`, others use `ActivityIndicator`, some use `Skeleton`, many admin screens show bare `ActivityIndicator` with no skeleton.
+- **Inconsistent empty states**: Only a subset of list screens use the `EmptyState` component; others render raw `Text` with hardcoded strings.
+- **Error state inconsistency**: `ErrorAlert` is used in checkout; elsewhere errors are either silent `catch {}` blocks or inline `Text` with hardcoded strings.
+
+**Accessibility**
+- Most `TouchableOpacity`s lack `accessibilityRole` and `accessibilityLabel`
+- `accessibilityHint` rarely used
+- No `testID` patterns on most screens
+- Color-only status indicators (badges) without text labels
+- No `accessibilityState` for busy/disabled buttons
+- No `accessibilityLiveRegion` for dynamic updates (cart count, notification count, order status)
+- Form inputs often lack explicit `accessibilityLabel`
+- No `minimumFontScale` / `maximumFontScale` set on `Text` components
+
+**Other Issues**
+- **No pull-to-refresh** on several list screens (admin orders, admin suppliers, supplier orders)
+- **Hardcoded text strings**: Some screens use raw strings like `"Are you a supplier?"` instead of the translation system; translation coverage is partial
+- **Large single-file components**: `admin/dashboard.tsx` is 1600+ lines, `checkout.tsx` is 1346 lines, `products/index.tsx` is 987 lines
+- **`lib/api.ts` is monolithic**: 1800+ lines. Should be split into domain-specific files
+- **Navigation type safety**: Many `router.push(... as never)` casts indicate missing route type definitions
+- **`Platform.OS === "web"` checks** scattered in `api.ts`, `_layout.tsx`, `currencyStore.ts` suggest web support is secondary
+- **`createStyles(theme)` recreates StyleSheet on every render** in many screens — a known RN anti-pattern
+
+---
+
+### 5. Gaps & Missing Features
+
+| Feature | Customer | Supplier | Admin | Logistics |
+|---|---|---|---|---|
+| Product catalog + filters | ✅ Full | — | ✅ Manage | — |
+| Product detail + variants | ✅ | ✅ Edit | ✅ Manage | — |
+| Cart + checkout | ✅ | — | — | — |
+| Order tracking + timeline | ✅ | ✅ Update | ✅ Manage | ✅ Own |
+| Returns / RMA | ✅ View | ✅ Manage | ✅ Manage | — |
+| Wishlist | ✅ | — | — | — |
+| Notifications + realtime | ✅ | ✅ | ✅ | ✅ |
+| Tickets / support | ✅ | ✅ | ✅ | ✅ |
+| AI Chatbot | ✅ | — | — | — |
+| Flash sales / coupons | ✅ | — | ✅ Manage | — |
+| Referral program | ✅ | — | — | — |
+| Address book | ✅ | — | — | — |
+| Multi-currency / i18n | ✅ | ✅ | ✅ | ✅ |
+| Payouts / finance | — | ✅ | — | ✅ |
+| Bank account management | — | ✅ | ✅ | ✅ |
+| Document upload | — | ✅ | — | ✅ |
+| Supplier onboarding | — | ✅ | ✅ Approve | — |
+| Product AI assist | — | ✅ | — | — |
+| Parcel photo proof | — | ✅ | — | — |
+| Shipment scanning | — | — | — | ✅ Full |
+| Live fleet map | — | — | — | ✅ |
+| Route plan / SLA alerts | — | — | — | ✅ |
+| Signature capture | — | — | — | ✅ |
+| Analytics / reports | — | ✅ | ✅ | ✅ |
+| Audit logs | — | — | ✅ | — |
+| Email campaigns | — | — | ✅ | — |
+| Barcode / QR management | — | — | ✅ | — |
+| Exports | — | — | ✅ | — |
+| Push notifications | Partial | Partial | Partial | Partial |
+| Deep linking (referral) | ✅ | — | — | — |
+
+**Missing / Incomplete Implementation:**
+1. **Social sign-in** is shown in the UI but not implemented for mobile
+2. **Payment web-redirect** (card, Tap, PayTabs, Thawani) opens external browser/web-app; no in-app WebView or payment SDK integration
+3. **Chatbot conversation history persistence** — no history beyond current session
+4. **Notification preferences** screen exists for supplier but not customer or admin
+5. **Order cancellation** only works for `pending`/`confirmed` statuses; no partial or multi-item cancellation
+6. **Return initiation from order detail** — returns are listed but initiating from order detail is unclear
+7. **Barcode scanner** entry point exists but not clearly wired to a product result screen
+8. **Invoice generation/download** exists but no visible PDF/share flow
+9. **Wishlist sharing** exists but no social/web sharing integration beyond `.Share`
+10. **Offline mode**: No explicit offline queue or SyncManager for cart/wishlist mutations
+11. **Supplier storefront public page** exists but customization from mobile is limited
+12. **Staff/HR features** referenced in comments but not present as distinct screens
+
+---
+
+### 6. Performance Concerns
+
+- **`Promise.allSettled` on home screen** loads 3 endpoints simultaneously — fine, but no stale-while-revalidate cache; every pull-to-refresh hits the network.
+- **`useTranslateTexts`** batch-calls `/translate` on every render cycle where locale is not `en` — screens with 20+ simultaneous translations (e.g., admin dashboard) generate large payloads.
+- **No `FlatList` `getItemLayout` / `windowSize` tuning** on long lists. `initialNumToRender` not set in most screens.
+- **`useCartStore` fetches full cart on every `addItem`** call (`fetchCart()`), causing redundant re-renders.
+- **No image caching strategy** beyond React Native's default; `expo-image` is a dependency but not obviously used for product images.
+
+---
+
+### 7. Developer Experience
+
+#### Adding a New Screen
+1. Create a new file under `app/` (or appropriate subfolder)
+2. Export a default React component — Expo Router picks it up automatically
+3. Required boilerplate: import `useThemeStore`, `makeStyles`, `createStyles`, define `StyleSheet.create`, handle loading/error/empty states manually
+4. **Risk**: Route paths are string literals passed to `router.push` with `as never` casts, bypassing TypeScript's typed routes
+
+#### Routing Structure
+- **File-based via Expo Router** with nested Stack + Tab navigators
+- **Hidden routes** in tabs use `href: null` to enable nested routing without showing in tab bar
+- **Modal routes** (`checkout`, `chatbot`) use `presentation: "modal"` at the root Stack level
+- **Route parameters** accessed via `useLocalSearchParams()` — works but lacks type safety
+
+#### Utilities Available
+- `lib/api.ts` — centralized API client with domain functions
+- `lib/useTranslate.ts` — batch translation hook with caching
+- `lib/homeInsights.ts` — category highlight builder
+- `lib/productRouteFilters.ts` — URL-param-to-filter-state mapper
+- `lib/supplierProductForm.ts` — supplier product form helpers
+- `lib/supplierProductAi.ts` — AI description/media helpers
+- `lib/adminManagementUtils.ts` — admin list/query helpers
+- `lib/supplierShipmentWorkspace.ts` — supplier shipment workspace counts
+- `lib/logisticsPayoutInsights.ts` — logistics payout calculations
+- `lib/toastStore.ts` — global toast notification system
+- `lib/backgroundJobs.ts` + `useBackgroundJobStore` — background job tracking
+- `@shared/*` — extensive cross-platform business logic library
+
+#### Testing Setup
+- **Jest** with `ts-jest`, `testEnvironment: 'node'`
+- **Tests** live in `lib/__tests__/` — unit tests for stores, API helpers
+- **Detox** configured for E2E with Android emulator configs
+- **Coverage gaps**: No component rendering tests for most screens; no integration tests for checkout flow
+- **Testing pain points**: Heavy mocking of React Native modules means tests validate logic but not actual native behavior

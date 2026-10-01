@@ -1,0 +1,4 @@
+order_shipped_sms
+المملكة العربية السعودية (SA) locale variant
+Subject: تم شحن طلبك
+Body: تم شحن طلبك رقم {order_id}. تتبع الشحنة: {tracking_url}
