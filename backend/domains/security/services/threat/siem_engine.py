@@ -108,7 +108,7 @@ class SIEMEngine:
             return None
 
     def _store_event(self, event: SecurityEvent):
-        """Store event in Redis."""
+        """Store event in Valkey."""
         key = f"siem:event:{event.event_id}"
         self.redis.setex(key, 86400, json.dumps(event.to_dict()))
 

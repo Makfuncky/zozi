@@ -160,7 +160,7 @@ class IPIntelligenceService:
         }
     
     def _check_bloom_filter(self, ip: str, filter_name: str) -> bool:
-        """Check if IP is in Redis Bloom Filter."""
+        """Check if IP is in Valkey Bloom Filter."""
         try:
             key = f"fraud:bloom:{filter_name}"
             return self.redis.execute_command("BF.EXISTS", key, ip) == 1
@@ -667,7 +667,7 @@ class FraudScoringEngine:
         return R * c
     
     def _check_velocity(self, key: str, event_type: str) -> bool:
-        """Check velocity limits using Redis sliding window."""
+        """Check velocity limits using Valkey sliding window."""
         window_key = f"fraud:velocity:{event_type}:{key}"
         limits = {
             "login": 5,

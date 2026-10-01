@@ -122,7 +122,7 @@ class TestHealthReadyBlocksOnFailingDep:
             "    assert resp.status_code == 503, resp.text\n"
             "    data = resp.json()\n"
             "    assert data['ready'] is False\n"
-            "    assert 'redis' in data['blocking_dependencies']\n"
+            "    assert 'valkey' in data['blocking_dependencies']\n"
         )
         result = _run_python_code(code)
         assert result.returncode == 0, (
@@ -145,9 +145,9 @@ class TestHealthEndpointAccuracy:
             "assert 'dependencies' in data\n"
             "deps = data['dependencies']\n"
             "assert 'database' in deps\n"
-            "assert 'redis' in deps\n"
+            "assert 'valkey' in deps\n"
             "assert deps['database']['status'] in ('ok', 'failed')\n"
-            "assert deps['redis']['status'] in ('ok', 'unavailable')\n"
+            "assert deps['valkey']['status'] in ('ok', 'unavailable')\n"
         )
         result = _run_python_code(code)
         assert result.returncode == 0, (
@@ -164,7 +164,7 @@ class TestHealthEndpointAccuracy:
             "client = TestClient(app)\n"
             "patches = [\n"
             "    patch.object(db_mod, 'check_connection_health', return_value=False),\n"
-            "    patch('infrastructure.utils.auth._get_redis', return_value=None),\n"
+            "    patch('infrastructure.valkey.client.get_valkey_health_status', return_value={'available': False}),\n"
             "]\n"
             "for p in patches:\n"
             "    p.start()\n"
@@ -174,7 +174,7 @@ class TestHealthEndpointAccuracy:
             "    data = resp.json()\n"
             "    assert data['status'] == 'degraded'\n"
             "    assert data['dependencies']['database']['status'] == 'failed'\n"
-            "    assert data['dependencies']['redis']['status'] == 'unavailable'\n"
+            "    assert data['dependencies']['valkey']['status'] == 'unavailable'\n"
             "finally:\n"
             "    for p in patches:\n"
             "        p.stop()\n"

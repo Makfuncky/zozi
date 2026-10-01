@@ -79,7 +79,7 @@ class AnomalyDetector:
             return False, 0.0, ""
 
     def _get_history(self, key: str) -> List[float]:
-        """Get history from Redis."""
+        """Get history from Valkey."""
         if not self.redis:
             return []
 
@@ -90,7 +90,7 @@ class AnomalyDetector:
             return []
 
     def _add_to_history(self, key: str, value: float):
-        """Add value to history in Redis."""
+        """Add value to history in Valkey."""
         if not self.redis:
             return
 
@@ -282,7 +282,7 @@ class ImpossibleTravelDetector:
         return self.EARTH_RADIUS_KM * c
 
     def _store_location(self, key: str, lat: float, lon: float, timestamp: float):
-        """Store location in Redis."""
+        """Store location in Valkey."""
         if not self.redis:
             return
 
@@ -334,7 +334,7 @@ class RiskScoringEngine:
         return risk_score > threshold
 
     def update_user_risk(self, user_id: int, score: float):
-        """Update user risk score in Redis."""
+        """Update user risk score in Valkey."""
         if not self.redis:
             return
 

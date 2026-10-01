@@ -110,23 +110,30 @@ async def health_check():
     valkey_status = get_valkey_health_status()
 
     deps = {
-        "database": "ok" if db_ok else "failed",
-        "valkey": "ok" if valkey_status.get("available") else "unavailable",
+        "database": {"status": "ok" if db_ok else "failed"},
+        "valkey": {"status": "ok" if valkey_status.get("available") else "unavailable"},
     }
 
     app_env = (settings.app_env or "").lower()
-    if app_env != "test":
-        if not db_ok or not valkey_status.get("available"):
-            return JSONResponse(
-                status_code=503,
-                content={
-                    "status": "unhealthy",
-                    "version": settings.app_version,
-                    "api_version": VERSION_PREFIX,
-                    "active_versions": get_active_versions(),
-                    "dependencies": deps,
-                }
-            )
+    if not db_ok or not valkey_status.get("available"):
+        if app_env == "test":
+            return {
+                "status": "degraded",
+                "version": settings.app_version,
+                "api_version": VERSION_PREFIX,
+                "active_versions": get_active_versions(),
+                "dependencies": deps,
+            }
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "version": settings.app_version,
+                "api_version": VERSION_PREFIX,
+                "active_versions": get_active_versions(),
+                "dependencies": deps,
+            }
+        )
 
     return {
         "status": "healthy",
@@ -140,11 +147,11 @@ async def health_check():
 @app.get("/health/deps")
 async def health_deps():
     from infrastructure.utils.config import settings
-    from infrastructure.utils.auth import _get_redis
     from infrastructure.database.database import check_connection_health, get_db
     from domains.finance.services.payments.payment_engine import _payment_provider_runtime_status
     from infrastructure.observability.circuit_breaker import get_all_breaker_stats
 
+    db_ok = check_connection_health()
     valkey_status = "ok" if _get_redis() else "unavailable"
     email_status = get_email_delivery_status()
 
@@ -162,6 +169,7 @@ async def health_deps():
     return {
         "runtime_profile": settings.runtime_profile,
         "dependencies": {
+            "database": {"status": "ok" if db_ok else "failed"},
             "valkey": {"status": valkey_status},
             "email": {"status": email_status.get("available", False) and "ok" or "unavailable"},
             "payments": {"status": payments_status},

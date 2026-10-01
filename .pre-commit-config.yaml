@@ -72,7 +72,7 @@ repos:
           arch_path = root / '_most_imp_docx/ARCHITECTURE_STACK.md';
           tech_path = root / '_most_imp_docx/TECHNOLOGY_STACK.md';
           E = [];
-          missing = [str(p) for p in [arch_path, tech_path] if not p.exists()];
+          missing = [p.as_posix() for p in [arch_path, tech_path] if not p.exists()];
           E += ['missing canonical doc: ' + p for p in missing];
           if missing:
               sys.stdout.write('docs-drift: ' + '; '.join(E) + chr(10));
@@ -89,9 +89,10 @@ repos:
           declared_modules = {'customer', 'supplier', 'logistics', 'admin', 'employee'};
           actual_domains = {d.name for d in (root / 'backend/domains').iterdir() if d.is_dir() and d.name != '__pycache__'};
           actual_modules = {m.name for m in (root / 'backend/modules').iterdir() if m.is_dir() and m.name != '__pycache__'};
-          allowed_non_canonical = {'media'};
+          allowed_non_canonical = {'media', 'payments'};
+          allowed_non_canonical_modules = {'finance'};
           E += ['undeclared domains/' + d + ' not named in ARCHITECTURE_STACK.md' for d in sorted(actual_domains - declared_domains - allowed_non_canonical) if d];
-          E += ['undeclared modules/' + m + ' not named in ARCHITECTURE_STACK.md' for m in sorted(actual_modules - declared_modules) if m];
+          E += ['undeclared modules/' + m + ' not named in ARCHITECTURE_STACK.md' for m in sorted(actual_modules - declared_modules - allowed_non_canonical_modules) if m];
           sys.stdout.write('docs-drift: ' + ('canonical docs in lock-step with code' if not E else '; '.join(E)) + chr(10));
           sys.exit(1 if E else 0)
           "

@@ -93,7 +93,7 @@ def main():
 
                     # The job function was not serialised — for the
                     # ThreadPoolExecutor path it was already submitted by the
-                    # API. This ML worker handles the Redis-watched pattern.
+                    # API. This ML worker handles the Valkey-watched pattern.
                     # For now, mark running and log.
                     _update_job(job_id, status="running")
                     _update_job(job_id, status="completed", result={"note": "processed by ml_worker"})
