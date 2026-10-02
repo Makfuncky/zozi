@@ -1,4 +1,4 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import path from "node:path";
 import { expect, test, devices, type Page, type TestInfo } from "@playwright/test";
 
@@ -38,7 +38,7 @@ const refreshCookieNames = new Set(["zozi_refresh", "refresh_token"]);
 
 const adminLogin: LoginConfig = {
   username: "admin@zozi.com",
-  password: "admin123",
+  password: "E2eAdmin#2026",
   landingRoute: "/admin/dashboard",
   expectedUrl: /\/admin\/dashboard(?:\?|$)/,
 };
@@ -196,3 +196,4 @@ test.describe("mobile panel audit", () => {
     });
   }
 });
+

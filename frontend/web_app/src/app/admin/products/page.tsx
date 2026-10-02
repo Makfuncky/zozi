@@ -13,6 +13,7 @@ import {
   Trash2,
   XCircle,
 } from "@/lib/icons";
+import { resolveImage } from "@/lib/utils";
 import AdminLayout from "@/components/AdminLayout";
 import BulkActionBar from "@/components/BulkActionBar";
 import InlineActionButtons from "@/components/InlineActionButtons";
@@ -200,7 +201,7 @@ function AdminProductsInner() {
         <div className="flex items-center gap-3">
           {p.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={p.image_url} alt="" className="h-9 w-9 flex-none rounded-lg border border-border object-cover"
+            <img src={resolveImage(p.image_url)} alt="" className="h-9 w-9 flex-none rounded-lg border border-border object-cover"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           ) : (
             <div className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-border bg-surface-2 text-text-faint">

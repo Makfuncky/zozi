@@ -1,0 +1,182 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--list"
+    ],
+    "configFile": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\playwright.config.ts",
+    "rootDir": "D:/Projects/10- E-COMMERCE WEBSITE/zozi/_browser_test/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\global-setup.ts",
+    "globalTeardown": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Projects/10- E-COMMERCE WEBSITE/zozi/_browser_test/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/Projects/10- E-COMMERCE WEBSITE/zozi/_browser_test/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.spec.ts",
+          "**/*.test.ts"
+        ],
+        "timeout": 30
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/html",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/run/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "reports/run/junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "ReferenceError: __dirname is not defined in ES module scope",
+      "stack": "ReferenceError: __dirname is not defined in ES module scope\n    at D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\cross-cutting\\bg-comparison-visual.spec.ts:39:33",
+      "location": {
+        "file": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\cross-cutting\\bg-comparison-visual.spec.ts",
+        "column": 33,
+        "line": 39
+      },
+      "snippet": "\u001b[90m   at \u001b[39mcross-cutting\\bg-comparison-visual.spec.ts:39\n\n\u001b[0m \u001b[90m 37 |\u001b[39m \u001b[90m// the browser loads images without CORS/file-protocol restrictions.\u001b[39m\n \u001b[90m 38 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 39 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mREPORT_DIR\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../../provider_test/bg_comparison\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 40 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mREPORT_FILE\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mjoin(\u001b[33mREPORT_DIR\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"index.html\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 41 |\u001b[39m\n \u001b[90m 42 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mBASE_PORT\u001b[39m \u001b[33m=\u001b[39m \u001b[35m7171\u001b[39m\u001b[33m;\u001b[39m\u001b[0m"
+    },
+    {
+      "message": "ReferenceError: __dirname is not defined in ES module scope",
+      "stack": "ReferenceError: __dirname is not defined in ES module scope\n    at D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\cross-cutting\\mobile-panel-audit.spec.ts:35:31",
+      "location": {
+        "file": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\cross-cutting\\mobile-panel-audit.spec.ts",
+        "column": 31,
+        "line": 35
+      },
+      "snippet": "\u001b[90m   at \u001b[39mcross-cutting\\mobile-panel-audit.spec.ts:35\n\n\u001b[0m \u001b[90m 33 |\u001b[39m }\u001b[33m;\u001b[39m\n \u001b[90m 34 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 35 |\u001b[39m \u001b[36mconst\u001b[39m repoRoot \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../..\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 36 |\u001b[39m \u001b[36mconst\u001b[39m artifactsDir \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mjoin(repoRoot\u001b[33m,\u001b[39m \u001b[32m\"artifacts\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"mobile-qa\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 37 |\u001b[39m \u001b[36mconst\u001b[39m refreshCookieNames \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mSet\u001b[39m([\u001b[32m\"zozi_refresh\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"refresh_token\"\u001b[39m])\u001b[33m;\u001b[39m\n \u001b[90m 38 |\u001b[39m\u001b[0m"
+    },
+    {
+      "message": "ReferenceError: __dirname is not defined in ES module scope",
+      "stack": "ReferenceError: __dirname is not defined in ES module scope\n    at D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\cross-cutting\\scaling_audit.spec.ts:214:18",
+      "location": {
+        "file": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\cross-cutting\\scaling_audit.spec.ts",
+        "column": 18,
+        "line": 214
+      },
+      "snippet": "\u001b[90m   at \u001b[39mcross-cutting\\scaling_audit.spec.ts:214\n\n\u001b[0m \u001b[90m 212 |\u001b[39m \u001b[36mconst\u001b[39m _isLoadTest \u001b[33m=\u001b[39m fs\n \u001b[90m 213 |\u001b[39m   \u001b[33m.\u001b[39mreadFileSync(\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 214 |\u001b[39m     path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../../backend/.env\"\u001b[39m)\u001b[33m,\u001b[39m\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 215 |\u001b[39m     \u001b[32m\"utf8\"\u001b[39m\n \u001b[90m 216 |\u001b[39m   )\n \u001b[90m 217 |\u001b[39m   \u001b[33m.\u001b[39mincludes(\u001b[32m\"RUNTIME_PROFILE=loadtest\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+    },
+    {
+      "message": "ReferenceError: __dirname is not defined in ES module scope",
+      "stack": "ReferenceError: __dirname is not defined in ES module scope\n    at D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\database.spec.ts:12:34",
+      "location": {
+        "file": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\database.spec.ts",
+        "column": 34,
+        "line": 12
+      },
+      "snippet": "\u001b[90m   at \u001b[39mdatabase.spec.ts:12\n\n\u001b[0m \u001b[90m 10 |\u001b[39m test\u001b[33m.\u001b[39mdescribe\u001b[33m.\u001b[39mconfigure({ timeout\u001b[33m:\u001b[39m \u001b[35m120\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mBACKEND_DIR\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../backend\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mALEMBIC_VERSIONS\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mjoin(\u001b[33mBACKEND_DIR\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"alembic\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"versions\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mDOMAINS_DIR\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mjoin(\u001b[33mBACKEND_DIR\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"domains\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 15 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mEXPECTED_SCHEMAS\u001b[39m \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mSet\u001b[39m([\u001b[0m"
+    },
+    {
+      "message": "ReferenceError: __dirname is not defined in ES module scope",
+      "stack": "ReferenceError: __dirname is not defined in ES module scope\n    at D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\admin\\finance-cod-proof-live.spec.ts:9:31",
+      "location": {
+        "file": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\admin\\finance-cod-proof-live.spec.ts",
+        "column": 31,
+        "line": 9
+      },
+      "snippet": "\u001b[90m   at \u001b[39mmodules\\admin\\finance-cod-proof-live.spec.ts:9\n\n\u001b[0m \u001b[90m  7 |\u001b[39m test\u001b[33m.\u001b[39mdescribe\u001b[33m.\u001b[39mconfigure({ timeout\u001b[33m:\u001b[39m \u001b[35m240\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m  8 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m \u001b[36mconst\u001b[39m repoRoot \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../..\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m \u001b[36mconst\u001b[39m seedOutputPath \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mjoin(repoRoot\u001b[33m,\u001b[39m \u001b[32m\"artifacts\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"playwright\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"finance-live-seed.json\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m \u001b[36mconst\u001b[39m pythonExecutable \u001b[33m=\u001b[39m process\u001b[33m.\u001b[39mplatform \u001b[33m===\u001b[39m \u001b[32m\"win32\"\u001b[39m\n \u001b[90m 12 |\u001b[39m   \u001b[33m?\u001b[39m path\u001b[33m.\u001b[39mjoin(repoRoot\u001b[33m,\u001b[39m \u001b[32m\".venv\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"Scripts\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"python.exe\"\u001b[39m)\u001b[0m"
+    },
+    {
+      "message": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\customer\\customer-cart.spec.ts",
+      "stack": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\customer\\customer-cart.spec.ts"
+    },
+    {
+      "message": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\customer\\customer-search.spec.ts",
+      "stack": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\customer\\customer-search.spec.ts"
+    },
+    {
+      "message": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\customer\\customer-wishlist.spec.ts",
+      "stack": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\customer\\customer-wishlist.spec.ts"
+    },
+    {
+      "message": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\logistics\\logistics-dashboard.spec.ts",
+      "stack": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\logistics\\logistics-dashboard.spec.ts"
+    },
+    {
+      "message": "ReferenceError: __dirname is not defined in ES module scope",
+      "stack": "ReferenceError: __dirname is not defined in ES module scope\n    at D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\logistics\\parcel-verification.spec.ts:30:35",
+      "location": {
+        "file": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\logistics\\parcel-verification.spec.ts",
+        "column": 35,
+        "line": 30
+      },
+      "snippet": "\u001b[90m   at \u001b[39mmodules\\logistics\\parcel-verification.spec.ts:30\n\n\u001b[0m \u001b[90m 28 |\u001b[39m \u001b[90m// ── Constants ────────────────────────────────────────────────────────────\u001b[39m\n \u001b[90m 29 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 30 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mPROJECT_ROOT\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../..\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 31 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mIMAGE_DIR\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../../image\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 32 |\u001b[39m\n \u001b[90m 33 |\u001b[39m \u001b[90m// ── Test ─────────────────────────────────────────────────────────────────\u001b[39m\u001b[0m"
+    },
+    {
+      "message": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\supplier\\supplier-orders-payouts.spec.ts",
+      "stack": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\supplier\\supplier-orders-payouts.spec.ts"
+    },
+    {
+      "message": "ReferenceError: __dirname is not defined in ES module scope",
+      "stack": "ReferenceError: __dirname is not defined in ES module scope\n    at D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\supplier\\supplier-product-upload.spec.ts:5:32",
+      "location": {
+        "file": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\supplier\\supplier-product-upload.spec.ts",
+        "column": 32,
+        "line": 5
+      },
+      "snippet": "\u001b[90m   at \u001b[39mmodules\\supplier\\supplier-product-upload.spec.ts:5\n\n\u001b[0m \u001b[90m 3 |\u001b[39m \u001b[36mimport\u001b[39m { \u001b[33mAPI_BASE\u001b[39m } \u001b[36mfrom\u001b[39m \u001b[32m\"../../../src/api\"\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 4 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 5 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mIMAGE_DIR\u001b[39m \u001b[33m=\u001b[39m path\u001b[33m.\u001b[39mresolve(__dirname\u001b[33m,\u001b[39m \u001b[32m\"../../../image\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m   |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 6 |\u001b[39m\n \u001b[90m 7 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m loginSupplier(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 8 |\u001b[39m   console\u001b[33m.\u001b[39mlog(\u001b[32m\"[login] Starting login...\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+    },
+    {
+      "message": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\supplier\\supplier-voice-to-catalog.spec.ts",
+      "stack": "Error: Cannot find module 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\src\\api' imported from D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\_browser_test\\tests\\modules\\supplier\\supplier-voice-to-catalog.spec.ts"
+    }
+  ],
+  "stats": {
+    "startTime": "2026-10-02T19:02:02.908Z",
+    "duration": 1274.971,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

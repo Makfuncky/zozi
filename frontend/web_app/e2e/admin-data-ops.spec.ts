@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
@@ -108,7 +108,7 @@ async function loginAsAdmin(page: Page, destination = "/admin/dashboard") {
   }
 
   await page.goto("/admin/login", { waitUntil: "domcontentloaded" });
-  await submitCredentialForm(page, "admin@zozi.com", "admin123");
+  await submitCredentialForm(page, "admin@zozi.com", "E2eAdmin#2026");
   try {
     await waitForSessionFlag(page, 30_000);
   } catch {
@@ -117,7 +117,7 @@ async function loginAsAdmin(page: Page, destination = "/admin/dashboard") {
     if (!(await hasSessionState(page))) {
       // Retry once with username-style credentials because some recovered login paths
       // are stricter than email-style identifiers during first-page hydration.
-      await submitCredentialForm(page, "admin", "admin123");
+      await submitCredentialForm(page, "admin", "E2eAdmin#2026");
     }
   }
   await waitForSessionFlag(page, 60_000);
@@ -125,7 +125,7 @@ async function loginAsAdmin(page: Page, destination = "/admin/dashboard") {
 
   if (await isAdminAccessGateVisible(page)) {
     await page.goto("/admin/login", { waitUntil: "domcontentloaded" });
-    await submitCredentialForm(page, "admin", "admin123");
+    await submitCredentialForm(page, "admin", "E2eAdmin#2026");
     await waitForSessionFlag(page, 60_000);
     await openProtectedRoute(page, destination, /\/admin\/(dashboard|finance)(?:\?|$)/, 120_000);
   }
@@ -193,3 +193,4 @@ test("admin exports workspace supports data download and backup operations", asy
   await expect(page.getByText(/Users export downloaded/i).first()).toBeVisible({ timeout: 120_000 });
   await expect(page.getByText(/Last file:\s*.*user/i).first()).toBeVisible({ timeout: 120_000 });
 });
+

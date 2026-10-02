@@ -17,9 +17,9 @@ class KMSEncryption:
     """AES-256-GCM encryption for sensitive data like national IDs, bank details."""
     
     def __init__(self, master_key: Optional[str] = None):
-        self.master_key = master_key or os.getenv("KMS_MASTER_KEY")
+        self.master_key = master_key or os.getenv("KMS_ENCRYPTION_KEY")
         if not self.master_key:
-            logger.warning("KMS_MASTER_KEY not set. KMS encryption is disabled.")
+            logger.warning("KMS_ENCRYPTION_KEY not set. KMS encryption is disabled.")
             self._enabled = False
         else:
             self._enabled = True

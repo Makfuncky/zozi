@@ -5,9 +5,12 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
-# Canonical home for the ``security`` schema (A3 / §26 ACC-01). Note: ``media``
-# schema's ``OCRResult`` keeps a FK to ``security.document_verifications`` and a
-# string-based relationship back to ``DocumentVerification``.
+# Canonical home for the ``security`` schema (A3 / §26 ACC-01). Note:
+# ``OCRResult`` is currently colocated in ``domains.accounts.models.onboarding``
+# under the ``accounts`` schema and re-exported via ``accounts.ports`` (CONTR-013).
+# It carries a FK to ``security.document_verifications.id`` and a string-based
+# relationship back to ``DocumentVerification``.  It will be migrated to a
+# dedicated ``media`` domain/schema once that domain is fully established.
 
 __all__ = ["AlertEscalationRule", "DocumentVerification", "KYCVerification"]
 

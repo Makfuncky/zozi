@@ -1,140 +1,150 @@
 # RESOLVER PLAN
 
-Generated: 2026-10-01T00:48:46.548315+00:00
-Time-box: Day 1 -> Day 9 (dispatch freeze) -> Day 10 (final loop-back)
+Generated: 2026-10-02T00:00:00Z
+Time-box: Day 1 → Day 9 (dispatch freeze) → Day 10 (final loop-back)
 
 ## Phase execution order
 
-### Phase emergency
+Files are processed in phase order. A file cannot be resolved until its
+dependencies are resolved.
 
+### Phase emergency (Day 1)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 20 | backend/domains/comms/models/cross_country_session.py | none | 1 | S (0h) |
-| 2 | FILE 108 | backend/config.py | none | 5 | L (6h) |
-| 3 | FILE 176 | backend/lifespan.py | none | 1 | — |
-| 4 | FILE 177 | backend/main.py | none | 2 | — |
+| 1 | FILE-2 | backend/__init__.py | — | 1 | 1h |
+| 2 | FILE-1 | backend/.env | — | 1 | 1h |
+| 3 | FILE-3 | backend/health_test_*.py | — | 1 | 2h |
+| 4 | FILE-4 | backend/run_tests.ps1, run_tests.sh | — | 1 | 1h |
+| 5 | FILE-5 | backend/uv.lock | — | 1 | 1h |
+| 6 | FILE-6 | backend/Dockerfile | — | 5 | 2h |
 
-### Phase boot
-
+### Phase boot (Day 2–3)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 88 | backend/scripts/fix_misplaced.py | none | 1 | — |
-| 2 | FILE 99 | .github/workflows/deploy.yml | none | 2 | — |
-| 3 | FILE 100 | .github/workflows/e2e.yml | none | 3 | — |
-| 4 | FILE 102 | .github/workflows/schema-audit.yml | none | 2 | — |
-| 5 | FILE 104 | .pre-commit-config.yaml | none | 1 | — |
-| 6 | FILE 119 | backend/jobs/celery_app.py | none | 3 | L (6h) |
-| 7 | FILE 123 | backend/jobs/periodic_tasks.py | none | 3 | M (3h) |
-| 8 | FILE 166 | backend/jobs/fraud_monitoring.py | none | 1 | — |
-| 9 | FILE 167 | backend/jobs/fx_revaluation.py | none | 1 | — |
-| 10 | FILE 168 | backend/jobs/ghost_order_detector.py | none | 1 | — |
-| 11 | FILE 169 | backend/jobs/mcp_server.py | none | 1 | — |
-| 12 | FILE 170 | backend/jobs/ml_worker.py | none | 2 | — |
-| 13 | FILE 171 | backend/jobs/payout_sweep.py | none | 1 | — |
-| 14 | FILE 172 | backend/jobs/payroll_run.py | none | 1 | — |
-| 15 | FILE 174 | backend/jobs/reconciliation_cron.py | none | 1 | — |
+| 1 | FILE-8 | backend/config.py | FILE-2 | 19 | 4h |
+| 2 | FILE-7 | backend/main.py | FILE-2 | 2 | 2h |
+| 3 | FILE-9 | backend/alembic/versions/* | — | 2 | 4h |
+| 4 | FILE-10 | backend/tests (collection errors) | FILE-2 | 3 | 2h |
 
-### Phase tech
-
+### Phase tech (Day 3)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 37 | backend/domains/catalog/services/search_service.py | none | 2 | — |
-| 2 | FILE 56 | backend/DOMAIN_ALLOWLIST.yaml | none | 1 | S (0.5h) |
-| 3 | FILE 71 | backend/infrastructure/utils/currency_service.py | none | 1 | — |
-| 4 | FILE 73 | backend/infrastructure/utils/free_image_tools.py | none | 1 | — |
-| 5 | FILE 74 | backend/infrastructure/utils/image_ai_service.py | none | 1 | — |
-| 6 | FILE 75 | backend/infrastructure/utils/media_service.py | none | 1 | — |
-| 7 | FILE 76 | backend/infrastructure/utils/media_storage.py | none | 1 | — |
-| 8 | FILE 78 | backend/middleware/country_context.py | none | 2 | — |
-| 9 | FILE 81 | backend/middleware/impossible_travel_middleware.py | none | 1 | — |
-| 10 | FILE 82 | backend/middleware/lifespan.py | none | 2 | — |
-| 11 | FILE 98 | .github/workflows/ci.yml | none | 2 | — |
-| 12 | FILE 114 | backend/infrastructure/observability/retry.py | none | 1 | S (1h) |
-| 13 | FILE 117 | backend/infrastructure/valkey/client.py | none | 2 | M (2h) |
-| 14 | FILE 118 | backend/jobs/ai_tasks.py | none | 1 | S (1h) |
-| 15 | FILE 120 | backend/jobs/email_tasks.py | none | 1 | S (1h) |
-| 16 | FILE 151 | backend/providers/payments/stripe_sdk.py | none | 1 | — |
-| 17 | FILE 179 | docker-compose.prod.yml | none | 2 | — |
-| 18 | FILE 180 | monitoring/alerts.yml | none | 1 | — |
-| 19 | FILE 181 | monitoring/docker-compose.monitoring.yml | none | 1 | — |
+| 1 | FILE-11 | backend/requirements.txt | — | 14 | 4h |
+| 2 | FILE-12 | .github/workflows/ci.yml | — | 1 | 1h |
+| 3 | FILE-13 | backend/providers/payments/paypal.py | — | 2 | 2h |
+| 4 | FILE-14 | backend/infrastructure/observability/metrics.py | — | 1 | 1h |
+| 5 | FILE-15 | backend/infrastructure/valkey/client.py | — | 1 | 1h |
+| 6 | FILE-16 | frontend/web_app/package.json | — | 9 | 2h |
+| 7 | FILE-17 | frontend/mobile_app/package.json | — | 5 | 2h |
+| 8 | FILE-18 | frontend/web_app/Dockerfile | — | 2 | 1h |
 
-### Phase db
-
+### Phase db (Day 3–4)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 11 | backend/domains/orders/services/orders_package_service.py | none | 1 | S (0.5h) |
-| 2 | FILE 14 | backend/alembic/versions/2026_09_03_0000-merge_20260831_0001_and_20260901_workspace.py | none | 1 | S (0.5h) |
-| 3 | FILE 16 | backend/domains/catalog/models/commission.py | none | 1 | S (0.5h) |
-| 4 | FILE 17 | backend/domains/catalog/models/products.py | none | 1 | M (1h) |
-| 5 | FILE 18 | backend/domains/comms/models/chat.py | none | 1 | S (0.5h) |
-| 6 | FILE 19 | backend/domains/comms/models/communication_schema_models.py | none | 2 | M (2h) |
-| 7 | FILE 22 | backend/domains/comms/services/shared/chat_threads_query.py | none | 1 | — |
-| 8 | FILE 23 | backend/domains/country/models/country_control.py | none | 1 | — |
-| 9 | FILE 26 | backend/domains/customers/models/cross_country_session.py | none | 1 | — |
-| 10 | FILE 27 | backend/domains/finance/models/general_ledger.py | none | 2 | — |
-| 11 | FILE 29 | backend/domains/finance/models/payments.py | none | 2 | — |
-| 12 | FILE 34 | backend/domains/promotions/models/promotion_config.py | none | 1 | — |
-| 13 | FILE 35 | backend/domains/promotions/models/promotion_ledger.py | none | 1 | — |
-| 14 | FILE 40 | backend/domains/hr/services/compliance_engine.py | none | 1 | — |
-| 15 | FILE 58 | backend/domains/accounts/ports.py | none | 1 | S (0.5h) |
-| 16 | FILE 107 | backend/alembic/versions/2026_07_30_0004-20260730_0004_create_event_tables.py | none | 3 | M (2h) |
+| 1 | FILE-19 | backend/domains/comms/models/communication.py | — | 25 | 4h |
+| 2 | FILE-20 | backend/domains/comms/models/chat.py | — | 9 | 2h |
+| 3 | FILE-21 | backend/domains/finance/models/general_ledger.py | — | 41 | 4h |
+| 4 | FILE-22 | backend/domains/security/models/fraud.py | — | 27 | 4h |
+| 5 | FILE-23 | backend/domains/comms/models/communication_schema_models.py | — | 16 | 2h |
+| 6 | FILE-24 | backend/domains/comms/models/marketing.py | — | 14 | 2h |
+| 7 | FILE-25 | backend/domains/comms/models/incident.py | — | 6 | 1h |
+| 8 | FILE-26 | backend/domains/comms/models/fraud.py | — | 1 | 1h |
+| 9 | FILE-27 | backend/domains/comms/models/message.py | — | 1 | 1h |
+| 10 | FILE-28 | backend/domains/comms/models/news.py | — | 1 | 1h |
+| 11 | FILE-29 | backend/domains/country/models/countries.py | — | 3 | 1h |
+| 12 | FILE-30 | backend/domains/country/models/country_basics.py | — | 1 | 1h |
+| 13 | FILE-31 | backend/domains/country/models/country_control.py | — | 8 | 2h |
+| 14 | FILE-32 | backend/domains/country/models/country_economics.py | — | 1 | 1h |
+| 15 | FILE-33 | backend/domains/country/models/country_enhancements.py | — | 16 | 2h |
+| 16 | FILE-34 | backend/domains/country/models/country_legal.py | — | 1 | 1h |
+| 17 | FILE-35 | backend/domains/country/models/country_tax.py | — | 1 | 1h |
+| 18 | FILE-36 | backend/domains/customers/models/cross_country_session.py | — | 2 | 1h |
+| 19 | FILE-37 | backend/domains/customers/models/customer_schema_models.py | — | 2 | 1h |
+| 20 | FILE-38 | backend/domains/finance/models/commission.py | — | 4 | 1h |
+| 21 | FILE-39 | backend/domains/finance/models/payments.py | — | 2 | 2h |
+| 22 | FILE-40 | backend/domains/finance/models/tax_rules.py | — | 4 | 1h |
+| 23 | FILE-41 | backend/domains/governance/models/admin.py | — | 2 | 1h |
+| 24 | FILE-42 | backend/domains/hr/models/employee_models.py | — | 6 | 1h |
+| 25 | FILE-43 | backend/domains/logistics/models/logistics_entities.py | — | 8 | 2h |
+| 26 | FILE-44 | backend/domains/logistics/models/logistics_schema_models.py | — | 1 | 1h |
+| 27 | FILE-45 | backend/domains/logistics/models/shipping_rules.py | — | 1 | 1h |
+| 28 | FILE-46 | backend/domains/media/models/media_asset.py | — | 1 | 1h |
+| 29 | FILE-47 | backend/domains/orders/models/order_entities.py | — | 7 | 2h |
+| 30 | FILE-48 | backend/domains/promotions/models/coupon_usage.py | — | 1 | 1h |
+| 31 | FILE-49 | backend/domains/promotions/models/promotion_config.py | — | 1 | 1h |
+| 32 | FILE-50 | backend/domains/suppliers/models/suppliers.py | — | 10 | 2h |
+| 33 | FILE-51 | backend/domains/accounts/models/user.py | — | 3 | 1h |
+| 34 | FILE-52 | backend/domains/catalog/models/products.py | — | 5 | 2h |
+| 35 | FILE-53 | backend/domains/catalog/models/upload_job.py | — | 1 | 1h |
 
-### Phase logic
-
+### Phase logic (Day 4–6)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 2 | backend/domains/catalog/services/commission_service.py | none | 1 | S (1h) |
-| 2 | FILE 5 | backend/domains/finance/services/data_import_service.py | none | 1 | M (1.5h) |
-| 3 | FILE 8 | backend/domains/finance/services/trading_service.py | none | 1 | M (2.5h) |
-| 4 | FILE 38 | backend/domains/finance/services/payments/payment_engine.py | none | 2 | — |
-| 5 | FILE 39 | backend/domains/finance/services/payments/payment_orchestrator.py | none | 3 | — |
-| 6 | FILE 42 | backend/domains/logistics/services/shipping_label.py | none | 1 | S (0.5h) |
-| 7 | FILE 43 | backend/domains/orders/services/admin_orders_service.py | none | 1 | S (0.5h) |
-| 8 | FILE 44 | backend/domains/orders/services/admin_orders_status_service.py | none | 1 | S (0.5h) |
-| 9 | FILE 45 | backend/domains/orders/services/core/admin.py | none | 1 | S (0.5h) |
-| 10 | FILE 48 | backend/domains/promotions/services/customer_coupons_create_service.py | none | 1 | S (0.5h) |
-| 11 | FILE 129 | backend/modules/admin/routers/accounts.py | none | 3 | M (2h) |
+| 1 | FILE-54 | backend/domains/finance/services/finance_service.py | FILE-8 | 2 | 2h |
+| 2 | FILE-55 | backend/domains/orders/services/orders_service.py | FILE-8 | 1 | 1h |
+| 3 | FILE-56 | backend/modules/customer/routers/orders.py | FILE-8 | 4 | 2h |
+| 4 | FILE-57 | backend/domains/finance/subscribers.py | FILE-54 | 1 | 4h |
+| 5 | FILE-58 | backend/domains/orders/services/returns/service.py | FILE-55 | 1 | 2h |
+| 6 | FILE-59 | backend/domains/finance/services/payments/payment_engine.py | FILE-8 | 3 | 2h |
+| 7 | FILE-60 | backend/domains/catalog/services/products/products_service.py | — | 3 | 2h |
+| 8 | FILE-61 | backend/domains/orders/services/core/order_engine.py | FILE-55 | 1 | 1h |
+| 9 | FILE-62 | backend/domains/logistics/services/core/service.py | — | 1 | 1h |
+| 10 | FILE-63 | backend/domains/security/services/fraud/fraud_detection_service.py | — | 1 | 2h |
 
-### Phase arch
-
+### Phase arch (Day 6–8)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 3 | backend/domains/catalog/services/products/products_service.py | none | 2 | L (8h) |
-| 2 | FILE 6 | backend/domains/finance/services/finance_service.py | none | 2 | M (3h) |
-| 3 | FILE 50 | backend/domains/suppliers/services/supplier_service.py | none | 1 | S (0.5h) |
-| 4 | FILE 63 | backend/domains/suppliers/services/supplier_shared.py | none | 10 | M (2h) |
-| 5 | FILE 64 | backend/infrastructure/database/seed/_common.py | none | 10 | M (2h) |
-| 6 | FILE 68 | backend/infrastructure/storage/storage.py | none | 3 | — |
-| 7 | FILE 69 | backend/infrastructure/utils/category_tree.py | none | 1 | — |
-| 8 | FILE 70 | backend/infrastructure/utils/country_rls.py | none | 2 | — |
-| 9 | FILE 72 | backend/infrastructure/utils/dependencies.py | none | 1 | — |
-| 10 | FILE 86 | backend/rbac/dependencies.py | none | 1 | — |
-| 11 | FILE 110 | backend/domains/orders/subscribers.py | none | 1 | M (2h) |
-| 12 | FILE 111 | backend/infrastructure/events/subscriber.py | none | 1 | M (2h) |
-| 13 | FILE 112 | backend/infrastructure/messaging/events/event_bus.py | FILE-7 | 1 | L (6h) |
-| 14 | FILE 113 | backend/infrastructure/messaging/events/event_publisher.py | FILE-8 | 1 | L (4h) |
-| 15 | FILE 121 | backend/jobs/event_workers.py | FILE-7, FILE-8 | 3 | L (4h) |
-| 16 | FILE 178 | backend/tests/architecture/test_law271_through_law295.py | none | 1 | — |
-| 17 | FILE 182 | monitoring/fraud_monitoring.py | none | 1 | — |
+| 1 | FILE-64 | backend/domains/finance/ports.py | — | 2 | 4h |
+| 2 | FILE-65 | backend/middleware/dependencies/auth.py | — | 1 | 2h |
+| 3 | FILE-66 | backend/middleware/dependencies/country_detection.py | — | 1 | 1h |
+| 4 | FILE-67 | backend/modules/admin/routers/finance.py | — | 1 | 1h |
+| 5 | FILE-68 | backend/modules/customer/routers/catalog.py | — | 1 | 2h |
+| 6 | FILE-69 | backend/modules/supplier/routers/accounts.py | — | 1 | 2h |
+| 7 | FILE-70 | backend/modules/logistics/routers/finance.py | — | 1 | 1h |
+| 8 | FILE-71 | backend/modules/finance/__init__.py | — | 2 | 2h |
+| 9 | FILE-72 | backend/domains/payments/__init__.py | — | 1 | 2h |
+| 10 | FILE-73 | backend/domains/media/ | — | 1 | 2h |
+| 11 | FILE-74 | backend/modules/admin/routers/orders.py | — | 3 | 2h |
+| 12 | FILE-75 | backend/modules/admin/routers/permissions.py | — | 1 | 1h |
+| 13 | FILE-76 | backend/modules/customer/routers/accounts.py | — | 1 | 1h |
+| 14 | FILE-77 | backend/modules/customer/routers/promotions.py | — | 1 | 1h |
+| 15 | FILE-78 | backend/modules/supplier/routers/audit.py | — | 2 | 1h |
+| 16 | FILE-79 | backend/providers/comms/sms.py | — | 1 | 1h |
+| 17 | FILE-80 | backend/providers/geography/geo.py | — | 1 | 1h |
+| 18 | FILE-81 | backend/providers/payments/config.py | — | 1 | 1h |
+| 19 | FILE-82 | backend/providers/news/, automation/, scanner/, voice/, analytics/ | — | 1 | 2h |
 
-### Phase security
-
+### Phase security (Day 8)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 60 | backend/domains/accounts/services/auth/auth_service.py | none | 1 | M (1h) |
-| 2 | FILE 124 | backend/middleware/authentication_middleware.py | none | 1 | S (1h) |
-| 3 | FILE 133 | backend/modules/customer/routers/accounts.py | none | 1 | M (3h) |
+| 1 | FILE-83 | backend/domains/finance/models/payments.py | — | 2 | 4h |
+| 2 | FILE-84 | backend/rbac/models/permission_entities.py | — | 1 | 2h |
+| 3 | FILE-85 | backend/infrastructure/observability/error_handler.py | — | 1 | 2h |
+| 4 | FILE-86 | backend/infrastructure/observability/logging_config.py | — | 1 | 1h |
+| 5 | FILE-87 | backend/infrastructure/storage/backup.py | — | 1 | 1h |
 
-### Phase frontend
-
+### Phase frontend (Day 1–8, parallel)
 | Order | FILE | Path | Depends on | Findings | Effort |
 |-------|------|------|------------|----------|--------|
-| 1 | FILE 90 | components/LocationPicker.tsx (frontend/mobile_app/components/LocationPicker.tsx) | none | 1 | — |
+| 1 | FILE-88 | frontend/web_app/src/app/admin/orders/page.tsx | — | 1 | 2h |
+| 2 | FILE-89 | frontend/web_app/src/components/ProductCard.tsx | — | 1 | 1h |
+| 3 | FILE-90 | frontend/web_app/src/lib/cartStore.ts | — | 1 | 2h |
+| 4 | FILE-91 | frontend/web_app/src/lib/useAdminApi.ts | — | 1 | 1h |
+| 5 | FILE-92 | frontend/shared/src/permissions.ts | — | 1 | 2h |
+| 6 | FILE-93 | frontend/shared/src/types.ts | — | 1 | 1h |
+| 7 | FILE-94 | frontend/mobile_app/lib/paymentService.ts | — | 1 | 2h |
+| 8 | FILE-95 | frontend/mobile_app/lib/authStore.ts | — | 1 | 1h |
+| 9 | FILE-96 | frontend/mobile_app/lib/socialAuth.ts | — | 1 | 1h |
+| 10 | FILE-97 | frontend/mobile_app/android/app/src/main/AndroidManifest.xml | — | 1 | 1h |
+| 11 | FILE-98 | frontend/mobile_app/app/_layout.tsx | — | 1 | 1h |
+| 12 | FILE-99 | frontend/mobile_app/lib/api.ts | — | 1 | 1h |
+| 13 | FILE-100 | frontend/mobile_app/e2e/ | — | 1 | 2h |
+| 14 | FILE-101 | frontend/web_app/src/ (TS errors) | — | 1 | 4h |
+| 15 | FILE-102 | frontend/web_app/next.config.ts | — | 1 | 1h |
+| 16 | FILE-103 | frontend/web_app/e2e/ | — | 1 | 2h |
+| 17 | FILE-104 | frontend/mobile_app/package.json + pnpm-lock.yaml | — | 7 | 2h |
+| 18 | FILE-105 | frontend/shared/src/permissions.ts + types.ts | — | 2 | 2h |
 
-### Phase defer
-
-| Order | FILE | Path | Depends on | Findings | Effort |
-|-------|------|------|------------|----------|--------|
-| 1 | FILE 101 | .github/workflows/rollback.yml | none | 1 | — |
-| 2 | FILE 103 | .github/workflows/security.yml | none | 2 | — |
-
+### Phase defer (Day 10)
+| FILE | Path | Reason |
+|------|------|--------|

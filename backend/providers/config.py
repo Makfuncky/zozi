@@ -7,6 +7,7 @@ Central configuration for all AI providers.
 Test file: backend/tests/_test_provider/test_ai_providers.py (config tests)
 """
 import os
+from config import settings
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -53,6 +54,7 @@ class ProviderConfig:
     ocr_max_file_size_mb: int = 25
 
     finance_ai_timeout: int = 30
+    ollama_ai_timeout: int = 30
 
     chatbot_max_history: int = 10
     chatbot_session_ttl_hours: int = 24
@@ -60,7 +62,7 @@ class ProviderConfig:
     search_default_limit: int = 20
     search_fuzzy_cutoff: float = 0.6
 
-    geo_default_country: str = os.environ.get("DEFAULT_COUNTRY", "US")
+    geo_default_country: str = os.environ.get("DEFAULT_COUNTRY", settings.default_country)
     geo_ipapi_timeout: int = 5
 
     analytics_default_period_days: int = 30

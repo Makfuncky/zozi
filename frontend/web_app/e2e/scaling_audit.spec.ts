@@ -1,5 +1,5 @@
-/**
- * Zozi Scaling Plan — Comprehensive Browser Test Suite
+﻿/**
+ * Zozi Scaling Plan â€” Comprehensive Browser Test Suite
  *
  * Covers all 6 resolved gaps + core functionality.
  * Run: cd frontend/web_app && npx playwright test e2e/scaling_audit.spec.ts
@@ -10,17 +10,17 @@ import path from "path";
 
 const API = "http://127.0.0.1:8000";
 
-// ── Health & Connectivity ─────────────────────────────────────────────────
+// â”€â”€ Health & Connectivity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("API health check returns 200", async ({ request }) => {
   const resp = await request.get(`${API}/health`);
   expect(resp.status()).toBe(200);
 });
 
-// ── Authentication (all roles) ─────────────────────────────────────────────
+// â”€â”€ Authentication (all roles) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const CREDENTIALS = [
-  ["admin", "admin@zozi.com", "admin123"],
+  ["admin", "admin@zozi.com", "E2eAdmin#2026"],
   ["supplier", "supplier@zozi.com", "supplier123"],
   ["customer", "customer@zozi.com", "customer123"],
 ] as const;
@@ -36,7 +36,7 @@ for (const [role, email, password] of CREDENTIALS) {
   });
 }
 
-// ── Product Search (FTS5) ──────────────────────────────────────────────────
+// â”€â”€ Product Search (FTS5) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("product search returns results", async ({ request }) => {
   const resp = await request.get(`${API}/api/products?search=test&limit=5`);
@@ -51,7 +51,7 @@ test("product search returns results", async ({ request }) => {
   }
 });
 
-// ── Pagination (offset + cursor) ───────────────────────────────────────────
+// â”€â”€ Pagination (offset + cursor) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("PageParams enforces max page size", async ({ request }) => {
   const resp = await request.get(`${API}/api/products?limit=9999`);
@@ -77,7 +77,7 @@ test("cursor pagination returns next_cursor if supported", async ({ request }) =
   }
 });
 
-// ── Storage Abstraction ────────────────────────────────────────────────────
+// â”€â”€ Storage Abstraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("uploads directory is accessible (local dev)", async ({ request }) => {
   const resp = await request.get(`${API}/uploads/`);
@@ -85,7 +85,7 @@ test("uploads directory is accessible (local dev)", async ({ request }) => {
   expect(resp.status()).not.toBe(500);
 });
 
-// ── Alembic & DB Health ───────────────────────────────────────────────────
+// â”€â”€ Alembic & DB Health â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("DB responds to health check", async ({ request }) => {
   const resp = await request.get(`${API}/health`);
@@ -94,7 +94,7 @@ test("DB responds to health check", async ({ request }) => {
   expect(body.status).toBe("healthy");
 });
 
-// ── Presigned Upload (dev-safe) ────────────────────────────────────────────
+// â”€â”€ Presigned Upload (dev-safe) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("presigned upload endpoint is reachable", async ({ request }) => {
   const resp = await request.post(`${API}/supplier/upload/presign`, {
@@ -106,7 +106,7 @@ test("presigned upload endpoint is reachable", async ({ request }) => {
   }
 });
 
-// ── File existence checks (code-level) ─────────────────────────────────────
+// â”€â”€ File existence checks (code-level) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("Dockerfile.worker exists with correct CMD", () => {
   
@@ -180,7 +180,7 @@ test("alembic merge migration exists with all heads", () => {
   expect(content).toContain("revision = 'opencode20260717a1'");
 });
 
-// ── Full-stack flow: login → browse → search ──────────────────────────────
+// â”€â”€ Full-stack flow: login â†’ browse â†’ search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("full user flow: login + browse + search", async ({ request }) => {
   // Login
@@ -207,7 +207,7 @@ test("full user flow: login + browse + search", async ({ request }) => {
   expect(searchResp.status()).not.toBe(500);
 });
 
-// ── Rate Limiting Integration ─────────────────────────────────────────────
+// â”€â”€ Rate Limiting Integration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const _isLoadTest = fs
   .readFileSync(
@@ -229,7 +229,7 @@ test("rate limit middleware responds with 429 under rapid failed logins", async 
   expect(statuses).toContain(429);
 });
 
-// ── Worker Script Import ──────────────────────────────────────────────────
+// â”€â”€ Worker Script Import â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("run_worker.py imports cleanly", () => {
   
@@ -243,7 +243,7 @@ test("run_worker.py imports cleanly", () => {
   expect(content).toContain("run_heavy_job");
 });
 
-// ── Storage Backend Interface ─────────────────────────────────────────────
+// â”€â”€ Storage Backend Interface â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test("storage.py has complete StorageBackend interface", () => {
   
@@ -264,3 +264,4 @@ test("storage.py has complete StorageBackend interface", () => {
   expect(content).toContain("def make_key");
   expect(content).toContain("def ext_for");
 });
+

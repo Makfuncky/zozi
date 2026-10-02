@@ -1,0 +1,60 @@
+{
+  "batch": 7,
+  "files": [
+    {
+      "path": "frontend/web_app/package.json, pnpm-lock.yaml",
+      "findings": [
+        {
+          "id": "BLOCKER-009",
+          "status": "VALID",
+          "evidence": "package.json lines 29, 34, 43, 44 show: framer-motion ^12.0.0 (installed 12.43.0), next 16.3.4, zod ^3.25.76 (installed 3.25.76), @stripe/react-stripe-js ^5.6.0 (installed 5.6.1). pnpm-lock.yaml confirms installed versions: framer-motion@12.43.0, next@16.3.4, @stripe/react-stripe-js@5.6.1, zod@3.25.76.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "All four dependency versions diverge from TECHNOLOGY_STACK.md §12-14 canonical versions (next 16.3.5, motion 13.2.0+, @stripe/react-stripe-js 6.9.0, zod 4.3.6). Finding is accurate and still applicable."
+        }
+      ]
+    },
+    {
+      "path": "frontend/web_app/pnpm-lock.yaml",
+      "findings": [
+        {
+          "id": "TECH-036",
+          "status": "VALID",
+          "evidence": "pnpm-lock.yaml line 4204: zustand@5.0.15. pnpm list confirms installed version is 5.0.15.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Lockfile version 5.0.15 differs from TECHNOLOGY_STACK.md §14 target 5.0.14."
+        },
+        {
+          "id": "TECH-037",
+          "status": "VALID",
+          "evidence": "pnpm-lock.yaml line 2790: jose@6.2.12. pnpm list confirms installed version is 6.2.12.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Lockfile version 6.2.12 differs from TECHNOLOGY_STACK.md §13 target 6.2.10."
+        },
+        {
+          "id": "TECH-038",
+          "status": "VALID",
+          "evidence": "pnpm-lock.yaml line 3841: tailwind-merge@3.7.0. pnpm list confirms installed version is 3.7.0.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Lockfile version 3.7.0 differs from TECHNOLOGY_STACK.md §13 target 3.5.0."
+        }
+      ]
+    },
+    {
+      "path": "backend/alembic/versions/*",
+      "findings": [
+        {
+          "id": "DB-001",
+          "status": "VALID",
+          "evidence": "Verified down_revision graph: 20260930_0002, 20260930_0003, 20260930_0006, 20260930_0007, and 20261001_0001 each have no child migrations pointing to them as down_revision. No other migration file declares any of these five as its parent. This confirms exactly 5 divergent heads.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Alembic heads command could not run due to ModuleNotFoundError in 2026_08_06_0001_add_analytics_audit_columns.py (missing migration_helpers), but static analysis of the revision graph confirms the 5-head divergence described in the finding. This violates ARCHITECTURE_STACK.md Law 49 (Linear migration history)."
+        }
+      ]
+    }
+  ]
+}

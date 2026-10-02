@@ -9,6 +9,7 @@ import {
   StyleSheet,
   type ViewStyle,
 } from "react-native";
+import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeStore } from "@/lib/themeStore";
 import { makeStyles, AppTheme } from "@/theme";
@@ -123,23 +124,23 @@ export function LocationPicker({
     applyPoint({ lat, lng });
   }, [applyPoint, latText, lngText]);
 
-  const handleUseMyLocation = useCallback(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      toast.error("Location services are not available on this device");
-      return;
+  const handleUseMyLocation = useCallback(async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        toast.error("Location permission is required to use this feature");
+        return;
+      }
+      setLocating(true);
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      setLocating(false);
+      applyPoint({ lat: position.coords.latitude, lng: position.coords.longitude });
+    } catch {
+      setLocating(false);
+      toast.error("Could not get your location");
     }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false);
-        applyPoint({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      () => {
-        setLocating(false);
-        toast.error("Could not get your location");
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   }, [applyPoint]);
 
   const handleClear = useCallback(() => {

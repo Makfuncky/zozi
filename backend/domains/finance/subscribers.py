@@ -1,22 +1,23 @@
 """finance domain event subscribers.
 
 Per Law 3, cross-domain *writes* happen only by consuming events here. This module
-registers listeners against the shared ``EventPublisher``. Wire it at boot by calling
-``register_finance_subscribers(publisher)`` from ``lifespan.py`` (kept optional so the
-domain stays importable without side effects).
-"""
+registers listeners on the canonical ``event_bus`` so the finance domain can
+react to events without importing sibling domains directly.
 
+Wire it at app startup by importing this module, or call
+``register_finance_subscribers()`` explicitly from ``lifespan.py``.
+"""
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Dict
 
-from infrastructure.messaging.events.event_publisher import EventPublisher
+from infrastructure.messaging.events.event_bus import subscribe
 
 logger = logging.getLogger(__name__)
 
 
-def _on_payment_confirmed(event: Any) -> None:
+def _on_payment_confirmed(payload: Dict[str, Any]) -> None:
     """React to a payment confirmed in the payments domain.
 
     The finance domain accrues commission and posts the corresponding
@@ -24,54 +25,34 @@ def _on_payment_confirmed(event: Any) -> None:
     """
     logger.info(
         "payment confirmed: order_id=%s amount=%s — accrue commission",
-        getattr(event, "order_id", "?"),
-        getattr(event, "amount", "?"),
+        payload.get("order_id", "?"),
+        payload.get("amount", "?"),
     )
     # Future: post commission accrual to TransactionLedger, update balances.
 
 
-def _on_payment_refunded(event: Any) -> None:
+def _on_payment_refunded(payload: Dict[str, Any]) -> None:
     """React to a payment refunded in the payments domain."""
     logger.info(
         "payment refunded: order_id=%s amount=%s — post refund ledger entry",
-        getattr(event, "order_id", "?"),
-        getattr(event, "amount", "?"),
+        payload.get("order_id", "?"),
+        payload.get("amount", "?"),
     )
     # Future: post RefundLedger entry, reverse commission accrual.
 
 
-def _on_order_completed(event: Any) -> None:
+def _on_order_completed(payload: Dict[str, Any]) -> None:
     """React to an order completion in the orders domain."""
     logger.info(
         "order completed: order_id=%s — post settlement journal",
-        getattr(event, "order_id", "?"),
+        payload.get("order_id", "?"),
     )
     # Future: post SupplierSettlement journal entry when order fulfils.
 
 
-def register_finance_subscribers(publisher: EventPublisher) -> None:
-    """Register all finance-domain event listeners.
-
-    Called once at app startup from ``lifespan.py``. Importing the event
-    classes lazily avoids hard dependencies on publishing domains that may
-    not be wired in every deployment.
-    """
-    # Payments-domain events we react to.
-    try:
-        from infrastructure.messaging.events import PaymentConfirmedEvent
-        from infrastructure.messaging.events import PaymentRefundedEvent
-
-        publisher.register_listener(PaymentConfirmedEvent, _on_payment_confirmed)
-        publisher.register_listener(PaymentRefundedEvent, _on_payment_refunded)
-    except ImportError:
-        logger.debug("Payment events not available — skipping finance payment listeners")
-
-    # Orders-domain events we react to (resolved lazily to avoid import cycle).
-    try:
-        from domains.orders.events import OrderCompleted
-
-        publisher.register_listener(OrderCompleted, _on_order_completed)
-    except ImportError:
-        logger.debug("OrderCompleted event not available — skipping finance order listener")
-
+def register_finance_subscribers() -> None:
+    """Register all finance-domain event listeners on the canonical event bus."""
+    subscribe("payments.confirmed", _on_payment_confirmed)
+    subscribe("payments.refunded", _on_payment_refunded)
+    subscribe("orders.order.completed", _on_order_completed)
     logger.info("Finance domain event subscribers registered")

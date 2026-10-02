@@ -14,7 +14,11 @@ logger = logging.getLogger(__name__)
     bind=True,
     name="tasks.email_tasks.send_email",
     max_retries=3,
-    default_retry_delay=60,
+    retry_backoff=True,
+    retry_jitter=True,
+    retry_backoff_max=60,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def send_email_task(
     self,
@@ -67,8 +71,12 @@ def send_email_task(
 @shared_task(
     bind=True,
     name="tasks.email_tasks.send_bulk_email",
-    max_retries=2,
-    default_retry_delay=120,
+    max_retries=3,
+    retry_backoff=True,
+    retry_jitter=True,
+    retry_backoff_max=120,
+    time_limit=600,
+    soft_time_limit=540,
 )
 def send_bulk_email_task(
     self,
@@ -129,7 +137,11 @@ def send_bulk_email_task(
     bind=True,
     name="tasks.email_tasks.send_password_reset",
     max_retries=3,
-    default_retry_delay=60,
+    retry_backoff=True,
+    retry_jitter=True,
+    retry_backoff_max=60,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def send_password_reset_task(
     self,
@@ -158,7 +170,11 @@ def send_password_reset_task(
     bind=True,
     name="tasks.email_tasks.send_verification_email",
     max_retries=3,
-    default_retry_delay=60,
+    retry_backoff=True,
+    retry_jitter=True,
+    retry_backoff_max=60,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def send_verification_email_task(
     self,

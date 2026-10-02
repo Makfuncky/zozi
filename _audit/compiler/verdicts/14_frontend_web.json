@@ -1,0 +1,671 @@
+{
+  "agent_id": "COMP-V13-14_frontend_web",
+  "dimension": "14_frontend_web",
+  "records_considered": 22,
+  "verdict_summary": {
+    "REAL": 21,
+    "FALSE_POSITIVE": 1,
+    "ALREADY_FIXED": 0,
+    "BLOCKED_BY_CONTRADICTION": 0,
+    "attestations_verified_not_dispatchable": 9,
+    "dispatchable_defects": 12,
+    "breakdown_by_packet_status": {
+      "PASS -> REAL (attestation verified, NOT a defect)": 9,
+      "PARTIAL -> REAL": 3,
+      "FAIL -> REAL": 2,
+      "MISSING -> REAL (feature gap, not a code defect)": 5,
+      "NOT_PROVIDED -> REAL (prioritized corrections P1/P2)": 2,
+      "UNVERIFIABLE -> FALSE_POSITIVE (duplicate of 14_frontend_web-14)": 1
+    },
+    "note": "IMPORTANT — read this before counting defects. Only 12 of the 21 REAL verdicts are dispatchable defects. The other 9 are PASS-status compliance attestations (records 2,3,4,5,6,7,9,11,12) that were verified cheaply and confirmed accurate; they are recorded REAL because the contract offers no separate 'attestation' verdict value and the cited evidence genuinely exists, but they MUST NOT be inflated into the defect count. Records 3, 4, 6, 9 and 12 are attestations that are only PARTIALLY valid — each has a real problem that was routed to coverage_gaps rather than turned into a defect. Records 15-19 are MISSING route/feature gaps (absence of a page to build), not defects in existing code, and should be triaged as build scope. The single FALSE_POSITIVE (13) is a duplicate merge, not a dismissal of a fictional gap — the web-vitals absence is real and survives on record 14. Genuine code-level defects: record 1 (touch targets), record 10 (modal responsiveness), record 14 (observability), records P1/P2 (corrections), plus the 6 NEW findings in coverage_gaps (dead tailwind.config.js, 119 TS errors, ignoreBuildErrors, @tanstack/react-query, npm lockfile, broken footer routes)."
+  },
+  "high_value_stack_checks": {
+    "tailwind_major_actual": "v4",
+    "tailwind_major_evidence": "frontend/web_app/package.json devDependencies: \"@tailwindcss/postcss\": \"^4\"; node_modules/tailwindcss/package.json version=4.3.3; node_modules/@tailwindcss/postcss/package.json version=4.3.3. Matches TECHNOLOGY_STACK.md line 194 (Tailwind CSS 4.3.3).",
+    "tailwind_config_js_is_live": false,
+    "tailwind_config_js_verdict": "DEAD CODE. tailwind.config.js exists at frontend/web_app/tailwind.config.js (235 lines) and is a valid v3-style CJS config, but it is NEVER LOADED under v4: there is no `@config` directive anywhere in any CSS file under src (grep count 0), globals.css uses `@import \"tailwindcss\"` (line 3), and postcss.config.mjs loads only `@tailwindcss/postcss` + `autoprefixer`. v4 ignores tailwind.config.js unless explicitly bridged with @config. PROVEN EMPIRICALLY against the production build: utilities defined ONLY in tailwind.config.js are absent from every emitted CSS file under .next/static and .next/dev: .text-2xs (0), .text-3xs (0), .text-4xs (0), .text-5xs (0), .text-display (0), .max-w-11xl (0), .p-4.5 (0). Control classes DO appear: .max-w-7xl (present), .text-sm (present), .grid-cols-8 (present), .md\\:hidden (present), .sm\\:flex (present), .lg\\:grid-cols-8 (present). SOURCE IMPACT: text-3xs is used 128 times across 42 files, text-4xs 30 times / 11 files, text-5xs 15 times / 5 files, max-w-11xl 7 times / 7 files — all silently rendering with NO font-size / NO max-width.",
+    "react_query_occurrence_count": 3,
+    "react_query_detail": "Law 171 (ARCHITECTURE_STACK.md:697) says @tanstack/react-query and SWR are FORBIDDEN. Source occurrences = 3 import sites: src/app/providers.tsx:3, src/components/QueryErrorBoundary.tsx:16, src/lib/api/queryStates.ts:14. `swr` occurrence count = 0. NOT DECLARED in package.json and NOT in pnpm-lock.yaml (grep count 0) — but present in package-lock.json (line 14, ^5.104.0), i.e. an npm-installed leftover. It is also NOT resolvable at runtime: node_modules/@tanstack contains only `query-core`; `require.resolve('@tanstack/react-query')` returns MODULE_NOT_FOUND. So this is a hard Law 171 violation that also breaks tsc and jest.",
+    "pnpm_lock_present": true,
+    "package_lock_absent": false,
+    "lockfile_detail": "BOTH lockfiles are committed in frontend/web_app: pnpm-lock.yaml (379094 bytes) AND package-lock.json (434308 bytes). package-lock.json must not exist — TECHNOLOGY_STACK.md:183 'Do NOT use npm or yarn — they break workspace resolution'. package-lock.json is the sole record of the forbidden @tanstack/react-query dependency, so removing it also removes the phantom dep from the npm graph.",
+    "strict_true": true,
+    "strict_evidence": "frontend/web_app/tsconfig.json:9 \"strict\": true. Law 170 satisfied on the flag.",
+    "sharp_installed": true,
+    "sharp_detail": "package.json declares \"sharp\": \"0.35.4\"; node_modules/sharp/package.json reports 0.35.5 (pnpm-lock.yaml pins BOTH sharp@0.35.4 and sharp@0.35.5). §12 sharp requirement satisfied; version drift is a coverage gap.",
+    "api_proxy_rewrites_present": true,
+    "api_proxy_evidence": "frontend/web_app/next.config.ts `async rewrites()` proxies /api/auth/:path*, /api/:path*, /admin/:path*, /hr/:path*, /__api/countries, /__api/currency/:path*, /__api/products/suppliers, /__api/:path*, /uploads/:path* to NEXT_PUBLIC_API_URL. Law 173 / Law 40 (no browser CORS) satisfied.",
+    "cloudflare_pages_config_present": false,
+    "cloudflare_evidence": "No wrangler.toml / wrangler.json / wrangler.jsonc / _headers / _routes.json anywhere in the repo. No cloudflare or wrangler reference in .github/workflows/*.yml. A .env.wrangler file exists at repo root (154 bytes) but is only env material. The repo instead ships vercel.json (Vercel, not Cloudflare Pages) with `installCommand: cd frontend/web_app && npm install --legacy-peer-deps` — which violates the pnpm-only rule as well.",
+    "next_build_typecheck_failure": "PARTIALLY REAL — REFRAMED AS P0. (a) The specific claim `Module not found: Can't resolve '@/stores/currencyStore'` at frontend/web_app/src/app/admin/analytics/page.tsx:12 is FALSE — that line reads `import { useCurrencyStore } from \"@/lib/currencyStore\";` (page.tsx:12) and src/lib/currencyStore.ts exists. There is NO `@/stores/currencyStore` import anywhere in src; `@/stores/*` resolves exactly once (toastStore, which exists at src/stores/toastStore.ts). (b) The broader claim that typecheck is broken IS REAL: `npx tsc --noEmit -p tsconfig.json` exits 2 with 119 errors across 29 files (TS2322 x60, TS2339 x11, TS2305 x11, TS2353 x8, TS7006 x6, TS2307 x4, TS2604 x3, TS2786 x3, TS2503 x2, TS2559 x2, TS7031 x2, TS2614 x2, TS2304/TS2551/TS2345/TS7016/TS2459 x1 each). (c) `npx next build` exits 0 and prints `Compiled successfully in 69s` BUT ALSO `Skipping validation of types` — because next.config.ts:6-8 sets `typescript: { ignoreBuildErrors: true }`. So Law 186 ('next build passes with no errors') is only satisfied because type errors are suppressed at the config level. That suppression is itself the P0 defect: it hides 119 real type errors from CI.",
+    "csp_sri": "Not found. No Content-Security-Policy nonce machinery and no Subresource-Integrity/integrity= attribute anywhere in src or next.config.ts. vercel.json sets X-Frame-Options / X-Content-Type-Options / HSTS / Referrer-Policy / Permissions-Policy but NOT CSP. Laws 285 and 286 are unimplemented for the web app."
+  },
+  "touch_target_verification": {
+    "threshold": "WCAG 2.2 SC 2.5.8 Target Size (Minimum) is 24x24 CSS px at AA; 44x44 is SC 2.5.5 Target Size (Enhanced) at AAA. The packet's 44x44 bar is stricter than AA. Measured against 44x44, every control below fails; measured against the AA 24x24 minimum, ProductCard quick-view at h-6 (24px) is exactly at the floor and the wishlist h-6 w-6 (24px) is exactly at the floor.",
+    "ProductCard.tsx": {
+      "path": "frontend/web_app/src/components/ProductCard.tsx",
+      "wishlist_button": {
+        "actual_line": 183,
+        "classes": "absolute top-1 ... flex h-6 w-6 items-center justify-center rounded-full border",
+        "measured": "24x24 px (h-6 = 1.5rem = 24px, w-6 = 24px)",
+        "verdict": "CONFIRMED as cited. Exactly 24px, below 44px, at the AA floor."
+      },
+      "quick_view_button": {
+        "actual_line": 275,
+        "classes": "theme-btn-accent h-7! w-7! sm:h-6! sm:w-6! rounded-lg! p-0!",
+        "measured": "28x28 px below sm, 24x24 px at sm and above (the ! important modifiers override theme-btn-accent)",
+        "verdict": "CONFIRMED and WORSE than cited — the audit said h-7 w-7 (28x28); on sm+ it actually shrinks to 24x24 via `sm:h-6! sm:w-6!`."
+      },
+      "add_to_cart_button": {
+        "actual_line": 286,
+        "classes": "min-w-0 rounded-lg! px-2! sm:px-1.5! py-1.5! sm:py-1!",
+        "measured": "padding-driven, height ~28px; width shrinks to ~1.5rem horizontal padding at sm+",
+        "verdict": "Also below 44px — an additional target the packet did not cite."
+      },
+      "drift_note": "Packet cited ProductCard.tsx:172-184 for the wishlist button. The button now spans 179-191 with the h-6 w-6 className on line 183. Line drift, construct moved."
+    },
+    "Pagination.tsx": {
+      "path": "frontend/web_app/src/components/ui/Pagination.tsx",
+      "prev_button_line": 19,
+      "page_button_line": 29,
+      "next_button_line": 38,
+      "classes": "flex items-center justify-center w-8 h-8 rounded-lg",
+      "measured": "32x32 px on all three controls",
+      "verdict": "CONFIRMED as cited. 32x32 is above the AA 24x24 floor but below 44x44.",
+      "test_gap": "No Pagination test file exists anywhere (src/components/ui/Pagination.tsx has no .test.tsx sibling and no match under __tests__). jest-axe is installed but unused here."
+    },
+    "Header.tsx": {
+      "path": "frontend/web_app/src/components/Header.tsx",
+      "cited_by_packet_as_p2": true,
+      "icon_buttons": [
+        {"line": 592, "element": "notifications bell Link", "classes": "relative rounded-xl p-2", "icon": "Bell w-5 h-5", "measured": "p-2 = 8px padding each side + 20px icon = 36x36 px"},
+        {"line": 607, "element": "wishlist heart Link", "classes": "relative rounded-xl p-2", "icon": "Heart w-5 h-5", "measured": "36x36 px"},
+        {"line": 621, "element": "cart bag Link", "classes": "relative rounded-xl p-2", "icon": "ShoppingBag w-5 h-5", "measured": "36x36 px"},
+        {"line": 636, "element": "account menu button", "classes": "flex items-center gap-2 rounded-xl p-2", "icon": "User w-5 h-5", "measured": "36x36 px"},
+        {"line": 782, "element": "mobile search trigger", "classes": "rounded-xl p-2 transition-colors md:hidden", "icon": "Search w-5 h-5", "measured": "36x36 px"},
+        {"line": 793, "element": "mobile menu hamburger", "classes": "rounded-xl p-2 transition-colors md:hidden", "icon": "Menu/X w-5 h-5", "measured": "36x36 px"},
+        {"line": 852, "element": "drawer close button", "classes": "rounded-xl p-2", "icon": "X w-5 h-5", "measured": "36x36 px"}
+      ],
+      "measured_summary": "36x36 px, not the 32x32 the packet claimed — the packet counted p-2 alone and ignored the w-5 h-5 (20px) icon inside it. Still below 44x44 on every one of the 7 controls.",
+      "no_global_floor": "globals.css contains NO min-width/min-height 44px floor and no touch-target utility (grep for `44px` returns only box-shadow values).",
+      "drift_note": "Packet cited Header.tsx:790-802 for the hamburger — the hamburger is now at 790-802 with `md:hidden` on line 793 (matches). Packet cited 807-827 for the horizontal nav — line 807 is `<nav className=\"hidden sm:flex ...\">`, closing at 827 (matches). Packet cited 49-63 for global nav links — MAIN_NAV at 49-54, GUEST_NAV at 56, CUSTOMER_NAV at 58-63 (matches). Packet cited 523 for max-w-11xl — line 523 is `<div className=\"max-w-11xl mx-auto px-4 sm:px-6\">` (matches textually, but the class emits NO CSS — see tailwind_config_js_verdict). Packet cited 531-559 for the desktop search bar — line 532 is `hidden md:flex`, closing at 559 (matches)."
+    },
+    "jest_axe_status": "jest-axe ^10.0.0 is installed (package.json devDependencies) and @types/jest-axe ^3.5.9 too. It is imported by exactly 3 of 73 test files: src/__tests__/components/Footer.test.tsx, src/__tests__/components/Header.test.tsx, src/__tests__/pages/login.test.tsx. None of the cited components (ProductCard, Pagination, Modal) has an a11y test."
+  },
+  "verdicts": [
+    {
+      "key": "14_frontend_web-1",
+      "id": "14_frontend_web-1",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": "ProductCard.tsx:183 (wishlist), 275 (quick-view), 286 (add-to-cart); Pagination.tsx:19,29,38; Header.tsx:592,607,621,636,782,793,852",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "ProductCard.tsx:183 `className={\\`absolute top-1 ${isRtl ? \"left-1\" : \"right-1\"} flex h-6 w-6 items-center justify-center rounded-full border transition-all shadow-md ...`\"}  -> 24x24px\nProductCard.tsx:275 `className=\"theme-btn-accent h-7! w-7! sm:h-6! sm:w-6! rounded-lg! p-0! flex shrink-0 items-center justify-center shadow-none\"` -> 28x28 below sm, 24x24 at sm+\nPagination.tsx:19,29,38 `className=\"flex items-center justify-center w-8 h-8 rounded-lg ...\"` -> 32x32px\nHeader.tsx:592,607,621,636,782,793,852 all `rounded-xl p-2` with a `w-5 h-5` icon -> 36x36px\nProductCard.tsx cited by packet at :172-184; button now at :179-191 (line drift, construct present)",
+      "verify_command": "python3 read of frontend/web_app/src/components/{ProductCard.tsx,ui/Pagination.tsx,Header.tsx}; Select-String for h-6/h-7/h-8/p-2/w-8",
+      "test_command": "npx jest --runInBand src/__tests__/providers.test.tsx",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/ProductCard.tsx:183,275,286; frontend/web_app/src/components/ui/Pagination.tsx:19,29,38; frontend/web_app/src/components/Header.tsx:592,607,621,636,782,793,852",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH — every cited class read directly from current source",
+        "Truth level": "CONFIRMED — 44x44 WCAG 2.2 SC 2.5.5 (AAA) threshold violated on 11 distinct controls across 3 files",
+        "Claim state": "OPEN — no touch-target test exists for any of the three components"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "FIX_UNTESTABLE: the packet record carries NO Verify command and NO Test path (all canonical fields are NOT_PROVIDED). FIX_VAGUE candidate: 'make targets 44px' needs a decision on whether to enlarge the visual box or add an invisible expanded hit area, since enlarging ProductCard's absolutely-positioned wishlist button would overlap the badges. Magnitude corrected against the packet: Header is 36x36 (packet said 32x32 — it forgot the 20px icon inside p-2), ProductCard quick-view shrinks to 24x24 at sm+ which is worse than the packet's 28x28 claim. No global 44px floor exists in globals.css to lean on."
+    },
+    {
+      "key": "14_frontend_web-2",
+      "id": "14_frontend_web-2",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "Header.tsx:790-802 (hamburger, md:hidden on 793), Header.tsx:807-827 (nav, hidden sm:flex on 807), Header.tsx:531-559 (desktop search, hidden md:flex on 532), MobileSearchOverlay.tsx:1-616",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Header.tsx:793 `className={\\`rounded-xl p-2 transition-colors md:hidden ${interactiveMutedClass}\\`}` (hamburger) — MATCHES cited 790-802\nHeader.tsx:807 `<nav className=\"hidden sm:flex items-center -mb-px pb-2 overflow-x-auto scrollbar-none\">` … closes 827 — MATCHES cited 807-827\nHeader.tsx:532 `<div className=\"hidden md:flex flex-1 max-w-5xl mx-auto\">` … closes 559 — MATCHES cited 531-559\nMobileSearchOverlay.tsx = 616 lines; packet cited 191-614 — in range\nHeader.tsx:846 `<motion.div className=\"fixed bottom-0 right-0 top-0 z-[151] flex w-72 max-w-[85vw] flex-col border-l ...\">` with initial={{x:\"100%\"}} — right-side slide-in confirmed\nEmitted CSS contains .md\\:hidden, .sm\\:flex, .lg\\:grid-cols-8 (verified in .next/static)",
+      "verify_command": "python3 read of Header.tsx lines 40-84, 518-567, 775-854; regex probes against .next/static/**/*.css",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/Header.tsx:790-802, 807-827, 531-559",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH — all four cited ranges match the current file byte-for-byte",
+        "Truth level": "ATTESTATION VERIFIED",
+        "Claim state": "CLOSED"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "Classified REAL only in the contract sense that the cited evidence exists and is accurate. This is a PASS-status compliance attestation about responsive nav collapse, NOT a dispatchable defect. It must not be counted as a defect. Recorded as REAL-for-accuracy because the contract has no separate 'attestation' verdict value; the verdict_summary.attestations_verified_not_dispatchable field is the authoritative count."
+    },
+    {
+      "key": "14_frontend_web-3",
+      "id": "14_frontend_web-3",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "Header.tsx:523, Footer.tsx:26, HomeClient.tsx:105, HomeClient.tsx:172/218/227",
+      "current_matches_claim": "partial",
+      "counter_evidence": null,
+      "verify_output": "Header.tsx:523 `<div className=\"max-w-11xl mx-auto px-4 sm:px-6\">` — text matches\nFooter.tsx:26 `<div className=\"relative max-w-11xl mx-auto px-6 pt-12 pb-8\">` — text matches\nHomeClient.tsx:105 `<main className=\"max-w-11xl mx-auto px-4 sm:px-6 pb-20\">` — text matches\nHomeClient.tsx:172 `grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3`; :218 `grid-cols-2 sm:grid-cols-3 md:grid-cols-4`; :227 `grid-cols-2 md:grid-cols-4` — all match\nBUT max-w-11xl is defined only in tailwind.config.js:222 (\"11xl\": \"140rem\") and that file is NOT loaded under Tailwind v4. Probe across all 24 CSS files under .next/ (prod + dev): '.max-w-11xl' found in 0 files; control '.max-w-7xl' found in 3. So the max-width is never applied — the containers are unbounded width.",
+      "verify_command": "python3 substring probe for '.max-w-11xl' / '.max-w-7xl' across glob('frontend/web_app/.next/**/*.css')",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/Header.tsx:523; frontend/web_app/src/components/Footer.tsx:26; frontend/web_app/src/app/HomeClient.tsx:105",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH for the class text, HIGH for the non-emission",
+        "Truth level": "ATTESTATION PARTLY INVALID — the responsive grids are real, but the `max-w-11xl` container width is not applied at runtime",
+        "Claim state": "OPEN on the max-width half"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "PASS-status row, so NOT a dispatchable defect on its own. Downgraded to partial because the max-width it attests to silently does nothing. This is the same root cause as 14_frontend_web-4 and 14_frontend_web-6 (dead tailwind.config.js) — routed to coverage_gaps rather than inflating this attestation into a defect."
+    },
+    {
+      "key": "14_frontend_web-4",
+      "id": "14_frontend_web-4",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "frontend/web_app/tailwind.config.js:1-235 (packet cited :10-231)",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "tailwind.config.js exists, 235 lines, CJS v3-style, darkMode:\"class\" on line 8, theme.extend on line 10, closes at 233. It defines NO `screens` key (grep 'screens' -> 0 matches), so the packet's 'relies on default Tailwind scale' is accurate AS A STATEMENT ABOUT THE FILE.\nBUT THE FILE IS NOT LOADED. Under Tailwind v4.3.3, tailwind.config.js is ignored unless a CSS file declares `@config`. Probe: Select-String '@config' across every *.css under src -> 0 matches. postcss.config.mjs plugins = {@tailwindcss/postcss, autoprefixer}. globals.css line 3 = `@import \"tailwindcss\"`.\nEmpirical proof: utilities that exist ONLY in tailwind.config.js emit zero CSS across all 24 built CSS files — .text-2xs 0, .text-3xs 0, .text-4xs 0, .text-5xs 0, .text-display 0, .max-w-11xl 0 — while stock v4 utilities do emit (.max-w-7xl present, .text-sm present, .grid-cols-8 present).",
+      "verify_command": "Select-String '@config' over frontend/web_app/src/**/*.css; python3 probe of '.text-3xs' etc across .next/**/*.css",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/tailwind.config.js:1-235 (DEAD — not loaded under Tailwind v4)",
+        "Phase": "tech",
+        "Evidence strength": "HIGH — file contents match the citation AND non-emission is proven against a real production build",
+        "Truth level": "ATTESTATION VERIFIED AS WRITTEN, but the file it cites is inert",
+        "Claim state": "OPEN — the attestation rests on a dead file"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "PASS-status row; not a standalone dispatchable defect. IMPORTANT CORRECTION TO THE AUDIT'S ASSUMPTION: the packet treats tailwind.config.js as if it were live config. It is not. The repo is genuinely on Tailwind v4 (matches TECHNOLOGY_STACK.md §13 'no tailwind.config.js in v4'), so the audit's premise was right about the major but wrong about the file's effect. The breakpoint scale that IS in effect is Tailwind v4's built-in default, which happens to coincide with the v3 defaults the config relied on — so the responsive breakpoints work by accident, while every custom token in the file (the 2xs/3xs/4xs/5xs/display fontSize ramp, max-w-11xl, the 4.5 spacing step) is dead."
+    },
+    {
+      "key": "14_frontend_web-5",
+      "id": "14_frontend_web-5",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "ProductCard.tsx:143-145 (alt/sizes), BannerCarousel.tsx:126-128, next.config.ts:27 (formats)",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "ProductCard.tsx:143 `alt={displayName}` (packet cited :136 — drift of 7 lines); :144 `fill`; :145 `sizes=\"(max-width: 640px) 50vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, (max-width: 1536px) 16vw, 12vw\"` (packet cited :138 — drift of 7)\nBannerCarousel.tsx:126 `alt={current.title}` (exact match); :128 `sizes=\"100vw\"` (exact match)\nnext.config.ts `images.formats: ['image/webp']` — packet cited :16; the key actually sits on line 27 (drift of 11). remotePatterns present for placeholder.com/placehold.co/unsplash/picsum.photos/localhost.\nAll images are `next/image`; sharp 0.35.4 declared so production optimization is live (Law-adjacent §12 sharp requirement satisfied).",
+      "verify_command": "python3 read of ProductCard.tsx 140-152, BannerCarousel.tsx 120-130, next.config.ts",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/ProductCard.tsx:143-145; frontend/web_app/src/components/BannerCarousel.tsx:126-128; frontend/web_app/next.config.ts:27",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "ATTESTATION VERIFIED",
+        "Claim state": "CLOSED"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "PASS-status attestation, not a defect. All three citations verified with line drift only. One substantive caveat worth flagging even though the row passes: ProductCard uses `motion.create(Image)` (ProductCard.tsx:25) and passes an `animate={{scale}}` prop. next/image with `fill` plus a transform animation is a known source of layout/CLS churn, so the 'responsive delivery' attestation is weaker than it looks. Not dispatchable; noted only."
+    },
+    {
+      "key": "14_frontend_web-6",
+      "id": "14_frontend_web-6",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "tailwind.config.js:72-88 (fontSize) and :87 (display clamp); globals.css:2123, 2142, 2357 (prefers-reduced-motion)",
+      "current_matches_claim": "partial",
+      "counter_evidence": null,
+      "verify_output": "tailwind.config.js:72 `fontSize: {` … :73 \"2xs\" … :87 `display: [\"clamp(2.5rem,6vw,4.5rem)\", { lineHeight: \"1.1\" }],` … :88 `},` — the packet's :72-88 citation is EXACT.\nglobals.css prefers-reduced-motion confirmed at lines 2123, 2142 (reduce) and 2357 (no-preference) — second half of the claim holds.\nBUT `text-display` has ZERO occurrences in src (grep count 0), so no component uses the fluid clamp type at all — 'Components use fluid type' is false.\nAND the whole fontSize block is dead: '.text-display' 0 hits, '.text-2xs' 0, '.text-3xs' 0, '.text-4xs' 0, '.text-5xs' 0 across all 24 built CSS files. Yet src uses text-3xs 128x/42 files, text-4xs 30x/11 files, text-5xs 15x/5 files, text-2xs 1x. Those 174 class usages produce NO font-size declaration.",
+      "verify_command": "python3 read of tailwind.config.js 68-92; grep text-display / probe '.text-3xs' across .next/**/*.css",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/tailwind.config.js:72-88 (DEAD); frontend/web_app/src/styles/globals.css:2123,2142,2357",
+        "Phase": "tech",
+        "Evidence strength": "HIGH",
+        "Truth level": "ATTESTATION PARTLY INVALID — prefers-reduced-motion is real; the fluid clamp() type is both unused AND not emitted",
+        "Claim state": "OPEN on the fluid-type half"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "PASS-status row, not counted as a defect. This is the highest-consequence attestation error in the packet: 174 font-size class usages across 42 files resolve to no CSS at all, so every badge, price strikethrough, and micro-label in the catalogue renders at inherited size. Routed to coverage_gaps under the dead-tailwind.config.js root cause."
+    },
+    {
+      "key": "14_frontend_web-7",
+      "id": "14_frontend_web-7",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "Header.tsx:790-802, 807-827, 841-857",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Header.tsx:790-802 `{!hideNav && (<button onClick={() => setMenuOpen(!menuOpen)} className={\\`rounded-xl p-2 transition-colors md:hidden ${interactiveMutedClass}\\`} aria-label={menuOpen ? \"Close menu\" : \"Open menu\"}>{menuOpen ? <X className=\"w-5 h-5\" /> : <Menu className=\"w-5 h-5\" />}</button>)}` — EXACT match to cited 790-802\nHeader.tsx:806-827 `{!hideNav && nav.length > 0 && (<nav className=\"hidden sm:flex items-center -mb-px pb-2 overflow-x-auto scrollbar-none\">` — EXACT match to cited 807-827\nHeader.tsx:841-846 drawer: `<motion.div initial={{x:\"100%\"}} animate={{x:0}} transition={{type:\"spring\",damping:30,stiffness:300}} className=\"fixed bottom-0 right-0 top-0 z-[151] flex w-72 max-w-[85vw] flex-col border-l border-border bg-surface-base\">` — right-side slide confirmed\nCONTRADICTION NOTE: the nav is hidden at `md:hidden` (hamburger) but the horizontal nav only appears at `sm:flex`. Between 640px and 768px BOTH the hamburger and the horizontal nav are visible simultaneously.",
+      "verify_command": "python3 read of Header.tsx 775-857",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/Header.tsx:790-802, 807-827, 841-846",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "ATTESTATION VERIFIED with one breakpoint gap",
+        "Claim state": "CLOSED with note"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "PASS-status attestation, not a defect. Real inconsistency found while verifying: `md:hidden` on the hamburger (hides at >=768px) vs `hidden sm:flex` on the nav (shows at >=640px) leaves a 640-767px window where both render. Recorded as a coverage gap, not as an inflation of this PASS row."
+    },
+    {
+      "key": "14_frontend_web-8",
+      "id": "14_frontend_web-8",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "checkout/page.tsx:651-701, MobileSearchOverlay.tsx:368-385, cart/page.tsx:265,274,281",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "checkout/page.tsx:651-701 — 8 explicit <label> elements and 9 `px-3 py-2` inputs inside the Delivery Details block (line 651 Full Name, 659 Country, 699 Delivery Note textarea). All inputs carry a visible <label>. EXACT match.\nMobileSearchOverlay.tsx:384 `className=\"flex-1 h-11 bg-transparent pl-9 pr-8 text-sm text-text placeholder:text-text-faint focus:outline-none\"` — h-11 = 44px, the ONLY control in scope that meets the 44x44 threshold. Packet cited 368-385; the input opens at 368 and its className is on 384 — in range.\ncart/page.tsx:265 `theme-input w-full rounded-lg border px-2.5 py-1.5 text-xs`; :274 same; :281 `theme-btn-primary w-full rounded-lg py-1.5 text-[11px]`. Packet cited 255-265; the first instance is on 265 — at the boundary, in range. All three are compact controls, consistent with the 'may be tight on 320px' concern.",
+      "verify_command": "python3 read of checkout/page.tsx 645-705, MobileSearchOverlay.tsx 366-390, cart/page.tsx 260-285; substring counts",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/app/checkout/page.tsx:651-701; frontend/web_app/src/components/MobileSearchOverlay.tsx:384; frontend/web_app/src/app/cart/page.tsx:265,274,281",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "ATTESTATION VERIFIED — labels present, MobileSearchOverlay input compliant; cart inputs genuinely compact",
+        "Claim state": "CLOSED"
+      },
+      "laws_cited": ["Law 174", "Law 175"],
+      "notes": "PARTIAL-status row, but functionally an attestation: the cited evidence (labels present, MobileSearchOverlay input compliant) verifies and only the cart-page 'may be tight' half is open. Classified in dispatchable_defects because the packet marks it PARTIAL, but a resolver should treat the label/contrast half as CLOSED and decide separately whether the cart page's px-2.5 py-1.5 controls warrant action at 320px. Worth noting the split: MobileSearchOverlay's h-11 input shows the team already applies the 44px floor where they thought about it, which strengthens the case that ProductCard/Pagination/Header are omissions rather than a deliberate density decision."
+    },
+    {
+      "key": "14_frontend_web-9",
+      "id": "14_frontend_web-9",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "ui/shared/Table.tsx:10-18, admin/users/page.tsx:331, admin/payouts/page.tsx:338,430,496",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "admin/users/page.tsx:331 `<div className=\"overflow-x-auto rounded-2xl border border-border bg-surface-1\">` — EXACT match\nadmin/payouts/page.tsx:338 `<div className=\"overflow-x-auto\">` (also :430 and :496) — EXACT match\nIMPORTANT CORRECTION: the packet cites `shared/Table.tsx:11-17` as wrapping the table in overflow-x-auto. There are TWO Table components and the cited one is the wrong file. frontend/web_app/src/components/ui/shared/Table.tsx:12 is `<div className={cn(\"glass-panel rounded-xl border border-glass-border-mid overflow-hidden\", className)}>` — `overflow-hidden`, NOT `overflow-x-auto`. That wrapper CLIPS a wide table instead of scrolling it. The file that actually does overflow-x-auto is frontend/web_app/src/components/ui/Table.tsx:11 — and that one is imported by ZERO files.\nImport counts: ui/shared/Table -> 4 files (admin/employees/_components/employees-content.tsx, admin/promotions/_components/CouponsPanel.tsx, admin/promotions/_components/FlashSalesPanel.tsx, components/FraudDetectionDashboard.tsx); components/ui/Table -> 0 files (dead component).",
+      "verify_command": "python3 read of both Table.tsx files; glob import-site scan for 'ui/shared/Table' and 'components/ui/Table'",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/app/admin/users/page.tsx:331; frontend/web_app/src/app/admin/payouts/page.tsx:338,430,496",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH for the admin pages; HIGH for the Table.tsx correction",
+        "Truth level": "ATTESTATION VERIFIED for admin pages; the shared/Table.tsx sub-claim is FALSE (overflow-hidden, not overflow-x-auto)",
+        "Claim state": "OPEN on the shared Table component"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "PASS-status attestation for the admin pages, but one of its three citations is wrong in a way that matters: the SHARED Table used by 4 files clips rather than scrolls. Routed to coverage_gaps (the overflow-hidden wrapper plus a dead duplicate Table component), NOT inflated into a defect here."
+    },
+    {
+      "key": "14_frontend_web-10",
+      "id": "14_frontend_web-10",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "ui/shared/Modal.tsx:48-53, 70",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "ui/shared/Modal.tsx:48-53 `const sizeClasses = { sm: \"max-w-sm\", md: \"max-w-md\", lg: \"max-w-lg\", xl: \"max-w-2xl\" };` — EXACT match to cited 48-53\nui/shared/Modal.tsx:70 `\"glass-panel border rounded-xl shadow-2xl max-h-[80vh] overflow-y-auto\",` — fixed max-h, no breakpoint variant\nui/shared/Modal.tsx:58 overlay `\"fixed inset-0 z-50 flex items-center justify-center theme-overlay p-4\"` — centered at every width, no sm:items-end or full-screen variant anywhere in the file (grep for 'sm:max-h-' and 'h-[100dvh]' in Modal.tsx -> 0)\nSame pattern confirmed in the other modal surfaces: QuickDetailModal.tsx:65 `max-h-[80vh]`, components/admin/AdminVideoPanel.tsx:398 `max-w-2xl max-h-[80vh]`. Repo-wide, `max-h-[80vh]` appears in 3 files and no responsive full-screen variant in any of them.",
+      "verify_command": "python3 read of ui/shared/Modal.tsx 44-88; repo-wide grep for max-h-[80vh] / sm:max-h- / h-[100dvh]",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/ui/shared/Modal.tsx:48-53,70",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH — exact line match and the absence of any mobile variant confirmed by grep",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "FIX_UNTESTABLE: no Verify command and no Test path in the record (all canonical fields NOT_PROVIDED). This is the cleanest genuine defect in the packet: FAIL status, exact line citations, and a constructive fix already implied by the codebase (MobileSearchOverlay uses w-72 max-w-[85vw], so a full-screen sm:w-auto variant is the in-repo idiom). Blast radius is wider than the packet states — QuickDetailModal and AdminVideoPanel repeat the pattern."
+    },
+    {
+      "key": "14_frontend_web-11",
+      "id": "14_frontend_web-11",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "ProductCard.tsx:143, BannerCarousel.tsx:126, checkout/page.tsx:747",
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "ProductCard.tsx:143 `alt={displayName}` where displayName = translatedName || product.name (ProductCard.tsx:102) — packet cited :136, drift of 7 lines\nBannerCarousel.tsx:126 `alt={current.title}` — EXACT match\ncheckout/page.tsx:747 `<Image src={img} alt={item.name} fill sizes=\"40px\" className=\"object-cover\" />` — EXACT match\nDecorative images: ProductCard.tsx:134-136 renders a raw inline <svg> placeholder (no alt attribute, correct for a decorative fallback); ProductCard.tsx:146 `className=\"object-cover\"`; Header.tsx:551-557 and :562-567 use `<input type=\"file\" className=\"hidden\" />` (not images). No <img> tag lacking alt was found in the cited files.",
+      "verify_command": "python3 read of ProductCard.tsx 129-152, BannerCarousel.tsx 120-130, checkout/page.tsx 744-750",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/ProductCard.tsx:143; frontend/web_app/src/components/BannerCarousel.tsx:126; frontend/web_app/src/app/checkout/page.tsx:747",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "ATTESTATION VERIFIED",
+        "Claim state": "CLOSED"
+      },
+      "laws_cited": ["Law 174"],
+      "notes": "PASS-status attestation, not a defect. All three alt-text citations verified with one line drift. The 'decorative images use alt=\"\"' half of the claim is only partially checkable — the repo uses inline SVG and CSS placeholders rather than decorative <img alt=\"\">, which is equivalent or better."
+    },
+    {
+      "key": "14_frontend_web-12",
+      "id": "14_frontend_web-12",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "Header.tsx:49-63, Breadcrumbs usage in 4 routes, ProductCard.tsx:139+226, Footer.tsx:43-91",
+      "current_matches_claim": "partial",
+      "counter_evidence": null,
+      "verify_output": "Header.tsx:49-63 MAIN_NAV [/products,/suppliers,/offers,/help], GUEST_NAV = MAIN_NAV, CUSTOMER_NAV = MAIN_NAV + [/orders,/wishlist,/profile] — EXACT match to cited 49-63\nBreadcrumbs imported and rendered on 4 registered routes: src/app/products/page.tsx, src/app/products/category/page.tsx, src/app/products/[id]/page.tsx, src/app/suppliers/page.tsx — matches 'product detail and category pages'\nProductCard.tsx:139 `<Link href={productUrlFrom(product)} className=\"relative block w-full h-full\" aria-label={\\`View product: ${displayName}\\`}>` and :226 `<Link href={productUrlFrom(product)}>` — packet cited 219-223, drift of ~5 lines, construct present\nFooter.tsx:78 `href={\\`/${key}\\`}` over [\"terms\",\"privacy\",\"cookies\"] and :43 `href=\"/supplier/register\"` — the link targets are there.\nBUT THE 'No orphan pages observed' HALF IS FALSE. Route-file existence check against the App Router tree (not inferred from filenames):\n  src/app/terms/page.tsx — MISSING (only src/app/supplier/terms/page.tsx exists, a different route)\n  src/app/privacy/page.tsx — MISSING (no privacy page anywhere under src/app)\n  src/app/cookies/page.tsx — MISSING (no cookies page anywhere under src/app)\n  src/app/supplier/register/page.tsx — exists (confirmed in the next build route table)\nSo 3 of the 4 footer legal/supplier links are 404s: /terms, /privacy, /cookies.",
+      "verify_command": "python3 glob of src/app/**/page.tsx filtered for terms|privacy|cookies|register; next build route table cross-check",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/Header.tsx:49-63; frontend/web_app/src/components/Footer.tsx:43,78",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH — nav links and Breadcrumbs confirmed; orphan claim disproved by App Router tree enumeration",
+        "Truth level": "ATTESTATION PARTLY INVALID — internal linking is sound, but the 'no orphan pages' claim is wrong: /terms, /privacy, /cookies have no route",
+        "Claim state": "OPEN — 3 footer links 404"
+      },
+      "laws_cited": ["Law 178"],
+      "notes": "PASS-status row, so not counted as a defect, but its explicit 'No orphan pages observed' assertion is FALSE and that is a dispatchable SEO/legal problem (broken footer links in the global chrome of every page, plus no privacy page for a marketplace handling PII). Routed to coverage_gaps with citations. Per SHARED_INSTRUCTIONS anti-inference rule 4 I confirmed route registration by enumerating the built route table from `next build`, not by reading filenames."
+    },
+    {
+      "key": "14_frontend_web-13",
+      "id": "14_frontend_web-13",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "no",
+      "counter_evidence": "Duplicates 14_frontend_web-14. Status is UNVERIFIABLE, i.e. the audit itself declined to assert a defect, and its 'Evidence / File' text is byte-identical in substance to 14_frontend_web-14's. Independently re-verified: grep for 'web-vitals|reportWebVitals|onLCP|onCLS|onINP|onFCP|onTTFB|useReportWebVitals' across frontend/web_app/src and next.config.ts returns 0 matches — so the underlying absence is TRUE, but it is already carried by 14_frontend_web-14. Dispatching both would double-count one gap.",
+      "verify_output": "Select-String 'web-vitals|reportWebVitals|onLCP|onCLS|onINP|onFCP|onTTFB|useReportWebVitals' over frontend/web_app/src/**/*.ts(x) and next.config.ts -> count 0\nNo instrumentation.ts or useReportWebVitals hook anywhere under src.\nGrep of _most_imp_docx/ARCHITECTURE_STACK.md and TECHNOLOGY_STACK.md for 'web-vitals|Core Web Vital|CWV|onLCP|Lighthouse' -> 0 matches, so this gap is NOT a benchmark-law violation; it is an unmonitored-CWV observation only.",
+      "verify_command": "Select-String over src/**/*.ts(x) + next.config.ts for the web-vitals token set",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — no single file. Cross-cutting (whole frontend).",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH that the instrumentation is absent",
+        "Truth level": "TRUE BUT DUPLICATE of 14_frontend_web-14",
+        "Claim state": "MERGED"
+      },
+      "laws_cited": [],
+      "notes": "Marked FALSE_POSITIVE strictly on the duplicate ground, not because the absence is fictional — the absence is real and confirmed. The single legitimate caveat: the audit labelled this UNVERIFIABLE while labelling the identical claim FAIL in record 14, which is internally inconsistent. Surviving record is 14_frontend_web-14 (higher confidence, FAIL status, more specific evidence)."
+    },
+    {
+      "key": "14_frontend_web-14",
+      "id": "14_frontend_web-14",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Grep 'web-vitals|reportWebVitals|onLCP|onCLS|onINP|onFCP|onTTFB|useReportWebVitals' across frontend/web_app/src/**/*.ts,/**/*.tsx and next.config.ts -> 0 matches. CONFIRMED.\nNo src/instrumentation.ts and no src/instrumentation-client.ts.\nBroader analytics sweep -> 0 matches for gtag, googletagmanager, plausible, posthog, analytics.track.\nBroader error-tracking sweep -> 0 matches for Sentry or @sentry/nextjs anywhere in src, even though package.json declares \"@sentry/nextjs\": \"^9.0.0\" and Law 176 / §15 require the error tracker in production. So the observability gap is wider than the packet states: neither CWV nor error tracking is wired.\nNOT a benchmark-law violation: ARCHITECTURE_STACK.md and TECHNOLOGY_STACK.md contain no web-vitals / CWV / Lighthouse law (grep -> 0). The @sentry/nextjs half IS benchmark-backed (§15 'Always in production', Law 176).",
+      "verify_command": "Select-String over src/**/*.ts(x) + next.config.ts for web-vitals/onLCP/onCLS/onINP/reportWebVitals; second sweep for Sentry/gtag/posthog/plausible; Test-Path src/instrumentation.ts",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — cross-cutting. Nearest anchors: frontend/web_app/next.config.ts and frontend/web_app/src/instrumentation-client.ts (ABSENT)",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH — exhaustive negative grep across src and next.config.ts",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": ["Law 176"],
+      "notes": "Survivor of the 13/14 duplicate pair. Downgraded in significance by one point: CWV monitoring is not a Law, so this is a quality/observability gap rather than a compliance breach. However the verification surfaced a SECOND and larger gap under the same root cause: @sentry/nextjs is a declared production dependency that is never imported, so Law 176 ('Unhandled -> console (dev) / error tracker (prod)') is unimplemented for the web app. FIX_MISALIGNED risk for any resolver: adding Vercel Analytics or a generic `web-vitals` reporter is fine, but the sanctioned destination is the self-hosted GlitchTip endpoint per Law 95 / §15, not a SaaS."
+    },
+    {
+      "key": "14_frontend_web-15",
+      "id": "14_frontend_web-15",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Enumerated the full admin route tree (Get-ChildItem -Directory src/app/admin -> 47 dirs): accounting, analytics, audit-logs, bank-accounts, banners, barcode, catalog, categories, chat, coc, command-center, commission, comms-test, communication, countries, coupons, dashboard, disputes, email, employees, ess, exports, finance, flash-sales, hr, inventory-alerts, invoices, login, logistics, logistics-partners, moderation, orders, organization, payments, payouts, payroll, permissions, product-verification, products, promotions, resolution, returns, staff, supplier-documents, suppliers, tickets, treasury, users, video.\nRecursive filter for '*purchase-order*', '*purchase_order*', '*sales-order*', '*sales_order*' under src/app -> 0 matches in all four.\nCross-checked against the `next build` route table (151 routes emitted) — no purchase-order or sales-order segment appears.\nFEATURE_STACK_LIST.md confirms the feature is specced for both Employee and Admin: '| Purchase Order CRUD | ... | Employee |' and '| ... | Admin |', and '| Sales Order CRUD | ... | Employee |' / '| ... | Admin |'.\nCONFIRMED MISSING.",
+      "verify_command": "Get-ChildItem -Directory src/app/admin; recursive name filter for purchase-order|sales-order under src/app; cross-check vs `next build` route table",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — the absence itself. Nearest existing analogue: frontend/web_app/src/app/admin/orders/page.tsx",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH — exhaustive route-tree enumeration plus independent confirmation from the emitted build route table",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": ["Law 177"],
+      "notes": "MISSING-feature row, correctly classified by the audit. Verified against the real App Router tree rather than inferred from filenames (SHARED_INSTRUCTIONS anti-inference rule 4). Both the PO and the SO CRUD surfaces are absent. CAVEAT the orchestrator must weigh: this is a feature-gap row, not a defect in existing code — there is no file to fix, only a route to build, and FEATURE_STACK_LIST.md is the authority on whether it is in the current release scope. FIX_UNTESTABLE: no Verify command and no Test path supplied."
+    },
+    {
+      "key": "14_frontend_web-16",
+      "id": "14_frontend_web-16",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Test-Path 'src/app/admin/dunning/page.tsx' -> False. Recursive name filter '*dunning*' under src/app -> 0 matches. The `next build` route table (151 routes) contains no /admin/dunning segment. The admin tree listing above confirms no dunning directory.\nFEATURE_STACK_LIST.md lines: '| Dunning Run | Automated overdue AR collection | 1. Trigger dunning -> 2. Emails day 3/7/14 -> 3. Late fee applied | Employee |' and the same row for Admin.\nCONFIRMED MISSING. Note the nearest existing surfaces are admin/accounting and admin/invoices, neither of which covers the dunning run.",
+      "verify_command": "Test-Path src/app/admin/dunning/page.tsx; Get-ChildItem -Directory src/app/admin; recursive '*dunning*' filter; cross-check vs next build route table",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — the absence itself. Nearest existing analogue: frontend/web_app/src/app/admin/accounting/page.tsx",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": ["Law 177"],
+      "notes": "MISSING-feature row, correctly classified. Same caveat as 14_frontend_web-15: absence of a route, not a defect in code. FIX_UNTESTABLE: no Verify command, no Test path."
+    },
+    {
+      "key": "14_frontend_web-17",
+      "id": "14_frontend_web-17",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Recursive filters under src/app for '*fixed-asset*', '*fixed_asset*', '*budget*' -> 0 matches in all. No /admin/assets, /admin/fixed-assets, /admin/budgets segment in the `next build` route table (151 routes). Admin tree listing confirms neither.\nFEATURE_STACK_LIST.md: '| Fixed Assets | Asset register + depreciation | 1. Register asset -> 2. Monthly depreciation run -> 3. Disposal gain/loss ...' and '| Budgets | Budget vs actual | 1. Create budget -> 2. Track actuals -> 3. Variance report | Admin |'.\nCONFIRMED MISSING (both features).",
+      "verify_command": "recursive '*fixed-asset*' / '*budget*' filter under src/app; admin tree listing; cross-check vs next build route table",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — the absence itself. Nearest existing analogue: frontend/web_app/src/app/admin/payroll/page.tsx",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": ["Law 177"],
+      "notes": "MISSING-feature row, correctly classified. Same caveat: route absence, not a code defect. FIX_UNTESTABLE: no Verify command, no Test path."
+    },
+    {
+      "key": "14_frontend_web-18",
+      "id": "14_frontend_web-18",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "partial",
+      "counter_evidence": null,
+      "verify_output": "Enumerated src/app/admin/employees recursively: page.tsx, employee-types.ts, _components/{employee-types.ts, employees-content.tsx}, _tabs/{AddressMatrixTab, AlumniContractorTab, CommunicationsTab, DEITab, DisciplinaryOffboardingTab, HseTab, InsuranceBenefitsTab, PerformanceTab, RoleAssignmentTab, TaskAssignmentTab}.tsx\nTWO of the four claimed gaps DO NOT EXIST as the record states:\n  Disciplinary Cases + Offboarding -> frontend/web_app/src/app/admin/employees/_tabs/DisciplinaryOffboardingTab.tsx (component defined at line 51) IS registered and rendered: employees-content.tsx:65 `import DisciplinaryOffboardingTab from \"../_tabs/DisciplinaryOffboardingTab\"` and employees-content.tsx:1313 `<DisciplinaryOffboardingTab employees={employees} addToast={addToast} />`. Both features are implemented as a tab inside the employees page.\n  COI -> src/app/admin/coc/page.tsx exists. NOTE: this `coc` route is Category-of-Commission (the interfaces are CoCCategory / commission_group_id), NOT conflict-of-interest, so it does NOT satisfy the COI gap — the audit did not make this mistake, and neither should the resolver.\nTWO claimed gaps DO hold:\n  Employee Analytics -> no '*employee-analytic*' match anywhere; admin/analytics/page.tsx is revenue/order/user analytics (interfaces OverviewResponse, COUNTRY_OPTIONS), not HR metrics. FEATURE_STACK_LIST.md: '| Employee Analytics | HR metrics | 1. Open -> 2. Headcount, attrition, DEI, leave burn -> 3. Export | Admin |'. admin/hr/page.tsx is the only other candidate and was not sufficient.\n  COI Check / Report -> grep '*coi*' -> 0 matches. FEATURE_STACK_LIST.md: '| COI Check / Report | Conflict-of-interest detection | 1. Run COI -> 2. Flag conflicts -> 3. Report | Employee (HR) |'.",
+      "verify_command": "recursive enumeration of src/app/admin/employees and src/app/admin/hr; import+render grep for DisciplinaryOffboardingTab; recursive '*employee-analytic*' / '*coi*' filters; read src/app/admin/coc/page.tsx interfaces",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — mixed. Existing (contradicting) implementation: frontend/web_app/src/app/admin/employees/_tabs/DisciplinaryOffboardingTab.tsx:51, wired at frontend/web_app/src/app/admin/employees/_components/employees-content.tsx:65,1313. Genuinely absent: no route for Employee Analytics or COI.",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH — the DisciplinaryOffboardingTab is verified both as a defined export AND as a rendered element, so this is not a filename inference",
+        "Truth level": "PARTIALLY FALSE — the record overstates the gap. Disciplinary Cases and Offboarding ARE implemented (as employees-page tabs). Employee Analytics and COI are genuinely missing.",
+        "Claim state": "PARTLY OPEN — the resolver must not rebuild Disciplinary/Offboarding"
+      },
+      "laws_cited": ["Law 177"],
+      "notes": "The most useful correction in the packet. Acting on this record as written would cause the resolver to BUILD Disciplinary Cases and Offboarding, which already ship as a working tab. Scope the fix to Employee Analytics and COI only. Also flag the `coc` naming trap for the resolver: /admin/coc is Category-of-Commission, and mistaking it for COI would close the gap falsely. FIX_UNTESTABLE: no Verify command, no Test path."
+    },
+    {
+      "key": "14_frontend_web-19",
+      "id": "14_frontend_web-19",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Test-Path 'src/app/admin/automation/page.tsx' -> False. Recursive '*automation*' filter under src/app -> 0 matches. The `next build` route table (151 routes) has no /admin/automation segment. Admin tree listing confirms no automation directory (note: the unrelated /admin/automation-adjacent surface is not present either — there is no automation route of any kind).\nFEATURE_STACK_LIST.md: '| Automation Control Tower | Manage automations | 1. List automations -> 2. Toggle ON/OFF -> 3. View last-run + counters -> ...' under the '## 7. System & Automation' section.\nCONFIRMED MISSING.",
+      "verify_command": "Test-Path src/app/admin/automation/page.tsx; Get-ChildItem -Directory src/app/admin; recursive '*automation*' filter; cross-check vs next build route table",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — the absence itself. Nearest existing analogue: frontend/web_app/src/app/admin/command-center/page.tsx",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": ["Law 177"],
+      "notes": "MISSING-feature row, correctly classified. Same caveat: route absence. FIX_UNTESTABLE: no Verify command, no Test path."
+    },
+    {
+      "key": "14_frontend_web-20",
+      "id": "14_frontend_web-20",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "src/app/admin/command-center/headlines/page.tsx",
+      "current_matches_claim": "partial",
+      "counter_evidence": null,
+      "verify_output": "src/app/admin/command-center/headlines/ exists as a registered route directory (confirmed in the `next build` route table as a segment under /admin/command-center).\nRecursive filters for '*market-radar*' and '*external-intel*' under src/app -> 0 matches each. The admin tree has `command-center` but no market-radar / external-intelligence child.\nFEATURE_STACK_LIST.md: '| External Intelligence | Market radar + regulatory shield | 1. View ticker -> 2. Regulatory countdowns -> 3. Simulate | Admin |' — a distinct feature from headlines/news.\nSo the record is accurate: headlines exist and the External Intelligence / Market Radar surface does not.",
+      "verify_command": "recursive '*market-radar*' / '*external-intel*' filters under src/app; admin tree listing; cross-check vs next build route table; FEATURE_STACK_LIST.md grep",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/app/admin/command-center/headlines/page.tsx (exists); no file for the missing Market Radar surface",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": ["Law 177"],
+      "notes": "PARTIAL-status feature gap, correctly characterised by the audit — this row already distinguishes what exists from what does not, which is more precise than records 15-19. Same route-absence caveat and FIX_UNTESTABLE flag."
+    },
+    {
+      "key": "14_frontend_web-P1",
+      "id": "14_frontend_web-P1",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "partial",
+      "counter_evidence": null,
+      "verify_output": "frontend/web_app/src/components/Chatbot.tsx exists, 404 lines.\n'Add file attachments' — CONFIRMED ABSENT. Substring counts in Chatbot.tsx: 'attach' 0, 'file' 0, 'pdf' 0, 'voice' 0, 'type=.file' (regex for type=\"file\") 0. There is no <input type=\"file\"> anywhere in the component.\n'Search' — CONFIRMED PRESENT. Chatbot.tsx:11 `import type { ChatbotResponsePayload, ChatbotResultMode, ChatbotSearchResult } from \"@shared/chatbot\";`, :19 `type SearchResult = ChatbotSearchResult;`, :26 `products?: SearchResult[];`, :33 `function productTags(product: SearchResult): string[]`, :213 `products?: SearchResult[],`. The component renders product search results.\nSo the correction's second half is already satisfied; only attachments are genuinely missing.",
+      "verify_command": "python3 substring/regex counts against frontend/web_app/src/components/Chatbot.tsx (attach, file, pdf, voice, type=\"file\", SearchResult)",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "frontend/web_app/src/components/Chatbot.tsx (404 lines, no File:Line for the missing attachment affordance)",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "PARTIALLY FALSE — search already exists; attachments genuinely absent",
+        "Claim state": "OPEN on attachments only"
+      },
+      "laws_cited": [],
+      "notes": "A prioritized-correction row, not a dimension finding, so it carries no Benchmark citation and no File:Line. Half of the stated correction is already implemented. Any resolver action should be scoped to file attachments alone. Confidence field says 5 (highest in the packet) but the record under-verifies its own claim — flagging that so the confidence score is not taken at face value."
+    },
+    {
+      "key": "14_frontend_web-P2",
+      "id": "14_frontend_web-P2",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "counter_evidence": null,
+      "verify_output": "Push notification infrastructure — CONFIRMED ABSENT.\nNo push SDK in either manifest: Select-String 'web-push|firebase|fcm|push' over frontend/web_app/package.json and frontend/mobile_app/package.json -> 0 matches.\nNo service worker: 'ServiceWorker' 0 and 'serviceWorker' 0 across all src/**/*.ts and src/**/*.tsx.\npublic/ contains only file.svg, globe.svg, next.svg, placeholder.svg, vercel.svg, window.svg — no manifest.json, no sw.js, no service-worker.js.\nThe single `new Notification` site is a transient desktop toast at src/components/supplier/ParcelAuditWidget.tsx:334, not push infrastructure.\nNearest partial surface: src/app/supplier/notification-preferences/page.tsx (in-app preference UI) and src/components/Header.tsx:589-600 (bell + unread count) — both in-app, neither push.\nCorrected the audit's raw substring count: the packet's 'push 310' figure is inflated by ordinary English/property matches (pushToTalk, refetch pushes, etc.); the meaningful count is 0 for push-delivery APIs.",
+      "verify_command": "Select-String 'web-push|firebase|fcm|push' over both package.json files; grep ServiceWorker/serviceWorker across src; Get-ChildItem public; grep 'new Notification' across src",
+      "test_command": "not_run",
+      "test_result": "not_run",
+      "filled_fields": {
+        "File:Line": "NOT_PROVIDED — cross-cutting. Nearest anchors: frontend/web_app/public/ (no manifest.json, no service worker), frontend/web_app/package.json (no push SDK)",
+        "Phase": "frontend",
+        "Evidence strength": "HIGH",
+        "Truth level": "CONFIRMED",
+        "Claim state": "OPEN"
+      },
+      "laws_cited": [],
+      "notes": "A prioritized-correction row, so no Benchmark citation is expected. Blocking flag is 'no', which is consistent with it being a capability gap rather than a regression. One FIX_MISALIGNED risk for the resolver: `web-push` and Firebase FCM are NOT in TECHNOLOGY_STACK.md §12-§15. §14/§15 sanction only the shared realtime helpers (@zozi/shared/realtime.ts, per §3 layout and Law 199's apiFetch/retry contract), so a compliant push implementation should extend the existing realtime.ts WebSocket channel rather than introduce a new push vendor — introducing web-push or FCM would be FIX_MISALIGNED."
+    }
+  ],
+  "duplicates_merged": [
+    {
+      "survivor": "14_frontend_web-14",
+      "duplicate": "14_frontend_web-13",
+      "why": "Identical claim (no web-vitals / onLCP / onCLS / onINP instrumentation in the web app). Record 13 is UNVERIFIABLE while record 14 is FAIL on the same evidence, which is an internal inconsistency in the audit. 14 carries the higher-confidence, more specific assertion, so 14 survives. Both were independently re-verified and the absence is real in both cases — this is a duplicate merge, not a false-positive dismissal of the underlying gap."
+    }
+  ],
+  "internal_contradictions": [
+    {
+      "keys": ["14_frontend_web-13", "14_frontend_web-14"],
+      "conflict": "The same observation is classified UNVERIFIABLE in 13 and FAIL in 14. The audit asserts it cannot be verified in one row and is a hard failure in the adjacent row. Resolved by keeping 14 as the survivor; 13 is merged away."
+    },
+    {
+      "keys": ["14_frontend_web-4", "14_frontend_web-6", "14_frontend_web-3"],
+      "conflict": "Records 3, 4 and 6 all treat frontend/web_app/tailwind.config.js as LIVE configuration governing theme.extend (maxWidth, fontSize) — 4 cites it as the breakpoint authority, 6 cites lines 72-88 as the source of the fluid clamp() type, 3 cites max-w-11xl as an applied container width. All three are premised on the v3 config being loaded. The repo is on Tailwind v4.3.3 where tailwind.config.js is inert without an `@config` directive, and no `@config` exists. The three rows cannot all be satisfied by 'the config works'; they are simultaneously accurate as statements about the file and false as statements about the rendered CSS. Not resolved here — routed to coverage_gaps as one cross-cutting root cause."
+    },
+    {
+      "keys": ["14_frontend_web-12", "14_frontend_web-11"],
+      "conflict": "Row 12 asserts 'No orphan pages observed' as part of a PASS attestation, while row 11 asserts that alt text is correctly applied across the same navigational surfaces. Row 12's no-orphans claim is falsified (/terms, /privacy, /cookies have no route), which undermines the completeness premise the SEO section relies on, but it does not contradict row 11's specific alt-text citations, which are all verified. Recorded so the orchestrator does not treat row 12 as a clean PASS."
+    }
+  ],
+  "cross_cutting_candidates": [
+    {
+      "key": "14_frontend_web-4",
+      "why": "frontend/web_app/tailwind.config.js is a single 235-line config file that governs the whole codebase's styling tokens, yet it is NEVER LOADED under Tailwind v4. Applies to >= 42 files: text-3xs 128 usages / 42 files, text-4xs 30 / 11 files, text-5xs 15 / 5 files, max-w-11xl 7 / 7 files, text-2xs 1 / 1 file all emit no CSS. This meets the compiler's cross-cutting test on both counts: >= 5 files, and a config file governing the whole codebase with no single meaningful File:Line. THE FIX IS A DECISION, NOT A FINDING: either bridge v3 config into v4 with `@config \"../tailwind.config.js\"` in globals.css, or migrate the tokens into a v4 `@theme` block. A resolver must pick one — they are mutually exclusive."
+    },
+    {
+      "key": "14_frontend_web-14",
+      "why": "No observability instrumentation anywhere in frontend/web_app/src: no web-vitals / reportWebVitals / onLCP / onCLS / onINP (0 matches), no instrumentation.ts, and — discovered while verifying — @sentry/nextjs is a declared production dependency that is never imported (0 Sentry matches in src), despite Law 176 and §15 requiring it. No single File:Line; governs the whole frontend and is a deployment-readiness issue."
+    },
+    {
+      "key": "14_frontend_web-P2",
+      "why": "Push-notification infrastructure is absent platform-wide: no push SDK in either package.json, no service worker anywhere in src, no manifest.json or sw.js in public/. Cross-cutting across web_app and mobile_app, and it must be built on the sanctioned @zozi/shared/realtime.ts WebSocket channel rather than a new vendor."
+    },
+    {
+      "key": "14_frontend_web-14 (CSP/SRI)",
+      "why": "Laws 285 (CSP with nonces) and 286 (SRI integrity hashes) are unimplemented for the web app: no CSP header or nonce machinery, no integrity= attribute anywhere, and vercel.json sets the other four security headers but not CSP. Applies to every route; no single File:Line."
+    },
+    {
+      "key": "14_frontend_web-15 (lockfile drift)",
+      "why": "frontend/web_app ships BOTH pnpm-lock.yaml and package-lock.json. The npm lockfile is the only record of the Law-171-forbidden @tanstack/react-query, so the two problems are one problem: package.json declares neither, pnpm-lock.yaml records neither, but package-lock.json declares @tanstack/react-query ^5.104.0 and 3 source files import it. Root-level config governing the whole frontend; removing package-lock.json is the single highest-leverage action and would expose the import sites as hard TS2307 errors (which they already are — see the typecheck result)."
+    }
+  ],
+  "coverage_gaps": [
+    "NEW FINDING (cross-cutting, HIGH impact, not in the packet): frontend/web_app/tailwind.config.js is DEAD CODE under Tailwind v4.3.3 and ~174 utility class usages across 42 files emit no CSS. Evidence: package.json devDependencies '@tailwindcss/postcss': '^4' with node_modules/tailwindcss at 4.3.3; postcss.config.mjs loads only @tailwindcss/postcss + autoprefixer; globals.css:3 is `@import \"tailwindcss\"`; Select-String '@config' across every CSS file under src returns 0 matches. Empirically confirmed against a fresh `next build`: across all 24 CSS files under .next/, '.text-3xs' 0, '.text-4xs' 0, '.text-5xs' 0, '.text-2xs' 0, '.text-display' 0, '.max-w-11xl' 0, while control classes '.max-w-7xl', '.text-sm', '.grid-cols-8', '.md\\:hidden', '.sm\\:flex', '.lg\\:grid-cols-8' are all present. Source usage counts: text-3xs 128x/42 files, text-4xs 30x/11 files, text-5xs 15x/5 files, max-w-11xl 7x/7 files, text-2xs 1x. This makes packet rows 3, 4 and 6 partly invalid and is the single largest frontend defect found.",
+    "NEW FINDING (P0, verified by running the typechecker): 119 TypeScript errors across 29 files. `npx tsc --noEmit -p tsconfig.json` exits 2. Tally: TS2322 x60, TS2339 x11, TS2305 x11, TS2353 x8, TS7006 x6, TS2307 x4, TS2604 x3, TS2786 x3, TS2503 x2, TS2559 x2, TS7031 x2, TS2614 x2, TS2304 x1, TS2551 x1, TS2345 x1, TS7016 x1, TS2459 x1. Decisive lines: src/app/providers.tsx:3, src/components/QueryErrorBoundary.tsx:16 and src/lib/api/queryStates.ts:14 all `error TS2307: Cannot find module '@tanstack/react-query'` (Law 171 forbidden package, undeclared and unresolvable); src/app/checkout/page.tsx:217 `TS2304: Cannot find name 'setConfig'`; src/app/suppliers/[id]/page.tsx:72 `TS2551: Property 'discount_percent' does not exist on type 'Product'. Did you mean 'discount_percentage'?`; src/app/employee/attendance/page.tsx:254,268 and src/components/map/LocationPicker.tsx:21,75 `TS7006` implicit any; src/lib/serverCountry.ts:23,30,44,63,70 `TS2339` Next 16 async cookies()/headers() not awaited; 13 of the 29 files are src/shared/**/*.native.tsx React-Native files being typechecked against DOM types.",
+    "NEW FINDING (P0, the actual reason the build is green): frontend/web_app/next.config.ts:6-8 sets `typescript: { ignoreBuildErrors: true }`. `npx next build` therefore exits 0 and prints 'Compiled successfully in 69s' followed by 'Skipping validation of types' — it is NOT evidence that the code typechecks. This suppression is what lets Law 186 ('next build passes with no errors') appear satisfied while 119 real errors sit in CI's blind spot. Removing it is the single change that surfaces the typecheck debt.",
+    "NEW FINDING (Law 171 violation, quantified): @tanstack/react-query is imported at 3 source sites — src/app/providers.tsx:3, src/components/QueryErrorBoundary.tsx:16, src/lib/api/queryStates.ts:14 — which ARCHITECTURE_STACK.md:697 (Law 171) forbids outright. `swr` occurrence count is 0, so that half of the law holds. The package is NOT in package.json and NOT in pnpm-lock.yaml (grep 0 in both) but IS in package-lock.json:14 as ^5.104.0, and node_modules/@tanstack contains only query-core — `require.resolve('@tanstack/react-query')` returns MODULE_NOT_FOUND. Net effect: a forbidden dependency that is simultaneously undeclared, unresolvable, and breaking the build. Note src/__tests__/providers.test.tsx:20 asserts `expect(content).not.toContain(\"@tanstack/react-query\")` — the repo's own test encodes the Law 171 rule and is currently FAILING. Running it: `npx jest --runInBand src/__tests__/providers.test.tsx` -> 'Test suite failed to run / Cannot find module @tanstack/react-query from src/app/providers.tsx'. Also worth noting src/app/providers.tsx is imported by NO route (layout.tsx uses ThemeProvider + AuthProvider only), so the violation is currently latent rather than user-facing.",
+    "NEW FINDING (Law 173 / §12 violation): frontend/web_app/package-lock.json (434308 bytes) is committed ALONGSIDE pnpm-lock.yaml (379094 bytes). TECHNOLOGY_STACK.md:183 forbids npm. The Dockerfile is clean (`npm install --global pnpm@10.34.6` bootstraps pnpm only, then `pnpm install --frozen-lockfile` / `pnpm build` / `CMD [\"pnpm\",\"start\"]`), but vercel.json declares `installCommand: cd frontend/web_app && npm install --legacy-peer-deps` and `buildCommand: cd frontend/web_app && npm run build` — the deploy path uses npm. Additionally frontend/web_app/package.json:11 sets `\"test\": \"npx jest --runInBand\"`, invoking npm's npx rather than pnpm dlx/exec. packageManager is pinned to pnpm@11.9.0 while the Dockerfile installs pnpm 10.34.6 — another drift.",
+    "NEW FINDING (Law 172 / data-fetching, marginal): src/app/providers.tsx:5 imports fetchRbacCatalog from @shared/adminPermissions, but no route imports src/app/providers.tsx, so the /rbac/catalog fetch on which shared/src/permissions.ts depends (Law 167 / 197) is never executed in the current route tree. frontend/shared/src/permissions.ts is correctly marked AUTO-GENERATED ('will be overwritten by scripts/generate-permissions.mjs', referencing Law 167, 197) so the generation contract itself is intact; the gap is that nothing consumes it at runtime. Not verified further — I did not trace whether each admin page fetches the catalog directly instead.",
+    "NEW FINDING (broken global footer links): src/components/Footer.tsx:78 renders href={`/${key}`} for [\"terms\",\"privacy\",\"cookies\"] and :43 renders href=\"/supplier/register\". Route registration confirmed by enumerating the built route table: /terms, /privacy and /cookies have NO page under src/app (only src/app/supplier/terms/page.tsx exists, a different route). /supplier/register DOES exist. So three footer links in the global chrome of every storefront page 404, and there is no privacy policy route for a marketplace processing PII. Refutes the 'No orphan pages observed' attestation in packet row 12.",
+    "NEW FINDING (duplicate + clipping Table component): two Table components exist. src/components/ui/Table.tsx:11 correctly wraps in `w-full overflow-x-auto` but is imported by ZERO files (dead). src/components/ui/shared/Table.tsx:12 wraps in `... overflow-hidden` — which CLIPS a wide table instead of scrolling it — and IS imported by 4 live files (admin/employees/_components/employees-content.tsx, admin/promotions/_components/CouponsPanel.tsx, admin/promotions/_components/FlashSalesPanel.tsx, components/FraudDetectionDashboard.tsx). This refutes the packet's citation of 'shared/Table.tsx:11-17' as an overflow-x-auto wrapper.",
+    "NEW FINDING (nav breakpoint gap): Header.tsx:793 hides the hamburger at `md:hidden` (>=768px) while Header.tsx:807 reveals the horizontal nav at `hidden sm:flex` (>=640px). Between 640px and 767px both the hamburger and the full horizontal nav render simultaneously. Found while verifying row 7.",
+    "NEW FINDING (version drift): sharp is declared as 0.35.4 in package.json and pnpm-lock.yaml pins BOTH sharp@0.35.4 and sharp@0.35.5; the installed node_modules/sharp is 0.35.5. §12 pins 0.35.4 and explicitly notes 0.35.5 does not exist in the npm registry as of 2026-09-15, so the installed tree should be re-resolved.",
+    "NEW FINDING (infrastructure drift): frontend/web_app carries committed build/debug artifacts that should not be in the tree — build_log.txt, build_output.txt, build.log, new_build_log.txt, next.err, output.txt, browser_test.cjs, browser_test_output.txt, bulk_test_output.txt, bulk_test_verbose.txt, test-results.json, e2e-screenshots/, test-results/, playwright-results.txt, audit-logs-fixed.png, command-center-fixed.png, plus stray scripts tmp_count_cva.py, tmp_count_hidden.py, tmp_count_input_types.py, tmp_count_submit.py, tmp_count_toasts.py and a file literally named `-w`. Not in the packet; flagged because it obscures the frontend state assessment.",
+    "NOT VERIFIED — visual rendering of touch targets. All touch-target findings are static Tailwind-class measurements. Without a browser I could not confirm computed box sizes, and could not run axe-core against rendered DOM to corroborate the WCAG 2.5.5 44x44 judgement. jest-axe is installed but the three a11y test files (Footer, Header, login) do not cover ProductCard, Pagination, or Modal, and no test asserts a minimum target size anywhere.",
+    "NOT VERIFIED — mobile viewport behaviour. No Playwright run was performed, so claims about 320px rendering, horizontal scroll behaviour of the clipping Table component, and the modal full-screen question were assessed from class names only. Playwright 1.62.1+ is installed and e2e/mobile-panel-audit.spec.ts exists but was not executed.",
+    "NOT VERIFIED — CSP and SRI as shipped. I confirmed no CSP header, no nonce machinery, and no integrity= attribute exist in source or config. I did not inspect Cloudflare/Vercel edge configuration or any response headers at runtime, so a header could theoretically be injected outside the repo. No Cloudflare config file exists at all, so there is nothing repo-side to inspect.",
+    "SCOPE NOTE — the packet's canonical fields are uniformly NOT_PROVIDED. All 22 records carry Phase, Cluster, File:Line, Current, Target, Delta, Fix, Verify, Test, Rollback, Blast radius, Depends on, Blocks and Completion blocker as NOT_PROVIDED (np_token = NOT_PROVIDED). Under the second-pass rule that NOT_PROVIDED is not a licence to invent, I filled File:Line, Phase, Evidence strength, Truth level and Claim state only where I read direct evidence, and left Target/Delta/Fix/Rollback/Blast-radius empty. Consequence: 8 of the 8 dispatchable defects and all 9 attestations are FIX_UNTESTABLE under compiler §0.7 item 42, because the source records supply no Verify command and no Test path. The orchestrator should request these from the audit before dispatch, or the resolver will have no acceptance criterion.",
+    "SCOPE NOTE — rows 15 through 20 are FEATURE-GAP rows (route absence), not defects in existing code. There is no File:Line to fix, only a route to create, and FEATURE_STACK_LIST.md is the authority on release scope. They are reported REAL because the absences are factually confirmed, but they should be triaged as build-scope items rather than repairs, and row 18 in particular must be re-scoped (Disciplinary Cases and Offboarding already ship)."
+  ],
+  "not_run": [
+    {"check": "Playwright E2E / mobile viewport render", "reason": "Requires starting a server; the contract forbids starting servers. Touch-target and 320px findings are static class measurements only."},
+    {"check": "jest-axe accessibility run on ProductCard / Pagination / Modal", "reason": "No test file exists for any of the three; jest-axe is wired into only 3 of 73 test files (Footer, Header, login). A new test would be source creation, which is forbidden for this agent."},
+    {"check": "Full `pnpm test` suite", "reason": "Partial run only (src/__tests__/providers.test.tsx), sufficient to prove the @tanstack/react-query failure. A full run would take far longer than the remaining budget and is not needed for any packet row."},
+    {"check": "Cloudflare Pages deploy verification", "reason": "No wrangler.toml / _headers / _routes.json and no Cloudflare reference in .github/workflows; nothing to inspect. Static hosting config cannot be verified beyond file absence."},
+    {"check": "npm/yarn install reproducibility audit", "reason": "`pnpm install` and all mutating package commands are forbidden by the hard rules. The lockfile conflict is established by file presence and content comparison only."}
+  ]
+}

@@ -59,6 +59,25 @@ def _bytes_to_image(data: bytes) -> Image.Image:
     return Image.open(io.BytesIO(data)).convert("RGBA")
 
 
+def _deskew(gray: np.ndarray) -> np.ndarray:
+    """Deskew a grayscale image using minAreaRect."""
+    try:
+        import cv2
+    except ImportError:
+        return gray
+    coords = np.column_stack(np.where(gray > 0))
+    if len(coords) == 0:
+        return gray
+    angle = cv2.minAreaRect(coords.astype(np.float32))[-1]
+    if angle < -45:
+        angle = -(90 + angle)
+    else:
+        angle = -angle
+    (h, w) = gray.shape[:2]
+    M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)
+    return cv2.warpAffine(gray, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
+
 def _extract_text_from_image(image_bytes: bytes) -> str:
     """Extract text from image using OCR-ready preprocessing."""
     img = _bytes_to_image(image_bytes)
@@ -77,6 +96,7 @@ def _extract_text_from_image(image_bytes: bytes) -> str:
         gray = np.array(Image.fromarray(rgb).convert("L"))
 
     if gray is not None:
+        gray = _deskew(gray)
         enhanced = cv2.convertScaleAbs(gray, alpha=1.5, beta=10) if 'cv2' in dir() else gray
         _, binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU) if 'cv2' in dir() else (None, enhanced)
         return _ocr_read(binary)

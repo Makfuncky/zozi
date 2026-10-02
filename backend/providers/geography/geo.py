@@ -16,16 +16,13 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-try:
-    import requests
-    HAS_GEO = True
-except ImportError:
-    HAS_GEO = False
-    requests = None  # type: ignore[assignment]
 
-from ..config import settings
+
+from providers.config import settings
 
 logger = logging.getLogger(__name__)
+
+HAS_GEO = True
 
 
 class CountryDetectionProvider:
@@ -309,24 +306,22 @@ def resolve_ip_location(
     for template in IP_GEO_PROVIDERS:
         url = template.format(ip=ip)
         try:
-            resp = requests.get(url, timeout=DEFAULT_TIMEOUT, headers={"User-Agent": USER_AGENT})
-            if resp.status_code != 200:
-                last_error = f"{url} -> HTTP {resp.status_code}"
-                continue
-            payload = resp.json()
-            location = _parse_ipwhois(payload) if "ipwho.is" in url else _parse_ipapi(payload)
-            if location is None or location.latitude is None:
-                last_error = f"{url} -> unparsable payload"
-                continue
-            _cache.set(cache_key, location)
-            return location
-        except requests.RequestException as exc:
-            last_error = f"{url} -> {exc}"
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+                location = _parse_ipwhois(payload) if "ipwho.is" in url else _parse_ipapi(payload)
+                if location is None or location.latitude is None:
+                    last_error = f"{url} -> unparsable payload"
+                    continue
+                _cache.set(cache_key, location)
+                return location
+        except urllib.error.HTTPError as exc:
+            last_error = f"{url} -> HTTP {exc.code}"
             logger.warning("Location provider failed: %s", last_error)
             continue
-        except (ValueError, json.JSONDecodeError) as exc:
+        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
             last_error = f"{url} -> {exc}"
-            logger.warning("Location provider returned bad JSON: %s", last_error)
+            logger.warning("Location provider failed: %s", last_error)
             continue
 
     raise RuntimeError(f"All location providers failed: {last_error}")
@@ -341,11 +336,12 @@ def reverse_geocode(latitude: float, longitude: float) -> ReverseLocation:
 
     url = f"{REVERSE_GEO_URL}?format=json&lat={latitude}&lon={longitude}&zoom=18&addressdetails=1"
     try:
-        resp = requests.get(url, timeout=DEFAULT_TIMEOUT, headers={"User-Agent": USER_AGENT})
-        if resp.status_code != 200:
-            raise RuntimeError(f"Reverse geocode HTTP {resp.status_code}")
-        payload = resp.json()
-    except (requests.RequestException, ValueError, json.JSONDecodeError) as exc:
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT) as resp:
+            if resp.status != 200:
+                raise RuntimeError(f"Reverse geocode HTTP {resp.status}")
+            payload = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
         raise RuntimeError(f"Reverse geocode failed: {exc}")
 
     result = ReverseLocation(

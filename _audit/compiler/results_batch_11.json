@@ -1,0 +1,92 @@
+{
+  "batch": 10,
+  "files": [
+    {
+      "path": "backend/domains/orders/models/order_entities.py",
+      "findings": [
+        {
+          "id": "FEAT-021",
+          "status": "VALID",
+          "evidence": "Line 19: CheckConstraint limits status_code to ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'). However, order_engine.py:77-89 defines VALID_ORDER_TRANSITIONS including 'prepared', 'picking_up', 'in_transit', 'failed', 'refunded' which are absent from the DB constraint.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 104: Order status state machine must be consistent between DB constraint and service. DB constraint omits statuses allowed by service transitions.",
+          "notes": "Real inconsistency between DB-level constraint and service-level state machine. A migration is required to align the check constraint with VALID_ORDER_TRANSITIONS."
+        },
+        {
+          "id": "FEAT-028",
+          "status": "VALID",
+          "evidence": "Line 63: is_deleted = Column(Boolean, default=False, nullable=False, index=True) is present on Order model.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Soft delete is correctly implemented per Law 54. No action needed; this is a positive verification."
+        },
+        {
+          "id": "PERF-002",
+          "status": "VALID",
+          "evidence": "Line 67: items = relationship('OrderItem', back_populates='order') uses default lazy='select' (SQLAlchemy default when lazy is unspecified).",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 45: No N+1 queries — all relationships must declare lazy='selectin' or 'joined'. Default lazy='select' is forbidden.",
+          "notes": "Accessing order.items outside of a selectinload context will trigger N+1 queries for order lines."
+        },
+        {
+          "id": "PERF-009",
+          "status": "VALID",
+          "evidence": "Line 176: order = relationship('Order') on ReturnRequest uses default lazy='select' (SQLAlchemy default).",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 45: No N+1 queries — all relationships must declare lazy='selectin' or 'joined'. Default lazy='select' is forbidden.",
+          "notes": "Accessing return_request.order from a list of returns triggers N+1 queries."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/orders/services/core/order_engine.py",
+      "findings": [
+        {
+          "id": "PERF-007",
+          "status": "VALID",
+          "evidence": "Line 1009: orders = orders.offset(skip) is used when cursor is None in get_orders(). The cursor branch exists at lines 1006-1007 but OFFSET remains the default path.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 317: Keyset pagination (cursor) must be used; OFFSET is forbidden on hot lists.",
+          "notes": "Customer order history falls back to OFFSET pagination, which degrades at 1000+ orders."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/accounts/models/onboarding.py",
+      "findings": [
+        {
+          "id": "TF-020",
+          "status": "INVALID",
+          "evidence": "Line 23: pipeline_status = Column('status', String, default='pending') maps DB column 'status' to model attribute pipeline_status. The DB column IS represented in the model via SQLAlchemy column-name mapping.",
+          "counter_evidence": "SQLAlchemy Column('status', ...) explicitly declares the DB column name 'status'; the model does contain this column, just with a different Python attribute name.",
+          "benchmark_mismatch": "",
+          "notes": "False positive. The finding appears to compare raw DB column names against Python attribute names without accounting for SQLAlchemy's column-name mapping."
+        },
+        {
+          "id": "TF-021",
+          "status": "INVALID",
+          "evidence": "Line 23: pipeline_status = Column('status', String, default='pending') means the live DB has column 'status' mapped to the model attribute pipeline_status. The column exists in the DB.",
+          "counter_evidence": "The Column('status', ...) definition confirms the DB column 'status' exists and is mapped in the model.",
+          "benchmark_mismatch": "",
+          "notes": "False positive. Misunderstands SQLAlchemy column-name mapping. The DB column 'status' exists and is represented in the model."
+        },
+        {
+          "id": "TF-022",
+          "status": "INVALID",
+          "evidence": "Line 47: step_status = Column('status', String, default='pending') maps DB column 'status' to model attribute step_status. The DB column IS represented in the model.",
+          "counter_evidence": "SQLAlchemy Column('status', ...) explicitly declares the DB column name 'status' in the OnboardingStep model.",
+          "benchmark_mismatch": "",
+          "notes": "False positive. Same SQLAlchemy column-name mapping misunderstanding as TF-020."
+        },
+        {
+          "id": "TF-023",
+          "status": "INVALID",
+          "evidence": "Line 47: step_status = Column('status', String, default='pending') means the live DB has column 'status' mapped to model attribute step_status. The column exists in the DB.",
+          "counter_evidence": "The Column('status', ...) definition confirms the DB column 'status' exists and is mapped in the model.",
+          "benchmark_mismatch": "",
+          "notes": "False positive. Misunderstands SQLAlchemy column-name mapping. The DB column 'status' exists and is represented in the model."
+        }
+      ]
+    }
+  ]
+}

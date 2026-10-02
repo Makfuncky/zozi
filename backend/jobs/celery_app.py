@@ -5,9 +5,12 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 from celery.signals import worker_init, worker_shutdown
+from celery.utils.log import get_task_logger
 from kombu import Exchange, Queue
 
 from infrastructure.utils.config import settings
+
+logger = get_task_logger(__name__)
 
 # Create Celery app
 celery_app = Celery(
@@ -18,6 +21,7 @@ celery_app = Celery(
         "jobs.ai_tasks",
         "jobs.periodic_tasks",
         "jobs.payout_tasks",
+        "jobs.payout_sweep",
         "jobs.email_tasks",
         "jobs.event_workers",
         "jobs.fraud_monitoring",
@@ -28,6 +32,13 @@ celery_app = Celery(
         "jobs.ml_worker",
         "jobs.mcp_server",
         "jobs.mcp_marketplace_server",
+        "jobs.fx_revaluation",
+        "jobs.payroll_run",
+        "jobs.accrual_reversal",
+        "jobs.background_tasks",
+        "jobs.video_tasks",
+        "jobs.threat_feed_updater",
+        "jobs.async_workers",
     ],
 )
 
@@ -47,7 +58,9 @@ celery_app.conf.update(
         "jobs.ai_tasks.*": {"queue": "ml"},
         "jobs.periodic_tasks.*": {"queue": "periodic"},
         "jobs.payout_tasks.*": {"queue": "payouts"},
+        "jobs.payout_sweep.*": {"queue": "payouts"},
         "jobs.email_tasks.*": {"queue": "emails"},
+        "jobs.payroll_run.*": {"queue": "periodic"},
     },
     
     # Task queues with dead-letter routing for failed tasks
@@ -118,10 +131,35 @@ celery_app.conf.update(
             "task": "jobs.periodic_tasks.cleanup_old_jobs",
             "schedule": crontab(hour=1, minute=0),
         },
+        # Ghost order detection every hour
+        "ghost-order-detection": {
+            "task": "jobs.ghost_order_detector.detect_ghost_orders",
+            "schedule": 3600.0,  # Every hour
+        },
         # Clean up expired tokens daily
         "cleanup-tokens": {
             "task": "jobs.periodic_tasks.cleanup_expired_tokens",
             "schedule": crontab(hour=1, minute=30),
+        },
+        # Ghost employee detection nightly at 1:30 AM UTC
+        "ghost-employee-detection": {
+            "task": "jobs.fraud_monitoring.run_ghost_employee_detection",
+            "schedule": crontab(hour=1, minute=30),
+        },
+        # Anomaly detection every 6 hours
+        "anomaly-detection": {
+            "task": "jobs.fraud_monitoring.run_anomaly_detection",
+            "schedule": 21600.0,  # Every 6 hours
+        },
+        # FX revaluation daily at end of business day UTC
+        "fx-revaluation": {
+            "task": "jobs.fx_revaluation.run_fx_revaluation_task",
+            "schedule": crontab(hour=23, minute=0),
+        },
+        # Payroll batch processing on the 1st of each month at 5 AM UTC
+        "payroll-batch": {
+            "task": "jobs.payroll_run.run_payroll_batch",
+            "schedule": crontab(day_of_month=1, hour=5, minute=0),
         },
     },
     
@@ -156,6 +194,7 @@ celery_app.autodiscover_tasks([
     "jobs.ai_tasks",
     "jobs.periodic_tasks",
     "jobs.payout_tasks",
+    "jobs.payout_sweep",
     "jobs.email_tasks",
     "jobs.event_workers",
     "jobs.fraud_monitoring",
@@ -166,6 +205,13 @@ celery_app.autodiscover_tasks([
     "jobs.ml_worker",
     "jobs.mcp_server",
     "jobs.mcp_marketplace_server",
+    "jobs.fx_revaluation",
+    "jobs.payroll_run",
+    "jobs.accrual_reversal",
+    "jobs.background_tasks",
+    "jobs.video_tasks",
+    "jobs.threat_feed_updater",
+    "jobs.async_workers",
 ])
 
 # Signal handlers for worker lifecycle
@@ -178,6 +224,61 @@ def init_worker(**kwargs):
 def shutdown_worker(**kwargs):
     """Clean up on worker shutdown."""
     pass
+
+
+@celery_app.task(
+    bind=True,
+    name="tasks.celery_app.replay_dlq",
+    max_retries=3,
+    retry_backoff=True,
+    retry_backoff_max=300,
+    time_limit=300,
+    soft_time_limit=240,
+    queue="periodic",
+)
+def replay_dlq(self, limit: int = 50) -> dict:
+    """Replay failed tasks from the Celery dead-letter queue.
+
+    Reads up to ``limit`` messages from the ``dlq`` queue and republishes
+    each to its original exchange/routing_key so workers can retry them.
+
+    Returns:
+        {"status": "ok", "replayed": int, "failures": int}
+    """
+    replayed = 0
+    failures = 0
+    try:
+        with celery_app.pool.acquire(block=True) as conn:
+            channel = conn.channel()
+            queue = channel.queue_declare("dlq", passive=True)
+            message_count = queue.message_count
+            for _ in range(min(limit, message_count)):
+                try:
+                    message = channel.basic_get("dlq", no_ack=False)
+                    if message is None or message.body is None:
+                        break
+                    properties = message.properties or {}
+                    headers = properties.get("headers", {})
+                    original_routing_key = headers.get("x-original-routing-key", "periodic")
+                    original_exchange = headers.get("x-original-exchange", "periodic")
+                    channel.basic_publish(
+                        exchange=original_exchange,
+                        routing_key=original_routing_key,
+                        body=message.body,
+                        properties=properties,
+                        declare=[Exchange(original_exchange, type="direct")],
+                    )
+                    channel.basic_ack(message.delivery_tag)
+                    replayed += 1
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("DLQ replay failed for one message: %s", exc)
+                    failures += 1
+    except Exception as exc:  # noqa: BLE001
+        logger.error("DLQ replay task failed: %s", exc)
+        raise self.retry(exc=exc)
+
+    return {"status": "ok", "replayed": replayed, "failures": failures}
+
 
 if __name__ == "__main__":
     celery_app.start()

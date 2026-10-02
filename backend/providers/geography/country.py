@@ -9,7 +9,7 @@ Test file: backend/tests/_test_provider/test_country.py
 import logging
 from typing import Any, Dict, List, Optional
 
-from ..config import settings
+from providers.config import settings
 
 logger = logging.getLogger(__name__)
 

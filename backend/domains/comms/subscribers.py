@@ -179,6 +179,41 @@ def _on_user_registered(payload: Dict[str, Any]) -> None:
         )
 
 
+def _on_product_deleted(payload: Dict[str, Any]) -> None:
+    """Notify customers when a product in their order is no longer available."""
+    product_id = payload.get("product_id")
+    product_name = payload.get("product_name", "A product")
+    if product_id is None:
+        return
+    try:
+        from domains.orders.ports import Order, OrderItem
+
+        db_gen = get_db()
+        db = next(db_gen)
+        try:
+            affected_orders = (
+                db.query(Order)
+                .join(OrderItem, OrderItem.order_id == Order.id)
+                .filter(
+                    OrderItem.product_id == product_id,
+                    Order.status.in_(["pending", "processing", "confirmed"]),
+                )
+                .all()
+            )
+            for order in affected_orders:
+                _send_notification(
+                    user_id=order.user_id,
+                    type_="system",
+                    title="Product Unavailable",
+                    message=f"A product ('{product_name}') in your order #{order.id} is no longer available.",
+                    link=f"/orders/{order.id}",
+                )
+        finally:
+            next(db_gen, None)
+    except Exception:
+        logger.exception("Product-deleted notification failed", product_id=product_id)
+
+
 # ── register handlers on canonical event bus ──────────────────────────────
 
 def _register_handlers() -> None:
@@ -195,6 +230,7 @@ def _register_handlers() -> None:
         # Cross-domain events (using canonical event type strings)
         subscribe("order.status_changed", _on_order_status_changed)
         subscribe("account.registered", _on_user_registered)
+        subscribe("catalog.product.deleted", _on_product_deleted)
     except Exception:
         logger.debug("Event bus not available, handlers not registered")
 

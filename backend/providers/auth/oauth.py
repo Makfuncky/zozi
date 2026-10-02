@@ -14,11 +14,11 @@ from typing import Any, Dict
 from urllib.parse import urlencode
 
 try:
-    import requests
+    import httpx
     HAS_OAUTH = True
 except ImportError:
     HAS_OAUTH = False
-    requests = None  # type: ignore[assignment]
+    httpx = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -39,18 +39,18 @@ class OAuthProviderError(Exception):
 
 def _get_json(url: str, **kwargs: Any) -> Dict[str, Any]:
     try:
-        resp = requests.get(url, timeout=_TIMEOUT, **kwargs)
+        resp = httpx.get(url, timeout=_TIMEOUT, **kwargs)
         resp.raise_for_status()
-    except requests.RequestException as exc:
+    except httpx.HTTPError as exc:
         raise OAuthProviderError(f"GET {url} failed: {exc}") from exc
     return resp.json()
 
 
 def _post_json(url: str, **kwargs: Any) -> Dict[str, Any]:
     try:
-        resp = requests.post(url, timeout=_TIMEOUT, **kwargs)
+        resp = httpx.post(url, timeout=_TIMEOUT, **kwargs)
         resp.raise_for_status()
-    except requests.RequestException as exc:
+    except httpx.HTTPError as exc:
         raise OAuthProviderError(f"POST {url} failed: {exc}") from exc
     return resp.json()
 

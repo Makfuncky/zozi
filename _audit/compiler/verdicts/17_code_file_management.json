@@ -1,0 +1,652 @@
+{
+  "agent_id": "COMP-V18-17_code_file_management",
+  "dimension": "17_code_file_management",
+  "records_considered": 18,
+  "benchmark_read": [
+    "_most_imp_docx/ARCHITECTURE_STACK.md (full, 916 lines)",
+    "_most_imp_docx/TECHNOLOGY_STACK.md §3 backend package layout comment (via ARCH §3.1 line 172)",
+    "_most_imp_docx/PROMPT_AUDIT_COMPILER.md §0.3/§0.6/§0.7/§5.2",
+    "_audit/compiler/CROSS_AGENT_FINDINGS.md (T1-T15)"
+  ],
+  "structural_verdicts": {
+    "law18_root_forbidden_folders": {
+      "verdict": "CLEAN",
+      "evidence": "Get-ChildItem backend -Directory -> __pycache__, _audit, .hypothesis, .pytest_cache, .ruff_cache, .venv, alembic, domains, infrastructure, jobs, kernel, logs, middleware, modules, providers, rbac, scripts, tests, var. Test-Path backend/{utils,routers,controllers,services,models,db} -> False for all 6. All 11 canonical dirs present. No forbidden root folder exists.",
+      "laws_cited": ["Law 18", "Law 8", "Law 13"]
+    },
+    "law19_canonical_root_contents": {
+      "verdict": "DIRTY",
+      "canonical_files_present": ["config.py", "DOMAIN_ALLOWLIST.yaml", "main.py"],
+      "canonical_dirs_present": ["alembic", "domains", "infrastructure", "jobs", "kernel", "middleware", "modules", "providers", "rbac", "scripts", "tests"],
+      "non_canonical_root_files_count": "118 of 121",
+      "non_canonical_root_dirs": ["__pycache__", "_audit", ".hypothesis", ".pytest_cache", ".ruff_cache", ".venv", "logs", "var"],
+      "temp_pattern_counts": {
+        "health_test_*.py": 75,
+        "_tmp_*.py": 15,
+        "check_*.py": 7,
+        "debug_*.py": 0,
+        "extract_*.py": 0,
+        "compare_*.py": 0,
+        "fix_*.py": 0
+      },
+      "other_non_canonical_root_files": ["__init__.py", "_audit_boot_check.py", ".dockerignore", ".env", ".env.example", ".gitignore", "alembic_chain.py", "alembic_chain.txt", "Dockerfile", "Dockerfile.prod", "lifespan.py", "migration_helpers.py", "pyproject.toml", "requirements-compiled.txt", "requirements-dev.txt", "requirements.txt", "start_backend.ps1", "test_output1.txt", "test_output2.txt", "uv.lock", "zozi.db"],
+      "alembicini_location": "backend/alembic/alembic.ini - correctly inside alembic/, NOT at backend root",
+      "root_py_total": 104,
+      "root_files_total": 121,
+      "refutations_of_prior_claims": [
+        "~5 debug_*.py at backend root: REFUTED - 0 exist at root (debug_env.py and debug_regex.py exist inside backend/alembic/)",
+        "backend/run_tests.ps1 + backend/run_tests.sh at backend root: REFUTED - neither exists at backend/ root; both exist only under .kilo/worktrees/buttercup-rainbow/backend/ (an unscanned repo duplicate, T15)",
+        "project single-runner is scripts/run-pipeline.ps1: REFUTED for backend/ - no backend/scripts/run-pipeline.ps1 exists; the only run-pipeline.ps1 in the repo is _browser_test/scripts/run-pipeline.ps1. There is no canonical test runner under backend/scripts/."
+      ],
+      "temp_files_referenced_by_anything": "0 - a repo-wide grep (backend/**, docs/**, .github/** over *.py,*.ps1,*.sh,*.yml,*.yaml,*.md,*.toml,*.ini,*.cfg) for alembic_chain, health_test_, _tmp_check, check_db_accounts, check_baseline_cols, check_schema_vs_metadata, check_tables, _audit_boot_check, test_output1, test_output2 returned ZERO hits. Nothing imports them, so they are safe to delete without breaking any import.",
+      "laws_cited": ["Law 18", "Law 19", "Law 27", "Law 28", "Law 29"]
+    },
+    "law28_auto_stubs": {
+      "verdict": "NO_OP",
+      "evidence": "Get-ChildItem backend,frontend -Recurse -Filter '_auto_stubs*' (excluding .venv/node_modules/.kilo) -> zero hits. No _auto_stubs.py exists anywhere in the canonical tree. Law 28 is vacuously satisfied. NO FINDING REPORTED per instruction.",
+      "corroborates": "CROSS_AGENT_FINDINGS T15 bullet 2"
+    },
+    "law12_fifteen_domains": {
+      "verdict": "REAL - NOT fixed (17 domain packages, not 15)",
+      "actual_listing": ["__pycache__", "accounts", "analytics", "audit", "catalog", "comms", "country", "customers", "finance", "governance", "hr", "logistics", "media", "orders", "payments", "promotions", "security", "suppliers"],
+      "canonical_15_present": true,
+      "extras": ["media", "payments"],
+      "schema_vs_package_distinction": {
+        "principle": "ARCHITECTURE_STACK.md:354 approves NON-CANONICAL POSTGRES SCHEMAS media/treasury/ai/configuration. That approval covers schema= names only. It does NOT sanction an extra Python domain package under domains/. Law 12 (ARCH:538) fixes the set of 15 domains/ PACKAGES. domains/media/ IS a package (has features.py, ports.py, services/, models/, schemas/, events.py, subscribers.py) so it is a Law 12 violation even though its tables use the APPROVED schema 'media' (backend/domains/media/models/media_asset.py:11,26 -> __table_args__ = {'schema':'media'}).",
+        "media": "LAW 12 VIOLATION (extra domain package) + DEAD CODE. backend/domains/media/ has NO __init__.py. Verified empirically: `from domains.media...` appears ONLY inside domains/media itself (ports.py:6, services/media_service.py:5). Zero external references to MediaAsset / UploadSession / media_service / media_schema anywhere outside the package (the only name matches elsewhere are domains/comms/services/media_service.py and infrastructure/utils/media_service.py, different modules). Its 4 declared atoms in backend/domains/media/features.py (media.asset.upload/read/delete, media.upload_session.create) are therefore unreachable.",
+        "payments": "LAW 12 VIOLATION (extra domain package) but NOT dead. Live import at backend/jobs/event_workers.py:72 `from domains.payments.services.payment_service import create_payment_intent`. Its tables use schema='payments' (payment_models.py:46,81,111,148) which is NOT in ARCH §8's approved non-canonical schema list and NOT one of the 15 canonical domains - so it is also an undeclared schema (Law 55/56 territory).",
+        "net": "Both extras are REAL Law 12 violations. The schema-vs-package distinction does NOT rescue either: media's schema is approved but its package is not; payments' package and schema are both unapproved. media is additionally 100% dead code."
+      },
+      "laws_cited": ["Law 12", "Law 4", "Law 150", "Law 160"]
+    },
+    "law4_media_missing_init_concrete_mechanism": {
+      "verdict": "REAL - Law 4 break with a proven mechanism",
+      "mechanism": "backend/rbac/catalog.py:29-38 `def _load()` iterates `pkgutil.iter_modules(domains.__path__)` and imports `domains.{m.name}.features`. pkgutil.iter_modules only yields REGULAR packages (directories containing __init__.py); it does not yield namespace/dataless directories. Because backend/domains/media/__init__.py does not exist, `media` is never yielded.",
+      "empirical_proof": "PYTHONPATH=backend python -c \"import pkgutil, domains; print([m.name for m in pkgutil.iter_modules(domains.__path__)])\" -> ['_mixin_compliance','accounts','analytics','audit','catalog','comms','country','customers','finance','governance','hr','logistics','orders','payments','promotions','security','suppliers'] - 'media' is ABSENT. Then rbac/catalog.py FEATURE_CATALOG size = 367; namespaces = ['accounts','analytics','audit','catalog','coins','comms','country','customers','finance','fraud','governance','hr','logistics','orders','payments','promotions','security','suppliers','threat']; `media.* atoms in catalog = []`.",
+      "current_blast_radius": "ZERO today - grep for require_feature(\"media. across backend/ returns 0 hits, so no endpoint is currently gated on a media atom and no frontend permission is currently expected. The break is LATENT: adding any require_feature('media.*') gate will 403 for every role including super_admin (same class of defect as CROSS_AGENT_FINDINGS T8), and the 4 media atoms never reach GET /rbac/catalog so frontend/shared/src/permissions.ts can never contain them.",
+      "corroborates": "T-established mechanism from another agent; independently reproduced here with a live import."
+    },
+    "law13_five_modules": {
+      "verdict": "REAL - NOT fixed (6 modules, not 5)",
+      "actual_listing": ["__pycache__", "admin", "customer", "employee", "finance", "logistics", "supplier"],
+      "canonical_5_present": true,
+      "extra": "finance",
+      "extra_is_dead_code": "backend/modules/finance/ contains __init__.py (1 docstring line only) + routers/cash_management.py, and routers/ has NO __init__.py. Grep across backend/**.py for 'modules.finance' / 'modules/finance' / 'modules.finance.routers' returns ZERO hits, and grep for it in backend/main.py returns ZERO hits. The module is never mounted and never imported -> unreachable by construction, on top of the Law 13 violation.",
+      "law13_role_note": "Law 13 (ARCH:539) and Law 138 (ARCH:664) explicitly state Sub-Admin is a ROLE in the admin module, NOT a 6th module. That is honoured: there is no modules/sub_admin/. The 'finance' extra is a genuinely new module, not a role-folder, so the Law 13 violation stands on its own terms.",
+      "laws_cited": ["Law 13", "Law 132", "Law 138"]
+    },
+    "archived_module_parked_files": {
+      "count": 16,
+      "domain_packages_polluted": {
+        "promotions": 12,
+        "catalog": 1,
+        "orders": 1,
+        "suppliers": 1,
+        "accounts": 0,
+        "others": 0
+      },
+      "all_sixteen_paths": [
+        "backend/domains/catalog/services/categories/admin_categories_service.py",
+        "backend/domains/orders/services/cart/cart_service__orders.py",
+        "backend/domains/promotions/services/admin_promotion_service.py",
+        "backend/domains/promotions/services/flash_sale_service.py",
+        "backend/domains/promotions/services/flash_sale_write_service.py",
+        "backend/domains/promotions/services/promotion_admin_write_service.py",
+        "backend/domains/promotions/services/promotions_write_service.py",
+        "backend/domains/promotions/services/banners/banner_write_service.py",
+        "backend/domains/promotions/services/bogo/promotion_bogo_service.py",
+        "backend/domains/promotions/services/coins/promotion_points_service.py",
+        "backend/domains/promotions/services/coupons/commerce_coupons_read_service.py",
+        "backend/domains/promotions/services/coupons/commerce_coupons_write_service.py",
+        "backend/domains/promotions/services/coupons/customer_coupons_create_service.py",
+        "backend/domains/promotions/services/coupons/customer_coupons_mgmt_service.py",
+        "backend/domains/promotions/services/engine/promotion_engine_service.py",
+        "backend/domains/suppliers/services/documents/supplier_documents_service.py"
+      ],
+      "domains_parked_directory": "GONE. `Get-ChildItem backend -Recurse -Directory -Filter _parked` -> zero hits. The header comment in all 16 files still says 'DO NOT IMPORT FROM domains/_parked' - a dangling reference to a directory that no longer exists.",
+      "still_imported_YES_6_of_16": [
+        "backend/domains/promotions/services/admin_promotion_service.py <- LIVE PRODUCTION: backend/domains/orders/ports.py:1600 AND backend/modules/admin/routers/promotions.py:18 ('from domains.promotions.services.admin_promotion_service import (...)')",
+        "backend/domains/promotions/services/coupons/customer_coupons_create_service.py <- backend/domains/promotions/services/coupons/__init__.py:5 (star-import)",
+        "backend/domains/promotions/services/coupons/customer_coupons_mgmt_service.py <- backend/domains/promotions/services/coupons/__init__.py:6 (star-import)",
+        "backend/domains/promotions/services/coupons/commerce_coupons_read_service.py <- backend/domains/promotions/services/coupons/__init__.py:7 (star-import)",
+        "backend/domains/promotions/services/coupons/commerce_coupons_write_service.py <- backend/domains/promotions/services/coupons/__init__.py:8 (star-import)",
+        "backend/domains/promotions/services/engine/promotion_engine_service.py <- backend/domains/promotions/services/engine/__init__.py:12-15 (named import of ensure_promotion_tables, get_or_create_config)"
+      ],
+      "not_imported_10_of_16": ["admin_categories_service.py (only a prose reference in a comment at domains/catalog/services/categories/category_service.py:447)", "cart_service__orders.py", "flash_sale_service.py (only 4 commented-out imports at domains/logistics/services/core/service.py:1911-1914)", "flash_sale_write_service.py", "promotion_admin_write_service.py (only a prose reference at domains/promotions/services/engine/admin_promotions_write_service.py:406)", "promotions_write_service.py", "banner_write_service.py", "promotion_bogo_service.py", "promotion_points_service.py", "supplier_documents_service.py"],
+      "CRITICAL_hazard": "6 of the 16 files carry the header 'Retained for reference only; this file is NOT part of the running application.' THAT COMMENT IS FALSE for all 6. admin_promotion_service.py is imported by a live admin router (modules/admin/routers/promotions.py:18) and by domains/orders/ports.py:1600; four coupon modules are star-imported by a live package __init__.py; promotion_engine_service.py is named-imported by engine/__init__.py:12. Any resolver that trusts the header and deletes these files will break production routes. Note also customer_coupons_create_service.py:21 does `from domains.orders.customer_coupons_create_service import delete_coupon as ctrl_delete` and that target file DOES exist (backend/domains/orders/customer_coupons_create_service.py) - i.e. an 'ARCHIVED' module is the live owner of an orders-domain module.",
+      "laws_cited": ["Law 27", "Law 28", "Law 12", "Law 13", "Law 150"]
+    },
+    "hr_py_shadowing_and_collisions": {
+      "hr_py_verdict": "DEAD CODE - CONFIRMED EMPIRICALLY",
+      "mechanism": "backend/modules/employee/routers/ contains BOTH `hr.py` (55921 bytes, 1231 lines, 97 declared routes) AND a package directory `hr/` with __init__.py. Python's FileFinder checks directories-with-__init__ BEFORE same-named .py modules, so the package wins.",
+      "proof": "PYTHONPATH=backend python -c \"from modules.employee.routers import hr; print(hr.__file__, hasattr(hr,'__path__'))\" -> RESOLVED_TO: ...\\backend\\modules\\employee\\routers\\hr\\__init__.py / IS_PACKAGE: True",
+      "referrers_of_the_symbol": [
+        "backend/modules/employee/__init__.py:17 - \"hr_router\": (\"modules.employee.routers.hr\", \"router\") -> resolves to the PACKAGE, never to hr.py",
+        "backend/modules/admin/__init__.py:21 - \"hr_router\": (\"modules.admin.routers.hr\", \"router\") -> admin has its own hr.py, unaffected",
+        "backend/tests/integration/test_e2e_flows.py:118 - `from modules.employee.routers import hr` -> resolves to the PACKAGE"
+      ],
+      "generalisation_repo_wide": "I scanned every directory under backend/ for a stem that exists as BOTH <name>.py AND a <name>/ package with __init__.py. RESULT: exactly ONE collision in the entire repo - 'hr'. No models.py-vs-models/, no services.py-vs-services/, no routers.py-vs-routers/ collisions exist. The generalisation therefore reveals NO additional dead code beyond hr.py.",
+      "corroborates": "CROSS_AGENT_FINDINGS T5 (independently reproduced, and the file size 55921 bytes / 1231 lines matches exactly)"
+    },
+    "domain_allowlist_yaml_law7": {
+      "path": "backend/DOMAIN_ALLOWLIST.yaml",
+      "entries": 20,
+      "removal_date_range": "2026-10-03 .. 2026-10-30",
+      "today": "2026-10-02",
+      "max_age_days": 28,
+      "law7_le_30_days_satisfied": "YES - every removal_date is in the future and the furthest (2026-10-30) is 28 days out, inside the Law 7 <=30 day window. No entry is stale.",
+      "every_entry_has_a_dated_removal_plan": "YES - all 20 carry both removal_date and migration_status (10 pending, 9 in_progress).",
+      "is_it_actually_shrinking": "CANNOT BE DETERMINED - requires git history, which this agent is forbidden to run. Recorded as a coverage gap. What CAN be shown is that the CI enforcement of 'only shrinks' is BROKEN in three independent ways, so the law is not actually enforced regardless of history:",
+      "law7_enforcement_defects": [
+        "(a) DEAD GIT PATH - backend/tests/architecture/test_allowlist_shrinks.py:_git_show() runs `git show HEAD~1:DOMAIN_ALLOWLIST.yaml` with cwd=_REPO_ROOT, but the file actually lives at backend/DOMAIN_ALLOWLIST.yaml. The pathspec never matches, so _git_show ALWAYS returns None and the 'HEAD~1 diff enforcement' the module docstring advertises never runs.",
+        "(b) SELF-UPDATING BASELINES - two independent baselines exist: tests/architecture/_allowlist_shrink_baseline.txt = 36 (test_law7_allowlist_shrink.py) and tests/architecture/_allowlist_shrinks_baseline.txt = 20 (test_allowlist_shrinks.py). test_allowlist_shrinks.py:LAST LINE executes `_BASELINE_FALLBACK.write_text(str(current_count))`, i.e. the test mutates its own baseline on every pass. A test that rewrites its own fixture is not an audit trail.",
+        "(c) DATE-STAGGERING TEST ENCOURAGES FABRICATION - backend/tests/catalog/test_domain_allowlist_dates.py:14-16 asserts every entry has a removal_date, asserts all removal_date VALUES ARE UNIQUE ('staggered'), and explicitly asserts `d != '2026-10-28'` ('Uniform removal_date 2026-10-28 must be replaced'). That is why the 20 dates are one-per-day 10-03..10-30. The test rewards spreading dates cosmetically instead of removing the entry, and NO test anywhere checks the Law 7 <=30-day rule (grep for removal_date|remove_by|'30 day' across backend/tests returns only this cosmetic file)."
+      ],
+      "self_contradiction_in_the_file": "Line 3 says 'This list MUST only shrink over time' but lines 84-85 say 'Starts empty; entries are ADDED only for legacy cross-domain reads not yet routed through domains/<d>/ports.py.' The notes describe an additive policy while the header declares a monotonic-shrink policy.",
+      "known_domains_list_drift": "backend/tests/architecture/test_law7_allowlist_shrink.py:_KNOWN_DOMAINS includes 'payments', which is NOT one of the 15 canonical Law 12 domains. The Law 7 gate therefore institutionalises the Law 12 deviation by treating payments as a known domain.",
+      "laws_cited": ["Law 7", "Law 3", "Law 17"]
+    },
+    "code_quality_laws_63_to_68_spot_check": {
+      "L63_type_hints": "5853 public (non-underscore) functions across 1688 scanned backend .py files have NO return type annotation. VAST non-compliance. Method: ast walk, n.returns is None, name not starting with '_'.",
+      "L64_function_length_le_50": "462 of 13799 functions exceed 50 statement-lines. Worst: backend/config.py:598 _validate_production = 178 stmt-lines; backend/middleware/country_context.py:94 dispatch = 72; backend/config.py:385 _validate_required_secrets_in_non_production = 67; backend/alembic_chain.py (root temp file). VAST non-compliance.",
+      "L65_indentation_le_4": "307 of 1688 files contain a line indented >16 spaces (>4 levels of 4-space indentation). Examples: backend/config.py:330, backend/lifespan.py:216, backend/domains/_mixin_compliance.py:110, backend/jobs/dlq_reconciler.py:78, backend/jobs/celery_app.py:257. Widespread non-compliance.",
+      "L66_magic_numbers": "~13072 numeric literals excluding 0/1/-1/2/100 are not bound to a named constant. Approximate AST heuristic (over-counts loop bounds and test data); non-compliance is nevertheless clear and pervasive, e.g. backend/config.py:105 = 32, :108 = 15, :109 = 7, :142 = 50, :143 = 40.",
+      "L67_DRY": "Confirmed violated at import-block granularity by CFM-013 (general_ledger.py has 4 separate `from datetime import datetime` at lines 5, 36, 1136, plus decimal/typing/sqlalchemy.orm repeated at 6/1137, 7/14/37/1138, 10/1140, and ~40 function-local re-imports at 585, 634, 713, 833, 915, 1135+).",
+      "L68_consistent_errors": "VIOLATED. Raise-type census over backend/domains/**/*.py: HTTPException 1500, ValueError 279, AttributeError 60, AppError 45, ValidationError 7, RuntimeError 6, EntityNotFoundError 5, NotImplementedError 4, PermissionError 4, InvalidExportParameterError 3, Exception 2, FinanceDomainError 2, plus 3 malformed identifiers 'HTTPException_conflict'/'HTTPException_not_found'/'prefetch_error' (regex artefacts of the census, not real raises). 1500 raw FastAPI HTTPException raises inside DOMAIN SERVICES also breaches Law 14 / Law 2 layering (HTTP concerns belong in modules/routers). 321 bare `return None` sentinels across domains/ add a third, silent-failure error channel.",
+      "bonus_L58_print": "319 bare `print(` statements in backend/ (excluding .venv/__pycache__/.kilo and the 97 root temp files). Law 58 forbids print() in production code. Note this is consistent with CROSS_AGENT_FINDINGS T13 which locates one at auth_service.py:2058."
+    },
+    "ruff_statistics": {
+      "command": "ruff check backend --statistics",
+      "version": "ruff 0.15.12",
+      "total_errors": 8341,
+      "fixable": 2953,
+      "breakdown": {
+        "F401 unused-import": 2312,
+        "E402 module-import-not-at-top-of-file": 2104,
+        "F821 undefined-name": 1500,
+        "F811 redefined-while-unused": 1138,
+        "F405 undefined-local-with-import-star-usage": 397,
+        "E712 true-false-comparison": 308,
+        "F403 undefined-local-with-import-star": 176,
+        "F841 unused-variable": 111,
+        "E701 multiple-statements-on-one-line-colon": 93,
+        "F822 undefined-export": 76,
+        "E702 multiple-statements-on-one-line-semicolon": 44,
+        "E741 ambiguous-variable-name": 31,
+        "E401 multiple-imports-on-one-line": 22,
+        "F601 multi-value-repeated-key-literal": 14,
+        "F541 f-string-missing-placeholders": 8,
+        "E711 none-comparison": 6,
+        "E731 lambda-assignment": 1
+      },
+      "caveat": "These counts INCLUDE the 97 root temp files (75 health_test_*.py + 15 _tmp_*.py + 7 check_*.py). F821=1500 and E402=2104 are inflated by them; re-run after deletion for a clean baseline. The 397 F405 / 176 F403 star-import warnings are the ruff-level signature of the 4 archived coupon modules being star-imported by promotions/services/coupons/__init__.py:5-8."
+    }
+  },
+  "verdicts": [
+    {
+      "key": "CFM-009",
+      "id": "CFM-009",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/alembic_chain.py = 1525 bytes; backend/alembic_chain.txt = 10312 bytes",
+      "current_matches_claim": "yes",
+      "verify_output": "Get-ChildItem backend -File | Select Name,Length -> alembic_chain.py 1525; alembic_chain.txt 10312 (both present, both at backend root).\nRepo-wide grep for 'alembic_chain' over backend/**,docs/**,.github/** (*.py,*.ps1,*.sh,*.yml,*.yaml,*.md,*.toml,*.ini,*.cfg) -> 0 hits. Nothing references either file.\nCanonical location check: backend/alembic/ contains alembic.ini, env.py, script.py.mako, analyze_chain.py, analyze_chain2.py, analyze_chain3.py, check_migration_naming.py, debug_env.py, debug_regex.py, migration_helpers.py, versions/. alembic.ini is CORRECTLY inside alembic/, not at root.",
+      "verify_command": "Get-ChildItem backend -File | Select-Object Name,Length | Sort-Object Name",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/architecture/test_import_laws.py --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "`alembic_chain.py` (1525 B) and `alembic_chain.txt` (10312 B) both sit at backend/ root; neither is in the canonical root list (ARCH:172). CONFIRMED.",
+        "Target": "ARCHITECTURE_STACK.md:172 canonical backend root = main.py, config.py, DOMAIN_ALLOWLIST.yaml + 11 named dirs only.",
+        "Blast radius": "None. 0 referencing call sites. Safe to relocate or delete without code change.",
+        "Evidence strength": "single -> upgraded to 'exhaustive': full root listing + zero-hit repo-wide reference grep."
+      },
+      "laws_cited": ["Law 18", "Law 19", "Law 27"],
+      "notes": "Accurate. Minor scope note: the fix 'Move to backend/alembic/' collides with the fact that backend/alembic/ already contains THREE separate chain-analysis scripts (analyze_chain.py, analyze_chain2.py, analyze_chain3.py) plus a buggy check_migration_naming.py - i.e. the target directory is itself a Law 27 accumulation. The resolver should delete the three superseded analyze_chainN scripts rather than add a fourth. Not FIX_DESTRUCTIVE (a move is not a stub)."
+    },
+    {
+      "key": "CFM-001",
+      "id": "CFM-001",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "no",
+      "verify_output": "Test-Path backend/domains/_parked/orders_package_service.py -> False\nGet-ChildItem backend -Recurse -Directory -Filter '_parked' -> ZERO hits. The entire domains/_parked/ graveyard is gone.\nbackend/tests/architecture/test_parked_no_regrow.py now carries `_KNOWN_PARKED = frozenset()` with the comment: 'The domains/_parked graveyard (24 files per RESOLVER.md PART 5) was removed during the design-system / structure cleanup. Regenerate the baseline to an empty set; the law now simply guards against re-introducing a graveyard.'\npytest --collect-only -q on that file collects 2 tests: test_parked_file_set_stable, test_no_live_imports_from_parked.",
+      "verify_command": "Test-Path backend/domains/_parked/orders_package_service.py; Get-ChildItem backend -Recurse -Directory -Filter _parked; Get-Content backend/tests/architecture/test_parked_no_regrow.py",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/architecture/test_parked_no_regrow.py --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "STALE. `domains/_parked/` does not exist. The claim 'contains 1 orphaned file' is obsolete; the prior baseline recorded 24 files, all removed.",
+        "Status": "should be RESOLVED",
+        "Evidence strength": "single -> 'exhaustive': directory scan is definitive (no directory, therefore no file)."
+      },
+      "laws_cited": ["Law 27", "Law 28", "Law 12"],
+      "notes": "Superseded. IMPORTANT SCOPE WARNING for the resolver: the _parked DIRECTORY is gone but 16 files carrying the header '# ARCHIVED MODULE - DO NOT IMPORT FROM domains/_parked' still live INSIDE domains/ (12 in promotions, 1 in catalog, 1 in orders, 1 in suppliers) - see structural_verdicts.archived_module_parked_files. 6 of those 16 are still imported by live code. Do not read this ALREADY_FIXED as 'the parked cleanup finished'."
+    },
+    {
+      "key": "CFM-007",
+      "id": "CFM-007",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "4513 lines / 168700 bytes (whole file)",
+      "current_matches_claim": "partial",
+      "verify_output": "backend/domains/accounts/services/auth/auth_service.py: (Get-Content -Raw).Split(\"`n\").Count = 4513 lines; Length = 168700 bytes. Record claims '4506-line'. Off by 7 lines and the file has GROWN, so the fix has demonstrably not been applied.",
+      "verify_command": "$n=(Get-Content backend/domains/accounts/services/auth/auth_service.py -Raw).Split(\"`n\").Count; Get-Item backend/domains/accounts/services/auth/auth_service.py | Select Length",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/domains/accounts/test_auth_service.py --collect-only -q",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Current": "4513-line single file (168700 bytes) handling registration, login, OTP, MFA, biometrics, sessions, device binding. CONFIRMED and growing.",
+        "Status": "RESOLVED is WRONG - the split has not happened and the file is larger than when the audit recorded it.",
+        "Truth level": "L0 corroborated; measured line count differs from the audit by 7."
+      },
+      "laws_cited": ["Law 64", "Law 39"],
+      "notes": "Substantively correct. QUALITY GATE: Fix names five target modules (registration_service.py, login_service.py, otp_service.py, biometric_service.py, session_service.py) so it is NOT FIX_VAGUE, and it is not destructive. But the Test path 'tests/domains/accounts/test_auth_service.py' is written without the `backend/` prefix and does not exist at that path - it exists at backend/tests/domains/accounts/test_auth_service.py. Per CROSS_AGENT_FINDINGS T15 this is a systematic prefix defect in the packet, not a defect of this finding. I did not run the full suite, so test_result is not_run rather than pass."
+    },
+    {
+      "key": "CFM-004",
+      "id": "CFM-004",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": "backend/domains/finance/services/ledger/general_ledger.py = 8867 lines / 325754 bytes (whole file)",
+      "current_matches_claim": "partial",
+      "verify_output": "Get-Content 'backend/domains/finance/services/ledger/general_ledger_service.py' -> 'Cannot find path ... general_ledger_service.py because it does not exist.' THE CITED FILENAME IS WRONG.\nActual file: backend/domains/finance/services/ledger/general_ledger.py = 325754 bytes, 8867 lines (record claims 8884).\nFull ledger search: backend/domains/finance/models/general_ledger.py (80029 B), backend/domains/finance/services/ledger/general_ledger.py (325754 B), backend/alembic/versions/2026_08_06_0009_promotion_ledger_order_id.py, backend/alembic/versions/2026_09_30_0007_add_promotion_ledger_indexes.py, backend/domains/promotions/models/promotion_ledger.py. No general_ledger_service.py anywhere.",
+      "verify_command": "Get-Content backend/domains/finance/services/ledger/general_ledger_service.py -Raw  # errors; then Get-Content backend/domains/finance/services/ledger/general_ledger.py -Raw",
+      "test_command": "Test-Path tests/domains/finance/test_general_ledger.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "backend/domains/finance/services/ledger/general_ledger.py:1  (NOT general_ledger_service.py)",
+        "Current": "8867-line single file (325754 bytes) containing all ledger operations. CONFIRMED at the corrected path.",
+        "Test": "tests/domains/finance/test_general_ledger.py does not exist at any prefix. The nearest real test is backend/tests/domains/test_general_ledger_models.py, which covers the MODELS layer, not the service.",
+        "Evidence strength": "single -> 'exhaustive': path verified absent, sibling file located and measured."
+      },
+      "laws_cited": ["Law 64"],
+      "notes": "I return REAL rather than FALSE_POSITIVE because the defect is genuine and only the filename is wrong - the contract explicitly instructs me to search for the symbol elsewhere and record where it lives. FLAGGED PATH ERROR: the orchestrator must re-point CFM-004 and CFM-013 (and correction 17_code_file_management-P2) at general_ledger.py. QUALITY GATE: Test path does not exist at any prefix -> FIX_UNTESTABLE. Fix proposes splitting by sub-capability, which is aligned with ARCH:539 ('one sub-capability = one folder') so not FIX_MISALIGNED; it is not vague and not destructive."
+    },
+    {
+      "key": "CFM-013",
+      "id": "CFM-013",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": true,
+      "actual_line_range": "backend/domains/finance/services/ledger/general_ledger.py:1-56 top block; 585, 634, 713, 833, 915, 1135-1147 function-local re-imports",
+      "current_matches_claim": "yes",
+      "verify_output": "Grep of import lines in backend/domains/finance/services/ledger/general_ledger.py (corrected path):\n  5: from datetime import datetime, timezone, date\n  6: from decimal import Decimal, ROUND_HALF_UP\n  7: from typing import Any, Literal, Protocol\n 10: from sqlalchemy.orm import Session\n 14: from typing import Optional\n 15: from sqlalchemy.orm import joinedload\n 16: from sqlalchemy import func\n 36: from datetime import datetime          <- duplicate of 5\n 37: from typing import Optional, List      <- duplicate of 14\n 55: from infrastructure.utils.datetime_utils import utcnow\n 56: from kernel.money import round_money      <- duplicate of 12\nFunction-local re-imports (the real problem, worse than claimed):\n 585, 634, 713, 833: from domains.orders.models.orders import Order   (4x, one per function)\n 915: from domains.accounts.models.user import User\n1135: import logging          1136: from datetime import datetime\n1137: from decimal import Decimal 1138: from typing import Optional\n1140: from sqlalchemy.orm import Session  1141: from sqlalchemy import func\n1143-1147: from domains.finance.models.finance import Account, AccountBalance, AccountGroup, FiscalPeriod, JournalEntry\n\nRecorded line numbers in the audit (datetime 5/15/39, decimal 6/16, typing 7/10/17/40, sqlalchemy.orm 11/18) do not match the file. The DUPLICATION CLAIM IS CORRECT; only the line numbers are stale.",
+      "verify_command": "Select-String -Path backend/domains/finance/services/ledger/general_ledger.py -Pattern '^\\s*(from|import)\\s' | Select-Object LineNumber,Line",
+      "test_command": "Test-Path tests/test_import_laws.py; Test-Path backend/tests/architecture/test_import_laws.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "backend/domains/finance/services/ledger/general_ledger.py:1",
+        "Current": "Duplicate imports confirmed and materially worse than claimed: 6 duplicate stdlib/ORM imports in the top block PLUS ~40 function-local re-imports scattered from line 585 to line 1147+.",
+        "Target": "Law 67 (ARCH:593) duplicate code >5 lines MUST be extracted.",
+        "Test": "tests/test_import_laws.py does not exist at any prefix; real file is backend/tests/architecture/test_import_laws.py.",
+        "Blast radius": "low-medium: consolidating is behaviour-preserving, but the 4 per-function `from domains.orders.models.orders import Order` blocks at 585/634/713/833 hint at deliberate local-import cycle-breaking that a naive consolidation would reintroduce a circular import for (Law 98). The Fix as written ('consolidate imports to a single block at the top') is therefore RISKY, not merely untested."
+      },
+      "laws_cited": ["Law 67", "Law 98"],
+      "notes": "Confirms the DRY (Law 67) dimension with hard evidence. Two cautions. (1) The cited path is wrong - see CFM-004. (2) The stated Fix is close to FIX_DESTRUCTIVE in effect: top-hoisting the four `domains.orders.models.orders` imports is a classic way to create a circular import between domains/finance and domains/orders (Law 98), which is plausibly WHY they were written function-locally. The correct Fix must hoist only the duplicate stdlib/ORM imports (5/6/7/10/12/14/16 -> single blocks, and 36/37/55/56/1135-1147 removed) and must leave the cross-domain orders/account imports local until Law 98 is proven safe. Test path does not exist at any prefix -> FIX_UNTESTABLE."
+    },
+    {
+      "key": "CFM-012",
+      "id": "CFM-012",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "62-239 (25 stub subscribers); cited anchor 62-66",
+      "current_matches_claim": "yes",
+      "verify_output": "grep 'not implemented' backend/domains/governance/subscribers.py -> exactly 25 hits, at lines 65, 72, 79, 86, 93, 100, 107, 114, 121, 128, 141, 148, 155, 162, 169, 176, 183, 190, 197, 204, 211, 218, 225, 232, 239.\nCited function, verbatim (lines 62-66):\n  62: def _on_bulk_delete_products_admin_requested(payload: dict):\n  63:     # TODO: Module not yet created\n  64:     # from domains.governance.services.products.products_service import bulk_delete_products_admin\n  65:     logger.warning(\"bulk_delete_products_admin not implemented\")\n  66:     return None\nFile total = 351 lines. The audit cited :63 (the TODO comment); the function def is at :62 and the warning at :65 - a 2-line offset, substantively exact.",
+      "verify_command": "Select-String -Path backend/domains/governance/subscribers.py -Pattern 'not implemented'",
+      "test_command": "Test-Path tests/domains/governance/test_subscribers.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "25 stub subscribers, each of the form `logger.warning('<name> not implemented'); return None`, in backend/domains/governance/subscribers.py lines 62-239. CONFIRMED (audit said '25+', actual is exactly 25).",
+        "Target": "ARCH Law 154 / Law 3: subscribers are the sanctioned cross-domain WRITE channel. A subscriber that returns None is a silent no-op write.",
+        "Test": "tests/domains/governance/test_subscribers.py does not exist at any prefix - I checked both 'tests/...' and 'backend/tests/...'. No test covers this file.",
+        "Severity note": "These are registered event handlers, so the failure mode is silent cross-domain data loss, not a crash. The commented-out import at :64 names the intended live owner (domains.governance.services.products.products_service) - the resolver should verify whether that service now exists before deleting the stub, otherwise the event has no consumer at all."
+      },
+      "laws_cited": ["Law 3", "Law 59", "Law 154", "Law 156"],
+      "notes": "Accurate. QUALITY GATE: Test path does not exist at any prefix -> FIX_UNTESTABLE. Fix ('Implement handlers or remove stub subscribers and their event registrations') is a genuine either/or without a decision criterion, which makes it partly FIX_VAGUE; it is not FIX_DESTRUCTIVE per se (removing a handler is not stubbing) but the 'remove' branch would silently drop 25 cross-domain write events, so the resolver must confirm each event has another live consumer. Deletion of the 25 subscriber functions is also REQUIRED cleanup of dead code even if no replacement is written in the same pass."
+    },
+    {
+      "key": "CFM-006",
+      "id": "CFM-006",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "5105 lines / 229791 bytes (whole file)",
+      "current_matches_claim": "yes",
+      "verify_output": "backend/domains/orders/services/core/logistics.py = (Get-Content -Raw).Split(\"`n\").Count = 5105 lines; Length = 229791 bytes. Record claims 5119 lines (off by 14).\nRanked 3rd largest .py in the repo behind the alembic baseline migration (434315 B) and general_ledger.py (325754 B).",
+      "verify_command": "$n=(Get-Content backend/domains/orders/services/core/logistics.py -Raw).Split(\"`n\").Count; Get-Item backend/domains/orders/services/core/logistics.py | Select Length",
+      "test_command": "Test-Path tests/domains/orders/test_logistics.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "5105-line single file (229791 bytes) mixing fulfillment, tracking and shipment logic in the orders domain. CONFIRMED.",
+        "Test": "tests/domains/orders/test_logistics.py does not exist at any prefix.",
+        "Sibling check": "The declared Sibling 'backend/domains/orders/services/tracking/service.py:1' - I did not individually verify its existence; the orders/services/core/logistics.py size finding stands on its own."
+      },
+      "laws_cited": ["Law 64"],
+      "notes": "Accurate within measurement noise. QUALITY GATE: Test path does not exist at any prefix -> FIX_UNTESTABLE. Fix names three concrete targets so not FIX_VAGUE; splitting a service into fulfillment/tracking/shipment is aligned with ARCH:539 ('one sub-capability = one folder') so not FIX_MISALIGNED; not destructive."
+    },
+    {
+      "key": "CFM-005",
+      "id": "CFM-005",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/modules/employee/routers/hr.py = 1231 lines / 55921 bytes - but UNREACHABLE",
+      "current_matches_claim": "partial",
+      "verify_output": "backend/modules/employee/routers/ listing: __pycache__, hr/ (dir), __init__.py, accounts.py, analytics.py, attendance.py, audit.py, catalog.py, comms.py, country.py, customers.py, finance.py, governance.py, hr.py, lms.py, logistics.py, offices.py, orders.py, promotions.py, security.py, suppliers.py.\nhr.py = 55921 bytes, 1231 lines (record claims 1230).\nhr/ package contains: __init__.py, approval.py, attendance.py, employees.py, ess.py, health.py, hierarchy.py, leaves.py, lms.py, matrix.py, offices.py, payroll.py, performance.py, schemas.py, schemas_admin.py, succession.py.\nSHADOWING PROVEN AT RUNTIME:\n  PYTHONPATH=backend python -c \"from modules.employee.routers import hr; print(hr.__file__); print(hasattr(hr,'__path__'))\"\n  -> RESOLVED_TO: ...\\backend\\modules\\employee\\routers\\hr\\__init__.py\n  -> IS_PACKAGE: True\nReferrers: backend/modules/employee/__init__.py:17 maps 'hr_router' -> 'modules.employee.routers.hr' (resolves to the PACKAGE); backend/tests/integration/test_e2e_flows.py:118 `from modules.employee.routers import hr` (resolves to the PACKAGE). Neither can ever reach hr.py.",
+      "verify_command": "PYTHONPATH=backend python -c \"from modules.employee.routers import hr; print('RESOLVED_TO:', hr.__file__); print('IS_PACKAGE:', hasattr(hr,'__path__'))\"",
+      "test_command": "Test-Path tests/modules/test_employee_routers.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "PARTIALLY STALE. hr.py IS 1231 lines / 55921 bytes with many route handlers, but it is DEAD CODE: shadowed by the hr/ package and never imported by anything. The audit's framing as a thin-router Law 2/64 problem is the wrong diagnosis.",
+        "Target": "The live Law 2 exposure, if any, is inside hr/*.py (e.g. hr/employees.py, hr/payroll.py), NOT in hr.py.",
+        "Delta": "Correct diagnosis is 'unreachable duplicate of hr/', not 'monolithic router'.",
+        "Fix": "DELETE backend/modules/employee/routers/hr.py, do NOT split it. Splitting 1231 lines of unreachable code into hr/ sub-files would enlarge the shadowed dead file.",
+        "Blast radius": "zero for deletion (0 importers proven); non-zero for splitting (adds new files inside a package that already shadows the target)."
+      },
+      "laws_cited": ["Law 2", "Law 8", "Law 64", "Law 134", "Law 135"],
+      "notes": "This is the record where the audit is right about size and wrong about consequence. Corroborates CROSS_AGENT_FINDINGS T5 exactly (55921 bytes matches byte-for-byte). QUALITY GATE: the stated Fix ('Split into per-sub-capability router files under modules/employee/routers/hr/ and mount via __init__.py') is FIX_VAGUE (no decision on what to delete, and the word 'mount' is undefined for an already-mounted router) and is wasted effort on unreachable code - I flag it so the resolver does not burn 3h splitting a file that never loads. Test path tests/modules/test_employee_routers.py does not exist at any prefix -> FIX_UNTESTABLE. I also ran the repo-wide module-vs-package collision scan: 'hr' is the ONLY such collision in the entire backend, so no other shadowed module exists."
+    },
+    {
+      "key": "CFM-008",
+      "id": "CFM-008",
+      "verdict": "REAL",
+      "path_exists": "partial - 3 of 5 cited paths exist",
+      "line_exists": true,
+      "actual_line_range": "backend/Dockerfile 1376 B; backend/Dockerfile.prod 577 B; backend/start_backend.ps1 362 B; backend/run_tests.ps1 ABSENT; backend/run_tests.sh ABSENT",
+      "current_matches_claim": "partial",
+      "verify_output": "Test-Path per cited file:\n  backend/Dockerfile        = True (1376 bytes)\n  backend/Dockerfile.prod   = True (577 bytes)\n  backend/start_backend.ps1  = True (362 bytes)\n  backend/run_tests.ps1      = False  <- DOES NOT EXIST AT BACKEND ROOT\n  backend/run_tests.sh       = False  <- DOES NOT EXIST AT BACKEND ROOT\nRecursive search for run_tests.ps1 / run_tests.sh / run-pipeline.ps1 finds them ONLY at:\n  .kilo/worktrees/buttercup-rainbow/backend/run_tests.ps1\n  .kilo/worktrees/buttercup-rainbow/backend/run_tests.sh\n  _browser_test/scripts/run-pipeline.ps1\nbackend/scripts/ (28 top-level files) contains NO run-pipeline.ps1 and no test runner of any kind.\nCanonical root check: config.py, DOMAIN_ALLOWLIST.yaml, main.py are the only 3 canonical root files; Dockerfile, Dockerfile.prod and start_backend.ps1 are non-canonical root files, as are lifespan.py, migration_helpers.py, __init__.py, alembic_chain.py/.txt, pyproject.toml, requirements*.txt, uv.lock, .dockerignore, .gitignore, .env, .env.example, zozi.db, test_output1.txt, test_output2.txt.",
+      "verify_command": "Test-Path backend/Dockerfile; Test-Path backend/Dockerfile.prod; Test-Path backend/start_backend.ps1; Test-Path backend/run_tests.ps1; Test-Path backend/run_tests.sh; Get-ChildItem -Recurse -Include run_tests.ps1,run_tests.sh,run-pipeline.ps1",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/architecture/test_import_laws.py --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "3 of the 5 cited files exist at backend root: Dockerfile, Dockerfile.prod, start_backend.ps1. run_tests.ps1 and run_tests.sh DO NOT exist at backend root - both survive only inside the .kilo/worktrees/buttercup-rainbow/ repo duplicate (CROSS_AGENT_FINDINGS T15 flags that duplicate as an unscanned copy; if a future agent 'finds' them again there, that is a worktree artefact, not the canonical tree).",
+        "Target": "ARCHITECTURE_STACK.md:172 canonical backend root = main.py, config.py, DOMAIN_ALLOWLIST.yaml + 11 named dirs only.",
+        "Fix correction": "'move helper scripts to scripts/' has no correct destination for a test runner: backend/scripts/ has no canonical runner, and the repo's only run-pipeline.ps1 lives outside backend/ at _browser_test/scripts/. The stated single-runner policy is therefore UNIMPLEMENTED, not merely misplaced.",
+        "Evidence strength": "single -> 'exhaustive': full root file listing (121 files) + recursive existence check per cited path."
+      },
+      "laws_cited": ["Law 18", "Law 19", "Law 27"],
+      "notes": "Directionally correct but the file list is 40% wrong (2 of 5 files do not exist where claimed). The underlying Law 19 violation is far larger than 5 files: 118 of 121 root files are non-canonical, including 97 temp-pattern scripts (75 health_test_*, 15 _tmp_*, 7 check_*). QUALITY GATE: Fix is not vague (names docker/ and scripts/) but its premise about run_tests.* is stale; Test path tests/architecture/test_import_laws.py collects OK only at the backend/tests/ prefix -> the packet's missing prefix is again the cause."
+    },
+    {
+      "key": "CFM-002",
+      "id": "CFM-002",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "no",
+      "verify_output": "Test-Path backend/test -> False\nGet-ChildItem backend -Directory -> __pycache__, _audit, .hypothesis, .pytest_cache, .ruff_cache, .venv, alembic, domains, infrastructure, jobs, kernel, logs, middleware, modules, providers, rbac, scripts, tests, var. There is no `test/` (singular) anywhere at backend root, and no stray `alembic.ini` at backend root (alembic.ini is correctly at backend/alembic/alembic.ini).\nThe claimed survivor 'backend/tests/__pycache__/test_migrations.cpython-313-pytest-9.1.1.pyc' could not be the only content: backend/tests/ is a populated 60-file architecture suite plus many subpackages.",
+      "verify_command": "Test-Path backend/test; Get-ChildItem backend -Directory -Force | Select-Object -ExpandProperty Name",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/architecture/test_import_laws.py --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "STALE. `backend/test/` does not exist. The described single-pyc scratch directory has been removed.",
+        "Status": "should be RESOLVED",
+        "Evidence strength": "single -> 'exhaustive': absence of the directory is definitive."
+      },
+      "laws_cited": ["Law 18", "Law 27"],
+      "notes": "Superseded. Merged with CFM-014 (same path, same blast radius F-005) - see duplicates_merged. See internal_contradictions for the delete-vs-rename conflict between the two records; moot now that the directory is gone."
+    },
+    {
+      "key": "CFM-003",
+      "id": "CFM-003",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/scripts/_debug/ = 34 files",
+      "current_matches_claim": "partial",
+      "verify_output": "Test-Path backend/scripts/_debug -> True. (Get-ChildItem backend/scripts/_debug -File | Measure-Object).Count = 34. Record claims 35 - off by one.\nFull listing (34): _api_smoke.py _check_critical.py _check_login.py _check_login2.py _check_mappers.py _check_pw.py _check_pw2.py _check_schemas.py _check_schemas2.py _check_tables.py _check_users_schema.py _check_users_sql.py _create_test.py _db_check.py _db_check3.py _diag.py _login_dbg.py _login_test.py _patch_getattr.py _seed_demos.py _smoke_get.py _smoke.py _test_emp.py _test_products.py _test_products2.py _test_products3.py _test_products4.py _try_admin.py _try_login.py _try_logins.py _verify_hashes.py check_db.py check_order_engine.py check_seed.py",
+      "verify_command": "Get-ChildItem backend/scripts/_debug -File | Select-Object -ExpandProperty Name; (Get-ChildItem backend/scripts/_debug -File | Measure-Object).Count",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/architecture/test_import_laws.py --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "34 debug scripts in backend/scripts/_debug/ (record said 35). CONFIRMED with a one-file correction.",
+        "Delta": "Note the delta says these 'pollute backend ROOT' - that is inaccurate. They are inside backend/scripts/_debug/, which IS a canonical directory. The Law 27 violation is 'temp scripts retained after use', not 'files at the root'. backend/scripts/ additionally holds 11 more single-purpose dev scripts at top level (check_broken.py, check_docs_drift.py, check_law6.py, check_logistics.py, debug_import.py, fix_misplaced.py, undo_changes.py, _dbcheck.py, _bootstrap_build.py, _clean_redis_migration.py, reconstruct_functions.py) plus 7 _gen_* baseline generators and 6 *.txt baselines - a broader Law 27 surface than this record captures.",
+        "Target": "Law 27 (ARCH:553) requires temp scripts be removed after use.",
+        "Blast radius": "Not individually verified per file - see coverage_gaps."
+      },
+      "laws_cited": ["Law 27"],
+      "notes": "Essentially accurate (count off by one). QUALITY GATE: Fix 'Delete all files in backend/scripts/_debug/' is destructive-by-deletion but that is the explicit intent of a Law 27 cleanup, so I do not flag FIX_DESTRUCTIVE; it is specific enough not to be FIX_VAGUE. Test path needs the backend/ prefix -> collects OK at backend/tests/architecture/test_import_laws.py."
+    },
+    {
+      "key": "CFM-014",
+      "id": "CFM-014",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "no",
+      "verify_output": "Test-Path backend/test -> False. Get-ChildItem backend -Directory -> the only test directory is backend/tests (plural), which is the canonical name per ARCH:116.\nGet-ChildItem backend/tests/architecture -> 60 entries, i.e. tests/ is a real, populated suite, not a stray scratch tree.",
+      "verify_command": "Test-Path backend/test; Get-ChildItem backend/tests/architecture | Measure-Object",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/architecture/test_import_laws.py --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "STALE. No singular `test/` directory exists at backend root. The naming-inconsistency claim no longer has a subject.",
+        "Status": "should be RESOLVED",
+        "Evidence strength": "single -> 'exhaustive': directory listing is definitive."
+      },
+      "laws_cited": ["Law 18", "Law 19"],
+      "notes": "Superseded and merged with CFM-002 (identical path backend/test, identical blast radius F-005). See internal_contradictions for the mutually exclusive delete-vs-rename Fixes. The canonical name is `tests/` and it is correctly spelled."
+    },
+    {
+      "key": "CFM-011",
+      "id": "CFM-011",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "3465-3526 (validate_biometric + 3 validators + the now-dead format checker)",
+      "current_matches_claim": "no",
+      "verify_output": "Verbatim, backend/domains/accounts/services/auth/auth_service.py:3495-3511:\n  3495:    def _validate_faceid(self, token: str) -> bool:\n  3496:        \"\"\"Validate Apple FaceID token.\"\"\"\n  3497:        raise NotImplementedError(\n  3498:            \"FaceID validation requires server-side Secure Enclave assertion verification\"\n  3499:        )\n  3501:    def _validate_fingerprint(self, token: str) -> bool:\n  3503:        raise NotImplementedError(\n  3504:            \"Fingerprint validation requires TEE/StrongBox signed payload verification\"\n  3505:        )\n  3507:    def _validate_webauthn(self, assertion: str) -> bool:\n  3509:        raise NotImplementedError(\n  3510:            \"WebAuthn assertion verification requires python-fido2 integration\"\n  3511:        )\nTHE CLAIM IS INACCURATE. None of the three returns `self._is_plausible_biometric_token(token)`; all three raise NotImplementedError. Grep for `_is_plausible_biometric_token` returns exactly one hit in the whole repo - its own definition at :3514 - so it now has ZERO callers and is itself dead code.",
+      "verify_command": "Select-String -Path backend/domains/accounts/services/auth/auth_service.py -Pattern '_validate_faceid|_validate_fingerprint|_validate_webauthn|_is_plausible_biometric_token'",
+      "test_command": "Test-Path tests/domains/accounts/test_biometric_auth.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "INACCURATE. The three validators `raise NotImplementedError`; they do not perform a format-only check. The format-only checker `_is_plausible_biometric_token` (auth_service.py:3513-3526) survives but is unreachable dead code with zero callers.",
+        "Delta": "The Delta ('only check token format') is also now inaccurate - they check nothing at all.",
+        "Status": "RESOLVED is WRONG - biometric verification is still unimplemented and the failure mode has changed, not improved.",
+        "Severity note": "The defect changed DIRECTION and severity class. Before: fail-OPEN - a forged base64url string passed _is_plausible_biometric_token and was ACCEPTED (critical authentication bypass). Now: fail-CLOSED - validate_biometric() (:3465) propagates NotImplementedError, so any biometric login attempt returns HTTP 500 rather than authenticating. That is an availability/DoS-on-self defect instead of an auth bypass, which is an improvement, but the P1 priority is still correct because biometric enrolment is entirely non-functional in production.",
+        "Blast radius": "validate_biometric is defined at :3465 and grep across backend/ finds NO caller - so today the NotImplementedError cannot be reached from any route and the practical impact is nil. The risk is latent: the first caller added will turn this into a live 500."
+      },
+      "laws_cited": ["Law 33", "Law 39", "Law 27"],
+      "notes": "I return REAL rather than FALSE_POSITIVE deliberately: the underlying gap (no cryptographic biometric verification) is unquestionably real and still P1, but the record's Current and Delta text is factually wrong and must be rewritten before a resolver acts on it - anyone who greps for `return self._is_plausible_biometric_token` will find nothing and may wrongly close the finding as fixed. QUALITY GATE: Test path tests/domains/accounts/test_biometric_auth.py does not exist at any prefix -> FIX_UNTESTABLE. Fix proposes `python-fido2`, which is a WebAuthn/FIDO2 client library and IS consistent with the ARCH Law 11/123 one-SDK-per-provider pattern; it is NOT in TECHNOLOGY_STACK.md's pinned dependency list as far as I verified, so I flag it as POSSIBLY FIX_MISALIGNED - the resolver should add it to providers/ (Law 16: SDK wrappers live in providers/, never in domains/) rather than importing it directly into a domain service. This is also a dependency ADDITION, which is closer to FIX_DESTRUCTIVE in blast-radius terms and should not be merged blind."
+    },
+    {
+      "key": "CFM-010",
+      "id": "CFM-010",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/domains/finance/services/__init__.py = 9 lines total",
+      "current_matches_claim": "no",
+      "counter_evidence": "backend/domains/finance/services/__init__.py is 9 lines in full and contains NO TODO of any kind. Verbatim:\n  1: \"\"\"finance domain - services sub-package.\"\"\"\n  2: from __future__ import annotations\n  3: (blank)\n  4: from domains.finance.services.finance_service import *\n  5: from domains.finance.services.data_import_service import *\n  6: from domains.finance.services.ledger import *\n  7: (blank)\n  8: __all__: list[str] = []\n  9: (EOF)\nThe claimed lines 7, 9, 11, 13 DO NOT EXIST (the file has only 9 lines), and lines 7/9 are blank / __all__, not TODOs. The claimed Sibling backend/domains/hr/services/__init__.py:4 is likewise `from domains.hr.services.performance import *`, not a TODO. Additionally, `Test` is `wc -l` (a shell command, not a test) and `Rollback` is `tests/architecture/test_todo_hygiene.py` - the two canonical fields are swapped, and test_todo_hygiene.py does not exist at any prefix. Finally the Delta figure is wrong: grep for TODO|FIXME across 1703 backend .py files yields 311 hits, of which 251 are the string 'Module not yet created' - not the claimed 572.",
+      "verify_command": "Get-Content backend/domains/finance/services/__init__.py; Get-Content backend/domains/hr/services/__init__.py; Select-String -Path backend/**/*.py -Pattern 'TODO|FIXME' | Measure-Object",
+      "test_command": "Test-Path tests/architecture/test_todo_hygiene.py; Test-Path backend/tests/architecture/test_todo_hygiene.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "FALSE. No '# TODO: Module not yet created' exists in this file. Lines 7/9/11/13 do not exist (file is 9 lines).",
+        "Delta": "The 572-TODO figure is wrong. Actual: 311 TODO/FIXME hits across 1703 backend .py files, 251 of which are 'Module not yet created'.",
+        "Test": "`wc -l` is not a test; the real Test field was misplaced into Rollback.",
+        "Rollback": "The real Rollback text ('Revert TODO additions') was misplaced into Blast radius. The canonical fields are corrupted for this record."
+      },
+      "laws_cited": ["Law 62"],
+      "notes": "Counter-evidence supplied above; the record was already Status=INVALID in the source dimension file, and this second pass confirms INVALID was correct. The Law 62 concern it gestured at is not fabricated - 251 bare '# TODO: Module not yet created' comments with no ticket and no date DO exist elsewhere (e.g. domains/finance/services/finance_service.py:505-515, domains/finance/services/payouts/payout_batch_service.py:1562-1590, domains/finance/services/payments/payment_orchestrator.py:1114-1124) - but that is a DIFFERENT finding at different paths and must not be resurrected under CFM-010's citations. Also note: 25 of those 251 are the governance subscribers already captured by CFM-015, so CFM-010 and CFM-015 overlap in substance even though CFM-010's own evidence is false."
+    },
+    {
+      "key": "CFM-015",
+      "id": "CFM-015",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 139, 146, 153, 160, 167, 174, 181, 188, 195, 202, 209, 216, 223, 230, 237",
+      "current_matches_claim": "yes",
+      "verify_output": "Verbatim lines 62-73 of backend/domains/governance/subscribers.py:\n  62: def _on_bulk_delete_products_admin_requested(payload: dict):\n  63:     # TODO: Module not yet created\n  64:     # from domains.governance.services.products.products_service import bulk_delete_products_admin\n  65:     logger.warning(\"bulk_delete_products_admin not implemented\")\n  66:     return None\n  69: def _on_bulk_product_moderation_requested(payload: dict):\n  70:     # TODO: Module not yet created\n  71:     # from domains.governance.services.products.products_service import bulk_product_moderation\n  72:     logger.warning(\"bulk_product_moderation not implemented\")\n  73:     return None\nThe pattern repeats to line 237. All 25 cited line numbers (63,70,77,84,91,98,105,112,119,126 then 139,146,153,160,167,174,181,188,195,202,209,216,223,230,237) match the observed spacing exactly: each stub is 7 lines apart up to :126, then a 13-line gap (:128 -> :141), consistent with two subscriber groups separated by a non-stub handler at :130-138. Every one is a bare `# TODO: Module not yet created` with NO ticket reference and NO expiration date.",
+      "verify_command": "Get-Content backend/domains/governance/subscribers.py | Select-Object -Skip 54 -First 46",
+      "test_command": "Test-Path tests/architecture/test_todo_hygiene.py; Test-Path backend/tests/architecture/test_todo_hygiene.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "25 consecutive '# TODO: Module not yet created' comments at exactly the cited lines in backend/domains/governance/subscribers.py, each immediately followed by a commented-out import and a `logger.warning(... not implemented)` + `return None`. CONFIRMED line-for-line.",
+        "Target": "Law 62 (ARCH:588) TODO/FIXME must include ticket reference and expiration date. None of the 25 has either.",
+        "Test": "tests/architecture/test_todo_hygiene.py does not exist at any prefix (I checked both 'tests/' and 'backend/tests/'). There is no Law 62 CI gate at all - a repo-wide grep of backend/tests for 'TODO' found nothing enforcing comment hygiene.",
+        "Repo-wide scale": "251 occurrences of 'Module not yet created' and 311 TODO/FIXME hits across 1703 backend .py files, all without ticket references (spot-checked finance_service.py:505, payment_orchestrator.py:1114, payout_batch_service.py:1562 - all bare)."
+      },
+      "laws_cited": ["Law 62", "Law 3"],
+      "notes": "Accurate and precisely cited - the best-evidenced record in this packet. QUALITY GATE: FIX_UNTESTABLE - the named Test does not exist at any prefix and no equivalent Law 62 gate exists, so the fix cannot be regression-protected. The Fix itself ('add ticket references and expiration dates, or convert to tracked issues and remove comments') is FIX_VAGUE: it offers two mutually exclusive outcomes with no decision criterion, and the 'convert to tracked issues' branch presupposes an issue tracker whose identity is not established anywhere in the benchmark. Also note the overlap with CFM-012: same 25 subscriber functions, same file, different law (62 comment hygiene vs stub dead code). Both records survive because they require different fixes, but they MUST be resolved together or the resolver will double-edit one file."
+    },
+    {
+      "key": "17_code_file_management-P1",
+      "id": "17_code_file_management-P1",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/domains/accounts/services/auth/auth_service.py:3495-3511",
+      "current_matches_claim": "partial",
+      "verify_output": "Correction carried in Extra: 'Replace biometric stubs with real verification'. Target field names backend/domains/accounts/services/auth/auth_service.py. Verified at auth_service.py:3495-3511 - _validate_faceid, _validate_fingerprint and _validate_webauthn all `raise NotImplementedError`. The stub the correction targets still exists; it has merely changed from a fail-open format check to a fail-closed exception. Blocking: no (matches CFM-011's 'Blocks: no').\nMerge survivor: CFM-011. All fields NOT_PROVIDED except Target/Effort/Priority/Confidence/Extra, so nothing is lost by merging.",
+      "verify_command": "Select-String -Path backend/domains/accounts/services/auth/auth_service.py -Pattern 'NotImplementedError'",
+      "test_command": "not applicable - the correction record carries no Test field",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Current": "Derived from CFM-011: three biometric validators raise NotImplementedError (auth_service.py:3495-3511); no cryptographic verification exists. The format-only checker at :3513-3526 is now dead code with zero callers.",
+        "Evidence strength": "NOT_PROVIDED -> 'multiple' inherited from CFM-011 (definition site + repo-wide caller grep)."
+      },
+      "laws_cited": ["Law 33", "Law 39"],
+      "notes": "Duplicate of CFM-011 - see duplicates_merged (CFM-011 survives as the richer record). No independent verification was possible beyond CFM-011's because this row carries no Current, no File:Line and no Verify command. Test: 'not_run' rather than 'not_found' because no Test field exists to check."
+    },
+    {
+      "key": "17_code_file_management-P2",
+      "id": "17_code_file_management-P2",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/domains/finance/services/ledger/general_ledger.py = 8867 lines / 325754 bytes",
+      "current_matches_claim": "yes",
+      "verify_output": "Correction carried in Extra: 'Split general_ledger_service.py into per-sub-capability files'. Target field names backend/domains/finance/services/ledger/. The directory EXISTS and contains the 325754-byte / 8867-line general_ledger.py (NOT general_ledger_service.py - the correction inherits the same wrong filename as CFM-004). Blocking: no.\nMerge survivor: CFM-004.",
+      "verify_command": "Get-ChildItem backend/domains/finance/services/ledger -File | Select-Object Name,Length",
+      "test_command": "not applicable - the correction record carries no Test field",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Current": "general_ledger.py in the cited ledger/ directory is 8867 lines / 325754 bytes and is the 2nd-largest .py file in the repo.",
+        "Fix": "NOT_PROVIDED in the correction row; inherited from CFM-004 (split by sub-capability, per ARCH:539).",
+        "Evidence strength": "NOT_PROVIDED -> 'single' inherited from CFM-004."
+      },
+      "laws_cited": ["Law 64"],
+      "notes": "Duplicate of CFM-004 - see duplicates_merged (CFM-004 survives). Same wrong-filename error propagated; the orchestrator must fix it in both places. The 'Blocking: no' flag is correct: an 8h refactor is not a completion blocker for anything else."
+    },
+    {
+      "key": "17_code_file_management-P3",
+      "id": "17_code_file_management-P3",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "no",
+      "verify_output": "Correction carried in Extra: 'Delete domains/_parked/orders_package_service.py'. Target field names backend/domains/_parked/. Verified: `Get-ChildItem backend -Recurse -Directory -Filter _parked` returns ZERO hits - the directory itself no longer exists, so the file cannot exist. backend/tests/architecture/test_parked_no_regrow.py records `_KNOWN_PARKED = frozenset()` and documents that all 24 archived files 'were removed during the design-system / structure cleanup'. Blocking: no.\nMerge survivor: CFM-001 (identical verdict and identical evidence).",
+      "verify_command": "Get-ChildItem backend -Recurse -Directory -Filter _parked; Test-Path backend/domains/_parked/orders_package_service.py",
+      "test_command": "PYTHONPATH=backend python -m pytest backend/tests/architecture/test_parked_no_regrow.py --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "STALE. backend/domains/_parked/ does not exist; the file was already removed.",
+        "Status": "should be RESOLVED",
+        "Evidence strength": "NOT_PROVIDED -> 'exhaustive' (directory absence is definitive)."
+      },
+      "laws_cited": ["Law 27", "Law 28", "Law 12"],
+      "notes": "Duplicate of CFM-001 - see duplicates_merged (CFM-001 survives as it carries the full record fields). CRITICAL CAVEAT repeated here because this row is the actionable 'P3 correction' a resolver will pick up: the _parked DIRECTORY is gone, but 16 '# ARCHIVED MODULE ... _parked' files still sit inside domains/ and 6 of them are still imported by live production code (domains/orders/ports.py:1600, modules/admin/routers/promotions.py:18, promotions/services/coupons/__init__.py:5-8, promotions/services/engine/__init__.py:12). Deleting this correction's target is done; deleting the 16 archived modules is NOT done and would break routes if done blindly."
+    }
+  ],
+  "duplicates_merged": [
+    {
+      "survivor": "CFM-011",
+      "duplicate": "17_code_file_management-P1",
+      "why": "Identical subject: the three unimplemented biometric validators in backend/domains/accounts/services/auth/auth_service.py. The correction row carries only Target + Extra.Correction ('Replace biometric stubs with real verification'), which is a subset of CFM-011's Current/Delta/Fix. CFM-011 survives because it has the full evidence chain (verified line range 3495-3511, the repo-wide caller grep that proves _is_plausible_biometric_token is now dead, and the fail-open->fail-closed severity re-analysis)."
+    },
+    {
+      "survivor": "CFM-004",
+      "duplicate": "17_code_file_management-P2",
+      "why": "Identical subject and identical target directory: splitting the oversized ledger service in backend/domains/finance/services/ledger/. The correction row adds only Effort (L 8h) and Priority (P2), both already on CFM-004. CFM-004 survives because it carries the verified 8867-line measurement, the corrected file path, and the failed Test-path check. BOTH records must be re-pointed from general_ledger_service.py to general_ledger.py."
+    },
+    {
+      "survivor": "CFM-001",
+      "duplicate": "17_code_file_management-P3",
+      "why": "Identical subject, identical target and identical verdict (ALREADY_FIXED): backend/domains/_parked/orders_package_service.py. CFM-001 survives because it carries the full record plus the evidence that the whole 24-file graveyard was removed and that test_parked_no_regrow.py now baselines an empty set. Both must carry the warning that 16 archived modules remain elsewhere in domains/ and 6 are still imported."
+    },
+    {
+      "survivor": "CFM-002",
+      "duplicate": "CFM-014",
+      "why": "Same path (backend/test), same blast radius (F-005), same sibling (backend/tests), same fix intent, and both are ALREADY_FIXED. They are two framings of one observation (dead directory vs wrong directory name). CFM-002 survives as the primary because its Delta correctly attributes the cause to Laws 27-29 (stale test-run artefact) whereas CFM-014 frames it as a naming-convention issue. The Fix conflict between them is recorded in internal_contradictions rather than resolved here."
+    }
+  ],
+  "internal_contradictions": [
+    {
+      "keys": ["CFM-002", "CFM-014"],
+      "conflict": "Mutually exclusive fixes for the same path. CFM-002 Fix = 'Delete backend/test/ directory entirely' (rollback `git rm -r backend/test`). CFM-014 Fix = 'Rename backend/test/ to backend/tests/ if it contains tests, otherwise delete it'. Rename and delete cannot both be applied, and CFM-014 additionally introduces a branch on file content that the record never establishes. Both now moot because backend/test/ does not exist, but the conflict should be recorded so the pattern (two auditors, one path, divergent remedies) is not repeated. I am not resolving it."
+    },
+    {
+      "keys": ["CFM-007", "CFM-011"],
+      "conflict": "Both records carry Status=RESOLVED while their Current fields describe open, unfixed defects. CFM-007 is resolved-per-status but auth_service.py is 4513 lines (LARGER than the 4506 the audit recorded) and has not been split. CFM-011 is resolved-per-status but the three biometric validators still raise NotImplementedError at :3495-3511. Either the resolver marked them done without applying the fixes, or the Status field is unreliable for this dimension. I am not resolving it; the orchestrator should treat Status=RESOLVED in this packet as unverified."
+    },
+    {
+      "keys": ["CFM-012", "CFM-015"],
+      "conflict": "Not logically contradictory, but a fix-execution conflict: both target the SAME 25 subscriber functions in backend/domains/governance/subscribers.py with overlapping but different edits. CFM-015 wants ticket references + expiration dates ADDED to those 25 `# TODO: Module not yet created` comments; CFM-012 wants the 25 stub subscribers REMOVED (or implemented). Applying CFM-015 first and CFM-012 second makes the first edit worthless; applying them in the other order invalidates the first. They must be sequenced or merged into one edit, and CFM-012's removal branch must also delete the now-pointless CFM-015 TODOs."
+    },
+    {
+      "keys": ["CFM-001", "CFM-009"],
+      "conflict": "Low severity, but worth recording. CFM-001's Target asserts 'Laws 14-18: canonical domains are ... ; _parked is not approved' and its rollback is `git rm backend/domains/_parked/orders_package_service.py`, while CFM-009's Target redirects migration-chain artifacts into backend/alembic/. Both assume the canonical root/alembic layout is a safe sink for relocated files. backend/alembic/ already holds 3 superseded chain-analysis scripts plus a known-buggy check_migration_naming.py (CROSS_AGENT_FINDINGS T2), so 'move it into alembic/' is not a clean destination. Not a blocker; flagged so the two moves are not treated as independent clean-ups."
+    }
+  ],
+  "cross_cutting_candidates": [
+    {
+      "key": "ROOT-TEMP-POLLUTION",
+      "why": "118 of 121 files at backend/ root are non-canonical, of which 97 match temp/debug patterns (75 health_test_*.py, 15 _tmp_*.py, 7 check_*.py) plus alembic_chain.py/.txt, _audit_boot_check.py, lifespan.py, migration_helpers.py, Dockerfile, Dockerfile.prod, start_backend.ps1, test_output1.txt, test_output2.txt, zozi.db. No single File:Line governs this: it is the whole directory. It also has a hard upstream CAUSE - all 75 health_test_*.py are byte-identical probe scripts that `sys.path.insert(0, r'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi')` and emit 4 os.environ writes each (300 total), and they embed an absolute developer machine path in committed source. That is a generator/tooling gap, not 75 separate cleanup tickets. Verified unreferenced: a repo-wide grep for health_test_, _tmp_check, check_*, alembic_chain, _audit_boot_check, test_output1/2 returns ZERO hits, so the whole set is safe to remove in one action. NOTE .gitignore covers __pycache__/, .venv/, .env and *.db but NOT health_test_*.py, _tmp_*.py, check_*.py or test_output*.txt, so these are almost certainly committed."
+    },
+    {
+      "key": "LAW7-ALLOWLIST-ENFORCEMENT-IS-BROKEN",
+      "why": "Law 7's 'may only shrink' is not actually enforced anywhere, which makes the 20 dated entries in backend/DOMAIN_ALLOWLIST.yaml unenforceable debt. Three independent defects, each in a different file: (1) backend/tests/architecture/test_allowlist_shrinks.py resolves `git show HEAD~1:DOMAIN_ALLOWLIST.yaml` while the file is at backend/DOMAIN_ALLOWLIST.yaml, so the advertised HEAD~1 diff never executes; (2) that same file ends with `_BASELINE_FALLBACK.write_text(str(current_count))` and a second self-updating baseline exists at _allowlist_shrink_baseline.txt (36) vs _allowlist_shrinks_baseline.txt (20) - two baselines, both mutable by the tests that enforce them; (3) backend/tests/catalog/test_domain_allowlist_dates.py:15-16 REQUIRES removal_date values to be unique and explicitly forbids the uniform date 2026-10-28, which is why the 20 dates are one-per-day across 2026-10-03..2026-10-30 - the test rewards cosmetic date spreading instead of entry removal. No test anywhere checks the Law 7 <=30-day rule. This is a governance mechanism spanning 4 files plus the YAML, with no single File:Line. It also carries the file's own self-contradiction (header says MUST only shrink, notes at :84-85 say entries are ADDED)."
+    },
+    {
+      "key": "HR-SHADOWING-CLASS",
+      "why": "backend/modules/employee/routers/hr.py (1231 lines / 55921 bytes / 97 routes) is unreachable because the hr/ package shadows it - proven at runtime, not by inspection (importlib resolves to hr/__init__.py). This class of defect (a file and a same-named package coexisting in one directory, where the package silently wins) defeats every static file-placement law and every line-number citation a reviewer or agent makes against the shadowed file. I scanned every directory in backend/ for this pattern and found exactly ONE instance, so the blast radius is bounded - but the pattern recurs in the audit (CFM-005 cites hr.py line numbers that can never execute), and the same shadowing class is what makes domains/media invisible to rbac/catalog.py (missing __init__.py -> pkgutil.iter_modules skips it -> 4 declared feature atoms are unreachable and any future require_feature('media.*') would 403 for every role). Both are silent-by-construction defects that no CI gate currently detects."
+    },
+    {
+      "key": "ARCHIVED-MODULE-LIABILITY",
+      "why": "16 files inside domains/ (12 promotions, 1 catalog, 1 orders, 1 suppliers) carry the header 'Retained for reference only; this file is NOT part of the running application.' That header is FALSE for 6 of them, and they are on the live request path: domains/promotions/services/admin_promotion_service.py is imported by modules/admin/routers/promotions.py:18 (an admin HTTP route) and domains/orders/ports.py:1600; four modules are star-imported by promotions/services/coupons/__init__.py:5-8; promotion_engine_service.py is named-imported by promotions/services/engine/__init__.py:12. Deleting on the strength of the comment would break production routes. It also spans 16 files in 4 domain packages plus a dangling reference to a domains/_parked directory that no longer exists - no single File:Line, and the whole risk is created by an untrustworthy self-description."
+    },
+    {
+      "key": "ARCH-VS-REAL-DOMAIN-MODULE-COUNT",
+      "why": "ARCHITECTURE_STACK.md:538 (Law 12) fixes 15 domains and :539 (Law 13) fixes 5 modules. Reality: 17 domain packages (+media, +payments) and 6 modules (+finance). Neither extra is inert - payments is live via jobs/event_workers.py:72, media is entirely unreferenced, and modules/finance/routers/cash_management.py has no __init__.py so its package cannot even be imported. The count appears in at least four independent enforcement points that have all been silently widened to match the code: test_law7_allowlist_shrink.py:_KNOWN_DOMAINS includes 'payments'; the ARCH:354 approved non-canonical SCHEMA list includes 'media' but that approval does not extend to a domain PACKAGE; rbac/catalog.py's pkgutil scan silently skips media; and the audit's own P0 rows cite Law 12/Law 13 violations. Because the drift is embedded in the benchmark AND in the gates AND in the tests, it is a whole-codebase decision (amend ARCH, or reduce the tree) rather than a File:Line fix."
+    }
+  ],
+  "coverage_gaps": [
+    "CANNOT DETERMINE whether backend/DOMAIN_ALLOWLIST.yaml is 'actually shrinking' (Law 7). That requires commit history, and running git is forbidden by the subcontract. I verified instead that the CI enforcement of the rule is broken in three ways (see structural_verdicts.domain_allowlist_yaml_law7.law7_enforcement_defects), which is the stronger and independently provable statement.",
+    "LAW 7 <=30-DAY RULE IS UNTESTED. Grep for 'removal_date|remove_by|30 day|timedelta(days' across backend/tests returns only backend/tests/catalog/test_domain_allowlist_dates.py, which checks presence + uniqueness and explicitly forbids a uniform date. No test asserts that any removal_date is at most 30 days out. The current data does satisfy the rule (max 2026-10-30, 28 days from 2026-10-02), but nothing prevents regression. Not in my packet - routed here for the orchestrator.",
+    "backend/scripts/_debug/: I counted 34 files and listed them, but I did NOT individually verify that each of the 34 is unreferenced. I confirmed the repo-wide zero-hit result only for the backend-ROOT temp files (health_test_*, _tmp_*, check_*, alembic_chain, _audit_boot_check, test_output1/2). My reference grep covered *.py, *.ps1, *.sh, *.yml, *.yaml, *.md, *.toml, *.ini, *.cfg under backend/, docs/ and .github/ - it did NOT cover *.ipynb, *.json, *.txt, Dockerfile, or CI files outside .github/. Before any bulk delete of _debug/, a per-file reference check is required.",
+    "The CFM-005 'Sibling' backend/domains/orders/services/tracking/service.py and the CFM-007 'Sibling' backend/domains/accounts/services/identity/identity_admin_service.py were not individually opened. Neither affects its own verdict (both rest on a measured file size), but the sibling citations are unverified.",
+    "The CFM-008 'Sibling' backend/main.py:1 and the CFM-009 'Sibling' backend/alembic/env.py:1 were not individually opened. I did confirm main.py exists (15753 bytes) and that backend/alembic/env.py exists.",
+    "I did not verify that the 34 _debug/ scripts or the 6 forbidden-root-folder absences interact with any runtime behaviour. I did NOT import the application (except the two targeted, read-only imports: modules.employee.routers.hr and rbac.catalog) to avoid side effects.",
+    "LAW 63/65/66 measurements are AST/text HEURISTICS, not the exact law wording: (L63) I counted non-underscore functions with returns=None, which flags unannotated returns but not unannotated parameters - the true violation count is higher; (L64) I measured first-to-last BODY statement line span excluding docstring-only expressions, which under-counts a function whose body is one long expression; (L65) I measured raw space indentation >16 and divided by 4, which assumes 4-space indentation and would miscount tab-indented files; (L66) I excluded only 0/1/-1/2/100 and counted every other numeric literal, which massively over-counts test data, loop bounds and column widths. Treat the magnitudes as order-of-concurrence, not exact figures. The ruff statistics (8341 errors) are exact but INCLUDE the 97 root temp files.",
+    "NEW PROBLEM, not in my packet - DEAD CODE, Law 27: backend/modules/finance/routers/ has NO __init__.py and contains only cash_management.py; grep for 'modules.finance' across backend/**/*.py and backend/main.py returns ZERO hits, and backend/modules/finance/__init__.py is a single docstring line with no ROUTER_MAP (unlike modules/admin/__init__.py:21 and modules/employee/__init__.py:17 which do declare one). The 6th module is therefore a Law 13 violation that is also entirely unreachable. Recommend routing as a new Law 13 record.",
+    "NEW PROBLEM, not in my packet - DEAD CODE, Law 27: backend/domains/accounts/services/auth/auth_service.py:3513-3526 _is_plausible_biometric_token() is now dead. Grep across backend/**/*.py finds exactly one hit - its own definition - so after the three validators were changed to raise NotImplementedError, the format checker has zero callers. Recommend folding into CFM-011's fix rather than opening a separate ticket.",
+    "NEW PROBLEM, not in my packet - Law 18/19: backend/domains/ contains two loose files that are not domain packages: backend/domains/__init__.py and backend/domains/_mixin_compliance.py. The latter is picked up by rbac/catalog.py's pkgutil scan as a module named '_mixin_compliance' (verified in the iter_modules output), which means the RBAC catalog loader is being asked to import `domains._mixin_compliance.features` for a non-domain. It is swallowed by the bare `except Exception: continue` at catalog.py:33, so it is currently harmless, but it is a Law 150 structure deviation and a fragile implicit filter.",
+    "NEW PROBLEM, not in my packet - Law 63/64: backend/alembic/versions/2026_08_06_0003-20260806_0003_baseline_sync_orm_tables.py is 434315 bytes, the single largest .py file in the repo (bigger than the 8867-line general_ledger.py). It was excluded from the CFM-004 'monolith' framing because it is a migration, but if the size rule is about maintainability rather than runtime it should be reviewed too.",
+    "SCOPE NOTE on CORROBORATION of CROSS_AGENT_FINDINGS T15: I independently confirmed 4 of its 6 bullets (75 health_test_*; 15 _tmp_*; no _auto_stubs anywhere; all 6 forbidden root folders absent) and REFUTED 2 ('~5 debug_*.py at backend root' -> 0 exist at root, they are inside backend/alembic/; and the implicit 'run_tests.ps1/run_tests.sh at backend root' premise -> neither exists at backend root, only in the .kilo worktree duplicate). T15's '~20 ARCHIVED MODULE' is an over-count: the actual figure is exactly 16."
+  ],
+  "definition_of_done": {
+    "every_record_has_one_verdict": true,
+    "every_false_positive_has_counter_evidence": "CFM-010 - yes, backend/domains/finance/services/__init__.py quoted in full (9 lines, no TODO) plus the mis-set Test/Rollback fields and the corrected TODO count.",
+    "every_already_fixed_has_verify_output": "CFM-001, CFM-002, CFM-014, 17_code_file_management-P3 - yes, directory-absence listings in each verify_output.",
+    "every_filled_field_has_evidence": true,
+    "coverage_gaps_explains_unverified": true,
+    "logged_heartbeat_and_complete": true,
+    "edited_nothing_outside_verdict_file": true
+  },
+  "verdict_breakdown": {
+    "REAL": 13,
+    "FALSE_POSITIVE": 1,
+    "ALREADY_FIXED": 4,
+    "BLOCKED_BY_CONTRADICTION": 0,
+    "total": 18,
+    "note": "13 + 1 + 4 + 0 = 18, one verdict per packet record. REAL = CFM-003, CFM-004, CFM-005, CFM-006, CFM-007, CFM-008, CFM-009, CFM-011, CFM-012, CFM-013, CFM-015, 17_code_file_management-P1, 17_code_file_management-P2. ALREADY_FIXED = CFM-001, CFM-002, CFM-014, 17_code_file_management-P3. FALSE_POSITIVE = CFM-010. Of the 13 REAL, 4 have a wrong cited path or wrong cited text that must be corrected before resolution: CFM-004 and CFM-013 (general_ledger_service.py does not exist -> general_ledger.py), 17_code_file_management-P2 (inherits the same wrong filename), and CFM-011 (Current text says the validators 'return self._is_plausible_biometric_token' - they now raise NotImplementedError). Separately, one structural assessment is recorded under 'structural_verdicts' and is not a packet record: Law 18 CLEAN, Law 12 DIRTY (17 domain packages), Law 13 DIRTY (6 modules), Law 28 NO-OP."
+  }
+}

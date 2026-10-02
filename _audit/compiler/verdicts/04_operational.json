@@ -1,0 +1,404 @@
+{
+  "agent_id": "COMP-V22-04_operational",
+  "dimension": "04_operational",
+  "records_considered": 14,
+  "verdicts": [
+    {
+      "key": "OPS-007",
+      "id": "OPS-007",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "26",
+      "current_matches_claim": "partial",
+      "counter_evidence": "",
+      "verify_output": "Select-String -Path backend/Dockerfile.prod -Pattern 'CMD|workers|gunicorn' ->\n  26:CMD [\"gunicorn\", \"main:app\", \"--worker-class\", \"uvicorn.workers.UvicornWorker\", \"--bind\", \"0.0.0.0:8000\"]\n(only match; no --workers anywhere in the file)\n\nCross-check of the Delta's rationale:\n  docker-compose.prod.yml:55  replicas: 3\n  backend/config.py:203      background_job_workers: int = Field(default=2)\n\nBoth siblings cited by the record exist exactly as claimed. The Current text (the CMD literal) is verbatim accurate. The DELTA text is NOT: it says 'Gunicorn defaults to 1 worker per CPU core'. Gunicorn's documented default is workers=1 (a single worker); 1-per-CPU is uWSGI behaviour. The defect is still real (only one worker process serves the container) but the stated reasoning misattributes the default.",
+      "verify_command": "Select-String -Path backend/Dockerfile.prod -Pattern \"CMD|workers|gunicorn|ENTRYPOINT\"; Select-String -Path docker-compose.prod.yml -Pattern \"replicas\"; Select-String -Path backend/config.py -Pattern \"background_job_workers\"",
+      "test_command": "Select-String -Path backend/tests/infrastructure/test_docker_compose_prod.py -Pattern \"test_gunicorn_has_workers_flag\"",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Evidence strength": "single (unchanged) — Dockerfile.prod:26 is the sole production CMD and no other gunicorn invocation exists in the repo, but nothing asserts the worker count",
+        "Truth level": "L0 (unchanged) — literal source line",
+        "Claim state": "VERIFIED (Current text), DELTA RATIONALE WRONG",
+        "Sibling": "CONFIRMED — docker-compose.prod.yml:55 `replicas: 3`; backend/config.py:203 `background_job_workers: int = Field(default=2)`",
+        "Blast radius": "CHAIN-005 (confirmed as the only listed dependency); deploy.yml:94 deploys the backend image built from this Dockerfile"
+      },
+      "laws_cited": ["Law 47", "Law 216", "Law 223"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE + FIELD SWAP. The record's `Test` field contains `git revert <commit>` (a rollback command) and its `Rollback` field contains a pytest path — Test and Rollback are transposed in the source dimension row. `Verify: docker inspect <container>` is not runnable in CI (needs a running container). The named test `test_gunicorn_has_workers_flag` does not exist anywhere in the repo. The Fix's alignment target is also internally inconsistent: `replicas: 3` is a Coolify/orchestrator-level concept and is orthogonal to a hardcoded `--workers` inside the image; per TECHNOLOGY_STACK §20 the real constraint is `workers x (pool_size + max_overflow)` against the Neon pooler, so a blind `--workers 4` x 3 replicas = 12 processes against DB_POOL_SIZE 50 / DB_MAX_OVERFLOW 100 is not derivable from the cited sibling. Flag the fix as needing a computed worker count, not a literal 4."
+    },
+    {
+      "key": "OPS-009",
+      "id": "OPS-009",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "138-143",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "backend/infrastructure/observability/logging_config.py\n  15: from logging.handlers import RotatingFileHandler\n 138:         file_handler = RotatingFileHandler(\n 139-141:             log_file, maxBytes=10 * 1024 * 1024, backupCount=5, encoding='utf-8',\n 144:         file_handler.setLevel(resolved_level)\n\nGrep for TimedRotatingFileHandler / when= / log_retention across the whole module: 0 matches.\n\nGrep for log_retention_days across backend/**/*.py (excluding .venv):\n  backend/config.py:302:    log_retention_days: int = Field(default=30)\n  -> TOTAL 1 OCCURRENCE. The setting is declared and never read anywhere.\n\nSibling confirmed: backend/config.py:302 `log_retention_days: int = Field(default=30)`. Also declared in TECHNOLOGY_STACK §20 line 577 (LOG_RETENTION_DAYS, default 30).",
+      "verify_command": "Select-String -Path backend/infrastructure/observability/logging_config.py -Pattern \"RotatingFileHandler|TimedRotating|log_retention|backupCount|maxBytes|when=\"; grep-equivalent for log_retention_days across backend/**/*.py",
+      "test_command": "Test-Path backend/tests/infrastructure/test_logging_config.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Sibling": "CONFIRMED — backend/config.py:302 `log_retention_days: int = Field(default=30)` (never read)",
+        "Delta": "CONFIRMED and worse than stated: with maxBytes=10MB x backupCount=5 the cap is ~60MB regardless of age, so retention is bounded by volume, not by the declared 30 days",
+        "Verify": "NOT RUNNABLE — 'Log files older than 30 days are absent after 30+ days of runtime' is a 30-day observation, not a command"
+      },
+      "laws_cited": ["Law 92", "Law 315"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — the Test path `tests/infrastructure/test_logging_config.py::test_log_retention_enforced` does not exist (backend/tests/infrastructure/test_logging_config.py is absent) and the Verify command is an observation, not a shell command. FIX_MISALIGNED risk: the proposed `TimedRotatingFileHandler(when='midnight', backupCount=30)` keeps 30 *files*, which conflates file count with days and silently overwrites the declared `log_retention_days=30` semantics when >1 log file is produced per day. Prefer wiring the existing `settings.log_retention_days` into an age-based sweep. Not an optional-in-v1 item — Law 315 makes Coolify container logs + structured JSON the baseline, so the file handler is load-bearing."
+    },
+    {
+      "key": "OPS-010",
+      "id": "OPS-010",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "79 (worker_concurrency), 86-87 (retry), 167-189 (task_annotations)",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "Runtime read of jobs/celery_app.py conf (import only, no worker/beat started):\n  WORKER_CONCURRENCY: 4\n  BROKER: valkey://localhost:6379/1 | BACKEND: valkey://localhost:6379/2\n  SQLITE_IN_BROKER: False\n\ncelery_app.py:79   worker_concurrency=4\ncelery_app.py:86-87 retry_backoff=True, retry_backoff_max=300   (global, as claimed)\ncelery_app.py:167-189 task_annotations = { 3 entries, ALL jobs.ai_tasks.* }\n\nBoth tasks named in the Fix exist and are UNANNOTATED:\n  backend/jobs/periodic_tasks.py:15        name=\"tasks.periodic_tasks.run_auto_payout_sweep\"\n  backend/jobs/reconciliation_cron.py:18   name=\"tasks.reconciliation_cron.run_reconciliation_cron\"\n  (no `tasks.periodic_tasks.run_auto_payout_sweep` key and no `tasks.reconciliation_cron.run_reconciliation_cron` key in task_annotations)\n\nVerify command from the record (`grep -A5 run_auto_payout_sweep celery_app.py`) DOES return the string — but only at celery_app.py:101 inside beat_schedule, not as an annotation. The record's Verify is therefore inconclusive as written; the Test path is what proves the point, and it is missing.",
+      "verify_command": "python (import jobs.celery_app only) -> print worker_concurrency, broker_url, result_backend, task_annotations keys; Select-String on jobs/periodic_tasks.py and jobs/reconciliation_cron.py for the task names",
+      "test_command": "Test-Path backend/tests/jobs/test_celery_config.py ; Select-String -Path backend/tests/**/*.py -Pattern \"test_payout_task_concurrency_limit|celery_broker|beat_schedule\"",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Sibling": "CONFIRMED — backend/jobs/celery_app.py:167-189 (task_annotations exist, but only for jobs.ai_tasks.*)",
+        "Evidence strength": "CONFIRMED at runtime (worker_concurrency=4 read from the live Celery conf object), not merely from source text",
+        "Delta": "CONFIRMED. Additionally: `run_auto_payout_sweep` has no Celery-side mutual exclusion at all (no lock, no lock-key row), and docker-compose.prod.yml:217 runs the payouts worker with `-c 4`, so 4 concurrent prefork children can execute the same hourly sweep.",
+        "Depends on": "OPS-002 — stale. OPS-002 is RESOLVED/ALREADY_FIXED (deploy.yml exists), so this dependency is already satisfied; mark `Depends on: none` per compiler §0.8 step 43",
+        "Verify": "MISALIGNED — the record's own grep matches beat_schedule, not the absence of an annotation; a correct check is `assert 'tasks.periodic_tasks.run_auto_payout_sweep' not in celery_app.conf.task_annotations`"
+      },
+      "laws_cited": ["Law 115", "Law 226", "Law 60", "Law 311"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — `tests/jobs/test_celery_config.py` does not exist. A repo-wide grep for test_payout_task_concurrency_limit returns 0 matches. The only adjacent test is backend/tests/config/test_config_validation.py:59 which asserts on the string `celery_brok...`. The Fix itself is benchmark-aligned (Celery task_annotations is the documented Celery 5.5 mechanism) and non-destructive. NOTE: this record materially UNDERSTATES the surrounding defect — see coverage_gaps CG-OPS-01, which is P0 and blocks this fix's value: 10 of the 13 beat entries name tasks that are never registered, so those tasks would never reach a worker to be rate-limited in the first place."
+    },
+    {
+      "key": "OPS-001",
+      "id": "OPS-001",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "176-239",
+      "current_matches_claim": "no",
+      "counter_evidence": "",
+      "verify_output": "backend/main.py — /health/deps now fails closed:\n  208:    critical_deps = {\n  209:        \"database\": db_ok,\n  210:        \"valkey\": valkey_status == \"ok\",\n  211:        \"email\": email_status.get(\"available\", False),\n  212:        \"payments\": payments_status == \"ok\",\n  213:        \"storage\": storage_status.get(\"status\") == \"ok\",\n  214:    }\n  216:    failed_deps = [name for name, ok in critical_deps.items() if not ok]\n  231:    if failed_deps:\n  232:        response_body[\"failed_dependencies\"] = failed_deps\n  233:        app_env = (settings.app_env or \"\").lower()\n  234:        if app_env == \"test\" and \"database\" not in failed_deps:\n  235:            response_body[\"status\"] = \"degraded\"\n  236:            return response_body          <-- 200 only in APP_ENV=test AND db healthy\n  237:        return JSONResponse(status_code=503, content=response_body)\n  239:    return response_body\n\nSibling is also CONFIRMED: main.py:106-149 /health already returned 503 via JSONResponse(status_code=503, ...) at line 133.",
+      "verify_command": "Select-String -Path backend/main.py -Pattern \"status_code=503|critical_deps|failed_deps|@app.get\\(\\\"/health\" -Context 2,2",
+      "test_command": "Test-Path backend/tests/observability/test_health_checks.py ; repo grep for test_health_deps_fails_closed_when_db_down",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Sibling": "CONFIRMED — backend/main.py:106-149 (`/health` fails closed correctly, JSONResponse(status_code=503) at :133)",
+        "Delta": "NO LONGER TRUE — `/health/deps` returns 503 whenever any of database/valkey/email/payments/storage is not ok (main.py:237)",
+        "Completion blocker": "no longer blocking",
+        "Blocks": "OPS-008 — moot; OPS-008 is independently ALREADY_FIXED"
+      },
+      "laws_cited": ["Law 81", "Law 218", "Law 37"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — `tests/observability/test_health_checks.py` does not exist anywhere in the repo, so the regression guard the audit paired with this fix does not exist. The single residual gap is narrow: the `app_env == \"test\" and \"database\" not in failed_deps` escape hatch at main.py:234-236 still returns HTTP 200 with degraded deps. That is intentional and defensible for CI, but it means the fix is env-conditional, not unconditional. Cross-check on the sibling agent's T-lead: CORROBORATED that /health/deps covers exactly {database, valkey, email, payments, storage} + error_tracking + circuit_breakers and never calls a provider `health_check()` (see coverage_gaps CG-OPS-04); email status is `smtp_host` truthiness only (main.py:286-290). Note that the sibling's line range `main.py:176-239` matches exactly."
+    },
+    {
+      "key": "OPS-008",
+      "id": "OPS-008",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "106-149 (/health), 152-173 (_get_storage_health_status), 176-239 (/health/deps)",
+      "current_matches_claim": "no",
+      "counter_evidence": "",
+      "verify_output": "backend/main.py\n  152: def _get_storage_health_status() -> dict:\n  156:     store = get_storage()\n  157:     if isinstance(store, S3Storage):\n  159:         if store.client is None:\n  160:             return {\"status\": \"unavailable\", \"backend\": \"r2\", \"detail\": \"client not initialized\"}\n  161:         store.client.list_objects_v2(Bucket=store.bucket, MaxKeys=1)   <-- REAL R2 probe\n  162:         return {\"status\": \"ok\", \"backend\": \"r2\"}\n  165:     else:  ... local filesystem write/remove probe ...\n  206:     storage_status = _get_storage_health_status()\n  213:         \"storage\": storage_status.get(\"status\") == \"ok\",   <-- folded into critical_deps\n  225:             \"storage\": storage_status,                          <-- present in the JSON body\n\nThe record's own Verify command (`curl /health/deps` shows `storage`/`r2` key with status) is now satisfiable.",
+      "verify_command": "Select-String -Path backend/main.py -Pattern \"_get_storage_health_status|list_objects_v2|\\\"storage\\\"\"",
+      "test_command": "Test-Path backend/tests/observability/test_health_checks.py ; repo grep for test_health_checks_r2",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Sibling": "CONFIRMED — backend/config.py has the R2 settings (r2_bucket / r2_endpoint_url / r2_access_key_id / r2_secret_access_key) and STORAGE_BACKEND must be `r2` in production per TECHNOLOGY_STACK §20:347",
+        "Delta": "NO LONGER TRUE — R2 is probed with a real list_objects_v2 call and is a fail-closed critical dependency",
+        "Depends on": "OPS-001 — moot, OPS-001 is ALREADY_FIXED"
+      },
+      "laws_cited": ["Law 81", "Law 120", "Law 218"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — `tests/observability/test_health_checks.py::test_health_checks_r2` does not exist. PARTIAL FIX ONLY: the record's Fix asked for R2 in BOTH `/health` and `/health/deps`. `/health/deps` has it (main.py:206,213,225); `/health` (main.py:106-149) still checks only `database` and `valkey` (main.py:114-117). I do NOT count that as a defect — `/health` is the liveness probe and Law 218 requires it to return 200 for load-balancer routing; making liveness depend on R2 would take the whole fleet out of rotation for a media-backend outage. The fix as scoped over-reaches; only the `/health/deps` half was correct. NEW DEFECT SURFACED BY THIS PROBE: main.py:161 calls the SYNCHRONOUS boto3 `list_objects_v2` from inside `async def health_deps` (main.py:176) — Law 60 violation, see coverage_gaps CG-OPS-03."
+    },
+    {
+      "key": "OPS-006",
+      "id": "OPS-006",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "38-46",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "backend/providers/comms/sms.py — 6 raw os.getenv calls, exactly at the cited lines:\n  38: SMS_MODE = os.getenv(\"SMS_MODE\", \"dev\").lower()\n  40: SMS_SERIAL_PORT = os.getenv(\"SMS_SERIAL_PORT\", \"COM3\")\n  41: SMS_SERIAL_BAUD = int(os.getenv(\"SMS_SERIAL_BAUD\", \"9600\"))\n  43: SMS_ANDROID_URL = os.getenv(\"SMS_ANDROID_URL\", \"\")\n  45: SMS_RETRY_ATTEMPTS = int(os.getenv(\"SMS_RETRY_ATTEMPTS\", \"3\"))\n  46: SMS_RETRY_DELAY = int(os.getenv(\"SMS_RETRY_DELAY\", \"2\"))\n\nSibling confirmed and WORSE than stated — the typed fields exist and are unused:\n  backend/config.py:293 sms_mode: str = Field(default=\"dev\")\n  backend/config.py:294 sms_serial_port: str = Field(default=\"COM3\")\n  backend/config.py:295 sms_serial_baud: int = Field(default=9600)\n\nVerify command from the record (`grep -rn \"os.getenv\" backend/providers/comms/sms.py` returns zero matches) currently returns 6 matches, i.e. the defect is unfixed.",
+      "verify_command": "Select-String -Path backend/providers/comms/sms.py -Pattern \"os.getenv\" ; Select-String -Path backend/config.py -Pattern \"sms_mode|sms_serial\"",
+      "test_command": "Test-Path backend/tests/providers/test_sms_provider.py ; repo grep for test_no_raw_os_getenv",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Sibling": "CONFIRMED — backend/config.py:293-295 typed fields exist; the audit cited :283-288, which is stale by 10 lines",
+        "Verify": "RUNNABLE and currently FAILS — returns 6 matches, not zero",
+        "Truth level": "L0 (literal module-level constants)"
+      },
+      "laws_cited": ["Law 84", "Law 203", "Law 117"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — `tests/providers/test_sms_provider.py` does not exist; the named test `test_no_raw_os_getenv` appears nowhere in the repo (grep over backend/ excluding .venv = 0 matches). Also flagged by the same grep across three sibling files: OPS-005 geo.py (3 calls) and OPS-004 payments/config.py (18 calls). All three are the SAME root cause — `backend/config.py` declares the setting, the provider re-reads the environment with `os.getenv` and never consults `settings`. Per compiler §0.15 that makes this a cross-cutting finding rooted in a codebase-governing config file, not three independent file defects; see `cross_cutting_candidates` XCC-OPS-01."
+    },
+    {
+      "key": "OPS-005",
+      "id": "OPS-005",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "144-146",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "backend/providers/geography/geo.py — 3 raw os.getenv calls, exactly at the cited lines:\n  144: DEFAULT_TIMEOUT = float(os.getenv(\"LOCATION_HTTP_TIMEOUT\", \"4.0\"))\n  145: CACHE_TTL_SECONDS = int(os.getenv(\"LOCATION_CACHE_TTL\", \"3600\"))\n  146: USER_AGENT = os.getenv(\"LOCATION_USER_AGENT\", \"zozi-location-service/1.0\")\n\nSibling confirmed:\n  backend/config.py:290 location_http_timeout: float = Field(default=4.0)\n  backend/config.py:291 location_cache_ttl: int = Field(default=3600)\n  backend/config.py:292 location_user_agent: str = Field(default=\"zozi-location-service/1.0\")\n\nThe record's cited sibling range (config.py:280-282) is stale by 10 lines; the correct range is 290-292. The Verify command currently returns 3 matches, not zero.",
+      "verify_command": "Select-String -Path backend/providers/geography/geo.py -Pattern \"os.getenv|os.environ\" ; Select-String -Path backend/config.py -Pattern \"location_\"",
+      "test_command": "Test-Path backend/tests/providers/test_geo_provider.py ; repo grep for test_no_raw_os_getenv",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Sibling": "CONFIRMED but line-shifted — backend/config.py:290-292 (audit said :280-282)",
+        "Verify": "RUNNABLE and currently FAILS — returns 3 matches, not zero"
+      },
+      "laws_cited": ["Law 84", "Law 203", "Law 127"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — `tests/providers/test_geo_provider.py` does not exist; `test_no_raw_os_getenv` is absent repo-wide. Law 127 additionally requires 'API keys, endpoints, timeouts in providers/config.py' — these three timeouts are inline in `geo.py`, not in `providers/config.py`, so the fix should relocate rather than merely swap the accessor. Note the module is imported at process start, so the values are frozen at import time and cannot be re-read after settings load — the practical impact is that a test that monkeypatches `settings.location_http_timeout` will silently not take effect."
+    },
+    {
+      "key": "OPS-004",
+      "id": "OPS-004",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "42-138",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "backend/providers/payments/config.py — 18 raw os.getenv calls spanning exactly lines 42-138 as cited:\n  42 os.getenv(\"STRIPE_SECRET_KEY\")            49 STRIPE_WEBHOOK_SECRET\n  65 TAP_SECRET_KEY                            69 TAP_WEBHOOK_SECRET\n  73 TAP_API_BASE_URL                          77 TAP_WEBHOOK_URL\n  86 PAYTABS_SERVER_KEY                        90 PAYTABS_WEBHOOK_SECRET\n  94 PAYTABS_PROFILE_ID                        98 PAYTABS_API_BASE_URL\n 103 PAYTABS_CALLBACK_URL                     113 THAWANI_SECRET_KEY\n 117 THAWANI_PUBLISHABLE_KEY                  121 THAWANI_API_BASE_URL\n 126 THAWANI_WEBHOOK_SECRET                    136 PAYPAL_CLIENT_ID\n 137 PAYPAL_SECRET                            138 PAYPAL_MODE\n\nSibling CONFIRMED — backend/config.py is a single Settings class (audit cited :92-926; the class body actually spans ~:190-600 with the production validator at :598-776 per the T3 lead). Every one of these 18 names is already declared as a typed field on that class.\nThe record's Verify command currently returns 18 matches, not zero.",
+      "verify_command": "Select-String -Path backend/providers/payments/config.py -Pattern \"os.getenv|os.environ\" ; Select-String -Path backend/config.py -Pattern \"stripe_secret_key|tap_secret_key|paypal_secret|thawani_secret_key|paytabs_server_key\"",
+      "test_command": "Test-Path backend/tests/providers/test_payment_config.py ; repo grep for test_no_raw_os_getenv",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Sibling": "CONFIRMED — backend/config.py declares stripe_secret_key, tap_secret_key, paypal_secret, paytabs_server_key, thawani_secret_key, etc. as typed fields; the cited range :92-926 is stale",
+        "Delta": "CONFIRMED and materially worse than 'config drift': this module resolves 8 different SECRET values at call time from the raw environment with no schema, so the `_validate_production` checks (Law 83) cannot see a missing key — a missing PAYPAL_SECRET silently degrades to `None` (line 137: `... or None`) rather than failing startup",
+        "Verify": "RUNNABLE and currently FAILS — returns 18 matches, not zero"
+      },
+      "laws_cited": ["Law 84", "Law 203", "Law 32", "Law 83", "Law 123"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — `tests/providers/test_payment_config.py` does not exist; `test_no_raw_os_getenv` is absent repo-wide. The Fix's proposed signature change (`accept settings: Settings`) conflicts with how every caller uses these module-level `resolve_*()` functions — they are called as free functions from adapters and from the payment orchestrator, so an injected-Settings refactor is a wider change than the 3h estimate suggests. Benchmark-aligned (pydantic-settings, Law 84/203) and non-destructive. Highest-severity member of XCC-OPS-01 because it is the only one touching secrets (Law 32). See coverage_gaps CG-OPS-07 for a related but distinct secret-exposure issue in monitoring/."
+    },
+    {
+      "key": "04_operational-P0",
+      "id": "04_operational-P0",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "231-239",
+      "current_matches_claim": "no",
+      "counter_evidence": "",
+      "verify_output": "Correction text: '`/health/deps` must return 503 when critical deps down' (Blocking: yes)\n\nSatisfied at backend/main.py:231-239 — see the OPS-001 verdict for the full excerpt. The 503 return is at main.py:237 and the only 200 escape is the APP_ENV=test-and-db-healthy branch at :234-236.",
+      "verify_command": "Select-String -Path backend/main.py -Pattern \"status_code=503\"",
+      "test_command": "not_run — record carries no Test path",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Phase": "infra (inherited from OPS-001)",
+        "Status": "COMPILED -> already satisfied; no work required",
+        "File:Line": "backend/main.py:231-239",
+        "Verify": "NOT_PROVIDED in source; supplied here as `Select-String -Path backend/main.py -Pattern \"status_code=503\"`",
+        "Test": "NOT_PROVIDED in source; nearest real guard would be backend/tests/observability/ which does not exist",
+        "Depends on": "none"
+      },
+      "laws_cited": ["Law 81", "Law 218"],
+      "notes": "DUPLICATE of OPS-001 (same correction, same target file, same fix). Survivor: OPS-001 — higher evidentiary quality (triangulated vs NOT_PROVIDED, Priority P0, and it carries Verify/Test/Rollback). This row adds no independent evidence and carries NO Verify and NO Test (both NOT_PROVIDED), so it is FIX_UNTESTABLE on its face per compiler §0.7 rule 4. Because the underlying defect is already fixed, the blocking correction should be closed rather than routed to the resolver."
+    },
+    {
+      "key": "04_operational-P1",
+      "id": "04_operational-P1",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "42-138",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "Correction text: 'Raw os.getenv() in payment provider config -> typed settings' (Blocking: no)\n\nVerified true — backend/providers/payments/config.py has 18 raw os.getenv calls at lines 42-138. See the OPS-004 verdict for the full line-by-line list.",
+      "verify_command": "Select-String -Path backend/providers/payments/config.py -Pattern \"os.getenv|os.environ\"",
+      "test_command": "not_run — record carries no Test path",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Phase": "infra (inherited from OPS-004)",
+        "File:Line": "backend/providers/payments/config.py:42-138",
+        "Verify": "NOT_PROVIDED in source; supplied here as `Select-String -Path backend/providers/payments/config.py -Pattern \"os.getenv\"` (currently 18 matches)",
+        "Test": "NOT_PROVIDED in source"
+      },
+      "laws_cited": ["Law 84", "Law 203"],
+      "notes": "DUPLICATE of OPS-004. Survivor: OPS-004 (Confidence 5, Evidence strength triangulated, Priority P1, and it carries Verify/Test/Rollback/Sibling). This row is a bare restatement of the same correction with 20 of 22 canonical fields NOT_PROVIDED — FIX_UNTESTABLE (no Verify, no Test). Do not compile separately; fold into OPS-004's file block."
+    },
+    {
+      "key": "04_operational-P2",
+      "id": "04_operational-P2",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "26",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "Correction text: 'Gunicorn --workers explicitly set in Dockerfile.prod' (Blocking: no)\n\nVerified true — backend/Dockerfile.prod:26 is\n  CMD [\"gunicorn\", \"main:app\", \"--worker-class\", \"uvicorn.workers.UvicornWorker\", \"--bind\", \"0.0.0.0:8000\"]\nwith no --workers flag. See the OPS-007 verdict.",
+      "verify_command": "Select-String -Path backend/Dockerfile.prod -Pattern \"CMD|gunicorn|workers\"",
+      "test_command": "not_run — record carries no Test path",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Phase": "infra (inherited from OPS-007)",
+        "File:Line": "backend/Dockerfile.prod:26",
+        "Verify": "NOT_PROVIDED in source; supplied here as the Select-String above",
+        "Test": "NOT_PROVIDED in source"
+      },
+      "laws_cited": ["Law 216", "Law 47"],
+      "notes": "DUPLICATE of OPS-007. Survivor: OPS-007 (Confidence 5, carries Verify/Test/Rollback/Sibling/Blast-radius; this row has 21 of 22 fields NOT_PROVIDED). FIX_UNTESTABLE — no Verify, no Test. Do not compile separately. Note the correction states the requirement ('explicitly set') without naming a value, which is FIX_VAGUE: gunicorn also accepts `--workers $WEB_CONCURRENCY` or `-w`, and the benchmark gives no number, so the resolver must derive one from DB_POOL_SIZE / worker budget rather than assume 4."
+    },
+    {
+      "key": "04_operational-P3",
+      "id": "04_operational-P3",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "79, 86-87, 167-189",
+      "current_matches_claim": "yes",
+      "counter_evidence": "",
+      "verify_output": "Correction text: 'Celery payout/reconciliation tasks lack per-task concurrency limit' (Blocking: no)\n\nVerified true — celery_app.conf.worker_concurrency == 4; celery_app.conf.task_annotations contains only the 3 jobs.ai_tasks.* entries (celery_app.py:167-189); neither `tasks.periodic_tasks.run_auto_payout_sweep` (periodic_tasks.py:15) nor `tasks.reconciliation_cron.run_reconciliation_cron` (reconciliation_cron.py:18) is annotated. See the OPS-010 verdict.",
+      "verify_command": "python (import jobs.celery_app) -> print worker_concurrency and task_annotations keys",
+      "test_command": "not_run — record carries no Test path",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Phase": "infra (inherited from OPS-010)",
+        "File:Line": "backend/jobs/celery_app.py:167-189",
+        "Verify": "NOT_PROVIDED in source; supplied here as the conf read above",
+        "Test": "NOT_PROVIDED in source"
+      },
+      "laws_cited": ["Law 115", "Law 226"],
+      "notes": "DUPLICATE of OPS-010. Survivor: OPS-010 (carries Verify/Test/Rollback/Sibling/Blast-radius; this row has 21 of 22 fields NOT_PROVIDED). FIX_UNTESTABLE — no Verify, no Test. Do not compile separately. Important sequencing note for the resolver: this correction is worthless until CG-OPS-01 (10 of 13 beat entries dispatch unregistered task names) is fixed, otherwise the annotated tasks are never enqueued at all."
+    },
+    {
+      "key": "OPS-002",
+      "id": "OPS-002",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": ".github/workflows/deploy.yml (12038 bytes), rollback.yml (5874), ci.yml (1738), schema-audit.yml (824), router-generation.yml (803)",
+      "current_matches_claim": "no",
+      "counter_evidence": "",
+      "verify_output": "Get-ChildItem .github/workflows ->\n  ci.yml                 1738\n  deploy.yml            12038\n  rollback.yml           5874\n  router-generation.yml   803\n  schema-audit.yml        824\n\nThe record's own Verify command (`ls .github/workflows/` returns deployment workflow) PASSES.\n\nTarget clauses individually confirmed in .github/workflows/deploy.yml:\n  :43   name: Pre-deploy Validation                (pre-deploy step present)\n  :121  railway run --environment staging   -- alembic upgrade head\n  :205  railway run --environment production -- alembic upgrade head\n  :128  curl -sf https://staging-api.zozi.com/health || exit 1     (health gate)\n  :212  curl -sf https://api.zozi.com/health || exit 1\n  :272  name: Post-deploy Smoke Tests   needs: [deploy-backend-production, deploy-frontend-production]\n  :282  if curl -sf https://api.zozi.com/health; then  (5-attempt retry)\n  .github/workflows/rollback.yml exists (5874 bytes) -> rollback trigger present.\n\nRESIDUAL GAPS (the fix landed, but not to the letter of the Target):\n  (a) the health gate uses /health, not /health/ready as the Target specified\n  (b) deploy.yml deploys the backend to RAILWAY and the frontend to VERCEL\n      (:94 'Deploy Backend - Railway (Staging)', :107 Install Railway CLI, :151 Vercel CLI),\n      whereas TECHNOLOGY_STACK section 18 / Law 216 mandates Coolify on a Hostinger VPS\n      + Cloudflare Pages. A root vercel.json also exists.\n  (c) 4 of the 5 CI workflows named in TECHNOLOGY_STACK section 19 do not exist\n      (see coverage_gaps CG-OPS-06).",
+      "verify_command": "Get-ChildItem .github/workflows ; Select-String -Path .github/workflows/deploy.yml -Pattern \"alembic|health|rollback|needs:|Railway|Vercel\"",
+      "test_command": "Test-Path test_ci_cd_pipeline.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "N/A -> .github/workflows/deploy.yml:43-313 (5 workflow files total)",
+        "Current": "FALSE — a CI/CD pipeline exists in full",
+        "Delta": "FALSE — migrations (alembic upgrade head) and rollback (rollback.yml) are automated, not manual",
+        "Completion blocker": "no — confirmed resolved",
+        "Evidence strength": "CONFIRMED at file level: 5 workflow files, 19, 977 bytes total",
+        "Sibling": "documents/01_DATABASE.md exists (70701 bytes) — the CI/CD pre-deploy reference is plausible but I did not open it to locate line 323",
+        "Verify": "RUNNABLE and PASSES",
+        "Test": "NOT_PROVIDED — `test_ci_cd_pipeline.py` (new) does not exist; the practical substitute is backend/tests/infrastructure/test_docker_compose_prod.py, which is itself uncollectable (see coverage_gaps CG-OPS-08)"
+      },
+      "laws_cited": ["Law 217", "Law 218", "Law 219", "Law 216", "Law 71"],
+      "notes": "The prior audit row's RESOLVED status is ACCURATE — I return ALREADY_FIXED and the prior reviewer was right to close it. Three qualifications a resolver must not lose: (1) the pipeline targets Railway+Vercel while the canonical stack is Coolify+Cloudflare Pages — that is a BENCHMARK MISMATCH, not a fix, and it means the deployed artefact is not the benchmark's deployment model; (2) the health gate checks /health (liveness) instead of /health/ready (readiness), so a deployment whose Valkey/payments are down still passes the gate; (3) zero security scanning exists in any workflow, so the CI that now exists does not satisfy Law 44 / Law 291 / Law 295 or TECHNOLOGY_STACK section 11 despite the row being closed. FIX_UNTESTABLE — the named Test file was never created."
+    },
+    {
+      "key": "OPS-003",
+      "id": "OPS-003",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "monitoring/runbooks/ (5 files) — NOT docs/runbooks/",
+      "current_matches_claim": "partial",
+      "counter_evidence": "",
+      "verify_output": "Test-Path docs            -> False     <-- the cited directory does NOT exist\nTest-Path docs/runbooks    -> False     <-- the cited path in File:Line is WRONG\n\nRepo-wide search for *.md matching runbook|rollback|deploy|incident\n(excluding node_modules|.venv|.kilo|.git) returned ZERO results — because the\nfiles are named by alert, not by procedure.\n\nThe 5 runbooks DO exist, at monitoring/runbooks/:\n  api_high_latency.md                      902\n  backend_error_rate_high.md               922\n  database_connection_pool_exhausted.md    1141\n  sentry_new_errors.md                     978\n  slow_database_queries.md                 937\n\nLaw 303 (per-alert runbooks) is FULLY SATISFIED — exact 1:1 with monitoring/alerts.yml:\n  - alert: DatabaseConnectionPoolExhausted   -> database_connection_pool_exhausted.md\n  - alert: BackendErrorRateHigh              -> backend_error_rate_high.md\n  - alert: APIHighLatency                    -> api_high_latency.md\n  - alert: SentryNewErrors                   -> sentry_new_errors.md\n  - alert: SlowDatabaseQueries               -> slow_database_queries.md\n  (5 alerts in alerts.yml, 5 runbooks, zero gap)\n\nAll 5 were read in full. Each is an alert-triage runbook (Symptoms / Triage /\nResolution / Prevention). NONE is a deployment, rollback, migration-on-deploy or\nincident-response runbook. Law 248's three named artefacts are absent from the\nentire repository.",
+      "verify_command": "Test-Path docs/runbooks ; Get-ChildItem monitoring/runbooks ; Select-String -Path monitoring/alerts.yml -Pattern \"^\\s*- alert:\"",
+      "test_command": "Test-Path test_runbooks_exist.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "monitoring/runbooks/  (NOT docs/runbooks/ — that directory does not exist)",
+        "Current": "CONFIRMED — 5 runbooks exist: slow DB, backend errors, API latency, DB pool, Sentry",
+        "Sibling": "CONFIRMED — docs/runbooks/backend_error_rate_high.md does NOT exist; the real file is monitoring/runbooks/backend_error_rate_high.md",
+        "Delta": "CONFIRMED and UNDERSTATED — the gap is not 'missing deployment, rollback and migration-on-deploy runbooks'; it is that ZERO deployment/rollback/incident-response runbooks exist anywhere in the repo",
+        "Status": "The row is marked INVALID in the source dimension. I disagree: the Delta is a genuine, verifiable Law 248 defect. Recommend INVALID -> NEW/COMPILED with the corrected path.",
+        "Verify": "RUNNABLE and FAILS — `ls docs/runbooks/deployment.md docs/runbooks/rollback.md` fails; the correct check is the absence of monitoring/runbooks/deployment.md, -rollback.md, -incident_response.md",
+        "Depends on": "OPS-002 — now satisfied (OPS-002 is ALREADY_FIXED), so the dependency is stale but not broken"
+      },
+      "laws_cited": ["Law 248", "Law 303", "Law 219", "Law 217"],
+      "notes": "QUALITY GATE: FIX_UNTESTABLE — the named Test `test_runbooks_exist.py` (new) does not exist. FIX_PATH_MISMATCH — the Fix proposes `docs/runbooks/deployment.md` etc., which follows ARCHITECTURE_STACK Law 248's literal wording ('docs/runbooks/') but contradicts the repo's actual layout (`monitoring/runbooks/`). The resolver must decide: either migrate the 5 existing runbooks to `docs/runbooks/` to satisfy Law 248 literally, or add a docs-drift exception. This is a benchmark-vs-repo divergence the user should see, not something I should silently pick. EXPLICITLY NOT REPORTED AS DEFECTS (benchmark-optional / process, per instruction): (a) no evidence the runbooks are quarterly-tested in staging — Law 248/303's 'tested quarterly' clause is a PROCESS obligation with no code artefact to check, so this is a process note, not a code defect; (b) Law 316 Grafana/Loki are optional in v1 and monitoring/grafana, monitoring/promtail and monitoring/tempo all exist anyway; (c) Law 145 tracing is optional — the dead OpenTelemetry import at main.py:99 is therefore NOT a defect I am raising. MINOR DOC DRIFT observed but not raised as a finding: sentry_new_errors.md instructs operators to 'Open the Sentry project dashboard' while the canonical destination is self-hosted GlitchTip (TECHNOLOGY_STACK section 9), and several runbooks recommend 'autoscaling'/'deployment canaries' which Laws 252/319 explicitly defer for a single-VPS deployment."
+    }
+  ],
+  "duplicates_merged": [
+    {
+      "survivor": "OPS-001",
+      "duplicate": "04_operational-P0",
+      "why": "Identical correction ('/health/deps must return 503 when critical deps down', Blocking: yes) against the same target file backend/main.py. Survivor has Priority P0, Evidence strength 'triangulated', Confidence 5 and carries Verify/Test/Rollback/Sibling; the duplicate carries NOT_PROVIDED for 20 of 22 fields including both Verify and Test. Additionally the survivor is now ALREADY_FIXED (main.py:237), so the blocking correction should be closed, not routed."
+    },
+    {
+      "survivor": "OPS-004",
+      "duplicate": "04_operational-P1",
+      "why": "Identical correction ('Raw os.getenv() in payment provider config -> typed settings') against backend/providers/payments/config.py. Survivor is triangulated with a per-line evidence dump and a Runnable Verify; the duplicate is a bare restatement with no Verify and no Test."
+    },
+    {
+      "survivor": "OPS-007",
+      "duplicate": "04_operational-P2",
+      "why": "Identical correction ('Gunicorn --workers explicitly set in Dockerfile.prod') against backend/Dockerfile.prod:26. Survivor carries Sibling, Blast radius and a (transposed) Test path; the duplicate is a bare restatement."
+    },
+    {
+      "survivor": "OPS-010",
+      "duplicate": "04_operational-P3",
+      "why": "Identical correction ('Celery payout/reconciliation tasks lack per-task concurrency limit') against backend/jobs/celery_app.py:167-189. Survivor has a runtime-level verify and identifies the two exact task names; the duplicate does not."
+    },
+    {
+      "survivor": "OPS-001",
+      "duplicate": "OPS-008",
+      "why": "PARTIAL OVERLAP ONLY — both target backend/main.py /health/deps and both are now ALREADY_FIXED, but they describe different problems (fail-closed status code vs R2 coverage in the dependency set). Not merged into one finding; listed here so the resolver does not double-count them against the same file block. Recommended pairing: both close together in the backend/main.py block."
+    },
+    {
+      "survivor": "OPS-004",
+      "duplicate": "OPS-005 + OPS-006",
+      "why": "NOT MERGED — the three sit in three different provider files with three different sets of environment variables, so they are three separate file-block edits. They ARE however one root cause (backend/config.py declares a setting; the consumer re-reads os.getenv) and are routed together as cross_cutting_candidates XCC-OPS-01 rather than merged, so the resolver keeps three file blocks but gets one coordinated fix."
+    }
+  ],
+  "internal_contradictions": [
+    {
+      "keys": ["OPS-002", "OPS-010", "OPS-003"],
+      "conflict": "STALE DEPENDENCY GRAPH (compiler §0.8 step 43 — DEPENDENCY_BROKEN). OPS-002 is Status RESOLVED / ALREADY_FIXED (deploy.yml + rollback.yml exist), yet OPS-010 declares `Depends on: OPS-002` and OPS-003 declares `Depends on: OPS-002` AND `Blocks: OPS-010`. The work-order therefore routes OPS-010 and OPS-003 behind a blocker that is already closed. The orchestrator should rewrite both `Depends on` values to `none` and drop OPS-003's `Blocks: OPS-010` edge, otherwise the resolver will stall on a satisfied precondition. I am NOT resolving this myself — flagging only, per the contract."
+    },
+    {
+      "keys": ["OPS-007", "04_operational-P2"],
+      "conflict": "The two records fix the same line with DIFFERENT levels of specification: OPS-007's Fix says 'Add `--workers 4` ... aligned with docker-compose.prod.yml replicas=3 and background_job_workers=2', while 04_operational-P2's correction says only 'Gunicorn `--workers` explicitly set'. The survivor's justification is also internally unsound: `replicas: 3` is an orchestrator-level scale-out (TECHNOLOGY_STACK section 18, Coolify) and is orthogonal to the worker count inside a single container image; and per section 20 the correct constraint is `workers x (pool_size + max_overflow)` against the Neon pooler, so `3 replicas x 4 workers` = 12 processes is not derivable from the stated sibling. Applying either fix verbatim risks exceeding the DB connection budget. Not resolved here."
+    },
+    {
+      "keys": ["OPS-001", "OPS-008"],
+      "conflict": "Not a hard contradiction, but the two Targets pull in opposite directions and the resolver must choose. OPS-008's Fix asks to add an R2 probe to BOTH `/health` and `/health/deps`; OPS-001's Target requires `/health` to fail closed on a critical dependency. Wiring R2 into `/health` (main.py:106-149, the liveness probe) would make a media-backend outage evict every replica from the load balancer, which is the opposite of what Law 218 intends. The implemented state (R2 in `/health/deps` only, main.py:206/213/225) resolves this correctly; the audit text does not. Recorded so the resolver does not 'complete' OPS-008 by adding R2 to `/health`."
+    }
+  ],
+  "cross_cutting_candidates": [
+    {
+      "key": "XCC-OPS-01",
+      "why": "Governs the whole codebase via backend/config.py. Ops-004, Ops-005, Ops-006 and Ops-009 are one defect, not four: backend/config.py declares the typed field (config.py:206-208 celery, 290-292 location, 293-295 sms, 302 log_retention) and the consumer then re-reads the raw environment with os.getenv / a hardcoded literal. Verified counts: providers/payments/config.py 18 calls, providers/comms/sms.py 6, providers/geography/geo.py 3, and log_retention_days has exactly 1 repo-wide occurrence (its own definition). At least 4 files today, so it crosses the '>= 5 files / governs the whole codebase' bar in compiler §0.15 by its nature even at 4. Route to Codebase Implementation (Over All) -> Architectural, so one pass fixes the class and a single architecture test can prevent recurrence. Laws 84, 203, 82."
+    },
+    {
+      "key": "XCC-OPS-02",
+      "why": "Governs the whole codebase via backend/jobs/celery_app.py. The Celery task-identity split (`jobs.*` vs `tasks.*`) is a single root cause with codebase-wide blast radius: it breaks 10 of 13 beat schedules, defeats all 6 task_routes patterns, and strands every routed task on an unconsumed default queue. It is not attached to any single File:Line. Route to Codebase Implementation (Over All) -> Technological. Laws 115, 226, 298."
+    },
+    {
+      "key": "XCC-OPS-03",
+      "why": "Governs the whole codebase via .github/workflows/* — explicitly named in compiler §0.15 as a cross-cutting location. One root cause, four symptoms: (a) OPS-002's pipeline deploys to Railway/Vercel instead of Coolify/Cloudflare Pages; (b) 4 of the 5 workflows named in TECHNOLOGY_STACK section 19 do not exist; (c) zero dependency/secret/SAST scanning in any workflow despite Law 44 / Law 291 / Law 295 and section 11 mandating pip-audit, gitleaks, trivy, cosign and Dependabot; (d) .github/dependabot.yml does not exist. Because the whole `.github/workflows/*` tree governs the codebase, this belongs in Codebase Implementation (Over All) -> Technological, not in a per-file block. Note this does NOT reopen OPS-002 — the pipeline exists and works; it is the benchmark conformance and the security-scanning layer that are missing."
+    },
+    {
+      "key": "XCC-OPS-04",
+      "why": "Governs the whole codebase via backend/main.py — also explicitly named in compiler §0.15. The Law 81 health surface is one coherent, under-specified subsystem: three endpoints, one dead pair of settings, no provider-level probing, and blocking sync I/O on the event loop. OPS-001 and OPS-008 are the two surfaced symptoms; the three items in coverage_gaps CG-OPS-03/04/05 are the three unsurfaced ones. Treat backend/main.py:106-290 as a single architectural block rather than three independent P2s."
+    }
+  ],
+  "coverage_gaps": [
+    "CG-OPS-01 · P0 · NEW FINDING, not in any packet record. Celery Beat dispatches 10 of 13 entries to task names that are NEVER REGISTERED, so those scheduled jobs can never execute. `backend/jobs/celery_app.py:98-164` addresses tasks as `jobs.periodic_tasks.*`, `jobs.fx_revaluation.*`, `jobs.payroll_run.*`, but the @shared_task declarations use the `tasks.` prefix (periodic_tasks.py:15,69,102,146,190,234,267,311; fx_revaluation.py:18; payroll_run.py:20). Only fraud_monitoring.py:15,45 and ghost_order_detector.py:17 use the `jobs.` prefix and therefore resolve. Empirically proven by importing the Celery app object (no worker or beat started) and intersecting beat_schedule against every declared task name: MISMATCHED_BEAT_ENTRIES: 10 of 13. A worker receiving `jobs.periodic_tasks.run_auto_payout_sweep` will log 'Received unregistered task of type' and discard the message. Blast radius: the hourly auto-payout sweep, daily finance reconciliation, monthly VAT remittance, supplier/distributor statements, the alert engine, job/token cleanup, FX revaluation and the monthly payroll batch — i.e. the entire finance schedule. Compounds CG-OPS-02.",
+    "CG-OPS-02 · P0 · NEW FINDING. The same prefix split defeats `celery_app.conf.task_routes` at celery_app.py:57-64: all six patterns (`jobs.ai_tasks.*`, `jobs.periodic_tasks.*`, `jobs.payout_tasks.*`, `jobs.payout_sweep.*`, `jobs.email_tasks.*`, `jobs.payroll_run.*`) are keyed on `jobs.*` while the tasks are named `tasks.*`, so no route matches and every one of them falls to the DEFAULT `celery` queue. No worker in docker-compose.prod.yml subscribes to that queue — the four workers are `-Q ml` (:147), `-Q periodic` (:182), `-Q payouts` (:217), `-Q emails` (:252). Net effect: even after CG-OPS-01 is fixed, the DLQ wiring declared on all four custom queues (celery_app.py:67-73) is dead and the `payouts`/`emails` queues would receive nothing. Related: ARCHITECTURE_STACK section 3 names jobs/data_retention.py, jobs/reconciliation_cron.py, jobs/bank_statement_importer.py and jobs/accrual_reversal.py as required background workers; all four declare tasks but NONE appears in beat_schedule and a repo-wide search for `.delay(`/`.apply_async(`/`.s(`/`send_task` against those module names returns 0 hits, so they are unreachable. Jobs: run_data_retention (data_retention.py:19), run_reconciliation_cron (reconciliation_cron.py:18), import_bank_statement_task (bank_statement_importer.py:18), reverse_accrual_task (accrual_reversal.py:18). Laws 115, 226, 298.",
+    "CG-OPS-03 · P2 · NEW FINDING. Law 60 violation: blocking synchronous I/O inside `async def` health endpoints. `backend/main.py:176 async def health_deps` calls `_get_storage_health_status()` at :206, which performs a SYNCHRONOUS boto3 `store.client.list_objects_v2(Bucket=store.bucket, MaxKeys=1)` network call at main.py:161 (and a blocking open/write/os.remove filesystem probe at :167-170 for the local backend). `health_deps` also calls the sync `check_connection_health()` at :184 (defined at infrastructure/database/database.py:475 — a sync `engine.connect()` round-trip) and the sync `get_db_context()` at :191 (database.py:441). `health_ready` at main.py:242 does the same: `check_connection_health()` at :249 and `get_db()` at :265 (database.py:386). `health_check` at main.py:106 calls `check_connection_health()` at :111. Because these are the endpoints a load balancer polls, a slow R2 or an exhausted DB pool blocks the event loop for every concurrent request. NOTE: `time.sleep` inside `async def` is NOT the vector here — an AST scan of all first-party backend/*.py found 0 occurrences (the single hit repo-wide is in the vendored backend/.venv/Lib/site-packages/redis/asyncio/cluster.py:1592). The blocking is sync-driver, not sleep-based, so a `time.sleep` grep alone will not find it.",
+    "CG-OPS-04 · P2 · NEW FINDING. `/health/deps` never calls any provider `health_check()`. `BaseProvider.health_check()` and the abstract declaration exist at `backend/providers/_base.py:34` and `:68`, and Law 129 states their purpose is 'Enables /health/deps to verify external dependency health' — but `main.py:176-239` resolves its six dependency statuses solely from `check_connection_health()`, `get_valkey_health_status()`, `get_email_delivery_status()`, `_payment_provider_runtime_status(db)`, `get_all_breaker_stats()` and `_get_storage_health_status()`. No provider adapter is consulted, so a Stripe outage, a geocoding outage or an SMS-modem outage is invisible to the health surface. This CORROBORATES the sibling T-lead on `/health/deps`; I additionally confirm the email check is `settings.smtp_host` truthiness only with no SMTP connect probe (`main.py:286-290`) and the storage check is a real R2 list call (`main.py:161`). Law 129.",
+    "CG-OPS-05 · P2 · NEW FINDING. Two readiness settings are DEAD and one is MISNAMED. `backend/config.py:200 readiness_require_email: bool = Field(default=True)` and `config.py:201 readiness_require_payments: bool = Field(default=True)` are listed in `_BOOL_KEYS` at config.py:34-35 but a repo-wide grep finds no read site — only `readiness_require_valkey` is consumed, at `main.py:119-120`. `/health/ready` (main.py:242-283) instead hard-blocks unconditionally: `blocking.append('valkey')` at :257, `blocking.append('email')` at :262, `blocking.append('payments')` at :269-272, with no `if settings.readiness_require_*` guard anywhere, and `status_code = 503 if blocking else 200` at :274. So the three switches cannot influence behaviour and one cannot be turned off. This CORROBORATES the sibling T-lead with exact lines (the lead said config.py:200-201 — correct). Additionally: TECHNOLOGY_STACK section 20 line 455 documents the env var as `READINESS_REQUIRE_REDIS` while the code field is `readiness_require_valkey` (config.py:199), so an operator following the documented variable name has no effect; and section 20 line 455 states default `false` while config.py:199 defaults to `True`, which contradicts the doc and also contradicts `/health`'s own `getattr(settings, 'readiness_require_valkey', False)` fallback at main.py:119.",
+    "CG-OPS-06 · P2 · NEW FINDING. CI workflow inventory gap. Actual list (.github/, 5 files, 19,977 bytes): ci.yml, deploy.yml, rollback.yml, router-generation.yml, schema-audit.yml. Named in TECHNOLOGY_STACK section 19 line 288: ci.yml, schema-drift.yml, docs-drift.yml, e2e.yml, import-lint.yml. Only `ci.yml` matches. Missing: `schema-drift.yml` (a near-miss `schema-audit.yml` exists but targets only `tests/architecture/test_alembic_autogenerate_check.py`), `docs-drift.yml` (no workflow; a `check-docs-drift` pre-commit hook DOES exist at `.pre-commit-config.yaml:66-68` — this corroborates the sibling T-lead exactly), `e2e.yml` (no workflow; `frontend/web_app/root/playwright.config` per ARCH section 3 has no CI runner), `import-lint.yml` (no workflow; contracts DO exist at `backend/tests/architecture/import_linter.ini` with an `[importlinter:contract:laws]` block, but the hook at `.pre-commit-config.yaml:49-54` is local-only and therefore bypassable with `--no-verify`). Extra workflows not named in section 19: deploy.yml, rollback.yml, router-generation.yml. CI runs nothing on a direct push if hooks are skipped, so Laws 1/97/98/4/6 (Law 165, section 11 'import-linter ... Always in CI') are enforced only locally. This CORROBORATES the sibling T-lead.",
+    "CG-OPS-07 · P0 · NEW FINDING. Zero dependency, secret or SAST scanning in CI, and no Dependabot. A grep for `pip-audit|gitleaks|trivy|npm audit|dependabot|cosign|syft` across all five workflow files returns 0 matches; `Test-Path .github/dependabot.yml` is False. This directly violates Law 44 ('All deps scanned for CVEs in CI. High/critical block deployment'), Law 291, Law 295, and TECHNOLOGY_STACK section 11 lines 167-172 which mandate gitleaks, pip-audit, Dependabot and Trivy 'Always in CI'. It also leaves gitleaks and pip-audit reachable ONLY via `.pre-commit-config.yaml:34` and `:39`, i.e. skippable with `--no-verify`. I could not re-run pip-audit (that was the sibling agent's evidence and I am not repeating it). This CORROBORATES and extends the sibling T10 lead.",
+    "CG-OPS-08 · P2 · NEW FINDING. `backend/tests/infrastructure/test_docker_compose_prod.py` is uncollectable. All 19 of its test functions are declared at MODULE level with a `self` first parameter and no enclosing class (lines 25, 31, 43, 54, 59, 73, 78, 87, 107, 111, 119, 128, 139, 144, 148, 152, 160, 167, 173). pytest collects module-level functions taking zero fixture arguments, so none of these will ever run; they would only be collected if the file were wrapped in a class. CI never invokes this file in any case — `ci.yml:48-51` targets `tests/architecture/{test_import_laws,test_architecture_gates,test_laws_complete}.py` and `ci.yml:56-60` targets `tests/domains/{accounts,orders,finance,catalog}/`, both with `working-directory: backend` (verified those paths DO resolve to backend/tests/...). So the only infra test guarding docker-compose.prod.yml is doubly dead. Related hygiene: the file asserts `test_db_pool_size_is_20` and `test_db_max_overflow_is_20`, which conflicts with TECHNOLOGY_STACK section 20 lines 307-308 (DB_POOL_SIZE default 50, DB_MAX_OVERFLOW default 100) — I did not run the file so I cannot say whether the test currently passes, only that the two documents disagree. Law 71.",
+    "CG-OPS-09 · P2 · NEW FINDING. `backend/lifespan.py:108-119 _startup_register_services()` is a no-op whose docstring claims otherwise. The docstring states it 'Imports the service-side-effect registry once at startup ... It was previously never imported, so those registrations silently never ran. Importing it here (resiliently) restores that wiring', but the function body contains exactly one statement: `logger.debug('Service side-effect registry import skipped — no registry module present')`. No import is attempted. `services/_registry.py` does not exist. So the event-consumer / scheduler / webhook-handler wiring the docstring says is restored is still not wired, and the DEBUG message actively hides that. It is invoked at lifespan.py:327 during startup, so a reviewer reading the call site would believe the wiring happens. Laws 3, 249, 68.",
+    "CG-OPS-10 · P3 · NEW FINDING (documentation/registration drift, NOT a security defect — I checked and cleared it). `CORSMiddleware` is imported at `backend/middleware/orchestrator.py:47` and has its kwargs resolved at `:218-228`, but it appears in NONE of the eight layer lists (`:78-84 _FOUNDATION`, `:92-95 _AUTHENTICATION`, `:102-104 _RATE_LIMITING`, `:114-117 _WEBHOOKS`, `:125-129 _GEO_COUNTRY`, `:135-137 _OBSERVABILITY`, `:143-145 _COMPLIANCE`, `:151-155 _SECURITY`), so it is never registered. Layer 1 is documented as 'GZip · CORS · IP extract · RequestID · API-Version' at `orchestrator.py:13` and in ARCHITECTURE_STACK section 6 L1 and section 10 L1. I am NOT reporting this as a Law 78 violation: Law 40 and Law 206 require backend CORS to be DISABLED for browser origins (all web traffic goes through the Next.js proxy), so omitting the middleware is the correct security posture and `_resolve_kwargs`' CORS branch plus `settings.cors_origins_list` (`config.py` default `http://localhost:3000,http://127.0.0.1:3000`) are simply dead. It is a stale-doc + dead-config defect only. If the user instead wants dev CORS, the correct fix is to register CORSMiddleware conditionally on app_env != production, not to add it unconditionally.",
+    "CG-OPS-11 · P3 · NEW FINDING. Layer-membership reconciliation against ARCHITECTURE_STACK section 3 (the middleware file list) and section 6 / section 10 (the 8 layer definitions). Verified PRESENT AND REGISTERED (15 of 17): orchestrator, api_version_middleware (:82), country_context (:126), csrf_middleware (:154), device_binding (:94), impossible_travel_middleware (:127), ip_extraction_middleware (:80), logging_middleware (:136), pci_dss_compliance (:144, prod-only), rate_limit_middleware (:103), request_id_middleware (:81), security_headers (:152), webhook_ip_whitelist (:115), webhook_verification (:116), zero_trust_auth (registered INDIRECTLY — orchestrator.py:66 imports from device_binding_middleware, which at device_binding_middleware.py:3 re-exports `DeviceBindingMiddleware` from zero_trust_auth). Verified PRESENT BUT NOT REGISTERED: `database_security.py` — and on inspection it is not middleware at all, it is a `QueryLogger` class plus SQLAlchemy event decorators, so ARCH section 3's file list is simply inaccurate about what this module is. Also present but neither in the ARCH list nor registered: `admin_guard_middleware.py`, `coi_middleware.py`, `csrf_utils.py`, `middleware_helpers.py`, `router_helpers.py`. Also present, registered, but NOT in the ARCH section 3 list: `authentication_middleware.py` (orchestrator.py:93) and `request_timeout_middleware.py` (orchestrator.py:83). Net: ARCH section 3 is out of date in both directions. Minor: `backend/middleware/zero_trust_auth.py:9-12` assigns `logger` twice (structlog then logging), leaving line 9 dead.",
+    "CG-OPS-12 · P1 · NEW FINDING. BENCHMARK MISMATCH — the deployment target is wrong. `.github/workflows/deploy.yml` deploys the backend to RAILWAY (`:94 'Deploy Backend - Railway (Staging)'`, `:107 'Install Railway CLI'`, `:178 production`, `:196`) and the frontend to VERCEL (`:135`, `:151 'Pull Vercel Environment Information'`, `:256`), and a root `vercel.json` exists. TECHNOLOGY_STACK section 18 lines 272-280 / ARCHITECTURE_STACK Law 216 mandate Hostinger VPS + COOLIFY + CLOUDFLARE PAGES and expressly name Cloudflare as the consolidated vendor. The pipeline is real and working, but it deploys to a different platform than the canonical stack, which means the R2/Cache/WAF/Tunnel assumptions in Law 120/225/268 do not hold for what actually ships. Separately the health gate uses `/health` (deploy.yml:128, :212, :282) rather than `/health/ready`, so a deployment whose Valkey or payments are down still passes. Per compiler §0.3 rule 7 I surface the conflict and do NOT suppress it.",
+    "CG-OPS-13 · P3 · NEW FINDING. Root-level documentation required by the benchmark does not exist. `Test-Path` returns False for README.md, AGENTS.md, SETUP.md, SECURITY.md, CHANGELOG.md and docs/ (the whole tree). This breaks Law 246 (AGENTS.md quick reference), Law 247 is satisfied by FastAPI's /docs and /redoc (main.py:79-80), Law 248 (docs/runbooks/ — see OPS-003), Law 250 (CHANGELOG.md), Law 288 (SECURITY.md, 24h SLA for critical), and Law 314 (Infrastructure documented in SETUP.md). Substantive material does exist but is scattered under `documents/` (82 files) rather than at the paths the laws name; the closest equivalents are documents/PRODUCTION_DEPLOYMENT.md (4478 bytes) and documents/BACKUP_STRATEGY.md (21217 bytes). Law 315 note: `monitoring/` does contain grafana/, prometheus/, promtail/, tempo/, alertmanager.yml, alerts.yml, prometheus.yml and docker-compose.monitoring.yml, so Laws 92/94/317 have real artefacts; Grafana/Loki remain optional-in-v1 per Law 316 and are NOT reported as defects.",
+    "CG-OPS-14 · P2 · NEW FINDING. Repository-wide test-inventory gap that invalidates most named Test paths in this dimension. Of the 9 test paths named across the 14 packet records, only ONE file exists: `backend/tests/infrastructure/test_docker_compose_prod.py` — and it contains none of the named test functions. Verified absent: `backend/tests/infrastructure/test_logging_config.py`, `backend/tests/jobs/test_celery_config.py`, `backend/tests/observability/test_health_checks.py`, `backend/tests/providers/test_sms_provider.py`, `backend/tests/providers/test_geo_provider.py`, `backend/tests/providers/test_payment_config.py`, `test_ci_cd_pipeline.py`, `test_runbooks_exist.py`. A repo-wide grep for the six named test functions (`test_gunicorn_has_workers_flag`, `test_log_retention_enforced`, `test_payout_task_concurrency_limit`, `test_health_deps_fails_closed_when_db_down`, `test_health_checks_r2`, `test_no_raw_os_getenv`) over backend/ excluding .venv returns 0 matches. Eight of the 14 records are therefore FIX_UNTESTABLE. This is a dimension-level defect, not a per-record one — recorded once here as the sibling T15 lead instructs. `backend/tests/observability/` does not exist at all, so there is no Law 79/Law 236 test for the global exception handler either.",
+    "CG-OPS-15 · INFORMATIONAL, NOT A DEFECT. Law 78 order is CORRECT — recorded so a later reader does not re-open it. Law 78's canonical order is Foundation -> Auth -> Rate -> Webhook -> Geo -> Security -> Observe -> Compliance. The orchestrator composes the pipeline in exactly that order at `backend/middleware/orchestrator.py:176-188` (`[*_FOUNDATION, *_AUTHENTICATION, *_RATE_LIMITING, *_WEBHOOKS, *_GEO_COUNTRY, *_SECURITY, *_OBSERVABILITY]` then `[*_COMPLIANCE]` when app_env == 'production' at :186-188) and registers it in reverse at :192-193 to compensate for Starlette's prepend behaviour, which I confirmed at `backend/.venv/Lib/site-packages/starlette/applications.py:107` (`self.user_middleware.insert(0, ...)`) and `:81` (`for cls, args, kwargs in reversed(middleware)`) — so the LAST middleware added is the OUTERMOST and runs FIRST, and the orchestrator's reverse-registration makes the FIRST pipeline entry outermost, as its docstring at :167-174 claims. Verified empirically by registering the pipeline on a bare FastAPI app and printing `app.user_middleware` (no server started, no DB touched): index 1 GZipMiddleware, 2 IPExtractionMiddleware, 3 RequestIDMiddleware, 4 ApiVersionMiddleware, 5 RequestTimeoutMiddleware, 6 AuthenticationMiddleware, 7 DeviceBindingMiddleware, 8 RateLimitMiddleware, 9 WebhookIPWhitelistMiddleware, 10 WebhookVerificationMiddleware, 11 CountryContextMiddleware, 12 ImpossibleTravelMiddleware, 13 FraudDetectionMiddleware, 14 EnhancedSecurityHeadersMiddleware, 15 FraudScoringMiddleware, 16 CSRFMiddleware, 17 RequestLoggingMiddleware — TOTAL 17, with PCIDSSMiddleware appended as index 18 (innermost) in production. All 8 canonical layers are present and in order. Two presentation caveats for the resolver: (a) the module-level comment block at orchestrator.py:74-155 numbers the layers confusingly — it labels _OBSERVABILITY as 'Layer 5' and _SECURITY as 'Layer 7' while the actual composition puts _SECURITY before _OBSERVABILITY; the code is right and only the comments are wrong; (b) the module docstring at :6 claims it consolidates '14 individual middleware files' when 17 are registered. Neither is a defect. I could NOT empirically verify the production ordering because APP_ENV=production raises ValidationError in this environment (config.py:315, `database_url_direct` min_length=10 with an empty value) — which itself corroborates the sibling T3 lead on Law 83 startup validation — so the PCI-DSS innermost position is derived from the proven insertion mechanism plus the single `pipeline.append` at :188.",
+    "CG-OPS-16 · INFORMATIONAL, CONFIRMS A SIBLING LEAD. Law 80 (graceful shutdown) is SATISFIED and Law 77 (asyncio.Lock) is SATISFIED for the async engine. `backend/lifespan.py:339-361` disposes in order: background-service stoppers at :343-347 (populated by `_startup_background_jobs()` at :335, which returns stoppers for `jobs.event_workers` at :238 and the backup-manager thread at :260), then `dispose_engine()` at :350-351, then the Valkey client close at :356-359. `dispose_engine()` at `backend/infrastructure/database/database.py:541-555` disposes the primary engine, `_replica_engine` (:544-545) and the async engine via `sync_engine.dispose()` (:552). Law 77's asyncio.Lock IS present: `database.py:159 _async_init_lock = asyncio.Lock()` with correct double-checked locking at :187-193 and disposal at :546-554, so the classic multiple-engines race is closed. `backend/lifespan.py` itself contains NO asyncio.Lock, which is correct — it delegates engine creation to `infrastructure/database/`. The Valkey client (`infrastructure/valkey/client.py:112-167`) is a SYNCHRONOUS singleton (`valkey.Valkey`, not `valkey.asyncio`) guarded by a module-global `_client`, so Law 77's asyncio.Lock requirement does not literally apply there. Also CONFIRMED per the sibling lead: `lifespan.py:72 auto_migration_applied = False` is hardcoded and the surrounding docstring at :60-69 explicitly justifies it with Law 217, and `lifespan.py:55-57` swallows the `create_tables()` guard exception into a WARNING. I traced that swallow and it is BENIGN: `create_tables()` at database.py:576-585 calls `_guard_dev_only()` (:578), which raises on Postgres (:565-569) and in production (:570-573), so the auto-create is structurally impossible in production and the WARNING is correct behaviour, not a swallowed migration failure.",
+    "CG-OPS-17 · INFORMATIONAL, CONFIRMS A SIBLING LEAD. Law 79 (global exception handler) is SATISFIED. `@app.exception_handler(Exception)` is registered at `backend/main.py:391-394` and delegates to `global_exception_handler` at `backend/infrastructure/observability/error_handler.py:243-292`. Law 236 (RFC 7807) is satisfied by `_build_problem_response` at :207-231, which emits `type`, `title`, `status`, `detail`, `instance`, `request_id` and an ISO `timestamp`. NO STACK TRACE IS LEAKED IN THE RESPONSE IN ANY ENVIRONMENT, not merely in production: the unhandled-exception branch at :278-292 logs the full traceback server-side via `logger.exception(...)` at :281 and returns a fixed `detail='An unexpected error occurred'` at :286. The `HTTPException` branch (:249-261) and `AppError` branch (:263-276) echo `exc.detail` / `exc.message` / `exc.details`, which are deliberate structured error payloads, not stack traces. I am recording this as satisfied rather than as a finding.",
+    "CG-OPS-18 · SCOPE NOTE, NO FINDING. Benchmark-optional items I deliberately did NOT report as defects, per instruction: Law 145 (OpenTelemetry tracing optional in v1) — the dead import at `main.py:99 'from infrastructure.utils.tracing import setup_tracing'` is caught by the `except` at :102-103 and logged as a WARNING, and the sibling T14 lead confirms the module actually lives at `infrastructure/observability/tracing.py`; because the law is explicitly optional I raise it only as a correction to the T14 path attribution, not as a defect. Law 316 (Grafana/Loki optional in v1) — both exist under monitoring/ anyway. Law 248/303 quarterly staging testing of runbooks — a process obligation with no code artefact; per instruction this is a process note, and I do not report it. Laws 252/319 (no horizontal auto-scaling, no canary on a single VPS) — several of the existing runbooks nonetheless recommend autoscaling and deployment canaries; that is benchmark drift in documentation, noted but not raised. Consequently NO record in this 14-record packet was dismissed as benchmark-optional; every dismissal in this dimension was a FALSE_POSITIVE-by-already-fixed or a stale-claim dismissal, not an optionality dismissal."
+  ]
+}

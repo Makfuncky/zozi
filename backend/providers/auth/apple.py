@@ -18,7 +18,12 @@ from urllib.parse import urlencode
 import jwt
 from jwt import PyJWKClient
 
-import requests
+try:
+    import httpx
+    HAS_APPLE = True
+except ImportError:
+    HAS_APPLE = False
+    httpx = None  # type: ignore[assignment]
 
 from .oauth import OAuthProviderError
 
@@ -34,18 +39,18 @@ _TIMEOUT = 15.0
 
 def _get_json(url: str, **kwargs: Any) -> Dict[str, Any]:
     try:
-        resp = requests.get(url, timeout=_TIMEOUT, **kwargs)
+        resp = httpx.get(url, timeout=_TIMEOUT, **kwargs)
         resp.raise_for_status()
-    except requests.RequestException as exc:
+    except httpx.HTTPError as exc:
         raise OAuthProviderError(f"GET {url} failed: {exc}") from exc
     return resp.json()
 
 
 def _post_json(url: str, **kwargs: Any) -> Dict[str, Any]:
     try:
-        resp = requests.post(url, timeout=_TIMEOUT, **kwargs)
+        resp = httpx.post(url, timeout=_TIMEOUT, **kwargs)
         resp.raise_for_status()
-    except requests.RequestException as exc:
+    except httpx.HTTPError as exc:
         raise OAuthProviderError(f"POST {url} failed: {exc}") from exc
     return resp.json()
 
@@ -131,3 +136,17 @@ def get_apple_userinfo(id_token: str, client_id: Optional[str] = None) -> Dict[s
     Apple provides no userinfo endpoint; identity is conveyed in the id_token.
     """
     return verify_apple_identity(id_token, client_id=client_id)
+
+
+__all__ = [
+    "APPLE_AUTH_URL",
+    "APPLE_TOKEN_URL",
+    "APPLE_KEYS_URL",
+    "APPLE_ISSUER",
+    "HAS_APPLE",
+    "build_apple_auth_url",
+    "create_apple_client_secret",
+    "verify_apple_identity",
+    "exchange_apple_code",
+    "get_apple_userinfo",
+]

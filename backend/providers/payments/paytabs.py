@@ -11,7 +11,12 @@ import logging
 from decimal import Decimal
 from typing import Any, Optional
 
-import requests
+import httpx
+
+from infrastructure.observability.circuit_breaker import (
+    CircuitBreakerError,
+    get_circuit_breaker,
+)
 
 from providers.payments.config import (
     is_paytabs_configured,
@@ -26,6 +31,13 @@ logger = logging.getLogger(__name__)
 
 HAS_PAYTABS = True
 _PAYTABS_DEFAULT_TIMEOUT = 30
+_PAYTABS_BREAKER_FAILURE_THRESHOLD = 5
+
+_paytabs_breaker = get_circuit_breaker(
+    "paytabs",
+    failure_threshold=_PAYTABS_BREAKER_FAILURE_THRESHOLD,
+    recovery_timeout=30,
+)
 
 
 class PayTabsError(Exception):
@@ -123,14 +135,19 @@ def create_payment_page(
     if metadata:
         payload["framed"] = metadata.get("framed", False)
         payload["metadata"] = metadata
+    if _paytabs_breaker.state.value == "open":
+        raise PayTabsError("PayTabs circuit breaker is open")
     try:
-        response = requests.post(
-            f"{api_base}/payment/request",
-            json=payload,
-            headers=_get_headers(),
-            timeout=_PAYTABS_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_PAYTABS_DEFAULT_TIMEOUT) as client:
+            response = client.post(
+                f"{api_base}/payment/request",
+                json=payload,
+                headers=_get_headers(),
+            )
+    except CircuitBreakerError as exc:
+        logger.warning("PayTabs circuit breaker open for create_payment_page: %s", exc)
+        raise PayTabsError(f"PayTabs circuit breaker open: {exc}") from exc
+    except httpx.HTTPError as exc:
         logger.exception("PayTabs create_payment_page request failed")
         raise PayTabsError(
             f"PayTabs API request failed: {exc}"
@@ -171,14 +188,19 @@ def get_payment_status(transaction_ref: str) -> dict[str, Any]:
         "profile_id": profile_id,
         "tran_ref": transaction_ref,
     }
+    if _paytabs_breaker.state.value == "open":
+        raise PayTabsError("PayTabs circuit breaker is open")
     try:
-        response = requests.post(
-            f"{api_base}/payment/query",
-            json=payload,
-            headers=_get_headers(),
-            timeout=_PAYTABS_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_PAYTABS_DEFAULT_TIMEOUT) as client:
+            response = client.post(
+                f"{api_base}/payment/request",
+                json=payload,
+                headers=_get_headers(),
+            )
+    except CircuitBreakerError as exc:
+        logger.warning("PayTabs circuit breaker open for get_payment_status: %s", exc)
+        raise PayTabsError(f"PayTabs circuit breaker open: {exc}") from exc
+    except httpx.HTTPError as exc:
         logger.exception(
             "PayTabs get_payment_status request failed for %s", transaction_ref
         )
@@ -239,14 +261,19 @@ def refund(
     }
     if amount and currency:
         payload["cart_amount"] = str(amount)
+    if _paytabs_breaker.state.value == "open":
+        raise PayTabsError("PayTabs circuit breaker is open")
     try:
-        response = requests.post(
-            f"{api_base}/payment/request",
-            json=payload,
-            headers=_get_headers(),
-            timeout=_PAYTABS_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_PAYTABS_DEFAULT_TIMEOUT) as client:
+            response = client.post(
+                f"{api_base}/payment/request",
+                json=payload,
+                headers=_get_headers(),
+            )
+    except CircuitBreakerError as exc:
+        logger.warning("PayTabs circuit breaker open for refund: %s", exc)
+        raise PayTabsRefundError(f"PayTabs circuit breaker open: {exc}") from exc
+    except httpx.HTTPError as exc:
         logger.exception(
             "PayTabs refund request failed for %s", transaction_ref
         )

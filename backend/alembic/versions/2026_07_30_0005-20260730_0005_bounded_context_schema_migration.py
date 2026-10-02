@@ -8,8 +8,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.sql import identifier
-
 
 revision: str = "20260730_0005"
 down_revision: Union[str, None] = "20260730_0004"
@@ -40,7 +38,7 @@ def upgrade() -> None:
         "supplier",
         "treasury",
     ]:
-        op.execute(sa.text('CREATE SCHEMA IF NOT EXISTS :schema').bindparams(schema=sa.sql.identifier(schema_name)))
+        op.execute(sa.text('CREATE SCHEMA IF NOT EXISTS ' + schema_name))
 
     for table_name, schema_name in [
         ("account_balances", "finance"),

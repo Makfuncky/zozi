@@ -8,7 +8,7 @@ import hashlib
 import math
 from typing import Callable, Dict, Tuple
 from dataclasses import dataclass
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -16,7 +16,7 @@ from starlette.responses import JSONResponse
 
 from infrastructure.utils.config import settings
 from infrastructure.security.ip_utils import get_request_ip
-from infrastructure.utils.redis_client import redis_client
+from infrastructure.valkey.client import valkey_client
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ READ_METHODS = frozenset({"GET", "HEAD"})
 READ_LIMIT = (300, 60)  # 300 reads per 60 seconds
 LOADTEST_READ_LIMIT = (3000, 60)
 
-_memory_store: Dict[str, list] = defaultdict(list)
+_memory_store: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1200))
 _memory_store_locks: Dict[str, threading.Lock] = defaultdict(threading.Lock)
 
 
@@ -84,10 +84,10 @@ _cleanup_thread = threading.Thread(target=_cleanup_memory_store, daemon=True)
 _cleanup_thread.start()
 
 
-def _get_redis() -> object | None:
-    from infrastructure.utils.redis_client import redis_client as _redis_client_factory
+def _get_valkey() -> object | None:
+    from infrastructure.valkey.client import valkey_client as _valkey_client_factory
 
-    return _redis_client_factory()
+    return _valkey_client_factory()
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -97,7 +97,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def _ensure_redis(self) -> object | None:
         if self._redis is None:
-            self._redis = _get_redis()
+            self._redis = _get_valkey()
         return self._redis
 
     def _get_path_tier(self, path: str) -> tuple[int, int]:
@@ -111,7 +111,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         now = time.time()
         with _memory_store_locks[key]:
             requests = _memory_store[key]
-            requests[:] = [t for t in requests if now - t < window]
+            while requests and now - requests[0] >= window:
+                requests.popleft()
             count = len(requests)
         return count < max_r, max(1, int(window - (now - (requests[0] if requests else now))))
 
@@ -167,7 +168,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
                 return await call_next(request)
             except Exception as exc:
-                logger.warning("Redis rate limit check failed — failing closed: %s", exc)
+                logger.warning("Valkey rate limit check failed — failing closed: %s", exc)
                 return JSONResponse(
                     status_code=429,
                     content={"detail": "Rate limiting unavailable. Please retry."},
@@ -211,9 +212,9 @@ class TokenBucket:
         now = time.time()
         bucket_key = f"bucket:{hashlib.sha256(str(now).encode()).hexdigest()[:16]}"
 
-        redis = redis_client()
+        redis = valkey_client()
         if not redis:
-            return True, self.capacity - tokens, 0
+            return False, 0, 10
 
         try:
             pipe = redis.pipeline()
@@ -244,6 +245,6 @@ class TokenBucket:
                 return False, int(current), retry_after
 
         except Exception as exc:
-            logger.warning("Redis token bucket consume failed — failing closed: %s", exc)
+            logger.warning("Valkey token bucket consume failed — failing closed: %s", exc)
             return False, 0, 10
 

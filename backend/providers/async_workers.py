@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 # Pool size = min(32, os.cpu_count() * 4) — enough for concurrent requests
 # without overwhelming a 1-2 vCPU VPS.
 
-_POOL_SIZE = min(32, (os.cpu_count() or 2) * 4)
+_POOL_SIZE = min(32, os.cpu_count() or 2)
 _executor = ThreadPoolExecutor(
     max_workers=_POOL_SIZE,
     thread_name_prefix="async_provider",
@@ -174,14 +174,15 @@ async def analyze_product_image_async(
         Analysis result dict.
     """
     analyze_fn = _get_vision()
-    return await _run_in_thread(
-        analyze_fn,
-        image_bytes,
-        filename=filename,
-        generate_copy=generate_copy,
-        use_vision=use_vision,
-        subcategory=subcategory,
-    )
+    async with concurrency.http:
+        return await _run_in_thread(
+            analyze_fn,
+            image_bytes,
+            filename=filename,
+            generate_copy=generate_copy,
+            use_vision=use_vision,
+            subcategory=subcategory,
+        )
 
 
 def _read_file_bytes(path: str) -> bytes:
@@ -238,7 +239,8 @@ async def embed_text_async(text: str) -> List[float]:
         Embedding vector as list of floats.
     """
     embed_fn, _ = _get_text()
-    return await _run_in_thread(embed_fn, text)
+    async with concurrency.http:
+        return await _run_in_thread(embed_fn, text)
 
 
 async def batch_embed_text_async(
@@ -306,7 +308,8 @@ async def search_products_async(
     def _search():
         return engine.search(query, filters=filters, limit=limit)
 
-    return await _run_in_thread(_search)
+    async with concurrency.http:
+        return await _run_in_thread(_search)
 
 
 # ---------------------------------------------------------------------------
@@ -413,11 +416,13 @@ class ConcurrencyManager:
         max_ai: int = 8,
         max_ocr: int = 4,
         max_embed: int = 8,
+        max_http: int = 4,
     ):
         self.bg_removal = asyncio.Semaphore(max_bg)
         self.ai_analysis = asyncio.Semaphore(max_ai)
         self.ocr = asyncio.Semaphore(max_ocr)
         self.embedding = asyncio.Semaphore(max_embed)
+        self.http = asyncio.Semaphore(max_http)
 
 
 # Global concurrency manager with conservative defaults for VPS
@@ -426,6 +431,7 @@ concurrency = ConcurrencyManager(
     max_ai=min(8, _POOL_SIZE),
     max_ocr=min(4, _POOL_SIZE // 2),
     max_embed=min(8, _POOL_SIZE),
+    max_http=min(8, _POOL_SIZE),
 )
 
 

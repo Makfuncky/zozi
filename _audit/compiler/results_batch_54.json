@@ -1,0 +1,175 @@
+{
+  "batch": 54,
+  "files": [
+    {
+      "path": "backend/config.py",
+      "findings": [
+        {
+          "id": "CFG-001",
+          "status": "VALID",
+          "evidence": "Line 92: `class Settings(BaseSettings):` — single class serves all environments; no DevSettings/StagingSettings/ProdSettings split",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 86: Prod, staging, dev must have separate config profiles with no inheritance between profiles",
+          "notes": "Previous status COMPILED was incorrect; finding remains fully applicable"
+        },
+        {
+          "id": "CFG-002",
+          "status": "RESOLVED",
+          "evidence": "Lines 768-785: `_validate_staging` method now exists and enforces debug=False, CORS restrictions, and PostgreSQL requirement for staging",
+          "counter_evidence": "`grep -n \"_validate_staging\" backend/config.py` returns lines 768-785",
+          "benchmark_mismatch": "",
+          "notes": "Staging validator was added after the original audit"
+        },
+        {
+          "id": "CFG-003",
+          "status": "VALID",
+          "evidence": "No `secret=True` found in any Field definition across config.py (verified via `grep -r \"secret=True\" backend/`)",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status INVALID/CONTRADICTED was incorrect; secret fields like stripe_secret_key, tap_secret_key, smtp_password, etc. lack `secret=True` masking"
+        },
+        {
+          "id": "CFG-004",
+          "status": "VALID",
+          "evidence": "Line 163: `email_from: str = Field(default=\"noreply@zozi.com\")` — production-valid sender address remains as default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 82: Config fallbacks MUST NOT contain real credentials; noreply@zozi.com is a production-valid sender",
+          "notes": "Previous status RESOLVED was incorrect; default remains unchanged"
+        },
+        {
+          "id": "CFG-005",
+          "status": "VALID",
+          "evidence": "Lines 196-197: `celery_broker_url: str = Field(default=\"valkey://localhost:6379/1\")` and `celery_result_backend: str = Field(default=\"valkey://localhost:6379/2\")`",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status INVALID/CONTRADICTED was incorrect; non-empty defaults remain"
+        },
+        {
+          "id": "CFG-006",
+          "status": "VALID",
+          "evidence": "Line 179: `valkey_url: str = Field(default=\"valkey://localhost:6379\")` — non-empty localhost default remains",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status INVALID/CONTRADICTED was incorrect"
+        },
+        {
+          "id": "CFG-007",
+          "status": "VALID",
+          "evidence": "Line 926: `settings = Settings()` — still instantiated at module import time",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status RESOLVED was incorrect; import-time instantiation unchanged"
+        },
+        {
+          "id": "CFG-008",
+          "status": "VALID",
+          "evidence": "Lines 29-78: `_BOOL_KEYS`, `_INT_KEYS`, `_FLOAT_KEYS` defined; `grep` confirms no references outside config.py",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status INVALID/CONTRADICTED was incorrect; dead dicts remain"
+        },
+        {
+          "id": "CFG-009",
+          "status": "VALID",
+          "evidence": "Lines 22-25: `os.environ.get(\"APP_ENV\", \"development\")` used for dotenv gating before Settings class exists",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status RESOLVED was incorrect; raw os.getenv usage remains for dotenv path"
+        },
+        {
+          "id": "CFG-012",
+          "status": "VALID",
+          "evidence": "Line 136: `db_max_overflow: int = Field(default=40)` — no `ge`/`le` on Field; validator at lines 330-348 enforces `>= 30` but Field-level bounds absent",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status RESOLVED was incorrect; Field-level constraints still absent (validator exists but is separate)"
+        },
+        {
+          "id": "CFG-013",
+          "status": "VALID",
+          "evidence": "Line 101: `secret_key: str = Field(default=\"\")` — no `min_length` on Field; validator at lines 353-372 enforces `>= 64` in production only",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Previous status INVALID/CONTRADICTED was incorrect; Field-level min_length still absent"
+        },
+        {
+          "id": "CFG-020",
+          "status": "VALID",
+          "evidence": "Line 136: `db_max_overflow: int = Field(default=40)` — duplicate finding with CFG-012; no `ge`/`le` on Field",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Redundant with CFG-012; same evidence applies"
+        },
+        {
+          "id": "CFG-021",
+          "status": "RESOLVED",
+          "evidence": "Lines 628-637: `_validate_production` method explicitly checks `database_url_direct` for presence, sqlite rejection, and postgresql+asyncpg scheme",
+          "counter_evidence": "`grep -n \"database_url_direct\" backend/config.py` returns lines 123, 628-637",
+          "benchmark_mismatch": "",
+          "notes": "Validator was added after original audit"
+        },
+        {
+          "id": "CFG-022",
+          "status": "INVALID",
+          "evidence": "Line 101: `secret_key: str = Field(default=\"\")` — no `min_length` attribute present at all; finding claimed it had `min_length=32`",
+          "counter_evidence": "Current field definition lacks min_length; validator at line 361 enforces `>= 64` in production",
+          "benchmark_mismatch": "",
+          "notes": "Finding premise is factually wrong; secret_key Field has no min_length, not min_length=32"
+        },
+        {
+          "id": "CFG-023",
+          "status": "VALID",
+          "evidence": "Line 122: `database_url: str = Field(default=\"\")` — no `pattern` or scheme constraint on Field; validators at lines 556-566 and 617-626 enforce scheme post-hoc",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Field-level pattern still absent; scheme validation only in validators"
+        },
+        {
+          "id": "CFG-024",
+          "status": "VALID",
+          "evidence": "Line 179: `valkey_url: str = Field(default=\"valkey://localhost:6379\")` — no `pattern` constraint on Field; validator at lines 568-579 enforces `valkey://` scheme in production",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Field-level pattern still absent"
+        },
+        {
+          "id": "CFG-025",
+          "status": "VALID",
+          "evidence": "Line 250: `audit_chain_key: str = Field(default=\"\")` — no `min_length` on Field; validator at line 365 enforces `>= 32` in production",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Field-level min_length still absent"
+        },
+        {
+          "id": "CFG-026",
+          "status": "VALID",
+          "evidence": "Line 234: `field_encryption_key: str = Field(default=\"\")` — no `min_length` on Field; validator at line 369 enforces `>= 64` in production",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Field-level min_length still absent"
+        },
+        {
+          "id": "CFG-027",
+          "status": "INVALID",
+          "evidence": "Line 123: `database_url_direct: str = Field(default=\"\", min_length=10)` — Field DOES have `min_length=10`; finding claimed no min_length",
+          "counter_evidence": "Current Field definition includes `min_length=10`; scheme validation still absent at Field level but validators enforce it",
+          "benchmark_mismatch": "",
+          "notes": "Finding premise is factually wrong; min_length exists (though 10 is less than ideal for a DSN)"
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/finance/services/__init__.py",
+      "findings": [
+        {
+          "id": "CFM-010",
+          "status": "INVALID",
+          "evidence": "File is 8 lines total; contains only package docstring, three wildcard imports, and `__all__ = []` — no TODO comments anywhere",
+          "counter_evidence": "`grep -n \"TODO\" backend/domains/finance/services/__init__.py` returns no matches; TODOs exist in sibling files (finance_service.py, payout_batch_service.py, etc.) but not in __init__.py",
+          "benchmark_mismatch": "",
+          "notes": "Finding pointed to wrong file; TODOs are in individual service modules, not the package __init__"
+        }
+      ]
+    }
+  ]
+}

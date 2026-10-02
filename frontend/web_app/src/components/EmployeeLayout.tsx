@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import PanelShell from "@/components/PanelShell";
-import { useLocaleStore } from "@/stores/localeStore";
+import { useLocaleStore } from "@/lib/localeStore";
 import { useTranslateTexts } from "@/lib/useTranslate";
 import { Briefcase } from "@/lib/icons";
 import type { PanelNavItem } from "@/lib/panelNavigation";

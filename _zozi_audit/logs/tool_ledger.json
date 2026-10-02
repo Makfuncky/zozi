@@ -1,0 +1,20 @@
+[
+  {
+    "name": "git:rev",
+    "cmd": "git rev-parse HEAD",
+    "status": "PASS",
+    "exit_code": 0,
+    "duration_s": 0.08,
+    "skipped_reason": "",
+    "stderr_tail": ""
+  },
+  {
+    "name": "git:status",
+    "cmd": "git status --porcelain",
+    "status": "PASS",
+    "exit_code": 0,
+    "duration_s": 0.22,
+    "skipped_reason": "",
+    "stderr_tail": ""
+  }
+]

@@ -1,0 +1,108 @@
+{
+  "batch": 1,
+  "files": [
+    {
+      "path": "_browser_test/BROWSER_TEST_LOG.md",
+      "findings": [
+        {
+          "id": "BROWSER-002",
+          "status": "INVALID",
+          "evidence": "File does not exist at _browser_test/BROWSER_TEST_LOG.md; directory listing shows no such file (only docs/, tests/, src/, etc. present)",
+          "counter_evidence": "Get-ChildItem and Get-Item on the path both return that the file is absent; no BROWSER_TEST_LOG.md exists anywhere under _browser_test/",
+          "benchmark_mismatch": null,
+          "notes": "Finding references a non-existent source file. All BROWSER-* findings for this file share the same INVALID status because the cited evidence source is missing."
+        },
+        {
+          "id": "BROWSER-004",
+          "status": "INVALID",
+          "evidence": "File does not exist at _browser_test/BROWSER_TEST_LOG.md",
+          "counter_evidence": "Path does not exist in repository",
+          "benchmark_mismatch": null,
+          "notes": "Same root cause as BROWSER-002: source file missing."
+        },
+        {
+          "id": "BROWSER-005",
+          "status": "INVALID",
+          "evidence": "File does not exist at _browser_test/BROWSER_TEST_LOG.md",
+          "counter_evidence": "Path does not exist in repository",
+          "benchmark_mismatch": null,
+          "notes": "Same root cause as BROWSER-002: source file missing."
+        },
+        {
+          "id": "BROWSER-006",
+          "status": "INVALID",
+          "evidence": "File does not exist at _browser_test/BROWSER_TEST_LOG.md",
+          "counter_evidence": "Path does not exist in repository",
+          "benchmark_mismatch": null,
+          "notes": "Same root cause as BROWSER-002: source file missing."
+        },
+        {
+          "id": "BROWSER-007",
+          "status": "INVALID",
+          "evidence": "File does not exist at _browser_test/BROWSER_TEST_LOG.md",
+          "counter_evidence": "Path does not exist in repository",
+          "benchmark_mismatch": null,
+          "notes": "Same root cause as BROWSER-002: source file missing."
+        }
+      ]
+    },
+    {
+      "path": "backend/ (no __init__.py)",
+      "findings": [
+        {
+          "id": "BLOCKER-001",
+          "status": "VALID",
+          "evidence": "No __init__.py exists at backend/__init__.py; verified with Test-Path and Get-ChildItem returning no results at the backend root. `python -c \"from backend.main import app\"` run from project root raises ModuleNotFoundError: No module named 'infrastructure' because main.py uses bare imports (e.g. `from infrastructure.database import models`) without the backend. prefix.",
+          "counter_evidence": "",
+          "benchmark_mismatch": null,
+          "notes": "The import failure is confirmed from project root. Running from inside backend/ works because sys.path is mutated in main.py (line 15: sys.path.insert(0, _BACKEND_DIR)), but the documented import path `from backend.main import app` still fails. Note: the root cause is bare intra-package imports in main.py, not strictly the missing __init__.py (namespace packages do not require it in Python 3.3+). The finding's stated symptom is accurate even if the proposed fix is incomplete."
+        }
+      ]
+    },
+    {
+      "path": "backend/Dockerfile",
+      "findings": [
+        {
+          "id": "TECH-004",
+          "status": "VALID",
+          "evidence": "Line 19: `RUN pip install --no-cache-dir -r requirements.txt` — pip is used instead of uv",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §19 requires uv 0.12.12 as canonical package manager; Dockerfile uses pip",
+          "notes": "Benchmark-aligned finding. Still actionable."
+        },
+        {
+          "id": "TECH-006",
+          "status": "VALID",
+          "evidence": "Line 1: `FROM python:3.11-slim` — base image is Python 3.11, not 3.13",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §1 specifies Python 3.13.x; Dockerfile uses 3.11-slim",
+          "notes": "Benchmark-aligned finding. Still actionable."
+        },
+        {
+          "id": "TECH-007",
+          "status": "VALID",
+          "evidence": "Line 19: `RUN pip install --no-cache-dir -r requirements.txt` — pip used for dependency installation",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §19 requires uv 0.12.12; Dockerfile uses pip",
+          "notes": "Duplicate of TECH-004 at same line. Still applicable."
+        },
+        {
+          "id": "CONTRAD-030",
+          "status": "VALID",
+          "evidence": "Line 1: `FROM python:3.11-slim` — dev Dockerfile uses Python 3.11 while canonical requires 3.13.x",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md line 22 requires Python 3.13.x; Dockerfile uses 3.11-slim",
+          "notes": "Benchmark-aligned contradiction. Still applicable."
+        },
+        {
+          "id": "D2P-DOCKER-012",
+          "status": "VALID",
+          "evidence": "Lines 1-30: Single-stage build; line 22 `COPY . .` copies entire source tree including __pycache__, .venv, dev files into the image",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §18 recommends multi-stage Dockerfiles for production builds to reduce image size and attack surface",
+          "notes": "Benchmark-aligned finding. Still actionable."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# COMMAND: ... -q -k injection   (contract 23 nature-specific check)
+..                                                                       [100%]
+2 passed, 15 deselected in 24.34s

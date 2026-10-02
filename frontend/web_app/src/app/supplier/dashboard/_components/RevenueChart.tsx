@@ -1,6 +1,6 @@
 "use client";
 
-import { useCurrencyStore } from "@/stores/currencyStore";
+import { useCurrencyStore } from "@/lib/currencyStore";
 import { BarChart3 } from "@/lib/icons";
 import type { RevenueTrendPoint } from "@/lib/supplierDashboardConfig";
 

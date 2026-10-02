@@ -8,10 +8,10 @@ No paid APIs. Uses WhatsApp Web via Playwright with:
 Cost: FREE — just need a phone number with WhatsApp.
 
 Setup:
-1. pip install playwright
-2. playwright install chromium
-3. First run: scan QR code (session saved for reuse)
-4. Subsequent runs: auto-login via saved session
+ 1. pip install playwright
+ 2. playwright install chromium
+ 3. First run: scan QR code (session saved for reuse)
+ 4. Subsequent runs: auto-login via saved session
 
 Configuration:
 - WHATSAPP_MODE=dev|web
@@ -26,21 +26,35 @@ import os
 import time
 import urllib.parse
 from collections import deque
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
 # Always available — no external SDK needed
 HAS_WHATSAPP = True
 
+
+@dataclass
+class _WhatsAppSettings:
+    """WhatsApp provider configuration read from environment."""
+
+    mode: str = os.environ.get("WHATSAPP_MODE", "dev").lower()
+    session_path: str = os.environ.get("WHATSAPP_SESSION_PATH", "./whatsapp_session")
+    rate_limit: int = int(os.environ.get("WHATSAPP_RATE_LIMIT", "20"))
+    min_delay: float = float(os.environ.get("WHATSAPP_MIN_DELAY", "3"))
+
+
+_settings = _WhatsAppSettings()
+
 # Mode from environment
-WHATSAPP_MODE = os.getenv("WHATSAPP_MODE", "dev").lower()
+WHATSAPP_MODE = _settings.mode
 
 # Session persistence
-WHATSAPP_SESSION_PATH = os.getenv("WHATSAPP_SESSION_PATH", "./whatsapp_session")
+WHATSAPP_SESSION_PATH = _settings.session_path
 
 # Rate limiting (WhatsApp bans for spam)
-WHATSAPP_RATE_LIMIT = int(os.getenv("WHATSAPP_RATE_LIMIT", "20"))  # per minute
-WHATSAPP_MIN_DELAY = float(os.getenv("WHATSAPP_MIN_DELAY", "3"))  # seconds between messages
+WHATSAPP_RATE_LIMIT = _settings.rate_limit
+WHATSAPP_MIN_DELAY = _settings.min_delay
 
 # Rate tracking
 _message_timestamps: deque = deque(maxlen=WHATSAPP_RATE_LIMIT)

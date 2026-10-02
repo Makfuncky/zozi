@@ -131,52 +131,52 @@ class TestSecurityJWT:
         assert subject == "1"
 
 
-class TestRedisCache:
-    """Redis cache abstraction tests."""
+class TestValkeyCache:
+    """Valkey cache abstraction tests."""
 
-    def test_redis_client_returns_object(self) -> None:
-        from infrastructure.database.redis_client import redis_client
-        client = redis_client()
+    def test_valkey_client_returns_object(self) -> None:
+        from infrastructure.valkey.client import valkey_client
+        client = valkey_client()
         assert client is not None
 
-    def test_redis_noop_fallback(self) -> None:
-        from infrastructure.database.redis_client import _NoOpRedis
-        noop = _NoOpRedis()
+    def test_valkey_noop_fallback(self) -> None:
+        from infrastructure.valkey.client import _NoOpValkey
+        noop = _NoOpValkey()
         assert noop.get("any_key") is None
         assert noop.set("key", "val") is None
         assert noop.exists("key") is None
         assert noop.delete("key") is None
         assert noop.keys() == []
 
-    def test_redis_health_status(self) -> None:
-        from infrastructure.database.redis_client import get_redis_health_status
-        status = get_redis_health_status()
+    def test_valkey_health_status(self) -> None:
+        from infrastructure.valkey.client import get_valkey_health_status
+        status = get_valkey_health_status()
         assert isinstance(status, dict)
         assert "available" in status
 
-    def test_redis_noop_pipeline(self) -> None:
-        from infrastructure.database.redis_client import _NoOpPipeline
-        pipe = _NoOpPipeline()
+    def test_valkey_noop_pipeline(self) -> None:
+        from infrastructure.valkey.client import _NoOpValkeyPipeline
+        pipe = _NoOpValkeyPipeline()
         result = pipe.set("k", "v").execute()
         assert result == []
 
-    def test_cache_get_json_no_redis(self) -> None:
-        """cache_get_json should return None when Redis is unavailable."""
+    def test_cache_get_json_no_valkey(self) -> None:
+        """cache_get_json should return None when Valkey is unavailable."""
         from infrastructure.utils.cache import cache_get_json
         result = cache_get_json("nonexistent-key")
         assert result is None
 
-    def test_cache_set_json_no_redis(self) -> None:
-        """cache_set_json should not raise when Redis is unavailable."""
+    def test_cache_set_json_no_valkey(self) -> None:
+        """cache_set_json should not raise when Valkey is unavailable."""
         from infrastructure.utils.cache import cache_set_json
         cache_set_json("key", {"data": "value"}, ttl=60)
 
-    def test_cache_version_no_redis(self) -> None:
+    def test_cache_version_no_valkey(self) -> None:
         from infrastructure.utils.cache import get_cache_version
         version = get_cache_version("test-namespace")
         assert isinstance(version, str)
 
-    def test_cache_delete_no_redis(self) -> None:
+    def test_cache_delete_no_valkey(self) -> None:
         from infrastructure.utils.cache import cache_delete
         cache_delete("nonexistent-key")
 
@@ -219,9 +219,9 @@ class TestStorageAbstraction:
             storage.save("../../etc/passwd", b"evil")
 
     def test_get_storage_returns_backend(self) -> None:
-        from infrastructure.storage.storage import get_storage, LocalStorage
+        from infrastructure.storage.storage import S3Storage, get_storage
         storage = get_storage()
-        assert isinstance(storage, LocalStorage)
+        assert isinstance(storage, S3Storage)
 
 
 class TestObservability:

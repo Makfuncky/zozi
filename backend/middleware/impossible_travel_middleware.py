@@ -9,7 +9,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse
 
-from infrastructure.utils.redis_client import redis_client as get_redis
+from infrastructure.valkey.client import valkey_client as get_valkey
 from infrastructure.security.ip_utils import get_request_ip
 from infrastructure.utils.auth import verify_token
 
@@ -29,8 +29,8 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
     """
 
     SPEED_THRESHOLD_KMH: float = 900.0
-    REDIS_PREFIX = "travel:"
-    REDIS_TTL = 3600
+    VALKEY_PREFIX = "travel:"
+    VALKEY_TTL = 3600
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if not self._should_check(request):
@@ -45,15 +45,15 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         try:
-            redis = get_redis()
-            if isinstance(redis, dict):
+            valkey = get_valkey()
+            if isinstance(valkey, dict):
                 return await call_next(request)
 
-            current_coords = self._get_coordinates(redis, ip_address)
+            current_coords = self._get_coordinates(valkey, ip_address)
             if current_coords is None:
                 return await call_next(request)
 
-            previous = self._get_previous_location(redis, user_id)
+            previous = self._get_previous_location(valkey, user_id)
 
             if previous is not None:
                 prev_lat, prev_lon, prev_ts = previous
@@ -62,7 +62,7 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
                     distance = self._haversine(prev_lat, prev_lon, current_coords[0], current_coords[1])
                     speed = distance / (elapsed / 3600)
                     if speed > self.SPEED_THRESHOLD_KMH:
-                        self._lock_session(redis, user_id, ip_address, distance, speed)
+                        self._lock_session(valkey, user_id, ip_address, distance, speed)
                         return JSONResponse(
                             status_code=403,
                             content={
@@ -73,7 +73,7 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
                             },
                         )
 
-            self._update_location(redis, user_id, current_coords[0], current_coords[1], ip_address)
+            self._update_location(valkey, user_id, current_coords[0], current_coords[1], ip_address)
         except Exception:
             logger.exception("Impossible travel check failed")
 
@@ -99,51 +99,51 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
     def _extract_ip(self, request: Request) -> Optional[str]:
         return get_request_ip(request)
 
-    def _get_coordinates(self, redis, ip: str) -> Optional[tuple[float, float]]:
+    def _get_coordinates(self, valkey, ip: str) -> Optional[tuple[float, float]]:
         coord_key = f"geo:{ip}"
         try:
-            cached = redis.get(coord_key)
+            cached = valkey.get(coord_key)
             if cached:
                 parts = cached.split(",")
                 if len(parts) == 2:
                     return (float(parts[0]), float(parts[1]))
         except Exception as exc:
-            logger.debug("Redis cache get failed: %s", exc)
+            logger.debug("Valkey cache get failed: %s", exc)
 
         coords = lookup_coordinates(ip)
         if coords is None:
             return None
         try:
-            redis.setex(coord_key, 86400, f"{coords[0]},{coords[1]}")
+            valkey.setex(coord_key, 86400, f"{coords[0]},{coords[1]}")
         except Exception as exc:
-            logger.debug("Redis coord cache set failed: %s", exc)
+            logger.debug("Valkey coord cache set failed: %s", exc)
         return coords
 
-    def _get_previous_location(self, redis, user_id: int) -> Optional[tuple[float, float, float]]:
-        key = f"{self.REDIS_PREFIX}{user_id}"
+    def _get_previous_location(self, valkey, user_id: int) -> Optional[tuple[float, float, float]]:
+        key = f"{self.VALKEY_PREFIX}{user_id}"
         try:
-            data = redis.get(key)
+            data = valkey.get(key)
             if data:
                 parts = data.split(",")
                 if len(parts) == 4:
                     return (float(parts[0]), float(parts[1]), float(parts[2]))
         except Exception as exc:
-            logger.debug("Redis previous location get failed: %s", exc)
+            logger.debug("Valkey previous location get failed: %s", exc)
         return None
 
-    def _update_location(self, redis, user_id: int, lat: float, lon: float, ip: str) -> None:
-        key = f"{self.REDIS_PREFIX}{user_id}"
+    def _update_location(self, valkey, user_id: int, lat: float, lon: float, ip: str) -> None:
+        key = f"{self.VALKEY_PREFIX}{user_id}"
         try:
-            redis.setex(key, self.REDIS_TTL, f"{lat},{lon},{time.time()},{ip}")
+            valkey.setex(key, self.VALKEY_TTL, f"{lat},{lon},{time.time()},{ip}")
         except Exception as exc:
-            logger.debug("Redis location update failed: %s", exc)
+            logger.debug("Valkey location update failed: %s", exc)
 
-    def _lock_session(self, redis, user_id: int, ip: str, distance: float, speed: float) -> None:
+    def _lock_session(self, valkey, user_id: int, ip: str, distance: float, speed: float) -> None:
         lock_key = f"lock:impossible_travel:{user_id}"
         try:
-            redis.setex(lock_key, 1800, f"{ip},{distance},{speed}")
+            valkey.setex(lock_key, 1800, f"{ip},{distance},{speed}")
         except Exception as exc:
-            logger.debug("Redis session lock set failed: %s", exc)
+            logger.debug("Valkey session lock set failed: %s", exc)
         try:
             logger.warning(
                 "Impossible travel detected: user_id=%s ip=%s distance=%.0fkm speed=%.0fkm/h",
@@ -272,7 +272,7 @@ class FraudScoringMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app):
         super().__init__(app)
-        self.redis = get_redis()
+        self.valkey = get_valkey()
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         path = request.url.path

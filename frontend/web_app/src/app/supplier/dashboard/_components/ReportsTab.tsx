@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, FileText, Package, Sparkles, TrendingUp } from "@/lib/icons";
-import { useCurrencyStore } from "@/stores/currencyStore";
+import { useCurrencyStore } from "@/lib/currencyStore";
 import { StatCard } from "@/components/ui/StatCard";
 import { useRouter } from "next/navigation";
 import {

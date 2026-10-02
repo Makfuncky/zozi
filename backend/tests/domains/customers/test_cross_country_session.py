@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import Column, Integer
 
-from backend.domains.customers.models.cross_country_session import CrossCountryCustomerSession
+from domains.customers.models.cross_country_session import CrossCountryCustomerSession
 
 
 class TestCrossCountrySessionModel:

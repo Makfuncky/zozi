@@ -457,7 +457,7 @@ class UnifiedInboxService:
         where_clause = " AND ".join(conditions)
 
         sql = """
-            SELECT * FROM (
+            SELECT id, local_id, transport, title, preview, unread, updated_at, channel_type, participants, peer_avatar, folder FROM (
                 -- Direct messages
                 SELECT
                     'dm_' || dcr.id AS id,

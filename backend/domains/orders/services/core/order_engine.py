@@ -60,7 +60,7 @@ from infrastructure.utils.constants import STAFF_ROLES
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 from kernel.money import round_money, to_decimal
 from domains.orders.services.tracking.service import build_order_tracking_payload, derive_order_financials, normalize_shipment_event_type, order_status_label, reconcile_order_status, shipment_scan_codes
-from infrastructure.utils.redis_client import get_redis
+from infrastructure.valkey.client import get_valkey
 from infrastructure.utils.ip_utils import get_request_ip
 
 logger = logging.getLogger(__name__)
@@ -746,8 +746,8 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
             fraud_action = "allow"
             if total_amount and total_amount > Decimal("500"):
                 try:
-                    redis_client = get_redis()
-                    fraud_engine = FraudScoringEngine(db, redis_client)
+                    valkey_client = get_valkey()
+                    fraud_engine = FraudScoringEngine(db, valkey_client)
                     device_hash = getattr(request.state, "device_fingerprint", None) if request else None
                     score_result = fraud_engine.calculate_score(
                         user_id=current_user["id"],

@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
     autoretry_for=(Exception,),
     retry_backoff=True,
     retry_backoff_max=600,
+    time_limit=600,
+    soft_time_limit=540,
 )
 def video_transcode_task(
     self,
@@ -132,6 +134,8 @@ def _generate_caption(video_bytes: bytes, filename: str = "") -> str:
     name="tasks.video_tasks.generate_video_captions",
     max_retries=2,
     default_retry_delay=60,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def generate_video_captions(
     self,

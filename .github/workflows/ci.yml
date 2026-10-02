@@ -1,0 +1,60 @@
+name: CI — Backend Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  test:
+    name: Backend Test Suite
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: test
+      SECRET_KEY: ci-test-key-64chars-long-enough-for-validation-1234
+      TEST_ADMIN_PASSWORD: admin123
+      TEST_SUPPLIER_PASSWORD: supplier123
+      TEST_CUSTOMER_PASSWORD: customer123
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.12.12"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv pip install pytest==9.1.1 pytest-asyncio==1.4.0 pytest-timeout==2.3.1
+
+      - name: Run architecture law gates
+        working-directory: backend
+        run: |
+          uv run --no-sync pytest tests/architecture/test_import_laws.py \
+                        tests/architecture/test_architecture_gates.py \
+                        tests/architecture/test_laws_complete.py \
+                        -v --timeout=60
+
+      - name: Run critical path tests
+        working-directory: backend
+        run: |
+          uv run --no-sync pytest tests/domains/accounts/ \
+                        tests/domains/orders/ \
+                        tests/domains/finance/ \
+                        tests/domains/catalog/ \
+                        -v --timeout=30 -q -m "not slow and not integration"

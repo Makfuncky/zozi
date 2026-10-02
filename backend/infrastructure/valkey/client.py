@@ -11,9 +11,34 @@ Laws preserved:
 """
 from __future__ import annotations
 
+import random
+import time
+
 from typing import Any
 
+from infrastructure.observability.metrics import _safe_metric
 from infrastructure.utils.config import settings
+
+from prometheus_fastapi_instrumentator.metrics import Counter
+
+logger = None
+try:
+    import structlog
+    logger = structlog.get_logger(__name__)
+except ImportError:
+    pass
+
+valkey_fallback_total = _safe_metric(
+    Counter,
+    'valkey_fallback_total',
+    'Number of times Valkey client fell back to NoOp',
+    ['reason']
+)
+valkey_reconnect_total = _safe_metric(
+    Counter,
+    'valkey_reconnect_total',
+    'Number of Valkey reconnect attempts after initial failure',
+)
 
 
 class _NoOpValkey:
@@ -88,10 +113,18 @@ _client: "valkey.Valkey | _NoOpValkey | None" = None
 
 
 def valkey_client() -> "valkey.Valkey | _NoOpValkey":
-    """Return the process-wide Valkey client (singleton; Law 142)."""
+    """Return the process-wide Valkey client (singleton; Law 142).
+
+    On connection failure, retry with exponential backoff before falling back
+    to ``_NoOpValkey``. Emits metrics and logs WARNING on fallback.
+    """
     global _client
     if not _valkey_available:
-        return _NoOpValkey()
+        if logger is not None:
+            logger.warning("valkey_fallback", reason="import_unavailable")
+        valkey_fallback_total.labels(reason="import_unavailable").inc()
+        _client = _NoOpValkey()
+        return _client
     if _client is not None:
         return _client
     client = valkey.Valkey.from_url(
@@ -100,13 +133,37 @@ def valkey_client() -> "valkey.Valkey | _NoOpValkey":
         socket_timeout=2,
         socket_connect_timeout=2,
     )
-    try:
-        client.ping()
-    except Exception:
-        # Do NOT cache the NoOp fallback — retry on next call so a
-        # temporarily unreachable Valkey can recover without a restart.
-        return _NoOpValkey()
-    _client = client
+    last_exception: Exception | None = None
+    for attempt in range(1, 4):
+        try:
+            client.ping()
+        except Exception as exc:
+            last_exception = exc
+            if attempt < 3:
+                delay = min(2 ** attempt + random.uniform(0, 0.5), 5.0)
+                if logger is not None:
+                    logger.warning(
+                        "valkey_retry",
+                        attempt=attempt,
+                        max_attempts=3,
+                        delay=round(delay, 2),
+                        error=str(exc),
+                    )
+                valkey_reconnect_total.inc()
+                time.sleep(delay)
+                continue
+            break
+        else:
+            _client = client
+            return _client
+    if logger is not None:
+        logger.warning(
+            "valkey_fallback",
+            reason="connection_exhausted",
+            error=str(last_exception) if last_exception else None,
+        )
+    valkey_fallback_total.labels(reason="connection_exhausted").inc()
+    _client = _NoOpValkey()
     return _client
 
 

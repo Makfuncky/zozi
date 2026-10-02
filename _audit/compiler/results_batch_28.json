@@ -1,0 +1,100 @@
+{
+  "batch": 28,
+  "files": [
+    {
+      "path": "backend/modules/admin/routers/orders.py",
+      "findings": [
+        {
+          "id": "DRIFT-002",
+          "status": "VALID",
+          "evidence": "Line 3: docstring says 'Admin orders router — canonical.' Line 18: prefix='/api/v1/admin/orders'. Lines 21-72: all routes are /campaigns, /metrics, /campaigns/{cc}, /campaigns/{cc}/{id}, /admin_orders_routes/health. No order management endpoints (list, get, update status, delete, bulk-status) exist.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Router is mislabeled and contains comms domain routes instead of order management routes. Imports from domains.comms.ports (lines 11-16)."
+        },
+        {
+          "id": "DRIFT-007",
+          "status": "VALID",
+          "evidence": "Line 75: @router.get('/admin_orders_routes/health') — path is not under the router prefix root. Full path becomes /api/v1/admin/orders/admin_orders_routes/health.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Health endpoint path is double-nested and inconsistent with other admin routers."
+        },
+        {
+          "id": "DRIFT-009",
+          "status": "VALID",
+          "evidence": "Line 23: require_feature('orders.list') on /campaigns route. Line 30: require_feature('orders.read') on /metrics. Line 45: require_feature('orders.list') on /campaigns/{cc}. Line 57: require_feature('orders.create') on POST /campaigns/{cc}. Line 69: require_feature('orders.manage') on DELETE /campaigns/{cc}/{id}.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Campaign/email metrics routes are gated with orders.* feature atoms instead of promotions.campaigns.* atoms."
+        }
+      ]
+    },
+    {
+      "path": "backend/modules/customer/routers/finance.py",
+      "findings": [
+        {
+          "id": "FEAT-029",
+          "status": "RESOLVED",
+          "evidence": "Lines 99-103: payment_methods endpoint calls get_payment_methods_status(db, country_code=_resolve_request_country(request)). Country-aware routing is implemented.",
+          "counter_evidence": "Code at line 103 passes country_code=_resolve_request_country(request) to get_payment_methods_status.",
+          "benchmark_mismatch": "",
+          "notes": "The endpoint IS country-aware as required by Law 5. The finding documents correct behavior but was recorded as NEW; it is actually resolved."
+        }
+      ]
+    },
+    {
+      "path": "backend/modules/customer/routers/orders.py",
+      "findings": [
+        {
+          "id": "FEAT-008",
+          "status": "RESOLVED",
+          "evidence": "Lines 58-59: get_cart endpoint has _rf_gate: None = Depends(require_feature('customers.cart.manage')). Feature gate is present.",
+          "counter_evidence": "Code at line 59 includes require_feature('customers.cart.manage').",
+          "benchmark_mismatch": "",
+          "notes": "The endpoint already has the required feature gate per Law 88. Finding documents correct behavior but was recorded as NEW."
+        },
+        {
+          "id": "FEAT-009",
+          "status": "VALID",
+          "evidence": "Line 124: price: float in CartTotalsItem. Line 142: subtotal = sum(item.price * item.quantity for item in body.items) — float arithmetic for money.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 19: Monetary values MUST use Decimal or Numeric. Float FORBIDDEN for money.",
+          "notes": "Float math in cart totals violates Law 19. Although later code converts to Decimal (line 149), the initial subtotal calculation uses float."
+        },
+        {
+          "id": "FEAT-010",
+          "status": "VALID",
+          "evidence": "Line 175: tax_result = calculate_tax(float(after_discount), country_code, db) — float explicitly passed to tax calculation.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 19: Monetary values MUST use Decimal or Numeric. Float FORBIDDEN for money.",
+          "notes": "Explicit float() cast on Decimal value before passing to calculate_tax violates Law 19."
+        },
+        {
+          "id": "FEAT-026",
+          "status": "VALID",
+          "evidence": "Lines 72-79: sync_cart endpoint accepts CartSyncRequest and calls svc_sync_cart(current_user.id, body, db). No idempotency key parameter or validation visible in router.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 50: Explicit transactions required for all writes. Idempotency not evident.",
+          "notes": "Idempotency is not visible at the router layer; depends on service implementation."
+        },
+        {
+          "id": "FEAT-039",
+          "status": "VALID",
+          "evidence": "Lines 148-153: try/except block around build_coupon_quote with bare except Exception that silently sets discount = Decimal('0').",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 59: No silent exceptions. Law 68: Consistent errors.",
+          "notes": "Bare except swallows validation errors and returns zero discount silently, violating Laws 59 and 68."
+        },
+        {
+          "id": "DRIFT-003",
+          "status": "INVALID",
+          "evidence": "Line 199 contains the AUTO-GENERATED comment, not line 131. Line 131 contains class CartTotalsItem(BaseModel): with no auto-generated warning.",
+          "counter_evidence": "The cited path:line (131) does not contain the described issue. The auto-generated comment exists at line 199, but hand-written code now extends to line 198.",
+          "benchmark_mismatch": "",
+          "notes": "The underlying drift (auto-generated warning alongside hand-written code) still exists but at a different line. The specific cited location (131) is incorrect."
+        }
+      ]
+    }
+  ]
+}

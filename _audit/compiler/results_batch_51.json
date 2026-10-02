@@ -1,0 +1,44 @@
+{
+  "batch": 51,
+  "files": [
+    {
+      "path": "backend/providers/comms/sms.py",
+      "findings": [
+        {
+          "id": "OPS-006",
+          "status": "VALID",
+          "evidence": "Lines 38-46 contain raw os.getenv() calls: SMS_MODE=os.getenv(\"SMS_MODE\", \"dev\").lower(), SMS_SERIAL_PORT=os.getenv(\"SMS_SERIAL_PORT\", \"COM3\"), SMS_SERIAL_BAUD=int(os.getenv(\"SMS_SERIAL_BAUD\", \"9600\")), SMS_ANDROID_URL=os.getenv(\"SMS_ANDROID_URL\", \"\"), SMS_RETRY_ATTEMPTS=int(os.getenv(\"SMS_RETRY_ATTEMPTS\", \"3\")), SMS_RETRY_DELAY=int(os.getenv(\"SMS_RETRY_DELAY\", \"2\"))",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Finding confirmed. Config.py:283-288 has typed pydantic-settings fields (sms_mode, sms_serial_port, sms_serial_baud, sms_android_url, sms_retry_attempts, sms_retry_delay) that provider bypasses. Violates Law 84 (Typed feature flags) and TECHNOLOGY_STACK.md §1 (pydantic-settings for config)."
+        }
+      ]
+    },
+    {
+      "path": "backend/providers/geography/geo.py",
+      "findings": [
+        {
+          "id": "OPS-005",
+          "status": "VALID",
+          "evidence": "Lines 144-146 contain raw os.getenv() calls: DEFAULT_TIMEOUT=float(os.getenv(\"LOCATION_HTTP_TIMEOUT\", \"4.0\")), CACHE_TTL_SECONDS=int(os.getenv(\"LOCATION_CACHE_TTL\", \"3600\")), USER_AGENT=os.getenv(\"LOCATION_USER_AGENT\", \"zozi-location-service/1.0\")",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Finding confirmed. Config.py:280-282 has typed pydantic-settings fields (location_http_timeout, location_cache_ttl, location_user_agent) that provider bypasses. Violates Law 84 (Typed feature flags) and TECHNOLOGY_STACK.md §1 (pydantic-settings for config)."
+        }
+      ]
+    },
+    {
+      "path": "backend/providers/payments/config.py",
+      "findings": [
+        {
+          "id": "OPS-004",
+          "status": "VALID",
+          "evidence": "Lines 42-138 contain raw os.getenv() calls for all payment gateway config: STRIPE_SECRET_KEY (line 42), STRIPE_WEBHOOK_SECRET (line 49), TAP_SECRET_KEY (line 65), TAP_WEBHOOK_SECRET (line 69), TAP_API_BASE_URL (line 73), TAP_WEBHOOK_URL (line 77), PAYTABS_SERVER_KEY (line 86), PAYTABS_WEBHOOK_SECRET (line 90), PAYTABS_PROFILE_ID (line 94), PAYTABS_API_BASE_URL (line 98), PAYTABS_CALLBACK_URL (line 103), THAWANI_SECRET_KEY (line 113), THAWANI_PUBLISHABLE_KEY (line 117), THAWANI_API_BASE_URL (line 121), THAWANI_WEBHOOK_SECRET (line 126), PAYPAL_CLIENT_ID (line 136), PAYPAL_SECRET (line 137), PAYPAL_MODE (line 138)",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Finding confirmed. Config.py:140-155, 267-269 has typed pydantic-settings fields (stripe_secret_key, tap_secret_key, paytabs_server_key, thawani_secret_key, paypal_client_id, etc.) that provider bypasses. Violates Law 84 (Typed feature flags) and TECHNOLOGY_STACK.md §1 (pydantic-settings for config)."
+        }
+      ]
+    }
+  ]
+}

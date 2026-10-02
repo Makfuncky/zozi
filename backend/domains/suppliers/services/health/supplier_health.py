@@ -1,8 +1,74 @@
 """Supplier sub-module — imports shared helpers from supplier_shared."""
 
-from domains.suppliers.services.supplier_shared import *
-from domains.suppliers.services.supplier_shared import _build_public_supplier_cache_key
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Any, List, Optional
+
+from fastapi import HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
+from sqlalchemy import String, func, or_
+from sqlalchemy.orm import Session
+
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
+from domains.governance.ports import BadgeBillingRecord, CommissionBadgeTier, User
+from domains.logistics.models.logistics_entities import Shipment
+from domains.logistics.ports import ShipmentEvent
+from domains.orders.models.orders import Order, OrderItem
+from domains.suppliers.models.suppliers import SupplierBankAccount
+from domains.suppliers.services.supplier_shared import (
+    build_list_page_payload,
+    build_public_supplier_cache_key,
+    coerce_optional_bool,
+    deserialize_profile_json,
+    load_supplier_ai_audit_summary,
+    load_users_by_ids,
+    map_bulk_upload_error,
+    normalize_optional_product_text,
+    normalize_product_visibility_regions,
+    parse_optional_datetime,
+    parse_optional_return_window_days,
+    parse_product_variants_payload,
+    parse_supplier_return_window_days,
+    queue_supplier_ai_audit,
+    sanitize_profile_json,
+    sanitize_profile_string,
+    serialize_profile_json,
+    serialize_product_visibility_regions,
+    slugify_supplier_storefront,
+)
+from domains.suppliers.services.profile.supplier_profile import update_supplier_profile
 from infrastructure.utils.cache import cache_get_json
+
+__all__ = [
+    "get_supplier_analytics",
+    "get_supplier_inventory",
+    "update_product_stock",
+    "update_inventory_levels",
+    "get_inventory_alerts",
+    "get_supplier_profile",
+    "update_supplier_profile",
+    "request_verification",
+    "get_payout_history",
+    "get_supplier_shipments",
+    "request_payout",
+    "execute_bulk_operation",
+    "bulk_inventory_adjust",
+    "export_products_csv",
+    "get_supplier_reports",
+    "compute_credibility_score",
+    "refresh_supplier_badge",
+    "run_badge_recalculation_cycle",
+    "get_supplier_analytics_timeseries",
+    "admin_set_supplier_badge",
+    "list_public_suppliers",
+    "resolve_public_supplier_slug",
+    "get_public_supplier_profile",
+    "get_public_supplier_products",
+    "get_supplier_bank_account",
+    "upsert_supplier_bank_account",
+]
+
 
 def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict:
     day_map = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}
@@ -311,7 +377,7 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
         db.add(profile)
 
     if "phone" in profile_update:
-        supplier.phone = _sanitize_profile_string(profile_update.get("phone"))
+        supplier.phone = sanitize_profile_string(profile_update.get("phone"))
 
     profile_field_map = {
         "business_name": "business_name",
@@ -327,7 +393,7 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
         value = profile_update.get(source_field)
         if target_field == "website" and isinstance(value, str) and value.strip() and not value.startswith(("http://", "https://")):
             value = f"https://{value.strip()}"
-        setattr(profile, target_field, _sanitize_profile_string(value))
+        setattr(profile, target_field, sanitize_profile_string(value))
 
     if "established_year" in profile_update:
         raw_year = profile_update.get("established_year")
@@ -854,7 +920,7 @@ def get_supplier_reports(period: str, current_user: dict, db: Session) -> dict:
             "customerGrowth": float(customer_growth),
             "period": period,
         },
-        "aiAudit": _load_supplier_ai_audit_summary(),
+        "aiAudit": load_supplier_ai_audit_summary(),
     }
 
 
@@ -932,22 +998,22 @@ async def bulk_upload_products(
 
     for idx, item in enumerate(raw_products):
         if not isinstance(item, dict):
-            errors.append(_build_bulk_upload_error(idx, "Item must be an object"))
+            errors.append(build_bulk_upload_error(idx, "Item must be an object"))
             continue
 
         name = str(item.get("name", "")).strip()
         if not name:
-            errors.append(_build_bulk_upload_error(idx, "name is required"))
+            errors.append(build_bulk_upload_error(idx, "name is required"))
             continue
 
         try:
             price = float(item.get("price", 0))
         except (TypeError, ValueError):
-            errors.append(_build_bulk_upload_error(idx, "price must be a number", name=name))
+            errors.append(build_bulk_upload_error(idx, "price must be a number", name=name))
             continue
 
         if price <= 0:
-            errors.append(_build_bulk_upload_error(idx, "price must be > 0", name=name))
+            errors.append(build_bulk_upload_error(idx, "price must be > 0", name=name))
             continue
 
         try:
@@ -957,7 +1023,7 @@ async def bulk_upload_products(
 
         description = html.escape(str(item.get("description", "")).strip())
         category = str(item.get("category", "")).strip()
-        subcategory = _normalize_optional_product_text(item.get("subcategory", item.get("sub_category")))
+        subcategory = normalize_optional_product_text(item.get("subcategory", item.get("sub_category")))
         brand = str(item.get("brand", "")).strip() or None
         color = str(item.get("color", "")).strip() or None
         raw_tags = item.get("tags", "")
@@ -972,27 +1038,27 @@ async def bulk_upload_products(
         except (TypeError, ValueError):
             weight_float = None
         dimensions_str: Optional[str] = str(item.get("dimensions", "")).strip() or None
-        normalized_visibility_regions = _normalize_product_visibility_regions(item.get("visibility_regions"))
+        normalized_visibility_regions = normalize_product_visibility_regions(item.get("visibility_regions"))
         compare_price_value = item.get("compare_price", item.get("discount_price"))
         try:
             compare_price_float: Optional[float] = float(compare_price_value) if compare_price_value not in (None, "") else None
         except (TypeError, ValueError):
-            errors.append(_build_bulk_upload_error(idx, "compare_price must be a number", name=name))
+            errors.append(build_bulk_upload_error(idx, "compare_price must be a number", name=name))
             continue
         try:
-            discount_starts_at_value = _parse_optional_datetime(item.get("discount_starts_at"))
-            discount_ends_at_value = _parse_optional_datetime(item.get("discount_ends_at"))
-            return_window_days_value = _parse_supplier_return_window_days(
+            discount_starts_at_value = parse_optional_datetime(item.get("discount_starts_at"))
+            discount_ends_at_value = parse_optional_datetime(item.get("discount_ends_at"))
+            return_window_days_value = parse_supplier_return_window_days(
                 item.get("return_window_days"),
                 supplier_id=current_user["id"],
                 db=db,
             )
-            video_url_value = _normalize_product_video_reference(item.get("video_url"))
-            parsed_variants = _parse_product_variants_payload(item.get("variants"))
+            video_url_value = normalize_product_video_reference(item.get("video_url"))
+            parsed_variants = parse_product_variants_payload(item.get("variants"))
         except HTTPException as exc:
-            errors.append(_build_bulk_upload_error(idx, exc.detail, name=name))
+            errors.append(build_bulk_upload_error(idx, exc.detail, name=name))
             continue
-        is_active = _coerce_optional_bool(item.get("is_active"), True)
+        is_active = coerce_optional_bool(item.get("is_active"), True)
         # Web URL or server-relative path for main image (alternative to file upload)
         item_image_url: Optional[str] = str(item.get("image_url", "")).strip() or None
         if item_image_url and not item_image_url.startswith(("http://", "https://", "uploads/")):
@@ -1109,7 +1175,7 @@ async def bulk_upload_products(
 
         # ── create product ──
         try:
-            product = _persist_supplier_product(
+            product = persist_supplier_product(
                 name=name,
                 description=description or "",
                 price=round(price, 2),
@@ -1148,15 +1214,15 @@ async def bulk_upload_products(
                 "ai_description": product.ai_description,
                 "image_url": product.image_url,
                 "video_url": product.videos[0].video_url if product.videos else None,
-                "visibility_regions": _serialize_product_visibility_regions(product.visibility_regions),
-                "variants": [_serialize_product_variant(variant, product.price) for variant in (product.variants or [])],
+                "visibility_regions": serialize_product_visibility_regions(product.visibility_regions),
+                "variants": [serialize_product_variant(variant, product.price) for variant in (product.variants or [])],
             })
         except HTTPException as exc:
             logger.warning("Bulk upload validation failed for %r: %s", name, exc.detail)
-            errors.append(_build_bulk_upload_error(idx, exc.detail, name=name))
+            errors.append(build_bulk_upload_error(idx, exc.detail, name=name))
         except Exception as exc:
             logger.error("Failed to create product %r: %s", name, exc)
-            errors.append(_build_bulk_upload_error(idx, str(exc), name=name))
+            errors.append(build_bulk_upload_error(idx, str(exc), name=name))
 
     db.commit()
     if created:
@@ -1204,8 +1270,8 @@ def _serialize_supplier_profile(profile) -> dict:
         "logo_url": getattr(profile, "logo_url", None),
         "banner_url": getattr(profile, "banner_url", None),
         "video_url": getattr(profile, "video_url", None),
-        "certifications": _deserialize_profile_json(getattr(profile, "certifications", None), []),
-        "social_links": _deserialize_profile_json(getattr(profile, "social_links", None), {}),
+        "certifications": deserialize_profile_json(getattr(profile, "certifications", None), []),
+        "social_links": deserialize_profile_json(getattr(profile, "social_links", None), {}),
         "established_year": getattr(profile, "established_year", None),
         "bio": profile.bio,
         "is_terms_accepted": bool(profile.is_terms_accepted),
@@ -1219,7 +1285,7 @@ def _serialize_supplier_profile(profile) -> dict:
 
 def _public_supplier_slug(profile, user: User) -> str:
     preferred_name = getattr(profile, "business_name", None) or getattr(user, "username", None)
-    return _slugify_supplier_storefront(preferred_name) or _slugify_supplier_storefront(getattr(user, "username", None))
+    return slugify_supplier_storefront(preferred_name) or slugify_supplier_storefront(getattr(user, "username", None))
 
 
 def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
@@ -1246,9 +1312,9 @@ def update_supplier_profile_business(body: dict, current_user: dict, db: Session
         if field == "business_type" and value not in _VALID_BUSINESS_TYPES:
             continue
         if field in _PROFILE_JSON_ARRAY_FIELDS:
-            value = _serialize_profile_json(value, "array")
+            value = serialize_profile_json(value, "array")
         elif field in _PROFILE_JSON_OBJECT_FIELDS:
-            value = _serialize_profile_json(value, "object")
+            value = serialize_profile_json(value, "object")
         elif field == "established_year":
             if value in (None, ""):
                 value = None
@@ -1258,7 +1324,7 @@ def update_supplier_profile_business(body: dict, current_user: dict, db: Session
                 except (TypeError, ValueError) as exc:
                     raise HTTPException(status_code=400, detail="Established year must be a number") from exc
         else:
-            value = _sanitize_profile_string(value)
+            value = sanitize_profile_string(value)
         if field == "website" and isinstance(value, str) and value and not value.startswith(("http://", "https://")):
             value = "https://" + value
         setattr(profile, "country_code" if field == "country" else field, value)
@@ -1295,7 +1361,7 @@ def upload_supplier_profile_business_media(
     }
 
     if field == "certification_image":
-        certifications = _deserialize_profile_json(getattr(profile, "certifications", None), [])
+        certifications = deserialize_profile_json(getattr(profile, "certifications", None), [])
         if index is None or index < 0:
             raise HTTPException(status_code=400, detail="Certification index is required")
         if index > len(certifications):
@@ -1309,8 +1375,8 @@ def upload_supplier_profile_business_media(
             **existing_cert,
             "image_url": media_url,
         }
-        certifications[index] = _sanitize_profile_json(updated_cert)
-        profile.certifications = json.dumps(_sanitize_profile_json(certifications))
+        certifications[index] = sanitize_profile_json(updated_cert)
+        profile.certifications = json.dumps(sanitize_profile_json(certifications))
         response_payload["index"] = index
     else:
         setattr(profile, field, media_url)
@@ -2340,7 +2406,7 @@ def list_public_suppliers(
     No PII is exposed — only business-facing fields.
     """
     region_code = normalize_country_code(country)
-    cache_key = _build_public_supplier_cache_key(
+    cache_key = build_public_supplier_cache_key(
         "list",
         {
             "q": (q or "").strip().lower(),
@@ -2418,7 +2484,7 @@ def list_public_suppliers(
 
 
 def resolve_public_supplier_slug(slug: str, db: Session) -> dict:
-    cache_key = _build_public_supplier_cache_key("slug", {"slug": slug.strip().lower()})
+    cache_key = build_public_supplier_cache_key("slug", {"slug": slug.strip().lower()})
     cached_payload = cache_get_json(cache_key)
     if isinstance(cached_payload, dict):
         return cached_payload
@@ -2471,7 +2537,7 @@ def get_public_supplier_profile(supplier_id: int, db: Session) -> dict:
     Return the full customer-facing profile for one supplier.
     Sensitive fields (phone, address, tax_id, email) are excluded.
     """
-    cache_key = _build_public_supplier_cache_key("profile", {"supplier_id": supplier_id})
+    cache_key = build_public_supplier_cache_key("profile", {"supplier_id": supplier_id})
     cached_payload = cache_get_json(cache_key)
     if isinstance(cached_payload, dict):
         return cached_payload
@@ -2569,7 +2635,7 @@ def get_public_supplier_products(
     supplier_id: int, limit: int, offset: int, db: Session
 ) -> dict:
     """Return paginated active products for the customer-facing supplier page."""
-    cache_key = _build_public_supplier_cache_key(
+    cache_key = build_public_supplier_cache_key(
         "products",
         {"supplier_id": supplier_id, "limit": limit, "offset": offset},
     )

@@ -42,7 +42,7 @@ test("parcel proof upload + verification returns valid match_score > 0 and engin
   const token = await (async () => {
     for (const email of ["supplier@zozi.com", "supplier"]) {
       try {
-        const resp = await request.post(`${BACKEND}/auth/login`, {
+        const resp = await request.post(`${BACKEND}/api/v1/auth/login`, {
           data: { username: email, password: "supplier123" },
         });
         if (!resp.ok()) continue;

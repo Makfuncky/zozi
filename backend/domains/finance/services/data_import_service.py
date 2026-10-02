@@ -8,6 +8,8 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
+from infrastructure.utils.pagination import keyset_offset_window, windowed_iterate
+
 from domains.catalog.models.products import Product
 from domains.finance.models.erp import LandedCostAllocation
 from domains.finance.models.erp import CustomsEntry
@@ -24,7 +26,7 @@ from domains.logistics.models.erp import ImportShipmentLine
 from domains.logistics.models.erp import PurchaseOrder
 from domains.logistics.models.erp import PurchaseOrderLine
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance_service import general_ledger_service as gl
+from domains.finance.services.finance_service import general_ledger as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -471,11 +473,13 @@ def finalize_landed_cost(db: Session, shipment_id: int, warehouse_id: int = None
     if not warehouse:
         raise ValueError("Warehouse is required to finalize landed cost")
     total_inventory = Decimal("0")
+    product_ids = [sl.product_id for sl in shipment.lines if sl.product_id]
+    products_by_id = {p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()} if product_ids else {}
     for sl in shipment.lines:
         if sl.landed_unit_cost and sl.quantity:
             line_total = sl.landed_unit_cost * sl.quantity
             total_inventory += line_total
-            product = db.query(Product).filter(Product.id == sl.product_id).first()
+            product = products_by_id.get(sl.product_id)
             if product:
                 new_cost = sl.landed_unit_cost
                 product.cost_price = new_cost
@@ -525,7 +529,10 @@ def run_fx_revaluation(db: Session, as_of: date = None, country_code: str = None
     )
     if country_code:
         shipments = shipments.filter(ImportShipment.country_code == country_code)
-    for shipment in shipments.all():
+    for shipment in windowed_iterate(
+        shipments.order_by(ImportShipment.id),
+        window_size=100,
+    ):
         current_rate = Decimal(str(shipment.exchange_rate))
         diff = Decimal("0")
         if current_rate != Decimal("1"):
@@ -642,7 +649,12 @@ def list_shipments(db: Session, status: str = None, po_id: int = None,
     if country_code:
         q = q.filter(ImportShipment.country_code == country_code)
     total = q.count()
-    rows = q.order_by(ImportShipment.id.desc()).offset(offset).limit(limit).all()
+    rows = keyset_offset_window(
+        q.order_by(ImportShipment.id.desc()),
+        sort_keys=[(ImportShipment.id, 'desc')],
+        offset=offset,
+        limit=limit,
+    )
     return {"total": total, "items": rows}
 
 

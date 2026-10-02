@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+﻿import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -15,7 +15,7 @@ async function backendLogin(
   password: string,
 ): Promise<string> {
   for (const username of usernameCandidates) {
-    const response = await request.post(`${BACKEND_BASE_URL}/auth/login`, {
+    const response = await request.post(`${BACKEND_BASE_URL}/api/v1/auth/login`, {
       form: { username, password },
       failOnStatusCode: false,
     });
@@ -41,7 +41,7 @@ async function createApprovedCountryPartner(
   countryCode: string,
   cityName: string,
 ): Promise<number> {
-  const createResponse = await request.post(`${BACKEND_BASE_URL}/logistics-partners/`, {
+  const createResponse = await request.post(`${BACKEND_BASE_URL}/api/v1/logistics/logistics/partners/`, {
     headers: { Authorization: `Bearer ${adminToken}` },
     data: {
       name,
@@ -57,7 +57,7 @@ async function createApprovedCountryPartner(
   expect(Number.isFinite(partnerId)).toBeTruthy();
 
   const approveProfileResponse = await request.post(
-    `${BACKEND_BASE_URL}/logistics-partners/review/profile/${partnerId}`,
+    `${BACKEND_BASE_URL}/api/v1/logistics/logistics/partners/review/profile/${partnerId}`,
     {
       headers: { Authorization: `Bearer ${adminToken}` },
       data: { status: "approved" },
@@ -66,7 +66,7 @@ async function createApprovedCountryPartner(
   );
   expect(approveProfileResponse.ok()).toBeTruthy();
 
-  const createAreaResponse = await request.post(`${BACKEND_BASE_URL}/logistics-partners/service-areas`, {
+  const createAreaResponse = await request.post(`${BACKEND_BASE_URL}/api/v1/logistics/logistics/partners/service-areas`, {
     headers: { Authorization: `Bearer ${adminToken}` },
     data: {
       partner_id: partnerId,
@@ -131,17 +131,13 @@ test("manual country switching updates logistics discovery segregation and reque
   test.slow();
 
   let lastCountryHeader: string | null = null;
-  await page.route("http://localhost:8000/logistics-partners/public**", async (route) => {
-    lastCountryHeader = route.request().headers()["x-country-code"] ?? null;
-    await route.continue();
-  });
-  await page.route("http://127.0.0.1:8000/logistics-partners/public**", async (route) => {
+  await page.route("http://127.0.0.1:3100/__api/logistics-partners/public**", async (route) => {
     lastCountryHeader = route.request().headers()["x-country-code"] ?? null;
     await route.continue();
   });
 
   const runId = `${Date.now()}`;
-  const adminToken = await backendLogin(request, ["admin@zozi.com", "admin"], "admin123");
+  const adminToken = await backendLogin(request, ["admin@zozi.com", "admin"], "E2eAdmin#2026");
 
   const pkName = `Country Partner PK ${runId}`;
   const omName = `Country Partner OM ${runId}`;
@@ -182,3 +178,4 @@ test("manual country switching updates logistics discovery segregation and reque
   await expect(page.getByText("OMR").first()).toHaveCount(0);
   await expect.poll(() => lastCountryHeader, { timeout: 30_000 }).toBe("PK");
 });
+

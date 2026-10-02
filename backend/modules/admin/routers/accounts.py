@@ -62,8 +62,8 @@ router = APIRouter(tags=["admin", "accounts"])
 def list_pending_bank_accounts_route(
     country_code: str,
     kind: str = Query("supplier"),
-    page: int = Query(1),
-    page_size: int = Query(50),
+    cursor: Optional[str] = Query(None),
+    page_size: int = Query(50, ge=1, le=200),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
     _rf_gate: None = Depends(require_feature("accounts.permissions.manage")),
@@ -73,8 +73,8 @@ def list_pending_bank_accounts_route(
         kind=kind,
         db=db,
         current_user=current_user,
-        limit=page_size,
-        offset=(page - 1) * page_size,
+        cursor=cursor,
+        page_size=page_size,
     )
 
 

@@ -37,13 +37,13 @@ services:
       - VALKEY_URL=valkey://valkey:6379
       - SECRET_KEY=${SECRET_KEY}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STORAGE_BACKEND=s3
-      - S3_BUCKET=${S3_BUCKET}
-      - S3_REGION=${S3_REGION}
-      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
-      - S3_CDN_BASE=${S3_CDN_BASE}
-      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
-      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - STORAGE_BACKEND=r2
+      - R2_BUCKET=${R2_BUCKET}
+      - R2_REGION=${R2_REGION}
+      - R2_ENDPOINT_URL=${R2_ENDPOINT_URL}
+      - R2_CDN_BASE=${R2_CDN_BASE}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
       - DB_POOL_SIZE=10
       - DB_MAX_OVERFLOW=10
       - DB_POOL_RECYCLE=600
@@ -53,6 +53,11 @@ services:
       - SENTRY_DSN=${SENTRY_DSN}
     deploy:
       replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        parallelism: 1
       resources:
         limits:
           cpus: "2"
@@ -71,6 +76,7 @@ services:
     networks:
       - zozi_net
     restart: unless-stopped
+    stop_grace_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -86,11 +92,11 @@ services:
       - APP_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
       - VALKEY_URL=valkey://valkey:6379
-      - STORAGE_BACKEND=s3
-      - S3_BUCKET=${S3_BUCKET}
-      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
-      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
-      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - STORAGE_BACKEND=r2
+      - R2_BUCKET=${R2_BUCKET}
+      - R2_ENDPOINT_URL=${R2_ENDPOINT_URL}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
       - BG_MAX_CONCURRENT=2
       - BG_MAX_SESSION_CACHE=2
     deploy:
@@ -128,6 +134,146 @@ services:
         reservations:
           cpus: "0.5"
           memory: "512M"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-worker-ml:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: celery -A jobs.celery_app worker -Q ml -c 2 -l info --max-tasks-per-child=50
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
+      - VALKEY_URL=valkey://valkey:6379
+      - SECRET_KEY=${SECRET_KEY}
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      backend:
+        condition: service_started
+      valkey:
+        condition: service_started
+    networks:
+      - zozi_net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "4G"
+        reservations:
+          cpus: "1"
+          memory: "2G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-worker-periodic:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: celery -A jobs.celery_app worker -Q periodic -c 2 -l info --max-tasks-per-child=100
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
+      - VALKEY_URL=valkey://valkey:6379
+      - SECRET_KEY=${SECRET_KEY}
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      backend:
+        condition: service_started
+      valkey:
+        condition: service_started
+    networks:
+      - zozi_net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "2G"
+        reservations:
+          cpus: "0.5"
+          memory: "1G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-worker-payouts:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: celery -A jobs.celery_app worker -Q payouts -c 4 -l info --max-tasks-per-child=100
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
+      - VALKEY_URL=valkey://valkey:6379
+      - SECRET_KEY=${SECRET_KEY}
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      backend:
+        condition: service_started
+      valkey:
+        condition: service_started
+    networks:
+      - zozi_net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "4G"
+        reservations:
+          cpus: "1"
+          memory: "2G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-worker-emails:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: celery -A jobs.celery_app worker -Q emails -c 4 -l info --max-tasks-per-child=100
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
+      - VALKEY_URL=valkey://valkey:6379
+      - SECRET_KEY=${SECRET_KEY}
+      - CELERY_BROKER_URL=valkey://valkey:6379/1
+      - CELERY_RESULT_BACKEND=valkey://valkey:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      backend:
+        condition: service_started
+      valkey:
+        condition: service_started
+    networks:
+      - zozi_net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "4G"
+        reservations:
+          cpus: "1"
+          memory: "2G"
     logging:
       driver: "json-file"
       options:

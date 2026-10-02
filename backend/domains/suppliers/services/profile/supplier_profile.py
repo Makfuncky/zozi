@@ -8,7 +8,14 @@ from domains.accounts.models.user import User
 from domains.catalog.models.products import Product
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.suppliers.services.supplier_shared import _sanitize_profile_string
+from domains.suppliers.services.supplier_shared import sanitize_profile_string
+
+__all__ = [
+    "get_supplier_profile",
+    "update_supplier_profile",
+    "request_verification",
+]
+
 
 def get_supplier_profile(current_user: dict, db: Session) -> dict:
     supplier = db.query(User).filter(User.id == current_user["id"]).first()

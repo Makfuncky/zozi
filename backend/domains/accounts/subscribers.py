@@ -38,12 +38,33 @@ def _on_supplier_kyc_approved(payload: dict) -> None:
     return None
 
 
+def _on_product_deleted(payload: dict) -> None:
+    """Clear cart items for a deleted product."""
+    product_id = payload.get("product_id")
+    if product_id is None:
+        return
+    try:
+        from infrastructure.database.database import get_db
+        from domains.accounts.models.core import CartItem
+
+        db_gen = get_db()
+        db = next(db_gen)
+        try:
+            db.query(CartItem).filter(CartItem.product_id == product_id).delete(synchronize_session=False)
+            db.commit()
+        finally:
+            next(db_gen, None)
+    except Exception:
+        logger.debug("Cart cleanup for deleted product failed", product_id=product_id, exc_info=True)
+
+
 def register() -> None:
     """Wire all account-domain subscribers onto the in-process event bus."""
     subscribe("customers.address.created", _on_customer_address_changed)
     subscribe("customers.address.updated", _on_customer_address_changed)
     subscribe("orders.payment.succeeded", _on_orders_paid)
     subscribe("suppliers.kyc.approved", _on_supplier_kyc_approved)
+    subscribe("catalog.product.deleted", _on_product_deleted)
 
 
 __all__ = ["register"]

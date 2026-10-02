@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
     retry_backoff=True,
     retry_jitter=True,
     retry_backoff_max=60,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def dispatch_payout_batch(
     self,
@@ -66,6 +68,8 @@ def dispatch_payout_batch(
     retry_backoff=True,
     retry_jitter=True,
     retry_backoff_max=60,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def process_individual_payout(
     self,
@@ -113,6 +117,8 @@ def process_individual_payout(
     retry_backoff=True,
     retry_jitter=True,
     retry_backoff_max=300,
+    time_limit=600,
+    soft_time_limit=540,
 )
 def retry_failed_payouts(self) -> dict[str, Any]:
     """Retry failed payouts from the last 24 hours."""

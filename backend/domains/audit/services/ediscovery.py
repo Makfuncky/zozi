@@ -166,7 +166,7 @@ class EDiscoveryService:
 
         # Journal entries (financial communications)
         # NOTE: finance.ports has a pre-existing IndentationError in an unrelated
-        # service file (general_ledger_service.py:2514) that blocks module-level
+        # service file (general_ledger.py:2514) that blocks module-level
         # imports. Using function-scoped import as a workaround.
         from domains.finance.models.finance import JournalEntry
         q = self.db.query(JournalEntry)

@@ -29,7 +29,7 @@ class CountryFeatureFlag(Base):
     config = Column(Text, nullable=True)
     rollout_audience = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryFeatureFlag.country_code) == CountryConfig.code')
 
@@ -50,7 +50,7 @@ class CountryStaffAssignment(Base):
     is_active = Column(Boolean, default=True)
     assigned_by = Column(Integer, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     user = relationship('User', primaryjoin='foreign(CountryStaffAssignment.user_id) == User.id')
     country = relationship('CountryConfig', primaryjoin='foreign(CountryStaffAssignment.country_code) == CountryConfig.code')
@@ -69,6 +69,7 @@ class OmanDeliveryZone(Base):
     __table_args__ = (Index('ix_oman_zone_code', 'zone_code'), {'schema': 'country'})
     id = Column(Integer, primary_key=True, index=True)
     zone_code = Column(String(20), nullable=False, unique=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
     zone_name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     car_rate = Column(Numeric(10, 2), default=0)
@@ -79,7 +80,7 @@ class OmanDeliveryZone(Base):
     cities_json = Column(Text, default='[]')
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class CountryConfigVersion(Base):
     __tablename__ = 'country_config_versions'
@@ -120,7 +121,7 @@ class SupplierKYCRequirement(Base):
     document_types_required = Column(Text, nullable=True)
     verification_wait_days = Column(Integer, default=3)
     auto_approve_threshold = Column(Numeric(5, 2), default=Decimal('0.85'))
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     country = relationship('CountryConfig', foreign_keys='SupplierKYCRequirement.country_code')
 
@@ -142,7 +143,7 @@ class LogisticsPartnerKYCRequirement(Base):
     insurance_min_coverage = Column(Numeric(15, 2), nullable=True)
     vehicle_requirements = Column(Text, nullable=True)
     background_check_required = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     country = relationship('CountryConfig', foreign_keys='LogisticsPartnerKYCRequirement.country_code')
 
@@ -188,7 +189,7 @@ class CountryLocalization(Base):
     hijri_calendar_enabled = Column(Boolean, default=False)
     rtl_layout_enabled = Column(Boolean, default=False)
     address_format = Column(String(200), default='{street}, {city}, {postal_code}')
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryLocalization.country_code) == CountryConfig.code')
 
@@ -208,7 +209,7 @@ class CountryPaymentAlias(Base):
     alias_type = Column(String(50), nullable=False)
     alias_value = Column(String(200), nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryPaymentAlias.country_code) == CountryConfig.code')
 
 class CountryLegalContract(Base):
@@ -226,7 +227,7 @@ class CountryLegalContract(Base):
     version = Column(String(20), default='1.0')
     content_html = Column(Text, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryLegalContract.country_code) == CountryConfig.code')
 
@@ -253,7 +254,7 @@ class CountryCategoryTaxRate(Base):
     notes = Column(Text, nullable=True)
     source = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryCategoryTaxRate.country_code) == CountryConfig.code')
     category = relationship('Category', primaryjoin='foreign(CountryCategoryTaxRate.category_id) == Category.id')
 
@@ -282,7 +283,7 @@ class CountryCity(Base):
     region = Column(String(100), nullable=True)
     sort_order = Column(Integer, default=0)
     source = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     country = relationship('CountryConfig')
 
@@ -303,7 +304,7 @@ class CountryHolidayCalendar(Base):
     name = Column(String(200), nullable=False)
     local_name = Column(String(200), nullable=True)
     is_observed = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryHolidayCalendar.country_code) == CountryConfig.code')
 
 class CountryGatewayConfig(Base):
@@ -327,7 +328,7 @@ class CountryGatewayConfig(Base):
     settings = Column(Text, nullable=True)
     last_tested_at = Column(DateTime, nullable=True)
     last_test_result = Column(String(20), nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryGatewayConfig.country_code) == CountryConfig.code')
 
@@ -349,7 +350,7 @@ class CountryCommunicationThread(Base):
     participants = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     last_message_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryCommunicationThread.country_code) == CountryConfig.code')
 
 class CountryCommissionRateHistory(Base):
@@ -372,7 +373,7 @@ class CountryCommissionRateHistory(Base):
     effective_to = Column(DateTime, nullable=True)
     changed_by = Column(Integer, nullable=True)
     change_reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryCommissionRateHistory.country_code) == CountryConfig.code')
     category = relationship('Category', primaryjoin='foreign(CountryCommissionRateHistory.category_id) == Category.id')
 
@@ -395,7 +396,7 @@ class CountryLogisticsZone(Base):
     cities = Column(Text, nullable=True)
     pricing_config = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryLogisticsZone.country_code) == CountryConfig.code')
 
 class CountryPayoutRule(Base):
@@ -418,7 +419,7 @@ class CountryPayoutRule(Base):
     percent_fee = Column(Numeric(5, 4), default=0)
     settlement_days = Column(Integer, default=3)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country = relationship('CountryConfig', primaryjoin='foreign(CountryPayoutRule.country_code) == CountryConfig.code')
 
 # Backwards-compatible re-export shims for models whose canonical home moved.

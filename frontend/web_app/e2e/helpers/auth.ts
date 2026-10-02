@@ -115,7 +115,7 @@ export async function bootstrapSessionViaApi(page: Page, candidates: string[], p
 }
 
 export async function bootstrapAdminSessionViaApi(page: Page) {
-  return bootstrapSessionViaApi(page, ["admin@zozi.com", "admin"], "admin123");
+  return bootstrapSessionViaApi(page, ["admin@zozi.com", "admin"], "E2eAdmin#2026");
 }
 
 export async function ensurePanelSession(

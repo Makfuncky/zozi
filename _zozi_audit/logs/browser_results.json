@@ -1,0 +1,9 @@
+{
+  "browser_steps": [],
+  "browser_summary": {
+    "source": "_browser_test/reports/run/results.json",
+    "steps": 0,
+    "failures": 0,
+    "exit_code": 1
+  }
+}

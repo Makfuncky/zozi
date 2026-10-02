@@ -315,8 +315,10 @@ async def websocket_user(websocket: WebSocket, token: str=Query(...)):
             if event_type == 'ping':
                 await websocket.send_json({'type': 'pong'})
     except WebSocketDisconnect:
+        logger.info("WebSocket user disconnected: user_id=%s", user_id)
         pass
-    except Exception:
+    except Exception as exc:
+        logger.exception("WebSocket user error: %s", exc)
         pass
     finally:
         if scope == 'staff':

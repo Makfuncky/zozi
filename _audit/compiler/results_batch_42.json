@@ -1,0 +1,52 @@
+{
+  "batch": 42,
+  "files": [
+    {
+      "path": "backend/tests/architecture/test_country_staff_seed.py",
+      "findings": [
+        {
+          "id": "ARCHTEST-007",
+          "status": "RESOLVED",
+          "evidence": "All 4 tests pass: `pytest tests/architecture/test_country_staff_seed.py -v` reports 4 passed in 2.60s. Tests import `infrastructure.database.seed._seed_constants` and `scripts.seed_loader` without SECRET_KEY validation errors.",
+          "counter_evidence": "Verified 2026-10-01: `pytest tests/architecture/test_country_staff_seed.py -v` output shows all tests passing. `python -c \"from infrastructure.database.seed import _seed_constants; print('OK')\"` succeeds.",
+          "benchmark_mismatch": null,
+          "notes": "The SECRET_KEY blocking issue is fixed. All 4 seed tests now pass. The finding's described failure mode (3 of 4 tests failing with SECRET_KEY validation error) no longer exists."
+        }
+      ]
+    },
+    {
+      "path": "backend/tests/architecture/test_feature_catalog.py",
+      "findings": [
+        {
+          "id": "ARCHTEST-003",
+          "status": "RESOLVED",
+          "evidence": "`rbac.catalog._load()` succeeds without SECRET_KEY error (verified via `python -c \"from rbac.catalog import _load; _load(); print('OK')\"`). 3 of 5 tests now pass; the 2 remaining failures are NOT due to SECRET_KEY but due to Law 4 feature catalog violations: (1) media domain features (`media.asset.upload`, `media.asset.read`, `media.asset.delete`, `media.upload_session.create`) are not aggregated in rbac.catalog; (2) require_feature literals (`moderation.suppliers`, `promotions.flash_sales.read`, `promotions.flash_sales.write`, `support.read`, `support.reply`, `support.update`, `catalog.review.create`) are not present in the catalog.",
+          "counter_evidence": "Verified 2026-10-01: `pytest tests/architecture/test_feature_catalog.py -v` shows 3 passed, 2 failed. The failures are Law 4 violations, not SECRET_KEY validation errors.",
+          "benchmark_mismatch": "Law 4 violation persists: media domain features are defined in `domains/media/features.py` but not aggregated in `rbac.catalog`. Also, require_feature literals in routers are not present in catalog. These are separate benchmark violations from the original finding.",
+          "notes": "The original finding's specific failure mode (SECRET_KEY blocking catalog import) is RESOLVED. However, 2 of 5 tests still fail for different reasons — actual Law 4 feature catalog violations that were masked by the SECRET_KEY blocker."
+        },
+        {
+          "id": "ARCHTEST-004",
+          "status": "RESOLVED",
+          "evidence": "`test_every_domain_exposes_features_module` PASSED in pytest run. `domains/media/features.py` exists (confirmed by glob). All 17 domains now have features.py files.",
+          "counter_evidence": "Verified 2026-10-01: `pytest tests/architecture/test_feature_catalog.py::TestFeaturesSingleSourced -v` shows both tests passing. `glob('domains/media/features.py')` confirms file exists.",
+          "benchmark_mismatch": null,
+          "notes": "The finding claimed `domains/media/features.py` was missing and causing test failure. The file now exists and the test passes. The original failure mode is resolved."
+        }
+      ]
+    },
+    {
+      "path": "backend/tests/architecture/test_model_relocation.py",
+      "findings": [
+        {
+          "id": "ARCHTEST-002",
+          "status": "VALID",
+          "evidence": "File genuinely does not exist. Confirmed by: (1) glob search for `**/*relocation*` under backend/tests/architecture/ returned no results; (2) `read` tool returned 'File not found'.",
+          "counter_evidence": null,
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 6 (schema discipline) and Law 51 (single table ownership) require automated gates verifying model placement, but no such test file exists. The benchmark's test structure diagram (Section 3) lists `test_model_relocation.py` under `tests/architecture/`, implying it should exist.",
+          "notes": "The missing test file means there is no automated gate verifying that ORM models reside in their correct domain packages (Law 6, Law 51, Law 55). This is a genuine gap in the architecture test suite."
+        }
+      ]
+    }
+  ]
+}

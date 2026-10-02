@@ -18,7 +18,7 @@ from playwright.sync_api import sync_playwright
 BACKEND = "http://localhost:8000"
 AUTH_PATH = "/auth/login"
 AUTOMATION_PATH = "/automation/run"
-ADMIN_CREDS = {"username": "admin@zozi.com", "password": "admin123"}
+ADMIN_CREDS = {"username": "admin@zozi.com", "password": "E2eAdmin#2026"}
 
 
 def main() -> int:

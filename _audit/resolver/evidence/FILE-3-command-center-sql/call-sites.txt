@@ -1,0 +1,107 @@
+=== SCOPE EVIDENCE: call sites of safe_count ===
+
+Search performed (read-only) across the whole repo, excluding the separate git
+worktrees under .kilo/ (other branches, not this working tree) and node_modules.
+
+--------------------------------------------------------------------------------
+FINDING: the analytics safe_count this contract covers has ZERO call sites.
+--------------------------------------------------------------------------------
+
+1. DEFINITION (the one in my contract's file)
+   backend/domains/analytics/services/aggregation/command_center_query_service.py:177
+     def safe_count(db, table, where=None, params=None) -> Any:
+   (line 77 before my fix)
+
+2. RE-EXPORT ONLY - no named importer anywhere
+   backend/domains/analytics/services/aggregation/__init__.py:5
+     from domains.analytics.services.aggregation.command_center_query_service import *
+   backend/domains/analytics/services/__init__.py:5
+     from domains.analytics.services.aggregation import *
+   These make the name reachable as
+     domains.analytics.services.aggregation.safe_count
+     domains.analytics.services.safe_count
+   but NO module anywhere references safe_count through either path.
+
+3. backend/tests/  -> grep for 'safe_count' returns zero matches.
+   tests/ (repo root)        -> grep for 'safe_count' returns zero matches.
+   Therefore no pre-existing test constrains the signature, so the
+   Law 34 signature change breaks nothing. This is why SCOPE_INSUFFICIENT was
+   NOT required.
+
+4. MODULE-LEVEL IMPORT CHAIN RE-VERIFIED AFTER MY FIX
+   safe_fetch: True     safe_count: True     Predicate: True
+   safe_fetch sig: (db: 'Session', sql: 'str', params: 'dict | None' = None, scalar: 'bool' = False) -> 'Any'
+   safe_count sig: (db: 'Session', table: 'str',
+                    where: 'Optional[Union[ColumnElement, Predicate, list[Predicate]]]' = None,
+                    params: 'dict | None' = None) -> 'Any'
+   (underscore-private names were never exported by import *, before or after -
+    that is pre-existing Python semantics, not a regression)
+
+--------------------------------------------------------------------------------
+THE 19 OTHER `safe_count` HITS BELOW ARE **NOT** CALL SITES OF MY FUNCTION
+--------------------------------------------------------------------------------
+
+backend/domains/governance/services/command_center/command_center_service.py:98
+     def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
+
+This is an INDEPENDENT, SEPARATE DEFINITION in the governance domain. It does
+not import the analytics one. Its 19 internal call sites resolve to that local
+definition, not to the function my contract governs:
+
+  backend/domains/governance/services/command_center/command_center_service.py:588
+  backend/domains/governance/services/command_center/command_center_service.py:596
+  backend/domains/governance/services/command_center/command_center_service.py:602
+  backend/domains/governance/services/command_center/command_center_service.py:603
+  backend/domains/governance/services/command_center/command_center_service.py:632
+  backend/domains/governance/services/command_center/command_center_service.py:633
+  backend/domains/governance/services/command_center/command_center_service.py:695
+  backend/domains/governance/services/command_center/command_center_service.py:696
+  backend/domains/governance/services/command_center/command_center_service.py:698
+  backend/domains/governance/services/command_center/command_center_service.py:699
+  backend/domains/governance/services/command_center/command_center_service.py:708
+  backend/domains/governance/services/command_center/command_center_service.py:710
+  backend/domains/governance/services/command_center/command_center_service.py:711
+  backend/domains/governance/services/command_center/command_center_service.py:714
+  backend/domains/governance/services/command_center/command_center_service.py:715
+  backend/domains/governance/services/command_center/command_center_service.py:716
+  backend/domains/governance/services/command_center/command_center_service.py:717
+  backend/domains/governance/services/command_center/command_center_service.py:718
+  backend/domains/governance/services/command_center/command_center_service.py:719
+
+None of them need to change for MY fix to be sound, because none of them call my
+function.
+
+--------------------------------------------------------------------------------
+OUT-OF-SCOPE FINDING THAT NEEDS A SUPERSEDING CONTRACT (NOT FIXED BY ME)
+--------------------------------------------------------------------------------
+
+The governance twin carries a BYTE-IDENTICAL copy of the vulnerable
+_validate_where_clause and the same 14-keyword denylist, and still interpolates
+the fragment at command_center_service.py:101:
+
+  validated_where = _validate_where_clause(where)
+  sql = "SELECT COUNT(*) FROM " + validated_table + " WHERE " + validated_where
+  return safe_fetch(db, text(sql), params, scalar=True)
+
+A prior change only swapped the f-string for concatenation and wrapped it in
+text(); the fragment is still interpolated, so the Law 34 violation remains.
+Converting an f-string to string concatenation is NOT a Law 34 fix.
+
+Proof against that file's ACTUAL source (extracted via AST, exec'd in isolation,
+no DB/config import needed) - script file3_governance_twin_probe.py:
+
+  extracted assign  line 30: ALLOWED_TABLES = {...}
+  extracted func    line 39: def _validate_table_name(where...)
+  extracted assign  line 46: _BLOCKED_KEYWORDS = frozenset({'union','select',...
+  extracted assign  line 50: _KEYWORD_PATTERN = re.compile(...
+  extracted func    line 56: def _validate_where_clause(where: str) -> str:
+
+  --- same payloads, against the governance twin's real validator ---
+    ACCEPTED  '1=1 or pg_sleep(5)=1' -> ...   <<< STILL VULNERABLE
+    ACCEPTED  '1=1 or 1=1'            -> ...   <<< STILL VULNERABLE
+    ACCEPTED  'id=1 or benchmark(10000000,sha1(1))' -> ...   <<< STILL VULNERABLE
+  names in its ALLOWED_TABLES: 20
+
+That one IS live and has 19 real call sites, so it is a strictly higher-priority
+exposure than the file I was given. It is outside contract 1 and I did not touch
+it. See the log for the exact contract it needs.

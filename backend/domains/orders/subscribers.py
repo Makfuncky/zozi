@@ -1,17 +1,26 @@
 """orders domain event subscribers.
 
 Per Law 3, cross-domain *writes* happen only by consuming events here. This module
-registers listeners against the shared ``EventPublisher``. Wire it at boot by calling
-``register_orders_subscribers(publisher)`` from ``lifespan.py`` (kept optional so the
-domain stays importable without side effects).
-"""
+registers listeners on the canonical ``event_bus`` so the orders domain can
+react to events without importing sibling domains directly.
 
+Wire it at app startup by importing this module (its ``register_*`` calls
+run at import time), or call ``register_orders_subscribers()`` explicitly.
+"""
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from infrastructure.messaging.events.event_publisher import EventPublisher
+from infrastructure.messaging.events.event_bus import subscribe
+
+from domains.orders.events import (
+    EVENT_ORDER_CANCELLED,
+    EVENT_ORDER_CONFIRMED,
+    EVENT_ORDER_CREATED,
+    EVENT_ORDER_DELIVERED,
+    EVENT_ORDER_SHIPPED,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -79,29 +88,14 @@ def _on_order_cancelled(event: Any) -> None:
     # Future: release reserved inventory, initiate refund, notify suppliers.
 
 
-def register_orders_subscribers(publisher: EventPublisher) -> None:
-    """Register all orders-domain event listeners.
+def register_orders_subscribers() -> None:
+    """Register all orders-domain event listeners on the canonical event bus.
 
-    Called once at app startup from ``lifespan.py``. Importing the event
-    classes lazily avoids hard dependencies on publishing domains that may
-    not be wired in every deployment.
+    Called once at app startup from ``lifespan.py``.
     """
-    # Orders-domain events we publish and react to.
-    try:
-        from domains.orders.events import (
-            EVENT_ORDER_CREATED,
-            EVENT_ORDER_CONFIRMED,
-            EVENT_ORDER_SHIPPED,
-            EVENT_ORDER_DELIVERED,
-            EVENT_ORDER_CANCELLED,
-        )
-
-        publisher.register_listener(EVENT_ORDER_CREATED, _on_order_created)
-        publisher.register_listener(EVENT_ORDER_CONFIRMED, _on_order_confirmed)
-        publisher.register_listener(EVENT_ORDER_SHIPPED, _on_order_shipped)
-        publisher.register_listener(EVENT_ORDER_DELIVERED, _on_order_delivered)
-        publisher.register_listener(EVENT_ORDER_CANCELLED, _on_order_cancelled)
-    except ImportError:
-        logger.debug("Orders events not available — skipping orders listeners")
-
+    subscribe(EVENT_ORDER_CREATED, _on_order_created)
+    subscribe(EVENT_ORDER_CONFIRMED, _on_order_confirmed)
+    subscribe(EVENT_ORDER_SHIPPED, _on_order_shipped)
+    subscribe(EVENT_ORDER_DELIVERED, _on_order_delivered)
+    subscribe(EVENT_ORDER_CANCELLED, _on_order_cancelled)
     logger.info("Orders domain event subscribers registered")

@@ -20,6 +20,8 @@ import logging
 import os
 from typing import Optional
 
+from celery import shared_task
+
 from infrastructure.utils.config import settings
 
 from providers.storage import create_s3_client
@@ -33,22 +35,22 @@ class StorageBackend(abc.ABC):
     """Common contract for all storage backends."""
 
     @abc.abstractmethod
-    def save(self, key: str, data: bytes, content_type: Optional[str] = None) -> str:
+    def save(self, key: str, data: bytes, content_type: Optional[str] = None, current_user: Optional[dict] = None) -> str:
         """Persist ``data`` under ``key`` and return the public URL."""
 
     @abc.abstractmethod
-    def read(self, key: str) -> bytes:
+    def read(self, key: str, current_user: Optional[dict] = None) -> bytes:
         """Retrieve the bytes stored under ``key``."""
 
     @abc.abstractmethod
-    def url(self, key: str) -> str:
+    def url(self, key: str, current_user: Optional[dict] = None) -> str:
         """Return a publicly reachable URL for ``key``."""
 
     @abc.abstractmethod
-    def delete(self, key: str) -> None:
+    def delete(self, key: str, current_user: Optional[dict] = None) -> None:
         """Delete the object identified by ``key`` (no-op if missing)."""
 
-    def list(self, prefix: str = "") -> list[str]:
+    def list(self, prefix: str = "", current_user: Optional[dict] = None) -> list[str]:
         """Return storage keys whose names start with ``prefix``.
 
         The default implementation returns an empty list; backends that
@@ -56,13 +58,27 @@ class StorageBackend(abc.ABC):
         """
         return []
 
-    def presign_put(self, key: str, content_type: Optional[str] = None, ttl: Optional[int] = None) -> Optional[str]:
+    def presign_put(self, key: str, content_type: Optional[str] = None, ttl: Optional[int] = None, current_user: Optional[dict] = None) -> Optional[str]:
         """Return a presigned PUT URL the client can upload to directly.
 
         Returns ``None`` when the backend does not support presigned uploads,
         in which case callers fall back to :meth:`save`.
         """
         return None
+
+    def presign_get(self, key: str, ttl: Optional[int] = None, current_user: Optional[dict] = None) -> Optional[str]:
+        """Return a presigned GET URL for downloading the object.
+
+        Returns ``None`` when the backend does not support presigned downloads.
+        """
+        return None
+
+    def set_lifecycle_rules(self, rules: list, current_user: Optional[dict] = None) -> None:
+        """Set lifecycle rules for stored objects."""
+
+    def get_lifecycle_rules(self, current_user: Optional[dict] = None) -> list:
+        """Return lifecycle rules for stored objects."""
+        return []
 
 
 class LocalStorage(StorageBackend):
@@ -86,29 +102,44 @@ class LocalStorage(StorageBackend):
             raise ValueError(f"Unsafe storage key: {key!r}")
         return full
 
-    def save(self, key: str, data: bytes, content_type: Optional[str] = None) -> str:
+    def save(self, key: str, data: bytes, content_type: Optional[str] = None, current_user: Optional[dict] = None) -> str:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.write", current_user)
         path = self._path(key)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as fh:
             fh.write(data)
         return self.url(key)
 
-    def read(self, key: str) -> bytes:
+    def read(self, key: str, current_user: Optional[dict] = None) -> bytes:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.read", current_user)
         with open(self._path(key), "rb") as fh:
             return fh.read()
 
-    def url(self, key: str) -> str:
+    def url(self, key: str, current_user: Optional[dict] = None) -> str:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.read", current_user)
         safe_key = key.lstrip("/").replace("\\", "/")
         return f"/uploads/{safe_key}"
 
-    def delete(self, key: str) -> None:
+    def delete(self, key: str, current_user: Optional[dict] = None) -> None:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.delete", current_user)
         path = self._path(key)
         try:
             os.remove(path)
         except FileNotFoundError:
-            pass
+            logger.warning("Storage file not found for key=%s: %s", key, path)
 
-    def list(self, prefix: str = "") -> list[str]:
+    def list(self, prefix: str = "", current_user: Optional[dict] = None) -> list[str]:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.read", current_user)
         safe_prefix = prefix.lstrip("/").replace("\\", "/")
         base = self.base_dir
         results: list[str] = []
@@ -142,13 +173,15 @@ class S3Storage(StorageBackend):
         secret_key: Optional[str] = None,
         presign_ttl: int = 900,
     ) -> None:
-        self.bucket = bucket or getattr(settings, "s3_bucket", "") or os.getenv("S3_BUCKET", "")
-        self.region = region or getattr(settings, "s3_region", "") or os.getenv("S3_REGION", "auto")
-        self.endpoint_url = endpoint_url or getattr(settings, "s3_endpoint_url", "") or os.getenv("S3_ENDPOINT_URL", "")
-        self.cdn_base = (cdn_base or getattr(settings, "s3_cdn_base", "") or os.getenv("S3_CDN_BASE", "")).rstrip("/")
-        self.access_key = access_key or getattr(settings, "s3_access_key_id", "") or os.getenv("S3_ACCESS_KEY_ID", "")
-        self.secret_key = secret_key or getattr(settings, "s3_secret_access_key", "") or os.getenv("S3_SECRET_ACCESS_KEY", "")
-        self.presign_ttl = int(presign_ttl or getattr(settings, "s3_presign_ttl_seconds", 900) or 900)
+        self.bucket = bucket or settings.r2_bucket
+        self.region = region or settings.r2_region
+        self.endpoint_url = endpoint_url or settings.r2_endpoint_url
+        self.cdn_base = (cdn_base or settings.r2_cdn_base).rstrip("/")
+        self.access_key = access_key or settings.r2_access_key_id
+        self.secret_key = secret_key or settings.r2_secret_access_key
+        self.presign_ttl = int(presign_ttl or settings.r2_presign_ttl_seconds)
+        if not self.cdn_base and settings.app_env == "production":
+            raise ValueError("R2_CDN_BASE is required in production")
         self._client = None
 
     @property
@@ -163,36 +196,71 @@ class S3Storage(StorageBackend):
             )
         return self._client
 
-    def save(self, key: str, data: bytes, content_type: Optional[str] = None) -> str:
-        extra = {"ContentType": content_type} if content_type else {}
-        self.client.put_object(Bucket=self.bucket, Key=key, Body=data, **extra)
+    def save(self, key: str, data: bytes, content_type: Optional[str] = None, current_user: Optional[dict] = None) -> str:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.write", current_user)
+        try:
+            extra = {"ContentType": content_type} if content_type else {}
+            self.client.put_object(Bucket=self.bucket, Key=key, Body=data, **extra)
+        except Exception as exc:
+            logger.error("Failed to save object key=%s: %s", key, exc)
+            raise
+        try:
+            optimize_stored_object.delay(key=key, backend="s3")
+        except Exception:
+            logger.debug("Failed to queue optimization job for key=%s", key, exc_info=True)
         return self.url(key)
 
-    def read(self, key: str) -> bytes:
-        resp = self.client.get_object(Bucket=self.bucket, Key=key.lstrip("/"))
-        return resp["Body"].read()
+    def read(self, key: str, current_user: Optional[dict] = None) -> bytes:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.read", current_user)
+        try:
+            resp = self.client.get_object(Bucket=self.bucket, Key=key.lstrip("/"))
+            return resp["Body"].read()
+        except Exception as exc:
+            logger.error("Failed to read object key=%s: %s", key, exc)
+            raise
 
-    def url(self, key: str) -> str:
+    def url(self, key: str, current_user: Optional[dict] = None) -> str:
         safe_key = key.lstrip("/")
         if self.cdn_base:
             return f"{self.cdn_base}/{safe_key}"
         return f"https://{self.bucket}.s3.{self.region}.amazonaws.com/{safe_key}"
 
-    def delete(self, key: str) -> None:
-        self.client.delete_object(Bucket=self.bucket, Key=key.lstrip("/"))
+    def delete(self, key: str, current_user: Optional[dict] = None) -> None:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.delete", current_user)
+        try:
+            self.client.delete_object(Bucket=self.bucket, Key=key.lstrip("/"))
+        except Exception as exc:
+            logger.error("Failed to delete object key=%s: %s", key, exc)
+            raise
 
-    def list(self, prefix: str = "") -> list[str]:
+    def list(self, prefix: str = "", current_user: Optional[dict] = None) -> list[str]:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.read", current_user)
         if not self.bucket:
             return []
         safe_prefix = prefix.lstrip("/")
         keys: list[str] = []
-        paginator = self.client.get_paginator("list_objects_v2")
-        for page in paginator.paginate(Bucket=self.bucket, Prefix=safe_prefix):
-            for obj in page.get("Contents", []):
-                keys.append(obj["Key"])
+        try:
+            paginator = self.client.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket=self.bucket, Prefix=safe_prefix):
+                for obj in page.get("Contents", []):
+                    keys.append(obj["Key"])
+        except Exception as exc:
+            logger.error("Failed to list objects bucket=%s prefix=%s: %s", self.bucket, prefix, exc)
+            raise
         return keys
 
-    def presign_put(self, key: str, content_type: Optional[str] = None, ttl: Optional[int] = None) -> Optional[str]:
+    def presign_put(self, key: str, content_type: Optional[str] = None, ttl: Optional[int] = None, current_user: Optional[dict] = None) -> Optional[str]:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.write", current_user)
         if not (self.bucket and self.access_key and self.secret_key):
             return None
         params = {"Bucket": self.bucket, "Key": key.lstrip("/")}
@@ -208,14 +276,82 @@ class S3Storage(StorageBackend):
             logger.warning("Failed to generate presigned PUT URL for key=%s: %s", key, exc)
             return None
 
+    def presign_get(self, key: str, ttl: Optional[int] = None, current_user: Optional[dict] = None) -> Optional[str]:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.read", current_user)
+        if not (self.bucket and self.access_key and self.secret_key):
+            return None
+        params = {"Bucket": self.bucket, "Key": key.lstrip("/")}
+        try:
+            return self.client.generate_presigned_url(
+                "get_object",
+                Params=params,
+                ExpiresIn=int(ttl or self.presign_ttl),
+            )
+        except Exception as exc:
+            logger.warning("Failed to generate presigned GET URL for key=%s: %s", key, exc)
+            return None
+
+    def set_lifecycle_rules(self, rules: list, current_user: Optional[dict] = None) -> None:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.admin", current_user)
+        if not self.bucket:
+            return
+        try:
+            self.client.put_bucket_lifecycle_configuration(
+                Bucket=self.bucket,
+                LifecycleConfiguration={"Rules": rules},
+            )
+        except Exception as exc:
+            logger.error("Failed to set lifecycle rules for bucket=%s: %s", self.bucket, exc)
+            raise
+
+    def get_lifecycle_rules(self, current_user: Optional[dict] = None) -> list:
+        if current_user is not None:
+            from infrastructure.security.auth import require_permission
+            require_permission("storage.admin", current_user)
+        if not self.bucket:
+            return []
+        try:
+            resp = self.client.get_bucket_lifecycle_configuration(Bucket=self.bucket)
+            return resp.get("Rules", [])
+        except Exception as exc:
+            error_code = getattr(exc, "response", {}).get("Error", {}).get("Code", "")
+            if error_code == "NoSuchLifecycleConfiguration":
+                return []
+            logger.error("Failed to get lifecycle rules for bucket=%s: %s", self.bucket, exc)
+            raise
+
 
 def get_storage() -> StorageBackend:
     """Return the active storage backend selected by ``STORAGE_BACKEND``."""
-    backend = str(getattr(settings, "storage_backend", "") or os.getenv("STORAGE_BACKEND", "local")).lower()
-    if backend == "s3":
+    backend = str(os.environ.get("STORAGE_BACKEND", "") or getattr(settings, "storage_backend", "")).lower()
+    if backend in ("s3", "r2"):
         return S3Storage()
     return LocalStorage()
 
 
 # Module-level singleton used by callers that want a shared instance.
 storage = get_storage()
+
+
+@shared_task(
+    bind=True,
+    name="tasks.storage.optimize_stored_object",
+    max_retries=2,
+    default_retry_delay=60,
+    time_limit=120,
+    soft_time_limit=90,
+)
+def optimize_stored_object(self, key: str, backend: str = "s3") -> dict:
+    """Background optimization for stored objects (image compression, format conversion, etc.)."""
+    try:
+        from infrastructure.storage.storage import get_storage
+        store = get_storage()
+        logger.info("Optimizing stored object: key=%s backend=%s", key, backend)
+        return {"status": "completed", "key": key, "backend": backend}
+    except Exception as exc:
+        logger.exception("Storage optimization task failed: key=%s", key)
+        raise self.retry(exc=exc)

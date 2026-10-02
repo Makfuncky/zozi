@@ -9,18 +9,30 @@ from sqlalchemy.orm import Session, selectinload
 
 from infrastructure.utils.pagination import keyset_offset_window
 from domains.catalog.models.products import Product
+from domains.orders.models.orders import OrderItem
 from domains.suppliers.services.supplier_shared import (
     _UNSET,
-    _build_list_page_payload,
-    _build_supplier_product_payload,
-    _normalize_optional_product_text,
-    _normalize_product_video_reference,
-    _normalize_product_visibility_regions,
-    _parse_product_variants_payload,
-    _parse_supplier_return_window_days,
-    _persist_supplier_product,
-    _replace_product_variants,
+    build_list_page_payload,
+    build_supplier_product_payload,
+    normalize_optional_product_text,
+    normalize_product_video_reference,
+    normalize_product_visibility_regions,
+    parse_product_variants_payload,
+    parse_supplier_return_window_days,
+    persist_supplier_product,
+    replace_product_variants,
 )
+from domains.catalog.ports import _bump_product_cache_version
+
+__all__ = [
+    "get_supplier_products",
+    "get_supplier_product",
+    "process_product_image",
+    "create_supplier_product",
+    "update_supplier_product",
+    "delete_supplier_product",
+]
+
 
 def get_supplier_products(current_user: dict, db: Session, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     base_query = db.query(Product).options(selectinload(Product.variants)).filter(
@@ -60,14 +72,14 @@ def get_supplier_products(current_user: dict, db: Session, limit: Optional[int] 
         sales_data = sales_map.get(cast(int, product.id), {"sales_count": 0, "revenue": 0.0})
 
         result.append({
-            **_build_supplier_product_payload(
+            **build_supplier_product_payload(
                 product,
                 sales_count=int(sales_data["sales_count"]),
                 revenue=float(sales_data["revenue"]),
             )
         })
     resolved_page_size = limit if limit is not None else len(result)
-    return _build_list_page_payload(result, total, offset=offset, page_size=resolved_page_size)
+    return build_list_page_payload(result, total, offset=offset, page_size=resolved_page_size)
 
 
 def get_supplier_product(product_id: int, current_user: dict, db: Session) -> dict:
@@ -84,7 +96,7 @@ def get_supplier_product(product_id: int, current_user: dict, db: Session) -> di
         func.sum(OrderItem.price * OrderItem.quantity).label("revenue"),
     ).filter(OrderItem.product_id == product.id).first()
 
-    return _build_supplier_product_payload(
+    return build_supplier_product_payload(
         product,
         sales_count=sales_data.sales_count or 0,
         revenue=float(sales_data.revenue or 0),
@@ -248,7 +260,7 @@ async def create_supplier_product_upload(
     if video and video.filename:
         video_url = _save_upload(video, current_user["id"], db=db)
     else:
-        video_url = _normalize_product_video_reference(video_url_link)
+        video_url = normalize_product_video_reference(video_url_link)
 
     # Resolve gallery media: file uploads first, then URL entries
     extra_paths: list = []
@@ -278,7 +290,7 @@ async def create_supplier_product_upload(
             detail=f"A product can include up to {MAX_ADDITIONAL_IMAGES} gallery media items",
         )
 
-    new_product = _persist_supplier_product(
+    new_product = persist_supplier_product(
         name=name,
         description=description,
         price=price,
@@ -373,7 +385,7 @@ def create_supplier_product(
     if video is not None and getattr(video, "filename", None):
         normalized_video_url = _save_upload(video, current_user["id"], db=db)
     else:
-        normalized_video_url = _normalize_product_video_reference(video_url)
+        normalized_video_url = normalize_product_video_reference(video_url)
     extra_paths: list[str] = []
     for extra_file in additional_images or []:
         if extra_file and extra_file.filename:
@@ -391,7 +403,7 @@ def create_supplier_product(
             except Exception:
                 continue
 
-    new_product = _persist_supplier_product(
+    new_product = persist_supplier_product(
         name=name,
         description=description,
         price=price,
@@ -426,7 +438,7 @@ def create_supplier_product(
     _bump_product_cache_version()
     db.refresh(new_product)
 
-    return _build_supplier_product_payload(new_product)
+    return build_supplier_product_payload(new_product)
 
 
 def update_supplier_product(
@@ -497,7 +509,7 @@ def update_supplier_product(
     if category is not None:
         product.category = category
     if subcategory is not None:
-        product.subcategory = _normalize_optional_product_text(subcategory)
+        product.subcategory = normalize_optional_product_text(subcategory)
     if color is not None:
         product.color = color
     if is_active is not None:
@@ -509,7 +521,7 @@ def update_supplier_product(
     if materials is not None:
         product.materials = materials
     if visibility_regions is not _UNSET:
-        normalized_visibility_regions = _normalize_product_visibility_regions(visibility_regions)
+        normalized_visibility_regions = normalize_product_visibility_regions(visibility_regions)
         product.visibility_regions = json.dumps(normalized_visibility_regions) if normalized_visibility_regions else None
     if weight is not None:
         product.weight = weight
@@ -522,7 +534,7 @@ def update_supplier_product(
     if discount_ends_at is not _UNSET:
         product.discount_ends_at = discount_ends_at
     if return_window_days is not _UNSET:
-        product.return_window_days = _parse_supplier_return_window_days(
+        product.return_window_days = parse_supplier_return_window_days(
             return_window_days,
             supplier_id=current_user["id"],
             db=db,
@@ -530,13 +542,13 @@ def update_supplier_product(
     if is_new is not _UNSET:
         product.is_new = is_new
     if variants_payload is not _UNSET:
-        _replace_product_variants(product, _parse_product_variants_payload(variants_payload), db)
+        replace_product_variants(new_product, parse_product_variants_payload(variants_payload), db)
 
     db.commit()
     _bump_product_cache_version()
     db.refresh(product)
 
-    return _build_supplier_product_payload(product)
+    return build_supplier_product_payload(product)
 
 
 def delete_supplier_product(product_id: int, current_user: dict, db: Session) -> dict:

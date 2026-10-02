@@ -51,7 +51,7 @@ class EmailCampaign(Base, TenantMixin):
     status_code = Column(String(50), default='draft')
     send_at = Column(DateTime, nullable=True)
     created_by = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     from_name = Column(String(200), nullable=True)
     target_audience = Column(Text, nullable=True)
@@ -70,6 +70,7 @@ class EmailTemplate(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
+    country_code = Column(String(2), nullable=True)
     __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), unique=True, index=True, nullable=False)
@@ -78,7 +79,7 @@ class EmailTemplate(Base):
     template_type = Column(String(50), default='marketing')
     is_active = Column(Boolean, default=True)
     created_by = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
 class NewsletterSubscriber(Base):
@@ -90,10 +91,11 @@ class NewsletterSubscriber(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
+    country_code = Column(String(2), nullable=True)
     __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
 class EmailCampaignLog(Base):
@@ -106,6 +108,7 @@ class EmailCampaignLog(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
+    country_code = Column(String(2), nullable=True)
     __table_args__ = (CheckConstraint("status_code IN ('sent', 'delivered', 'bounced', 'failed')", name='chk_email_campaign_logs_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey('comms.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
@@ -114,7 +117,7 @@ class EmailCampaignLog(Base):
     sent_at = Column(DateTime, default=utcnow)
     delivered_at = Column(DateTime, nullable=True)
     opened_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class CampaignRecipient(Base):
     __tablename__ = 'campaign_recipients'
@@ -126,6 +129,7 @@ class CampaignRecipient(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
+    country_code = Column(String(2), nullable=True)
     __table_args__ = (CheckConstraint("status_code IN ('pending', 'sent', 'delivered', 'bounced', 'failed', 'unsubscribed')", name='chk_campaign_recipients_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey('comms.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
@@ -137,7 +141,7 @@ class CampaignRecipient(Base):
     opened_at = Column(DateTime, nullable=True)
     clicked_at = Column(DateTime, nullable=True)
     bounced_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     campaign = relationship('EmailCampaign', back_populates='recipients')
     user = relationship('User', primaryjoin='foreign(CampaignRecipient.user_id) == User.id')
 
@@ -151,6 +155,7 @@ class EmailDeliveryEvent(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
+    country_code = Column(String(2), nullable=True)
     __table_args__ = (Index('ix_email_delivery_events_details', 'details'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String(50), nullable=False)
@@ -158,7 +163,7 @@ class EmailDeliveryEvent(Base):
     subject = Column(String(255), nullable=True)
     status_code = Column(String(50), default='sent')
     details = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class EmailSuppression(Base):
     __tablename__ = 'email_suppressions'
@@ -170,6 +175,7 @@ class EmailSuppression(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
+    country_code = Column(String(2), nullable=True)
     __table_args__ = (CheckConstraint("status_code IN ('active', 'inactive', 'expired')", name='chk_email_suppressions_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), nullable=False, index=True)
@@ -180,7 +186,7 @@ class EmailSuppression(Base):
     notes = Column(Text, nullable=True)
     suppressed_at = Column(DateTime, nullable=True)
     last_event_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class EmailRuntimeConfig(Base):
     __tablename__ = 'email_runtime_configs'
@@ -192,6 +198,7 @@ class EmailRuntimeConfig(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
+    country_code = Column(String(2), nullable=True)
     __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(String(50), default='environment')

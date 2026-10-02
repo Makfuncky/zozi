@@ -1,0 +1,68 @@
+{
+  "batch": 2,
+  "files": [
+    {
+      "path": "backend/config.py",
+      "findings": [
+        {
+          "id": "CONTRAD-019",
+          "status": "VALID",
+          "evidence": "Line 279: `default_country: str = Field(default=\"AE\")` — AE is hardcoded as the default country",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §20: DEFAULT_COUNTRY default must be US (ISO 3166-1 alpha-2). Code defaults to AE (Oman), contradicting the canonical default.",
+          "notes": "Finding still applies. The AE default affects RLS session context, localization, and tax rules for any non-AE deployment."
+        },
+        {
+          "id": "CONTRAD-020",
+          "status": "VALID",
+          "evidence": "Lines 204-205: `vat_rate: float = Field(default=0.0)` and `zozi_commission_rate: float = Field(default=0.1)` — both monetary config values typed as float",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 19: Monetary values MUST use Decimal or Numeric; float is FORBIDDEN for money. These are commission and VAT rates that flow into financial calculations.",
+          "notes": "Finding still applies. Float rounding errors will propagate into finance domain calculations."
+        },
+        {
+          "id": "D2P-DOCKER-005",
+          "status": "VALID",
+          "evidence": "Lines 189-191: `readiness_require_valkey: bool = Field(default=False)`, `readiness_require_email: bool = Field(default=True)`, `readiness_require_payments: bool = Field(default=True)` — valkey defaults to False while email and payments default to True",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 81: /health/ready must fail closed (503) when critical dependencies are down. With readiness_require_valkey=False, the readiness probe returns 200 even when Valkey is down, violating the fail-closed principle.",
+          "notes": "Finding still applies. Valkey is the session store, cache, rate-limit backend, and Celery broker — its unavailability should make the instance unhealthy."
+        },
+        {
+          "id": "BLOCKER-002",
+          "status": "INVALID",
+          "evidence": "Line 472: `raise AttributeError(f\"Settings has no attribute '{name}'\")` — this is the generic `__getattr__` fallback that raises AttributeError for ANY undefined attribute name, not specifically `DATABASE_URL`",
+          "counter_evidence": "The finding claims `settings.DATABASE_URL` raises AttributeError because the actual attribute is `settings.database_url` (lowercase). However, the code at line 472 is a generic `__getattr__` method that catches all undefined attribute access. There is no `DATABASE_URL` attribute reference at line 472. The finding misidentifies the line and mischaracterizes the issue.",
+          "benchmark_mismatch": "",
+          "notes": "The finding's described issue (DATABASE_URL case mismatch) is not evidenced at line 472. The actual code is a generic __getattr__ fallback. While AttributeError on undefined settings is real behavior, the specific claim about DATABASE_URL at line 472 is false."
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "findings": [
+        {
+          "id": "TECH-005",
+          "status": "VALID",
+          "evidence": "Line 37: `pip install -r backend/requirements.txt` — CI uses pip for dependency installation",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §19: uv 0.12.12 is the canonical package manager. CI must use `uv sync --frozen`, not pip.",
+          "notes": "Finding still applies. The CI workflow uses pip with a requirements.txt lockfile pattern, entirely bypassing the uv + pyproject.toml canonical workflow."
+        }
+      ]
+    },
+    {
+      "path": "backend/infrastructure/observability/metrics.py",
+      "findings": [
+        {
+          "id": "TECH-013",
+          "status": "VALID",
+          "evidence": "Line 1: `from prometheus_client import Counter, Histogram, Gauge, REGISTRY` — direct import from standalone prometheus_client package",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §9: prometheus-fastapi-instrumentator 8.1.0+ is the canonical metrics library. Standalone prometheus_client is forbidden ('Do NOT install prometheus-client standalone').",
+          "notes": "Finding still applies. The metrics module directly imports from prometheus_client, which is the exact forbidden pattern documented in TECHNOLOGY_STACK.md."
+        }
+      ]
+    }
+  ]
+}

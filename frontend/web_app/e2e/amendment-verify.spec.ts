@@ -1,10 +1,10 @@
-import { expect, test } from "@playwright/test";
+﻿import { expect, test } from "@playwright/test";
 import { ensurePanelSession } from "./helpers/auth";
 
 test.describe.configure({ timeout: 180_000 });
 
 const cases: Array<{ role: string; user: string; pass: string; loginPath: string; landing: string; landingRegex: RegExp; title: string }> = [
-  { role: "admin", user: "admin@zozi.com", pass: "admin123", loginPath: "/admin/login", landing: "/admin/dashboard", landingRegex: /\/admin\/dashboard(?:\?|$)/, title: "Choose how many dashboard widgets fit in view" },
+  { role: "admin", user: "admin@zozi.com", pass: "E2eAdmin#2026", loginPath: "/admin/login", landing: "/admin/dashboard", landingRegex: /\/admin\/dashboard(?:\?|$)/, title: "Choose how many dashboard widgets fit in view" },
   { role: "supplier", user: "supplier@zozi.com", pass: "supplier123", loginPath: "/supplier/login", landing: "/supplier/dashboard", landingRegex: /\/supplier\/dashboard(?:\?|$)/, title: "Business performance at a glance" },
   { role: "logistics", user: "logistics@zozi.com", pass: "logistics123", loginPath: "/logistics-partner/login", landing: "/logistics-partner/dashboard", landingRegex: /\/logistics-partner\/dashboard(?:\?|$)/, title: "Real-time logistics operations overview" },
   { role: "logistics", user: "logistics@zozi.com", pass: "logistics123", loginPath: "/logistics-partner/login", landing: "/logistics-partner/routes", landingRegex: /\/logistics-partner\/routes(?:\?|$)/, title: "Total Coverage" },
@@ -35,3 +35,4 @@ for (const c of cases) {
     expect(overflow).toBe(false);
   });
 }
+

@@ -92,14 +92,8 @@ class UserPermissionOverride(Base):
 
 class PermissionAuditLog(Base):
     __tablename__ = 'permission_audit_log'
+    WORM_RETENTION_DAYS = 2555  # ~7 years; rows must never be updated or deleted
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_by = Column(Integer, nullable=True)
-    created_by = Column(Integer, nullable=True, index=True)
-    updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (Index('ix_permission_audit_log_country_created', 'country_code', 'created_at'), {'schema': 'security'})
     id = Column(Integer, primary_key=True, index=True)
     actor_id = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=False, index=True)

@@ -10,12 +10,6 @@ from domains.catalog.services.products.bulk_ops_write_service import (
     bulk_archive_entities,
     bulk_restore_entities,
 )
-# TODO: Module not yet created
-# from domains.governance.services.products.admin_catalog_operations_service import (
-#     bulk_category_change,
-#     bulk_product_moderation,
-# )
-
 from domains.catalog.services.products.products_service import _bump_product_cache_version
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest

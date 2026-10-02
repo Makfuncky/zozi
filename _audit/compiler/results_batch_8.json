@@ -1,0 +1,44 @@
+{
+  "batch": 8,
+  "files": [
+    {
+      "path": "backend/alembic/versions/*.py",
+      "findings": [
+        {
+          "id": "BLOCKER-007",
+          "status": "VALID",
+          "evidence": "Parsed all 75 migration files; exactly 5 divergent heads remain: 20260930_0002, 20260930_0003, 20260930_0006, 20260930_0007, 20261001_0001. Each is a leaf in the revision graph with no child migration.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 49 (ARCHITECTURE_STACK.md): Alembic history MUST remain linear with exactly one head.",
+          "notes": "Verified via custom graph analysis of all migration revision/down_revision declarations. No merge migration unifies these 5 heads."
+        }
+      ]
+    },
+    {
+      "path": "backend/alembic/versions/2026_08_06_0001_add_analytics_audit_columns.py",
+      "findings": [
+        {
+          "id": "TF-001",
+          "status": "VALID",
+          "evidence": "Global migration state has 5 divergent heads (20260930_0002, 20260930_0003, 20260930_0006, 20260930_0007, 20261001_0001). This file is a child of 20260805_0001 and not itself a head, but the repo-wide migration graph is not linear.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 49 (ARCHITECTURE_STACK.md): Linear migration history with single head required.",
+          "notes": "The cited file is an observation point, not the root cause. The finding is valid because the global migration graph is divergent."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/catalog/models/commission.py",
+      "findings": [
+        {
+          "id": "FEAT-031",
+          "status": "VALID",
+          "evidence": "CommissionGroup (line 38), CommissionProfile (line 78), CommissionRule (line 116), and CommissionTransaction (line 168) all declare {\"schema\": \"catalog\"}. CommissionAgreement in backend/domains/finance/models/commission.py:19 declares {\"schema\": \"finance\"}.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 6 (ARCHITECTURE_STACK.md): Every table in a domain Postgres schema; commission models are split across catalog and finance schemas.",
+          "notes": "Split ownership violates schema discipline. The finding correctly identifies cross-schema commission model distribution."
+        }
+      ]
+    }
+  ]
+}

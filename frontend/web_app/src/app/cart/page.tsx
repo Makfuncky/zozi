@@ -28,6 +28,10 @@ export default function CartPage() {
   const getTotal = useCartStore((s) => s.getTotal);
   const getItemCount = useCartStore((s) => s.getItemCount);
   const addToast = useToastStore((s) => s.addToast);
+  const formatPrice = useCurrencyStore((s) => s.format);
+  const locale = useLocaleStore((s) => s.locale);
+  const tr = useLocaleStore((s) => s.t);
+  const isRtl = isRtlLocale(locale);
 
   const [totals, setTotals] = useState<{
     subtotal: number;
@@ -40,6 +44,12 @@ export default function CartPage() {
     free_shipping_threshold: number;
     free_shipping_applied: boolean;
   } | null>(null);
+
+  const [shipCountry, setShipCountry] = useState("");
+  const [shipCity, setShipCity] = useState("");
+  const [shipLoading, setShipLoading] = useState(false);
+  const [shipQuote, setShipQuote] = useState<{ shipping_amount: number; partner_name?: string; estimated_delivery_min?: number; estimated_delivery_max?: number } | null>(null);
+  const [showShippingForm, setShowShippingForm] = useState(false);
 
   useEffect(() => {
     useCartStore.getState().initialize();
@@ -80,7 +90,7 @@ export default function CartPage() {
         body: JSON.stringify({
           country: shipCountry.trim().toUpperCase(),
           city: shipCity.trim(),
-          subtotal,
+          subtotal: totals?.subtotal ?? 0,
           items: items.map((i) => ({
             product_id: Number(i.id),
             quantity: i.quantity,

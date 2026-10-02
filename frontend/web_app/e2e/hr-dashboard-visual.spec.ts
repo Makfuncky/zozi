@@ -1,5 +1,5 @@
-/**
- * HR Dashboard — Visual Regression Smoke Test
+﻿/**
+ * HR Dashboard â€” Visual Regression Smoke Test
  *
  * Takes named element-level screenshots of each section on the /admin/hr page
  * and compares them against stored baselines.  Playwright's built-in
@@ -7,11 +7,11 @@
  * subsequent runs fail on any pixel difference.
  *
  * Sections captured:
- *   - hr-dashboard-full         — Viewport screenshot of the loaded page
- *   - hr-stats-row              — 6 StatCards (employees, pipeline, score, etc.)
- *   - hr-onboarding-pipeline    — Onboarding pipeline card
- *   - hr-performance-health     — Performance health card (green/amber/red bars)
- *   - hr-activity-feed          — Recent activity feed card
+ *   - hr-dashboard-full         â€” Viewport screenshot of the loaded page
+ *   - hr-stats-row              â€” 6 StatCards (employees, pipeline, score, etc.)
+ *   - hr-onboarding-pipeline    â€” Onboarding pipeline card
+ *   - hr-performance-health     â€” Performance health card (green/amber/red bars)
+ *   - hr-activity-feed          â€” Recent activity feed card
  *
  * Prerequisites:
  *   cd backend && python -m uvicorn main:app --host 127.0.0.1 --port 8000
@@ -24,7 +24,7 @@
  *   npx playwright test e2e/hr-dashboard-visual.spec.ts --update-snapshots
  *
  * Environment:
- *   CI=false  — local dev; CI=true  — CI pipeline (strict diffs)
+ *   CI=false  â€” local dev; CI=true  â€” CI pipeline (strict diffs)
  */
 import { expect, test } from "@playwright/test";
 import {
@@ -37,14 +37,14 @@ import {
 
 test.describe.configure({ timeout: 120_000 });
 
-// ── Visual Regression Test ────────────────────────────────────────────
+// â”€â”€ Visual Regression Test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test.describe("HR Dashboard Visual Regression", () => {
   test.beforeEach(async ({ page }) => {
     const hasSession = await bootstrapAdminSessionViaApi(page);
     if (!hasSession) {
       await page.goto("/admin/login");
-      await submitCredentialForm(page, "admin@zozi.com", "admin123");
+      await submitCredentialForm(page, "admin@zozi.com", "E2eAdmin#2026");
       await waitForSessionFlag(page);
     }
   });
@@ -55,13 +55,13 @@ test.describe("HR Dashboard Visual Regression", () => {
 
     await openProtectedRoute(page, "/admin/hr", /\/admin\/hr(?:\?|$)/, 120_000);
 
-    // Wait for the dashboard data to finish loading — the "HR Dashboard" heading
+    // Wait for the dashboard data to finish loading â€” the "HR Dashboard" heading
     // and at least one StatCard value confirm the API call completed.
     await expect(page.getByText("HR Dashboard")).toBeVisible({ timeout: 30_000 });
     // Ensure the skeleton loading state has fully resolved
     await page.waitForTimeout(2_000);
 
-    // ── Full-page viewport screenshot ──
+    // â”€â”€ Full-page viewport screenshot â”€â”€
     // Captures the entire page as rendered; animations should have settled.
     await expect(page).toHaveScreenshot("hr-dashboard-full.png", {
       fullPage: true,
@@ -153,3 +153,4 @@ test.describe("HR Dashboard Visual Regression", () => {
     });
   });
 });
+

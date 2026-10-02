@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
     name="tasks.bank_statement_importer.import_bank_statement_task",
     max_retries=2,
     default_retry_delay=120,
+    time_limit=600,
+    soft_time_limit=540,
 )
 def import_bank_statement_task(
     self,

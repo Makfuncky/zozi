@@ -11,6 +11,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any, Iterable, List, Mapping, Optional, cast
 
 from fastapi import HTTPException, Response
@@ -32,6 +33,10 @@ logger = logging.getLogger(__name__)
 MODERATION_APPROVED = "approved"
 MODERATION_REJECTED = "rejected"
 MODERATION_PENDING = "pending"
+
+# Moderation endpoint responses — single source of truth for the API messages.
+MODERATION_APPROVE_MESSAGE = "Product approved"
+MODERATION_REJECT_MESSAGE = "Product rejected"
 
 BADGE_FIELDS: frozenset[str] = frozenset({"is_hot", "is_featured"})
 
@@ -86,12 +91,13 @@ def _normalize(payload: Mapping[str, Any], allowed: frozenset[str]) -> dict[str,
 
 def unique_slug(db: Session, name: str) -> str:
     base = generate_slug(name)
-    slug = base
-    counter = 1
-    while db.query(Product.id).filter(Product.slug == slug).first() is not None:
-        slug = f"{base}-{counter}"
-        counter += 1
-    return slug
+    # Single existence check; DB unique constraint is the final guard
+    existing = db.query(Product.id).filter(Product.slug == base).first()
+    if existing is None:
+        return base
+    # If taken, append a short unique suffix; the DB unique constraint
+    # is the authoritative guard against any race condition on insert
+    return f"{base}-{uuid.uuid4().hex[:6]}"
 
 
 def get_product_by_id(db: Session, product_id: int) -> Optional[Product]:
@@ -99,7 +105,9 @@ def get_product_by_id(db: Session, product_id: int) -> Optional[Product]:
 
 
 def _is_product_restricted_for_country(product: Product, country_code: str) -> bool:
-    return False
+    if not product.country_code:
+        return False
+    return product.country_code.upper() != country_code.upper()
 
 
 def get_product_by_slug_hash(db: Session, slug_hash: str) -> Optional[Product]:
@@ -145,6 +153,7 @@ def _serialize_product(product: Product) -> dict[str, Any]:
         "color": getattr(product, "color", None),
         "image_url": product.image_url,
         "images": getattr(product, "images", None),
+        "blur_data_url": getattr(product, "blur_data_url", None),
         "is_active": product.is_active,
         "is_deleted": product.is_deleted,
         "is_featured": getattr(product, "is_featured", False),
@@ -192,6 +201,136 @@ def _apply_live_offer_metadata(product: Product, sale: Any = None) -> Product:
 
 # === PRODUCT LISTING & SEARCH ===
 
+def list_products(
+    db: Session,
+    response: Optional[Response] = None,
+    *,
+    q: Optional[str] = None,
+    category: Optional[str] = None,
+    subcategory: Optional[str] = None,
+    brand: Optional[str] = None,
+    brands: Optional[str] = None,
+    color: Optional[str] = None,
+    region: Optional[str] = None,
+    supplier: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    min_rating: Optional[float] = None,
+    max_rating: Optional[float] = None,
+    new_arrivals: bool = False,
+    best_sellers: bool = False,
+    trending: bool = False,
+    in_stock: bool = False,
+    min_discount: Optional[int] = None,
+    deals: bool = False,
+    sort: Optional[str] = None,
+    sale_id: Optional[int] = None,
+    limit: int = 24,
+    offset: int = 0,
+    country_code: Optional[str] = None,
+    has_video: bool = False,
+    attributes: Optional[str] = None,
+    cursor: Optional[str] = None,
+    supplier_id: Optional[int] = None,
+    exact_country_code: Optional[str] = None,
+    moderation_status: Optional[str] = None,
+    include_deleted: bool = False,
+) -> dict[str, Any]:
+    resolved_country = country_code or region
+
+    def _apply_sort(q_obj):
+        if sort == "price_asc":
+            return q_obj.order_by(Product.price.asc(), Product.id.asc())
+        elif sort == "price_desc":
+            return q_obj.order_by(Product.price.desc(), Product.id.desc())
+        elif sort == "rating":
+            return q_obj.order_by(Product.rating.desc(), Product.id.desc())
+        elif sort == "bestseller":
+            return q_obj.order_by(Product.sales_count.desc(), Product.id.desc())
+        elif sort == "discount":
+            return q_obj.order_by(Product.compare_price.desc().nullslast(), Product.price.asc(), Product.id.asc())
+        else:
+            return q_obj.order_by(Product.created_at.desc(), Product.id.desc())
+
+    def _apply_filters(q_obj):
+        if q:
+            q_obj = q_obj.filter(Product.name.ilike(f"%{q}%"))
+        if category:
+            q_obj = q_obj.filter(Product.category == category)
+        if subcategory:
+            q_obj = q_obj.filter(Product.subcategory == subcategory)
+        if brand:
+            q_obj = q_obj.filter(Product.brand == brand)
+        if min_price is not None:
+            q_obj = q_obj.filter(Product.price >= min_price)
+        if max_price is not None:
+            q_obj = q_obj.filter(Product.price <= max_price)
+        if min_rating is not None:
+            q_obj = q_obj.filter(Product.rating >= min_rating)
+        if in_stock:
+            q_obj = q_obj.filter(Product.stock > 0)
+        if resolved_country:
+            from domains.country.ports import get_country_config
+            country = get_country_config(db, resolved_country)
+            if country and country.product_restrictions_json:
+                    try:
+                        raw = country.product_restrictions_json
+                        restricted = json.loads(raw) if isinstance(raw, str) else raw
+                        if isinstance(restricted, list) and restricted:
+                            q_obj = q_obj.filter(~Product.category.in_([str(r).strip() for r in restricted]))
+                    except Exception:
+                        pass
+        if has_video:
+            q_obj = q_obj.filter(Product.video_count > 0)
+        if supplier_id is not None:
+            q_obj = q_obj.filter(Product.supplier_id == supplier_id)
+        if exact_country_code is not None:
+            q_obj = q_obj.filter(Product.country_code == exact_country_code)
+        if moderation_status is not None:
+            q_obj = q_obj.filter(Product.moderation_status == moderation_status)
+        return q_obj
+
+    def _compute() -> tuple[list[dict[str, Any]], int]:
+        base_q = db.query(Product)
+        if not include_deleted:
+            base_q = base_q.filter(Product.is_deleted == False)
+        base_q = _apply_filters(base_q)
+        total = base_q.count()
+        ordered = _apply_sort(base_q)
+
+        import base64
+        import json as _json
+
+        if cursor:
+            try:
+                payload = _json.loads(base64.urlsafe_b64decode(cursor.encode("utf-8")).decode("utf-8"))
+                last_id = int(payload["id"])
+            except Exception:
+                last_id = None
+            if last_id is not None:
+                ordered = ordered.filter(Product.id < last_id)
+            products = ordered.limit(limit).all()
+            next_cursor = None
+            if products:
+                next_cursor = base64.urlsafe_b64encode(
+                    _json.dumps({"id": products[-1].id}).encode("utf-8")
+                ).decode("utf-8")
+                if response is not None:
+                    response.headers["X-Next-Cursor"] = next_cursor
+            return _serialize_products(products), total
+
+        products = ordered.offset(offset).limit(limit).all()
+        return _serialize_products(products), total
+
+    serialized_products, total = _compute()
+
+    if response is not None:
+        response.headers["X-Total-Count"] = str(total)
+        response.headers["Cache-Control"] = _PUBLIC_PRODUCTS_CACHE_CONTROL
+
+    return {"items": serialized_products, "total": total}
+
+
 def get_products(
     db: Session,
     response: Optional[Response],
@@ -220,70 +359,40 @@ def get_products(
     country_code: Optional[str] = None,
     has_video: bool = False,
     attributes: Optional[str] = None,
+    cursor: Optional[str] = None,
 ) -> tuple[list[dict[str, Any]], int]:
-    resolved_country = country_code or region
-
-    def _compute() -> tuple[list[dict[str, Any]], int]:
-        q_obj = db.query(Product).filter(Product.is_deleted == False)
-
-        if q:
-            q_obj = q_obj.filter(Product.name.ilike(f"%{q}%"))
-        if category:
-            q_obj = q_obj.filter(Product.category == category)
-        if subcategory:
-            q_obj = q_obj.filter(Product.subcategory == subcategory)
-        if brand:
-            q_obj = q_obj.filter(Product.brand == brand)
-        if min_price is not None:
-            q_obj = q_obj.filter(Product.price >= min_price)
-        if max_price is not None:
-            q_obj = q_obj.filter(Product.price <= max_price)
-        if min_rating is not None:
-            q_obj = q_obj.filter(Product.rating >= min_rating)
-        if in_stock:
-            q_obj = q_obj.filter(Product.stock > 0)
-        if resolved_country:
-            from domains.country.ports import get_country_config
-            country = get_country_config(db, resolved_country)
-            if country and country.product_restrictions_json:
-                    try:
-                        raw = country.product_restrictions_json
-                        restricted = json.loads(raw) if isinstance(raw, str) else raw
-                        if isinstance(restricted, list) and restricted:
-                            q_obj = q_obj.filter(~Product.category.in_([str(r).strip() for r in restricted]))
-                    except Exception:
-                        pass
-
-        total = q_obj.count()
-
-        if sort == "price_asc":
-            q_obj = q_obj.order_by(Product.price.asc())
-        elif sort == "price_desc":
-            q_obj = q_obj.order_by(Product.price.desc())
-        elif sort == "rating":
-            q_obj = q_obj.order_by(Product.rating.desc())
-        elif sort == "bestseller":
-            q_obj = q_obj.order_by(Product.sales_count.desc())
-        elif sort == "discount":
-            q_obj = q_obj.order_by(Product.compare_price.desc().nullslast(), Product.price.asc())
-        else:
-            q_obj = q_obj.order_by(Product.created_at.desc())
-
-        # NOTE: OFFSET pagination is acceptable here because:
-        # 1. Product listings are typically browsed 1-3 pages deep (limit=24)
-        # 2. Results are cached (ttl=300s) so repeated page views hit cache
-        # 3. Total count is cached alongside results
-        # For admin/back-office deep pagination, use keyset via cursor param.
-        products = q_obj.offset(offset).limit(limit).all()
-        return _serialize_products(products), total
-
-    serialized_products, total = _compute()
-
-    if response is not None:
-        response.headers["X-Total-Count"] = str(total)
-        response.headers["Cache-Control"] = _PUBLIC_PRODUCTS_CACHE_CONTROL
-
-    return serialized_products, total
+    """Tuple-returning facade over :func:`list_products` (legacy call sites)."""
+    result = list_products(
+        db,
+        response,
+        q=q,
+        category=category,
+        subcategory=subcategory,
+        brand=brand,
+        brands=brands,
+        color=color,
+        region=region,
+        supplier=supplier,
+        min_price=min_price,
+        max_price=max_price,
+        min_rating=min_rating,
+        max_rating=max_rating,
+        new_arrivals=new_arrivals,
+        best_sellers=best_sellers,
+        trending=trending,
+        in_stock=in_stock,
+        min_discount=min_discount,
+        deals=deals,
+        sort=sort,
+        sale_id=sale_id,
+        limit=limit,
+        offset=offset,
+        country_code=country_code,
+        has_video=has_video,
+        attributes=attributes,
+        cursor=cursor,
+    )
+    return result["items"], result["total"]
 
 
 def autocomplete_products(q: str, db: Session) -> List[str]:
@@ -379,32 +488,24 @@ def delete_product(product_id: int, current_user: dict, db: Session) -> dict:
 
     product_name = str(product.name)
 
-    # Cross-domain reads via ports (Law 3 compliant)
-    from domains.accounts.ports import CartItem
+    # Same-domain cascade (Law 3: cross-domain writes go via events;
+    # same-domain writes may remain in the service)
     from domains.catalog.models.products import Wishlist, Review
-    from domains.comms.ports import Notification
-    from domains.orders.ports import Order, OrderItem
-
-    db.query(CartItem).filter(CartItem.product_id == product_id).delete(synchronize_session=False)
     db.query(Wishlist).filter(Wishlist.product_id == product_id).delete(synchronize_session=False)
     db.query(Review).filter(Review.product_id == product_id, Review.is_deleted == False).update({"is_deleted": True}, synchronize_session=False)
 
-    affected_orders = (
-        db.query(Order).join(OrderItem, OrderItem.order_id == Order.id)
-        .filter(OrderItem.product_id == product_id, Order.status.in_(["pending", "processing", "confirmed"]))
-        .all()
-    )
-    for order in affected_orders:
-        db.add(Notification(
-            user_id=order.user_id, type="system", title="Product Unavailable",
-            message=f"A product ('{product_name}') in your order #{order.id} is no longer available.",
-            link=f"/orders/{order.id}",
-        ))
-
     product.is_deleted = True
     db.commit()
-    
-    return {"message": "Product deleted", "orders_notified": len(affected_orders)}
+
+    # Emit event for cross-domain side effects (Law 3)
+    from domains.catalog.events import publish_product_deleted
+    publish_product_deleted(
+        product_id=product_id,
+        product_name=product_name,
+        supplier_id=product.supplier_id,
+    )
+
+    return {"message": "Product deleted"}
 
 
 # === INVENTORY MANAGEMENT ===
@@ -567,11 +668,16 @@ def list_my_products(page: int, size: int, current_user: Any, db: Session) -> di
     supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
     if not supplier:
         raise HTTPException(404, "Supplier profile not found")
-    q = db.query(Product).filter(Product.supplier_id == supplier.id)
-    total = q.count()
-    # NOTE: OFFSET acceptable — supplier product lists are scoped to one supplier
-    items = q.offset((page - 1) * size).limit(size).all()
-    return {"items": [_serialize_product(p) for p in items], "total": total, "page": page, "size": size}
+    # NOTE: OFFSET acceptable — supplier product lists are scoped to one supplier.
+    # include_deleted=True preserves the historic supplier view (no is_deleted gate).
+    result = list_products(
+        db,
+        supplier_id=supplier.id,
+        include_deleted=True,
+        limit=size,
+        offset=(page - 1) * size,
+    )
+    return {"items": result["items"], "total": result["total"], "page": page, "size": size}
 
 
 # === BARCODE LOOKUP ===
@@ -644,7 +750,7 @@ def approve_product_by_id(db: Session, country_code: str, product_id: int) -> di
     product.is_verified = True
     db.commit()
     
-    return {"message": "Product approved"}
+    return {"message": MODERATION_APPROVE_MESSAGE}
 
 
 def reject_product_by_id(db: Session, country_code: str, product_id: int, reason: Optional[str] = None) -> dict:
@@ -653,7 +759,7 @@ def reject_product_by_id(db: Session, country_code: str, product_id: int, reason
     product.moderation_notes = reason
     db.commit()
     
-    return {"message": "Product rejected"}
+    return {"message": MODERATION_REJECT_MESSAGE}
 
 
 def set_moderation_status(db: Session, product: Product, status: str, *, notes: Optional[str] = None) -> Product:
@@ -742,15 +848,18 @@ def update_product_discount_supplier(product_id: int, payload: dict, current_use
 
     discount_pct = 0
     now = utcnow()
-    if product.compare_price and product.price and float(product.compare_price) > 0:
-        discount_pct = round((1 - float(product.price) / float(product.compare_price)) * 100, 1)
+    if product.compare_price and product.price:
+        price = Decimal(str(product.price))
+        compare_price = Decimal(str(product.compare_price))
+        if compare_price > 0:
+            discount_pct = round((1 - price / compare_price) * 100, 1)
     is_active = bool(product.compare_price and product.compare_price > product.price)
     return {"status": "success", "product_id": product.id, "price": float(product.price), "compare_price": float(product.compare_price) if product.compare_price else None, "discount_percentage": discount_pct, "discount_active": is_active}
 
 
 def build_discount_summary(product: Product, now: datetime) -> dict[str, Any]:
-    price = float(product.price or 0)
-    compare_price = float(product.compare_price) if product.compare_price is not None else None
+    price = Decimal(str(product.price or 0))
+    compare_price = Decimal(str(product.compare_price)) if product.compare_price is not None else None
     discount_pct = 0.0
     if compare_price and compare_price > 0:
         discount_pct = round((1 - price / compare_price) * 100, 1)
@@ -761,7 +870,7 @@ def build_discount_summary(product: Product, now: datetime) -> dict[str, Any]:
         active = active and starts_at <= now <= ends_at
     elif starts_at:
         active = active and starts_at <= now
-    return {"product_id": product.id, "price": price, "compare_price": compare_price, "discount_percentage": discount_pct, "discount_active": active}
+    return {"product_id": product.id, "price": float(price), "compare_price": float(compare_price) if compare_price is not None else None, "discount_percentage": discount_pct, "discount_active": active}
 
 
 # === PRODUCT VERIFICATION ===
@@ -840,15 +949,16 @@ def update_supplier_product_fields(product_id: int, payload: dict, current_user:
 # === ADMIN OPERATIONS ===
 
 def list_products_paginated(db: Session, *, country_code: str, page: int, size: int, moderation_status: Optional[str] = None, include_deleted: bool = False) -> dict:
-    q = db.query(Product).filter(Product.country_code == country_code)
-    if moderation_status:
-        q = q.filter(Product.moderation_status == moderation_status)
-    if not include_deleted:
-        q = q.filter(Product.is_deleted == False)
-    total = q.count()
     # NOTE: OFFSET acceptable — admin product grids are typically small result sets
-    items = q.offset((page - 1) * size).limit(size).all()
-    return {"items": [_serialize_product(p) for p in items], "total": total, "page": page, "size": size}
+    result = list_products(
+        db,
+        exact_country_code=country_code,
+        moderation_status=moderation_status or None,
+        include_deleted=include_deleted,
+        limit=size,
+        offset=(page - 1) * size,
+    )
+    return {"items": result["items"], "total": result["total"], "page": page, "size": size}
 
 
 # === HEALTH & METRICS ===

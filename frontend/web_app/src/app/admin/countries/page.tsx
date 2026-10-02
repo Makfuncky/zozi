@@ -1149,6 +1149,9 @@ export default function AdminCountriesPage() {
       <PanelContent width="full" className="space-y-4">
         {/* Single Ledger — all countries, expandable rows */}
         <section className="theme-card rounded-xl border p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-bold text-text">Country Configuration Ledger</h2>
+          </div>
           <CountryLedgerTable
             countries={countrySummaries}
             expandedCode={expandedCountryCode}

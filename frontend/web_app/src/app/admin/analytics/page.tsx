@@ -9,7 +9,7 @@ import AdminLayout from "@/components/AdminLayout";
 import { PanelContent, PanelLoadingState } from "@/components/PanelPage";
 import { useAdminCountry } from "@/lib/useAdminCountry";
 import { useAuth } from "@/lib/useAuth";
-import { useCurrencyStore } from "@/stores/currencyStore";
+import { useCurrencyStore } from "@/lib/currencyStore";
 import { useToastStore } from "@/stores/toastStore";
 import { apiFetch } from "@/lib/api";
 

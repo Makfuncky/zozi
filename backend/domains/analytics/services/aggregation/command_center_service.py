@@ -26,7 +26,7 @@ from domains.orders.ports import Order
 from domains.hr.ports import Employee
 from domains.security.ports import AlertEscalationRule
 from infrastructure.utils.config import settings
-from infrastructure.utils.redis_client import redis_client
+from infrastructure.valkey.client import valkey_client
 
 logger = structlog.get_logger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -444,8 +444,8 @@ class CommandCenterService:
         }
     
     def get_treasury_metrics(self) -> dict:
-        redis = redis_client()
-        cached = redis.get("command_center:treasury_metrics")
+        valkey = valkey_client()
+        cached = valkey.get("command_center:treasury_metrics")
         if cached:
             return json.loads(cached)
         
@@ -480,7 +480,7 @@ class CommandCenterService:
             "updated_at": now.isoformat()
         }
 
-        redis.setex("command_center:treasury_metrics", 300, json.dumps(metrics))
+        valkey.setex("command_center:treasury_metrics", 300, json.dumps(metrics))
         return metrics
     
     def get_predictive_simulation(self, simulation_type: str, parameters: dict) -> dict:
@@ -541,8 +541,8 @@ class CommandCenterService:
         return result
     
     def get_external_intelligence(self) -> dict:
-        redis = redis_client()
-        cached = redis.get("command_center:external_intelligence")
+        valkey = valkey_client()
+        cached = valkey.get("command_center:external_intelligence")
         if cached:
             return json.loads(cached)
         
@@ -553,7 +553,7 @@ class CommandCenterService:
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         
-        redis.setex("command_center:external_intelligence", 600, json.dumps(result))
+        valkey.setex("command_center:external_intelligence", 600, json.dumps(result))
         return result
     
     def _get_currency_rates(self) -> dict:
@@ -566,8 +566,8 @@ class CommandCenterService:
         return [{"competitor": "Amazon", "news": "Launched new logistics arm", "impact": "medium"}]
     
     def get_workforce_metrics(self) -> dict:
-        redis = redis_client()
-        cached = redis.get("command_center:workforce_metrics")
+        valkey = valkey_client()
+        cached = valkey.get("command_center:workforce_metrics")
         if cached:
             return json.loads(cached)
         
@@ -585,7 +585,7 @@ class CommandCenterService:
             "updated_at": now.isoformat()
         }
         
-        redis.setex("command_center:workforce_metrics", 300, json.dumps(result))
+        valkey.setex("command_center:workforce_metrics", 300, json.dumps(result))
         return result
     
     def _get_employees_by_department(self) -> List[dict]:

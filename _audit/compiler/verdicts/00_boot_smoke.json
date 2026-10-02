@@ -1,0 +1,470 @@
+{
+  "agent_id": "COMP-V31-00_boot_smoke_test",
+  "dimension": "00_boot_smoke_test",
+  "records_considered": 8,
+  "verdict_breakdown": {
+    "REAL": 2,
+    "FALSE_POSITIVE": 6,
+    "ALREADY_FIXED": 0,
+    "BLOCKED_BY_CONTRADICTION": 0
+  },
+  "boot_baseline": {
+    "verdict": "boot is CLEAN and importable in this environment; 0 ERRORs, 4 WARNINGs at LOG_LEVEL=DEBUG",
+    "canonical_command": "$env:PYTHONPATH=\"backend\"; python -c \"from backend.main import app; print('ROUTES', len(app.routes))\"",
+    "len_app_routes": 84,
+    "len_openapi_paths": 738,
+    "len_app_routes_with_prometheus_enabled": 85,
+    "len_openapi_paths_with_prometheus_enabled": 738,
+    "metrics_route_present_only_when_prometheus_enabled": true,
+    "discrepancy_explanation": "This FastAPI/Starlette build (fastapi 0.141.0 / starlette 1.6.0) stores include_router() LAZILY as an opaque _IncludedRouter placeholder instead of flattening child routes into app.routes. Proven by Counter(type(r).__name__ for r in app.routes) == Counter({'_IncludedRouter': 75, 'Route': 4, 'APIRoute': 3, 'APIWebSocketRoute': 1, 'WebSocketRoute': 1}). 75 of the 84 entries are single lazy placeholders, so len(app.routes) counts MOUNT POINTS, not endpoints. The real route surface is len(app.openapi()['paths']) == 738 (OpenAPI forces the routers to expand). CONSEQUENCE FOR THE AUDIT: any finding that quotes len(app.routes) as a route count is wrong; 84 (or 85) is a count of lazy router handles, 738 is the endpoint count.",
+    "route_type_census_command": "$env:PYTHONPATH=\"backend\"; python -c \"from backend.main import app; import collections; print('ROUTES', len(app.routes)); print(collections.Counter(type(r).__name__ for r in app.routes))\"",
+    "raw_boot_output": "{\"event\": \"OpenTelemetry tracing disabled: No module named 'infrastructure.utils.tracing'\", \"level\": \"warning\", \"logger\": \"backend.main\", \"timestamp\": \"2026-10-02T12:18:47.280300Z\", \"db_query_time_ms\": 243.35}\n{\"attempt\": 1, \"max_attempts\": 3, \"delay\": 2.04, \"error\": \"Timeout connecting to server\", \"event\": \"valkey_retry\", \"level\": \"warning\", \"logger\": \"infrastructure.valkey.client\", \"timestamp\": \"2026-10-02T12:18:54.652434Z\", \"db_query_time_ms\": 243.35}\n{\"attempt\": 2, \"max_attempts\": 3, \"delay\": 4.12, \"error\": \"Timeout connecting to server\", \"event\": \"valkey_retry\", \"level\": \"warning\", \"logger\": \"infrastructure.valkey.client\", \"timestamp\": \"2026-10-02T12:19:00.716972Z\", \"db_query_time_ms\": 243.35}\n{\"reason\": \"connection_exhausted\", \"error\": \"Timeout connecting to server\", \"event\": \"valkey_fallback\", \"level\": \"warning\", \"logger\": \"infrastructure.valkey.client\", \"timestamp\": \"2026-10-02T12:19:08.857413Z\", \"db_query_time_ms\": 243.35}\nROUTES 84",
+    "raw_debug_level_output_full": "{\"event\": \"Database query instrumentation enabled\", \"level\": \"info\", \"logger\": \"zozi.db\", \"timestamp\": \"2026-10-02T13:36:58.816336Z\"}\nRLS interceptor installed on database engine\n{\"query_type\": \"create\", \"duration_ms\": 194.3, \"statement_length\": 609, \"event\": \"db_query\", \"level\": \"debug\", \"logger\": \"zozi.db\", \"timestamp\": \"2026-10-02T13:37:01.447280Z\", \"db_query_time_ms\": 194.3}\nInstalled RLS policies for 0 tables\n{\"dsn_configured\": true, \"environment\": \"development\", \"event\": \"sentry_initialized\", \"level\": \"info\", \"logger\": \"infrastructure.observability.error_handler\", \"timestamp\": \"2026-10-02T13:37:11.110769Z\", \"db_query_time_ms\": 194.3}\nMiddleware pipeline registered: 8 layers, 18 middleware\n{\"event\": \"OpenTelemetry tracing disabled: No module named 'infrastructure.utils.tracing'\", \"level\": \"warning\", \"logger\": \"backend.main\", \"timestamp\": \"2026-10-02T13:37:11.120197Z\", \"db_query_time_ms\": 194.3}\n{\"attempt\": 1, \"max_attempts\": 3, \"delay\": 2.27, \"error\": \"Timeout connecting to server\", \"event\": \"valkey_retry\", \"level\": \"warning\", \"logger\": \"infrastructure.valkey.client\", \"timestamp\": \"2026-10-02T13:37:18.866754Z\", \"db_query_time_ms\": 194.3}\n{\"attempt\": 2, \"max_attempts\": 3, \"delay\": 4.05, \"error\": \"Timeout connecting to server\", \"event\": \"valkey_retry\", \"level\": \"warning\", \"logger\": \"infrastructure.valkey.client\", \"timestamp\": \"2026-10-02T13:37:25.149275Z\", \"db_query_time_ms\": 194.3}\n{\"reason\": \"connection_exhausted\", \"error\": \"Timeout connecting to server\", \"event\": \"valkey_fallback\", \"level\": \"warning\", \"logger\": \"infrastructure.valkey.client\", \"timestamp\": \"2026-10-02T13:37:33.221642Z\", \"db_query_time_ms\": 194.3}\nPATHS 738",
+    "warnings_emitted": 4,
+    "errors_emitted": 0,
+    "warning_1": "backend/main.py:103 -- {'event': 'OpenTelemetry tracing disabled: No module named infrastructure.utils.tracing', 'level': 'warning', 'logger': 'backend.main'}  => OpenTelemetry is DEAD (see coverage_gaps CG-02)",
+    "warning_2": "infrastructure/valkey/client.py:145-151 -- {'attempt': 1, 'max_attempts': 3, 'delay': 2.04, 'error': 'Timeout connecting to server', 'event': 'valkey_retry', 'level': 'warning', 'logger': 'infrastructure.valkey.client'}",
+    "warning_3": "infrastructure/valkey/client.py:145-151 -- {'attempt': 2, 'max_attempts': 3, 'delay': 4.12, 'error': 'Timeout connecting to server', 'event': 'valkey_retry', 'level': 'warning', 'logger': 'infrastructure.valkey.client'}",
+    "warning_4": "infrastructure/valkey/client.py:160-164 -- {'reason': 'connection_exhausted', 'error': 'Timeout connecting to server', 'event': 'valkey_fallback', 'level': 'warning', 'logger': 'infrastructure.valkey.client'}",
+    "graceful_degradation_law_110": "CONFIRMED. backend/infrastructure/valkey/client.py:137-167: for attempt in range(1,4) with delay = min(2**attempt + random.uniform(0,0.5), 5.0) -- exactly 3 jittered retries (observed delays 2.02/2.04/2.27/2.31/2.32/2.36/2.39/4.02/4.05/4.12/4.15/4.36/4.4s), then logger.warning('valkey_fallback', reason='connection_exhausted', ...) and _NoOpValkey() is substituted. Import completes, exit 0. Law 75 also satisfied (WARNING-level, not silent).",
+    "structured_log_shape": "Lines are structlog JSON objects carrying event/level/logger/timestamp/db_query_time_ms. request_id is ABSENT on every boot line -- correct, because these are import-time logs with no HTTP request in scope (Law 92/Law 93 apply per-request, via the request_id middleware, not at import).",
+    "law_217_no_auto_migrate": "CONFIRMED. backend/lifespan.py:60-85 _bootstrap_runtime() hardcodes auto_migration_applied = False and NEVER imports alembic; it only sets migration_reason to 'skipped_fresh_schema' or 'skipped_deploy_pipeline' and logs 'Startup health: auto_migration_applied=%s migration_reason=%s'. Docstring at :61-64 states 'Migrations are run exclusively by the CI/CD deploy pipeline per Law 217. Web replicas must NEVER auto-migrate on boot.' Independently, backend/infrastructure/database/database.py:558-573 _guard_dev_only() raises RuntimeError('{operation} is disabled on PostgreSQL. Use a reviewed Alembic migration instead of Base.metadata.create_all/drop_all.') when _IS_POSTGRES, and raises again when app_env == 'production'; both create_tables() (:576-578) and reset_tables() (:588-590) call it. LAW 217 SATISFIED.",
+    "law_81_218_health_routes": "CONFIRMED present in the 738-path OpenAPI surface: /health, /health/deps, /health/ready all have a 'get' operation. Live HTTP 200 status NOT probed -- TestClient would start the app + lifespan, which the subcontract forbids ('Never run a command that ... starts a server').",
+    "infrastructure_utils_tracing_warning": {
+      "warned_module": "infrastructure.utils.tracing (imported at backend/main.py:99)",
+      "real_module": "backend/infrastructure/observability/tracing.py (setup_tracing defined at :43, :35)",
+      "utils_tracing_exists": false,
+      "observability_tracing_exists": true,
+      "otel_consequently_dead": true,
+      "proof": "Importing the CORRECT path works: sys.path.insert(0,'backend'); from infrastructure.observability.tracing import setup_tracing; setup_tracing(FastAPI()) -> 'SETUP_TRACING OK (no exporter endpoint set)'. So the whole of OpenTelemetry is disabled by a single wrong path segment (utils -> observability) in backend/main.py:99. It is not a missing dependency.",
+      "secondary_defect": "Even after the path is fixed, opentelemetry.exporter.otlp.proto.grpc is NOT installed: import opentelemetry.exporter.otlp.proto.grpc.trace_exporter -> ModuleNotFoundError. Installed: opentelemetry (version n/a), opentelemetry.instrumentation.fastapi 0.65b0 (backend/requirements.txt:67, pyproject.toml:40). So OTLP export, the only exporter this app configures, is a second independent gap."
+    },
+    "toolchain_versions": {
+      "command": "python --version; uv --version",
+      "python": "Python 3.13.15 (satisfies TECHNOLOGY_STACK.md:22 Python 3.13.x and backend/pyproject.toml:5 requires-python \">=3.13,<3.14\")",
+      "uv": "uv 0.10.11 (006b56b12 2026-03-16) -- TECHNOLOGY_STACK.md:290 pins uv 0.12.12; installed is 0.10.11, a MINOR DRIFT (see coverage_gaps CG-06)",
+      "fastapi_installed": "0.141.0 (satisfies TECHNOLOGY_STACK.md:23 FastAPI 0.141.x)",
+      "starlette_installed": "1.6.0 (satisfies TECHNOLOGY_STACK.md:24 Starlette >=1.6.0,<1.7.0, the Debian #1132860 build-from-source bug pin)",
+      "prometheus_fastapi_instrumentator_installed": "8.1.0 (satisfies TECHNOLOGY_STACK.md:136 prometheus-fastapi-instrumentator 8.1.0+)"
+    },
+    "secrets_redacted": "REDACTED. `docker compose -f docker-compose.prod.yml config` echoes every service environment verbatim and the raw output contains a hardcoded Neon owner DSN password and a SECRET_KEY literal committed in docker-compose.prod.yml. I did not reproduce those values anywhere in this file or in my report; only variable NAMES and service topology are quoted. Treat the committed prod DSN/SECRET_KEY as a Law 32 finding routed by the orchestrator."
+  },
+  "verdicts": [
+    {
+      "key": "BOOT-005",
+      "id": "BOOT-005",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": "backend/alembic/alembic.ini:1-13 (the only alembic.ini in the repo; backend/alembic.ini does NOT exist)",
+      "current_matches_claim": "partial",
+      "verify_command": "$env:PYTHONPATH=\"backend\"; python -m alembic -c backend/alembic.ini heads   (from repo root)\nalembic heads   (from backend/, i.e. the record's own `cd backend && alembic heads`)\nalembic -c alembic/alembic.ini heads   (from backend/)",
+      "verify_output": "$ python -m alembic -c backend/alembic.ini heads\nFAILED: No 'script_location' key found in configuration.\nROOT_EXIT=-1\n\n$ alembic heads            # cwd = backend/\nFAILED: No 'script_location' key found in configuration.\nALEMBIC_BIN_EXIT=-1\n\n$ alembic -c alembic/alembic.ini heads\n20261001_0001 (head)\nEXIT=0",
+      "test_command": "alembic -c alembic/alembic.ini heads  (read-only; 'upgrade'/'downgrade' NOT run per hard rules)",
+      "test_result": "pass",
+      "filled_fields": {
+        "File:Line": "backend/alembic/alembic.ini:1-13  -- NOT backend/alembic.ini:1 (that path does not exist)",
+        "Current": "The ERROR STRING IS EXACT, the DIAGNOSIS IS WRONG. Reproduced verbatim from BOTH the repo root and backend/, exit code -1 (non-zero) both times. But script_location is NOT missing -- it is present at backend/alembic/alembic.ini:5 ('script_location = %(here)s'). The real defect is a DISCOVERY defect: alembic looks for ./alembic.ini in the cwd, and the only ini in the repo lives one level deeper at backend/alembic/alembic.ini, so alembic silently reads an EMPTY config and reports a missing key. `alembic -c alembic/alembic.ini heads` returns '20261001_0001 (head)', exit 0.",
+        "Delta": "Wrong: 'Alembic configuration missing script_location'. Correct: 'alembic.ini is not at the path alembic auto-discovers (repo root / backend/), so every bare `alembic ...` invocation fails; -c backend/alembic/alembic.ini is mandatory and no CI/Makefile/Dockerfile entry uses it.'",
+        "Target": "Exactly one revision head -- CONFIRMED ACHIEVED when invoked correctly: '20261001_0001 (head)', 1 head, exit 0 (corroborates CROSS_AGENT_FINDINGS T2).",
+        "Verify": "cd backend && alembic -c alembic/alembic.ini heads",
+        "Blast radius": "F-003, F-012, CHAIN-002, CHAIN-005 (claimed) -- CONFIRMED plausible: this blocks the Law 217 pre-deployment migration step, which is the ONLY sanctioned place migrations run."
+      },
+      "laws_cited": ["Law 6", "Law 49", "Law 217", "Law 290"],
+      "notes": "FIX WRONG-DIRECTION (recorded for the compiler log, not applied): the proposed Fix 'Add script_location to alembic.ini' would ADD A SECOND ini with a duplicate config rather than fix discovery. The defect is the missing discovery path, not a missing key. Second, RELATED failure from the same task brief -- `backend/alembic/versions/2026_08_06_0001_add_analytics_audit_columns.py:31` -> 'ModuleNotFoundError: No module named migration_helpers' -- is ALREADY_FIXED and must not be re-raised: backend/alembic/alembic.ini:13 sets 'prepend_sys_path = %(here)s' and the ini carries an explicit comment explaining exactly that failure. Verified: (a) importlib.util.find_spec('migration_helpers') resolves to backend/alembic/migration_helpers.py; (b) `alembic -c alembic/alembic.ini upgrade 20261001_0001:head --sql` completes offline (BEGIN/COMMIT, Context impl PostgresqlImpl) with no import error. Confidence 5 for the record's 'triangulated / VERIFIED' label is OVERSTATED for the diagnosis (partial only). Also note: I did NOT run `alembic upgrade`/`downgrade` (hard rule) -- only read-only `heads` and `--sql` offline generation."
+    },
+    {
+      "key": "BOOT-001",
+      "id": "BOOT-001",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/config.py:126-129 (database_url field); backend/config.py:473-482 (__getattr__ that raises)",
+      "current_matches_claim": "partial",
+      "counter_evidence": "backend/config.py:126 declares `database_url: str = Field(default=\"\", pattern=r\"^(?:|postgres(?:ql)?(?:\\+[A-Za-z0-9_]+)?://.*|sqlite(?:\\+[A-Za-z0-9_]+)?://.*)$\")` -- the setting EXISTS and IS RESOLVED (returns a value beginning 'postgresql:'). The Delta 'Required env var missing from settings' is therefore false. The AttributeError is produced only by upper-case ATTRIBUTE access: pydantic-settings field names are snake_case, and backend/config.py:473-482 __getattr__ deliberately raises `AttributeError: Settings has no attribute '{name}'` for any undefined name. The cited line backend/config.py:340 is `_validate_db_max_overflow`, a @model_validator(mode='before') with nothing to do with DATABASE_URL -- the citation is stale by ~142 lines.",
+      "verify_command": "python -c \"from backend.config import settings; print(settings.database_url)\"; python -c \"from backend.config import settings; print(settings.DATABASE_URL)\"",
+      "verify_output": "$ python -c \"from backend.config import settings; print(settings.database_url)\"\n'postgresql:...'      # resolves\n\n$ python -c \"from backend.config import settings; print(settings.DATABASE_URL)\"\nAccessing undefined setting 'DATABASE_URL' - raising AttributeError. Define this setting explicitly or use getattr(settings, 'DATABASE_URL', default).\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    from backend.config import settings; print(settings.DATABASE_URL)\n                                               ^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\...\\backend\\config.py\", line 482, in __getattr__\n    raise AttributeError(f\"Settings has no attribute '{name}'\")\nAttributeError: Settings has no attribute 'DATABASE_URL'\nEXIT=1\n\n$ python -c \"...; print(hasattr(settings,'DATABASE_URL'))\"\nhas DATABASE_URL attr: False\nhas VALKEY_URL attr: False",
+      "test_command": "python -c \"from backend.config import settings; print(settings.database_url)\"",
+      "test_result": "pass",
+      "filled_fields": {
+        "Status": "RESOLVED is CORRECT and stays RESOLVED -- but for a different reason than the record gives. Nothing was 'defined'; it was always defined, and the record's own Verify command is case-sensitive and can NEVER pass against snake_case pydantic fields.",
+        "Current": "AttributeError: Settings has no attribute 'DATABASE_URL' -- the string is reproducible verbatim, but at backend/config.py:482, not :340.",
+        "Delta": "FALSE. 'Required env var missing from settings' is disproved by backend/config.py:126.",
+        "Fix": "REJECTED. 'Define DATABASE_URL in pydantic-settings config' would create a duplicate upper-case field, violating Law 84/Law 203 (typed pydantic-settings field names) and Law 39 (single canonical auth/config location). No code change is required.",
+        "Verify": "python -c \"from backend.config import settings; print(settings.database_url)\"  (lowercase; the record's upper-case command is self-confirming and cannot pass)",
+        "Target": "'DATABASE_URL is set and reachable' -- set: SATISFIED. reachable: NOT TESTED (would require a live connection, which I did not open)."
+      },
+      "laws_cited": ["Law 82", "Law 83", "Law 84", "Law 202", "Law 203"],
+      "notes": "Quality gate flags for COMPILER_LOG.md: FIX_MISALIGNED (proposes a duplicate upper-case field against Law 84/203) and FIX_UNTESTABLE (the Verify command as written can never pass -- it reproduces the finding rather than testing it). The finding is also self-blocking in the packet graph: BOOT-001 Blocks BOOT-002 while BOOT-002 Blocks BOOT-001 (2-cycle). Per CROSS_AGENT_FINDINGS T3 the real Law 82/83 behaviour is already verified satisfied (_validate_production at backend/config.py:598-776 raises on ~40 missing vars); this record adds nothing to that and should be closed as INVALID."
+    },
+    {
+      "key": "BOOT-002",
+      "id": "BOOT-002",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "backend/config.py:186-189 (valkey_url field); backend/config.py:473-482 (__getattr__)",
+      "current_matches_claim": "partial",
+      "counter_evidence": "backend/config.py:186 declares `valkey_url: str = Field(default=\"\", pattern=r\"^(?:|valkey://.*|rediss?://.*|unix://.*)$\")` -- the setting EXISTS and RESOLVES to a 'valkey://lo...' value. Identical case-mismatch mechanism as BOOT-001; backend/config.py:473-482 __getattr__ raises for the upper-case name only. Two DISTINCT defects are being conflated by this record: (a) 'settings attribute missing' -- FALSE, disproved by backend/config.py:186; (b) 'Valkey reachable' -- TRUE as a gap in THIS environment only, and it is an environment condition, not a code defect.",
+      "verify_command": "python -c \"from backend.config import settings; import valkey; c=valkey.Valkey.from_url(settings.valkey_url); print(c.ping())\"",
+      "verify_output": "$ ... settings.valkey_url   ->  'valkey://lo...'   (resolves)\n\n$ ... valkey.Valkey.from_url(settings.valkey_url).ping()\n  File \"...\\valkey\\connection.py\", line 735, in _connect\n    sock.connect(socket_address)\nConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it\n...\nvalkey.exceptions.ConnectionError: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.\nEXIT=1\n\n$ (the record's own Verify, run verbatim)\n$ python -c \"from backend.config import settings; import redis; r = redis.Redis.from_url(settings.VALKEY_URL); print(r.ping())\"\nAttributeError: Settings has no attribute 'VALKEY_URL'\nEXIT=1   # <-- self-confirming: it dies on the attribute, never reaches the network",
+      "test_command": "python -c \"from backend.config import settings; print(settings.valkey_url)\"",
+      "test_result": "pass",
+      "filled_fields": {
+        "Delta": "FALSE as written. Correct split: (a) settings attribute -- NOT missing (backend/config.py:186), FALSE_POSITIVE; (b) Valkey reachability -- ConnectionRefusedError [WinError 10061] localhost:6379, which is an ENVIRONMENT state, already handled correctly by Law 110 graceful degradation (3 jittered retries -> valkey_fallback WARNING -> _NoOpValkey, import continues, exit 0).",
+        "Fix": "REJECTED. 'Define VALKEY_URL in pydantic-settings config' would duplicate backend/config.py:186 and violate Law 84/203. No code change is required.",
+        "Verify": "python -c \"from backend.config import settings; import valkey; valkey.Valkey.from_url(settings.valkey_url).ping()\"  (lowercase attribute)",
+        "Target": "'Valkey reachable' -- NOT met in this environment (ConnectionRefusedError). NOT a code defect; do not open a resolver task on it.",
+        "Test": "test_ (placeholder in the source register; the real tree is backend/tests/, not test/ -- see BOOT-008)"
+      },
+      "laws_cited": ["Law 82", "Law 83", "Law 84", "Law 110", "Law 203"],
+      "notes": "IMPORTANT DISTINCTION the record collapses: 'settings attribute missing' and 'connection refused' are different defect classes. The first is a non-issue (field exists). The second is an expected, correctly-handled environment condition -- the code did precisely what Law 110/Law 75 mandate. The record's own Verify command also imports `redis`, which TECHNOLOGY_STACK.md:58 forbids in favour of the `valkey` client (a third, smaller problem in the Verify itself; `import redis` does succeed here only via the backward-compat shim, but the shim is itself deprecated per TECHNOLOGY_STACK.md:406). Quality gate: FIX_MISALIGNED + FIX_UNTESTABLE. Packet graph 2-cycle with BOOT-001 (BOOT-001 Blocks BOOT-002, BOOT-002 Blocks BOOT-001) -- see internal_contradictions."
+    },
+    {
+      "key": "BOOT-004",
+      "id": "BOOT-004",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "docker-compose.yml:1-173 (9 services, exit 0); docker-compose.prod.yml:1-324 (7 services, exit 0)",
+      "current_matches_claim": "no",
+      "counter_evidence": "The claimed error `service \"pgbouncer\" depends on undefined service \"db\": invalid compose project` cannot be produced from either file. (1) docker-compose.yml contains ZERO occurrences of the string 'pgbouncer' (grep count = 0) -- there is no pgbouncer service in the dev compose at all, so no pgbouncer can depend on anything. (2) docker-compose.yml:3 defines `db:` as the first service (`image: postgres:18-alpine`), and backend/celery-* correctly `depends_on: db: condition: service_healthy` at :42-46, :63-67, :89-93, :109-113, :128-132, :148-152. (3) `docker compose -f docker-compose.yml config --quiet` exits 0. (4) `docker compose -f docker-compose.prod.yml config --quiet` ALSO exits 0 -- prod's pgbouncer (docker-compose.prod.yml:2) has NO depends_on block at all, and only backend (docker-compose.prod.yml:36) depends_on pgbouncer, which IS defined. The audit's own Verify command (`docker compose config`) PASSES on both files.",
+      "verify_command": "docker compose -f docker-compose.yml config --quiet ; docker compose -f docker-compose.prod.yml config --quiet",
+      "verify_output": "$ docker compose version\nDocker Compose version v2.35.1-desktop.1\n\n$ docker compose -f docker-compose.yml config --quiet\nDEV_EXIT=0        # no output, exit 0\n\n$ docker compose -f docker-compose.prod.yml config --quiet\ntime=\"2026-10-02T16:37:24+04:00\" level=warning msg=\"The \\\"R2_REGION\\\" variable is not set. Defaulting to a blank string.\"\ntime=\"2026-10-02T16:37:24+04:00\" level=warning msg=\"The \\\"R2_CDN_BASE\\\" variable is not set. Defaulting to a blank string.\"\nPROD_EXIT=0\n\n$ docker compose -f docker-compose.yml config | grep '^  [a-z]'\n  backend:  celery-beat:  celery-worker-emails:  celery-worker-ml:\n  celery-worker-payouts:  celery-worker-periodic:  db:  frontend:  valkey:\n  # 9 services; `db` present; no pgbouncer\n\n$ grep -c pgbouncer docker-compose.yml\n0",
+      "test_command": "docker compose -f docker-compose.yml config --quiet  &&  docker compose -f docker-compose.prod.yml config --quiet",
+      "test_result": "pass",
+      "filled_fields": {
+        "Current": "FALSE for both files. Reproduced neither the dev nor the prod error string. `docker compose config` -- the record's own Verify -- exits 0 on docker-compose.yml AND on docker-compose.prod.yml.",
+        "Delta": "FALSE. 'Docker compose references undefined service' is not present in the compose dependency graph of either file.",
+        "Target": "'Valid config' -- ALREADY ACHIEVED (exit 0 on both).",
+        "Fix": "REJECTED as written -- there is nothing to fix in the dependency graph. Quality gate FIX_VAGUE ('Fix docker-compose service definitions' does not say what or into what).",
+        "Verify": "docker compose -f docker-compose.yml config --quiet  &&  docker compose -f docker-compose.prod.yml config --quiet"
+      },
+      "laws_cited": ["Law 215", "Law 260"],
+      "notes": "CORRECTION TO CROSS_AGENT_FINDINGS: this record REFUTES the batch-1/batch-2 reading that the error is 'CONFIRMED for prod'. Prod compose validates clean (exit 0). What IS true in prod is a WEAKER, DIFFERENT defect that compose validation cannot catch: docker-compose.prod.yml:5 sets pgbouncer's own `DATABASE_URL=postgres://...@db:5432/${POSTGRES_DB}` while docker-compose.prod.yml declares NO `db` service -- a dangling runtime DNS name inside an env var, which fails at connection time, not at parse time. Routed to coverage_gaps CG-07, NOT kept as BOOT-004. It also contradicts Law 260 ('Self-hosted pooler is NOT deployed' -- prod deploys edoburu/pgbouncer) -- routed to CG-07. I ran `docker compose config` ONLY; no `up`, no `build`, no container started. SECRET REDACTION: the prod `config` output echoes a committed Neon owner DSN password and a SECRET_KEY literal; both are REDACTED from this file."
+    },
+    {
+      "key": "BOOT-003",
+      "id": "BOOT-003",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "frontend/web_app/src/app/admin/analytics/page.tsx:12 (229-line file); ZERO errors reported against it by tsc --noEmit",
+      "current_matches_claim": "no",
+      "counter_evidence": "frontend/web_app/src/app/admin/analytics/page.tsx:12 is `import { useCurrencyStore } from \"@/lib/currencyStore\";` -- the specifier is `@/lib/currencyStore`, NOT `@/stores/currencyStore`. And frontend/web_app/src/lib/currencyStore.ts EXISTS (Test-Path = True), so the named module does resolve. The path the record actually names, frontend/web_app/src/stores/currencyStore.ts, does NOT exist -- but line 13 imports `@/stores/toastStore` and frontend/web_app/src/stores/toastStore.ts DOES exist, so the audit transposed two adjacent module paths. Decisive: `tsc --noEmit` reports ZERO errors of any code against admin/analytics/page.tsx; a filter of the full 119-error output for 'admin/analytics/page.tsx' returns an empty set. The cited file is not a locus of any build or type error.",
+      "verify_command": "& .\\node_modules\\.bin\\tsc.CMD --noEmit   (cwd = frontend/web_app)",
+      "verify_output": "$ tsc --version\nVersion 5.9.3\n\n$ tsc --noEmit\nsrc/shared/logo/Logo.native.tsx(125,44): error TS7031: Binding element 'pressed' implicitly has an 'any' type.\nsrc/shared/logo/Logo.native.tsx(137,5): error TS2353: Object literal may only specify known properties, and 'shadowColor' does not exist in type ...\nsrc/shared/logo/Logo.native.tsx(149,17): error TS2322: Type '{ scale: number; }' is not assignable to type 'string'.\nEXIT=1\n\nTOTAL_LINES=208   ERROR_LINES=119   FILES=29\n# by code: 60 TS2322, 11 TS2305, 11 TS2339, 8 TS2353, 6 TS7006,\n#          4 TS2307, 3 TS2786, 3 TS2604, 2 TS2503, 2 TS2614, 2 TS7031, 2 TS2559\n\n$ filter of the 119 errors for 'admin/analytics/page.tsx'\n(empty set -- ZERO errors in the cited file)\n\n$ Test-Path frontend/web_app/src/lib/currencyStore.ts   -> True\n$ Test-Path frontend/web_app/src/stores/currencyStore.ts -> False\n$ Test-Path frontend/web_app/src/stores/toastStore.ts    -> True",
+      "test_command": "& .\\node_modules\\.bin\\tsc.CMD --noEmit   (frontend/web_app, TypeScript 5.9.3)",
+      "test_result": "fail",
+      "filled_fields": {
+        "Current": "FALSE. \"Module not found: Can't resolve '@/stores/currencyStore'\" is not produced -- line 12 imports '@/lib/currencyStore' (exists) and line 13 imports '@/stores/toastStore' (exists). tsc reports no TS2307 against this file at all.",
+        "Delta": "PARTIALLY FALSE. '24 build errors' could NOT be reproduced: `tsc --noEmit` yields 119 errors across 29 files (a different and larger set), and `next build` was NOT run (would require pnpm install / long build; also writes .next). The nearest real signal is 4 TS2307 module-not-found errors repo-wide, 3 of which are '@tanstack/react-query'.",
+        "Target": "'Builds without error' -- NOT met for types (tsc exit 1). Cannot confirm the BUILD outcome without running next build.",
+        "Fix": "REJECTED. 'Create missing store files' would be FIX_DESTRUCTIVE-adjacent: the files it proposes to create already exist under their real names. Quality gate: FIX_VAGUE ('fix missing dependencies' names none) + FIX_MISALIGNED (proposes package work without naming a package; note Law 171 FORBIDS @tanstack/react-query, which is exactly the unresolvable module in providers.tsx:3, QueryErrorBoundary.tsx:16 and lib/api/queryStates.ts:14).",
+        "Verify": "& .\\node_modules\\.bin\\tsc.CMD --noEmit   (frontend/web_app)  -- NOT `pnpm build`, which exits 0 and cannot detect the defect",
+        "Priority": "P0 should move to frontend/web_app/next.config.ts:6-8, not to analytics/page.tsx:12"
+      },
+      "laws_cited": ["Law 170", "Law 171", "Law 186"],
+      "notes": "THE REAL P0 IS NOT THIS RECORD. frontend/web_app/next.config.ts:6-8 sets `typescript: { ignoreBuildErrors: true }`, so `next build` exits 0 while `tsc --noEmit` exits 1 with 119 errors. That single suppression flag -- not the cited module -- is what keeps Law 186 looking satisfied and what lets CI deploy a type-broken bundle. Corroborates CROSS_AGENT_FINDINGS T9 exactly (119 errors / 29 files / ignoreBuildErrors). Routed to coverage_gaps CG-01. MERGE: this record and BOOT-007 share the identical File:Line, the identical root cause and the identical fix target -- see duplicates_merged (BOOT-007 survives). Not run and why: `next build` needs an install (pnpm install is forbidden) and a full production build; `tsc --noEmit` was used as the read-only proxy and it is strictly more sensitive because ignoreBuildErrors hides the build-time check."
+    },
+    {
+      "key": "BOOT-007",
+      "id": "BOOT-007",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "frontend/web_app/src/app/admin/analytics/page.tsx:12 (cited); the real TS2551/TS2307/TS7006 loci are 11 OTHER files",
+      "current_matches_claim": "partial",
+      "counter_evidence": "The three error CODES are real repo-wide -- TS2307 x4, TS7006 x6, TS2551 x1 (all 11 counted from the 119-error tsc run) -- but NONE of them is in frontend/web_app/src/app/admin/analytics/page.tsx. Filtering the full 119-error output for that path returns an empty set. The concrete loci are: src/app/providers.tsx:3, src/components/QueryErrorBoundary.tsx:16, src/lib/api/queryStates.ts:14 (TS2307 '@tanstack/react-query', MODULE_NOT_FOUND, Law 171 violation); src/shared/components/ui/ProductGrid.native.tsx:5 (TS2307 './ProductCard.native'); 6 TS7006 implicit-any params across src/app/employee/attendance/page.tsx:254,268, src/components/map/LocationPicker.tsx:21,75, src/components/ProductCard.tsx:114, src/lib/serverCountry.ts:64; src/app/suppliers/[id]/page.tsx:72 (TS2551 'discount_percent' does not exist on type 'Product'. Did you mean 'discount_percentage'?').",
+      "verify_command": "& .\\node_modules\\.bin\\tsc.CMD --noEmit   (cwd = frontend/web_app); then filter the captured output by path and by code",
+      "verify_output": "$ tsc --noEmit  ->  119 errors / 29 files / EXIT=1\n\n=== TS2307 (module not found) — 4 ===\nsrc/app/providers.tsx(3,50): error TS2307: Cannot find module '@tanstack/react-query' or its corresponding type declarations.\nsrc/components/QueryErrorBoundary.tsx(16,32): error TS2307: Cannot find module '@tanstack/react-query' or its corresponding type declarations.\nsrc/lib/api/queryStates.ts(14,69): error TS2307: Cannot find module '@tanstack/react-query' or its corresponding type declarations.\nsrc/shared/components/ui/ProductGrid.native.tsx(5,25): error TS2307: Cannot find module './ProductCard.native' or its corresponding type declarations.\n\n=== TS7006 (implicit any) — 6 ===\nsrc/app/employee/attendance/page.tsx(254,32): error TS7006: Parameter 'q' implicitly has an 'any' type.\nsrc/app/employee/attendance/page.tsx(268,30): error TS7006: Parameter 'v' implicitly has an 'any' type.\nsrc/components/map/LocationPicker.tsx(21,11): error TS7006: Parameter 'e' implicitly has an 'any' type.\nsrc/components/map/LocationPicker.tsx(75,23): error TS7006: Parameter 'e' implicitly has an 'any' type.\nsrc/components/ProductCard.tsx(114,21): error TS7006: Parameter 'e' implicitly has an 'any' type.\nsrc/lib/serverCountry.ts(64,11): error TS7006: Parameter 'c' implicitly has an 'any' type.\n\n=== TS2551 ===\nsrc/app/suppliers/[id]/page.tsx(72,28): error TS2551: Property 'discount_percent' does not exist on type 'Product'. Did you mean 'discount_percentage'?  [note: NOT a snake_case violation -- a Property-vs-Type rename]\n\n=== setConfig (from the task brief) ===\nsrc/app/checkout/page.tsx(217,35): error TS2304: Cannot find name 'setConfig'.\n\n=== filter for admin/analytics/page.tsx ===\n(empty set -- ZERO errors)",
+      "test_command": "& .\\node_modules\\.bin\\tsc.CMD --noEmit   (frontend/web_app, TypeScript 5.9.3)",
+      "test_result": "fail",
+      "filled_fields": {
+        "Current": "PARTIALLY TRUE. The three TS codes exist repo-wide (TS2551 x1, TS2307 x4, TS7006 x6) but not in the cited file.",
+        "Delta": "Correct magnitude but wrong location: 119 errors across 29 files, not a handful at analytics/page.tsx:12.",
+        "Target": "'No type errors' -- NOT met (exit 1).",
+        "Fix": "REJECTED as located. Quality gate FIX_VAGUE ('Fix missing type declarations and implicit any types' names no file and no declaration). Substantively the 3 '@tanstack/react-query' TS2307s must be fixed by REMOVING that dependency (Law 171 forbids it), not by installing or declaring it -- the Fix's direction would worsen the Law 171 violation.",
+        "Verify": "& .\\node_modules\\.bin\\tsc.CMD --noEmit   (the record's `pnpm tsc --noEmit` is not a valid form)",
+        "Priority": "P0 remains, but the P0 target is frontend/web_app/next.config.ts:6-8 + the 29 affected files, NOT analytics/page.tsx:12"
+      },
+      "laws_cited": ["Law 170", "Law 171", "Law 186"],
+      "notes": "Highest-error files by count: src/shared/logo/Logo.native.tsx (17), src/shared/components/logo/Logo.native.tsx (17), src/shared/components/ui/SearchBar.native.tsx (10), src/shared/components/ui/Input.native.tsx (9), src/shared/components/ui/LoadingSkeleton.native.tsx (8). 21 of 29 files are *.native.tsx -- the React-Native variants are being typechecked by the WEB project's tsconfig, which is why the bulk of the 119 errors are native-shadow/type conflicts rather than web defects. That is a tsconfig scoping issue and should be recorded alongside CG-01. THIS IS THE SURVIVOR of the BOOT-003/BOOT-007 merge (see duplicates_merged): its Verify command actually reproduces the failure, whereas BOOT-003's `pnpm build` exits 0 and therefore contradicts its own claim. TypeScript version verified 5.9.3, matching TECHNOLOGY_STACK.md:182."
+    },
+    {
+      "key": "BOOT-006",
+      "id": "BOOT-006",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": "backend/tests/providers/test_functional_providers.py:1-1104 (1104 lines; cited line 679 is `PaymentGatewayRegistry.unregister(\"decorated_test\")` and carries NO ruff error)",
+      "current_matches_claim": "no",
+      "counter_evidence": "The cited path tests/providers/test_functional_providers.py DOES NOT EXIST at the repo root (Test-Path = False; root tests/providers/ exists but holds no such file). The real file is backend/tests/providers/test_functional_providers.py. Line 679 has ZERO ruff errors (`ruff check ... --output-format concise | Select-String 679` returns nothing; the whole file has 14 errors, all F401, at lines 12,13,15,16,17,20 x4,697,698,699,1086 x2). The COUNT is wrong: I measured 8341, not 8393 (delta -52) with ruff 0.15.12, 2953 auto-fixable. And the causal link is false: `pytest tests/providers --collect-only -q` from backend/ returns '1312 tests collected in 1.82s', EXIT=0 -- there is no collection failure for ruff to have caused.",
+      "verify_command": "ruff check backend --statistics ; ruff check backend ; (cwd backend) pytest tests/providers --collect-only -q",
+      "verify_output": "$ ruff --version\nruff 0.15.12\n\n$ ruff check backend --statistics\n2312 F401  unused-import              2104 E402  module-import-not-at-top-of-file\n1500 F821  undefined-name             1138 F811  redefined-while-unused\n 397 F405  undefined-local-with-import-star-usage\n 308 E712  true-false-comparison       176 F403  undefined-local-with-import-star\n 111 F841  unused-variable             93 E701  multiple-statements-on-one-line-colon\n  76 F822  undefined-export            44 E702  multiple-statements-on-one-line-semicolon\n  31 E741  ambiguous-variable-name    22 E401  multiple-imports-on-one-line\n  14 F601  multi-value-repeated-key-literal\n   8 F541  f-string-missing-placeholders\n   6 E711  none-comparison              1 E731  lambda-assignment\nFound 8341 errors.\n[*] 2953 fixable with the `--fix` option (423 hidden fixes can be enabled with the `--unsafe-fixes` option).\nRUFF_BACKEND_EXIT=1\n\n# cited file only:\n$ ruff check tests/providers/test_functional_providers.py --output-format concise\ntests\\providers\\test_functional_providers.py:12:8: F401 [*] `base64` imported but unused\n... (14 total, all F401, lines 12-20, 697-699, 1086)\n#   ^ NOTHING at line 679\n\n# THE ACTUAL CAUSE, verified:\n$ PYTHONPATH=backend python -m pytest tests/providers --collect-only -q   (cwd backend)\n1312 tests collected in 1.82s\nEXIT=0\n\n$ python -c \"import sys,os; sys.path.insert(0, os.path.abspath('backend/tests')); import providers; print(providers.__file__); print(list(providers.__path__)); print(len([n for n in dir(providers) if not n.startswith('_')]))\"\nBINDING  -> D:\\...\\backend\\tests\\providers\\__init__.py\n__path__ -> ['D:\\...\\backend\\tests\\providers']\nhas payments? False\ncount    -> 0",
+      "test_command": "cd backend && PYTHONPATH=backend python -m pytest tests/providers --collect-only -q",
+      "test_result": "pass",
+      "filled_fields": {
+        "File:Line": "backend/tests/providers/test_functional_providers.py:679 -- NOT tests/providers/test_functional_providers.py:679 (root path does not exist)",
+        "Current": "FALSE on all three axes: cited path absent, line 679 lint-clean, count 8341 != 8393.",
+        "Delta": "FALSE. 'Massive lint failures across test suite' as a BOOT blocker is wrong -- 8341 ruff findings exist (ruff exit 1, Law 243 pre-commit gate would block a commit) but they are not a BOOT failure and are not what breaks provider tests.",
+        "Target": "'Passes' -- `ruff check backend` still exits 1 (8341 errors), so this target is genuinely unmet, but it is a lint-gate finding (Law 243), not a boot finding.",
+        "Fix": "REJECTED as stated. 'Fix ruff violations in 8393 locations' -- wrong count (8341) and, more importantly, 397 F405 + 176 F403 + 1500 F821 + 1138 F811 are artefacts of `from x import *` and late/deferred imports, so a blind 'fix all' would DESTROY working code. Quality gate FIX_DESTRUCTIVE + FIX_VAGUE (no prioritisation, no file list, no acceptance threshold).",
+        "Verify": "ruff check backend --statistics   (gives the real count and the per-code breakdown needed to prioritise)"
+      },
+      "laws_cited": ["Law 58", "Law 71", "Law 243"],
+      "notes": "SYS.PATH SHADOWING MECHANISM CONFIRMED (this is what the record should have said, and it is the real diagnosis). backend/tests/providers/__init__.py EXISTS and is EMPTY (0 bytes / no statements). Because pytest's rootdir insertion puts backend/tests ahead of backend on sys.path, `import providers` binds to the empty test package instead of the real backend/providers/ package. Proven: __file__ = backend/tests/providers/__init__.py, __path__ = [backend/tests/providers], public-name count = 0, and `hasattr(providers,'payments')` = False. Any test that does `from providers.payments.registry import ...` (e.g. test_functional_providers.py:671-672) therefore resolves against an empty namespace. This is a package-name collision between backend/providers/ and backend/tests/providers/, NOT a lint problem. Note the scope: it did NOT stop COLLECTION (1312 collected, exit 0) in my run, so it breaks at EXECUTION/RUNTIME-import time, not collection time -- which is why the record's 'Verify: ruff' framing is doubly wrong. CORROBORATES CROSS_AGENT_FINDINGS T1 ('tests/providers collects 1312 tests with no collection error') -- my count is identical. Note also that ruff 0.15.12 is installed while TECHNOLOGY_STACK.md:163 pins ruff 0.16.6+, a minor drift routed to CG-06."
+    },
+    {
+      "key": "BOOT-008",
+      "id": "BOOT-008",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": "No single line. The defect spans _most_imp_docx/PROMPT_RESOLUTION_ORCHESTRATOR.md (12 sites), _most_imp_docx/PROMPT_FORENSIC_AUDIT.md (8 sites), _most_imp_docx/PROMPT_AUDIT_COMPILER.md (4 sites). Real trees: backend/tests/ (24 subdirs) and root tests/ (8 subdirs).",
+      "current_matches_claim": "yes",
+      "verify_command": "python -m pytest test/ --collect-only -q   (from repo root)\nPYTHONPATH=backend python -m pytest tests --collect-only -q   (from repo root)\npython -m pytest tests --collect-only -q   (from backend/)",
+      "verify_output": "$ python -m pytest test/ --collect-only -q\nno tests collected in 0.44s\nERROR: file or directory not found: test/\nEXIT=4\n\n# the REAL trees:\n$ (cwd backend) python -m pytest tests --collect-only -q\n4728 tests collected in 42.51s\nBACKEND_TESTS_EXIT=0\n\n$ (cwd repo root) PYTHONPATH=backend python -m pytest tests --collect-only -q\nERROR tests/domains/finance/test_cash_management.py\nERROR tests/domains/suppliers/test_supplier_service.py\nERROR tests/finance/test_finance_service.py\nERROR tests/jobs/test_celery_app.py - AttributeError: 'types.SimpleNamespace'...\nERROR tests/jobs/test_payout_retry.py - AttributeError: 'types.SimpleNamespac...\nERROR tests/jobs/test_payout_tasks.py - AttributeError: 'types.SimpleNamespac...\n1734 tests collected, 6 errors in 6.37s\nROOT_TESTS_EXIT=2\n\n# documented-vs-real path matrix:\ntest/architecture  -> False        tests/architecture          -> True\ntest/commerce      -> False        tests/commerce              -> False   <-- still wrong after the plural fix\ntest/security      -> False        tests/security              -> True\n                                    backend/tests/architecture   -> True\n\n# which canonical docs carry the WRONG path:\n_most_imp_docx/PROMPT_RESOLUTION_ORCHESTRATOR.md -> 12 hits of bare `test/`\n  128 'You never edit backend/, frontend/, scripts/, test/, alembic/'\n  335 'The boot smoke test also runs `pytest test/architecture/`. Any failure halts the phase.'\n  633 'RUN pytest test/architecture/'\n  1219-1221 'test/_temporary_test/**', 'test/domains/**', 'test/modules/**', 'test/frontend/**', 'test/mobile/**', 'test/commerce/**', 'test/security/**', 'test/architecture/**'\n  1459-1461 'Re-run pytest test/architecture/ ; test/commerce/ ; test/security/'\n  1728-1730 'pytest test/architecture/ passes. / test/commerce/ passes. / test/security/ passes.'\n_most_imp_docx/PROMPT_FORENSIC_AUDIT.md -> 8 hits\n  484-486, 638, 659, 1957-1959  ('pytest test/architecture/', 'test/commerce/', 'test/security/', 'pytest test/ --collect-only')\n_most_imp_docx/PROMPT_AUDIT_COMPILER.md -> 4 hits\n  735-737 ('pytest test/commerce/test_money_types.py', 'test/commerce/test_idempotency.py', 'test/commerce/test_payment_idempotency.py')\n  854 '**Verify (cross-cutting):** `pytest test/architecture/ && pytest test/commerce/ && pytest test/security/`'\n\n# docs that are CORRECT (0 bad hits) -- corrects the task brief:\n_most_imp_docx/ARCHITECTURE_STACK.md -> 0 hits of bare `test/`  (uses plural `tests/`, :116-134, :733)\n_most_imp_docx/TECHNOLOGY_STACK.md  -> 0 hits of bare `test/`  (uses plural `tests/`, :165)\n_most_imp_docx/PROMPT_STACK.md -> FILE DOES NOT EXIST\n\n# real subdirectories:\nbackend/tests/ : __pycache__ _support admin analytics architecture catalog config domains\n                finance frontend infrastructure integration jobs kernel middleware modules\n                monitoring observability playwright providers rbac scripts security system workflows\ntests/       : __pycache__ .pytest_cache architecture domains finance infrastructure\n                jobs middleware providers security",
+      "test_command": "python -m pytest test/ --collect-only -q",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "CONFIRMED EXACT. 'ERROR: file or directory not found: test/' reproduced verbatim, pytest exit code 4 (usage error).",
+        "Delta": "MISCHARACTERISED IN THE REGISTER -- corrected here. It is NOT 'Test directory missing or misnamed' in the repo; the repo has TWO working test trees. It is a DOCUMENTED-PATH vs REAL-PATH mismatch in the benchmark prompt documents, which instruct auditors and the resolver to run `pytest test/...` against a `test/` tree that has never existed.",
+        "Target": "'Collects without error' -- ACHIEVED on the real trees: backend/tests/ collects 4728 with exit 0; root tests/ collects 1734 with exit 2 (6 collection errors, see CG-09).",
+        "Fix": "REJECTED AS WRITTEN -- 'Create test directory or fix pytest collection path' is FIX_DESTRUCTIVE if applied literally: creating an empty backend/test/ or test/ would satisfy the commands while leaving zero tests in them, masking the documentation defect and adding a Law-18-adjacent duplicate test root. The correct fix is DOCUMENT-SIDE: correct `test/` -> the real tree in PROMPT_RESOLUTION_ORCHESTRATOR.md, PROMPT_FORENSIC_AUDIT.md and PROMPT_AUDIT_COMPILER.md, and resolve `test/commerce/` (which does not exist in EITHER real tree) to the post-split schemas catalog/promotion/finance/customer/security per ARCHITECTURE_STACK.md:354.",
+        "Verify": "python -m pytest backend/tests --collect-only -q  &&  python -m pytest tests --collect-only -q",
+        "Priority": "P0 as a documentation defect -- it is the root cause of the mass FIX_UNTESTABLE across other dimensions (24/55, 19/20 and 41/42 named test paths missing per CROSS_AGENT_FINDINGS T15). Fix the docs once and those records become testable; do NOT open per-record tasks.",
+        "Evidence strength": "triangulated -- CONFIRMED independently (reproduced the exact error AND mapped every documented path to its real counterpart)",
+        "Blast radius": "Every packet record whose Test/Verify path names `test/`. Cross-dimension, not F-003/CHAIN-002 (those blast-radius values are copy-pasted boilerplate shared by all 8 records)."
+      },
+      "laws_cited": ["Law 69", "Law 70", "Law 71", "Law 207", "Law 212", "Law 245", "Law 321"],
+      "notes": "GRADED AS A HIGH-VALUE DOCUMENTATION FINDING, NOT A TRIVIAL ONE -- the register marks it 'Effort: S / Fix: create test directory', which understates it badly. This single singular/plural typo propagates across 24 documented command sites in 3 canonical prompt documents and is the mechanical reason so many other dimensions' records are untestable. It is also a Law 321 (doc freshness) and Law 245 (ARCH is authoritative for structure) violation: ARCHITECTURE_STACK.md:116-134 documents the test tree as backend/tests/{architecture,domains,providers,...}, which IS accurate; the PROMPT docs contradict their own canonical companion. IMPORTANT CORRECTION TO THE TASK BRIEF: the brief named TECHNOLOGY_STACK.md as a carrier of `test/architecture/`; grep finds ZERO bare `test/` in TECHNOLOGY_STACK.md and ZERO in ARCHITECTURE_STACK.md -- both use the correct plural `tests/`. The carriers are PROMPT_RESOLUTION_ORCHESTRATOR.md (12), PROMPT_FORENSIC_AUDIT.md (8), PROMPT_AUDIT_COMPILER.md (4). Severity nuance: 'Fix' is doc-side only; there is no code change and nothing to roll back, yet the register marks Rollback 'irreversible' for a 24-character typo -- another sign this dimension's boilerplate fields were not individually derived. test_result is not_found, not fail: the path is genuinely absent, which is the finding."
+    }
+  ],
+  "duplicates_merged": [
+    {
+      "survivor": "BOOT-007",
+      "duplicate": "BOOT-003",
+      "why": "Same File:Line (frontend/web_app/src/app/admin/analytics/page.tsx:12), same root cause (the frontend typecheck is broken), same Target ('Builds without error' / 'No type errors' are the same goal), same cluster (CLUSTER-boot-failure). BOOT-007 is the survivor because its Verify command (`tsc --noEmit`) actually REPRODUCES the failure (exit 1, 119 errors / 29 files), whereas BOOT-003's Verify (`pnpm build`) exits 0 because of next.config.ts:6-8 ignoreBuildErrors -- so BOOT-003's own Verify contradicts its own claim and cannot confirm it. BOOT-007 also carries the correct error-code taxonomy (TS2551/TS2307/TS7006), all three of which I confirmed repo-wide. BOOT-003 contributes exactly one unique and already-refuted element (the '@/stores/currencyStore' module claim). Neither record is KEPT at its cited location: the merged finding must be re-anchored to frontend/web_app/next.config.ts:6-8 plus the 29 files listed in coverage_gaps CG-01. Nothing is deleted -- BOOT-003 stays in the packet with status DUPLICATE (merged into BOOT-007)."
+    }
+  ],
+  "internal_contradictions": [
+    {
+      "keys": ["BOOT-001", "BOOT-002"],
+      "conflict": "The packet's dependency graph is a 2-CYCLE: BOOT-001 'Blocks: BOOT-002' and BOOT-002 'Blocks: BOOT-001'. Neither can ever start. This is a DEPENDENCY_BROKEN condition (compiler rule 43) made visible by verification -- and it is also a substantive contradiction: BOOT-001's Fix ('Define DATABASE_URL in pydantic-settings config') and BOOT-002's Fix ('Define VALKEY_URL in pydantic-settings config') are the SAME wrong remedy applied twice, each of which would introduce a duplicate upper-case field on top of the already-correct snake_case fields at backend/config.py:126 and :186. Both fixes are mutually exclusive with the code as written and with Law 84/Law 203. NOT RESOLVED BY ME -- flagged for the orchestrator."
+    },
+    {
+      "keys": ["BOOT-001", "BOOT-008"],
+      "conflict": "BOOT-008 'Blocks: BOOT-001', but BOOT-001 is ALREADY RESOLVED and BOOT-008 is itself only a documentation-path defect. A completed record cannot be blocked by an open one, and BOOT-008 blocks nothing physical. Same defect in the graph: BOOT-008 -> BOOT-001 -> BOOT-002 -> BOOT-001 (cycle). The whole 'Blocks' column in this dimension is unreliable copy-paste -- all 8 records share the identical Blast radius string ('F-003, F-012, CHAIN-002, CHAIN-005') and the identical 'Blocks' target pattern, which is boilerplate, not derivation."
+    },
+    {
+      "keys": ["BOOT-003", "BOOT-007"],
+      "conflict": "BOOT-003 'Blocks: BOOT-004' and BOOT-004 'Blocks: BOOT-005' and BOOT-005 'Blocks: BOOT-006' and BOOT-006 'Blocks: BOOT-007' and BOOT-007 'Blocks: BOOT-008' -- a chain that asserts a frontend type error blocks a compose fix blocks an alembic config fix blocks a lint fix blocks a type fix blocks a doc fix. Verified: BOOT-004 is a FALSE_POSITIVE (compose validates clean, exit 0) and BOOT-005 is a real discovery defect with nothing to do with docker. The chain is fictitious. Recorded so the orchestrator does not order work by it."
+    }
+  ],
+  "cross_cutting_candidates": [
+    {
+      "key": "CG-01 / BOOT-007+BOOT-003 merged",
+      "why": "next.config.ts:6-8 ignoreBuildErrors:true suppresses 119 tsc errors across 29 files and makes `next build` exit 0. No single File:Line can describe it, it governs the entire web_app build, and it is the mechanism that makes Law 186 ('next build passes with no errors') appear satisfied while being false. This is the TRUE P0 for the frontend boot dimension."
+    },
+    {
+      "key": "BOOT-008",
+      "why": "Governs the whole codebase's testability, not one file. 24 documented command sites across 3 canonical prompt documents all name a `test/` tree that does not exist. Per CROSS_AGENT_FINDINGS T15 this is why 24/55, 19/20 and 41/42 named test paths were missing in OTHER dimensions. Must be filed once, as a cross-cutting documentation correction -- NOT duplicated per record (which is exactly what the dimension register already did)."
+    },
+    {
+      "key": "CG-02",
+      "why": "backend/main.py:99 imports `infrastructure.utils.tracing`; the module is at backend/infrastructure/observability/tracing.py:43. The entire OpenTelemetry stack (Law 93, TECHNOLOGY_STACK.md:140) is dead at runtime for a one-segment path typo, and the failure is swallowed by a bare `except Exception` at :102 that only WARNINGs. No single File:Line captures the blast radius (tracing, spans, OTLP export, cross-service correlation)."
+    },
+    {
+      "key": "CG-04 / Law 217",
+      "why": "The no-auto-migrate guarantee (backend/lifespan.py:60-85 + backend/infrastructure/database/database.py:558-590) is a global boot-time invariant that must hold for every replica. It is currently SATISFIED, and is recorded here so a resolver working an adjacent boot task does not regress it."
+    },
+    {
+      "key": "CG-06 / manifest drift",
+      "why": "backend/requirements.txt and backend/pyproject.toml disagree with each other AND with TECHNOLOGY_STACK.md on fastapi, starlette, prometheus-fastapi-instrumentator and uv. Both Dockerfiles install from requirements.txt, so containers follow the ungoverned manifest. This governs the whole codebase's dependency surface and has no single File:Line."
+    }
+  ],
+  "coverage_gaps": [
+    {
+      "id": "CG-01",
+      "title": "next.config.ts:6-8 ignoreBuildErrors hides 119 tsc errors across 29 files -- the real P0 behind BOOT-003/BOOT-007",
+      "citations": [
+        "frontend/web_app/next.config.ts:6-8 -> `typescript: { ignoreBuildErrors: true, }`",
+        "frontend/web_app/node_modules/.bin/tsc --noEmit -> EXIT=1, 119 errors, 29 files",
+        "frontend/web_app/next.config.ts:3-8 -> `const nextConfig: NextConfig = { reactStrictMode: true, devIndicators: false, typescript: { ignoreBuildErrors: true, } }`"
+      ],
+      "raw_output": "ERROR_LINES=119  FILES=29  EXIT=1\nby code: 60 TS2322, 11 TS2305, 11 TS2339, 8 TS2353, 6 TS7006, 4 TS2307, 3 TS2786, 3 TS2604, 2 TS2503, 2 TS2614, 2 TS7031, 2 TS2559\nworst files: src/shared/logo/Logo.native.tsx (17), src/shared/components/logo/Logo.native.tsx (17), src/shared/components/ui/SearchBar.native.tsx (10), src/shared/components/ui/Input.native.tsx (9), src/shared/components/ui/LoadingSkeleton.native.tsx (8)\n21 of 29 files are *.native.tsx (React-Native variants typechecked by the WEB tsconfig)",
+      "note": "Law 186 is FAILING while appearing satisfied. I did NOT run `next build` (needs pnpm install, forbidden; and writes .next). The 119-error tsc set is strictly more sensitive because ignoreBuildErrors hides the build-time check. @tanstack/react-query (Law 171 FORBIDDEN) is unresolvable in 3 files: src/app/providers.tsx:3, src/components/QueryErrorBoundary.tsx:16, src/lib/api/queryStates.ts:14. Also unresolvable: src/shared/components/ui/ProductGrid.native.tsx:5 './ProductCard.native'. Also: src/app/checkout/page.tsx:217 'Cannot find name setConfig' (TS2304); src/app/suppliers/[id]/page.tsx:72 'discount_percent' vs type 'Product' -> should be 'discount_percentage' (TS2551)."
+    },
+    {
+      "id": "CG-02",
+      "title": "OpenTelemetry is dead from a wrong module path in backend/main.py:99; OTLP exporter is also absent",
+      "citations": [
+        "backend/main.py:97-103 -> `try: from infrastructure.utils.tracing import setup_tracing` / `except Exception as _tracing_exc: logger.warning(\"OpenTelemetry tracing disabled: %s\", _tracing_exc)`",
+        "backend/infrastructure/observability/tracing.py:35 and :43 -> `def setup_tracing(app, service_name=\"zozi-api\", otlp_endpoint=None, db_engine=None)` -- THE REAL MODULE",
+        "backend/infrastructure/utils/tracing.py -- DOES NOT EXIST",
+        "backend/infrastructure/observability/tracing.py:49 -> `otlp_endpoint = otlp_endpoint or os.environ.get(\"OTEL_EXPORTER_OTLP_ENDPOINT\", \"\")`"
+      ],
+      "raw_output": "{\"event\": \"OpenTelemetry tracing disabled: No module named 'infrastructure.utils.tracing'\", \"level\": \"warning\", \"logger\": \"backend.main\", \"timestamp\": \"2026-10-02T12:18:47.280300Z\", \"db_query_time_ms\": 243.35}\n\n# proof the correct path works:\n$ from infrastructure.observability.tracing import setup_tracing; setup_tracing(FastAPI())\nSETUP_TRACING OK (no exporter endpoint set)\n\n# proof OTLP export is ALSO missing:\n$ import opentelemetry.exporter.otlp.proto.grpc.trace_exporter\nFAIL opentelemetry.exporter.otlp.proto.grpc.trace_exporter ModuleNotFoundError\n$ import opentelemetry.instrumentation.fastapi\nOK   opentelemetry.instrumentation.fastapi 0.65b0",
+      "note": "TWO independent defects: (1) wrong path segment utils->observability in main.py:99; (2) opentelemetry OTLP exporter package absent from backend/requirements.txt:67 / pyproject.toml:40 (which pin only opentelemetry-instrumentation-fastapi==0.65b0). Fixing (1) alone would still yield a non-exporting tracer. Law 93 (request tracing) and TECHNOLOGY_STACK.md:140 are therefore both unmet. The bare `except Exception` at main.py:102 is Law 59-adjacent: it degrades to WARNING rather than crashing, which is arguably correct per Law 30/125, but it means a whole observability subsystem can be silently absent."
+    },
+    {
+      "id": "CG-03",
+      "title": "backend/main.py runs DDL at MODULE IMPORT (not in lifespan) and installs ZERO RLS policies",
+      "citations": [
+        "backend/main.py:51-57 -> `if not (settings.app_env or \"\").lower() == \"test\": try: install_rls_policies(engine)`",
+        "backend/infrastructure/database/rls_interceptor.py:279-296 -> `install_rls_policies(engine, schema=\"public\")` executes `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` + `FORCE ROW LEVEL SECURITY` per table plus a generated policy DDL, inside `engine.connect().execution_options(isolation_level=\"AUTOCOMMIT\")`",
+        "backend/infrastructure/database/rls_interceptor.py:46 -> `COUNTRY_AWARE_TABLES: dict[str,str] = _build_country_aware_tables()` (derived live from the DB)",
+        "backend/infrastructure/database/rls_interceptor.py:296 -> `logger.info(\"Installed RLS policies for %d tables\", len(COUNTRY_AWARE_TABLES))`"
+      ],
+      "raw_output": "{\"query_type\": \"create\", \"duration_ms\": 194.3, \"statement_length\": 609, \"event\": \"db_query\", \"level\": \"debug\", \"logger\": \"zozi.db\", \"timestamp\": \"2026-10-02T13:37:01.447280Z\", \"db_query_time_ms\": 194.3}\nInstalled RLS policies for 0 tables\n\n# confirming it is import-time, not lifespan-time:\n$ python -c \"import backend.main; print('IMPORT OK')\"\n... db_query (create) ...\nInstalled RLS policies for 0 tables\nIMPORT OK\nEXIT=0",
+      "note": "TWO problems. (a) IMPORT-TIME DB MUTATION: a `create` DDL statement (609 chars) executes on plain `import backend.main`, i.e. any CLI, script, test collection or CI step that imports the app mutates the database schema. Law 6 says Alembic is the only schema source. It should live in lifespan, not module scope. (b) 'Installed RLS policies for 0 tables' -- COUNTRY_AWARE_TABLES is empty in this environment (the derived DB has no country_code-bearing tables), so NO RLS policy is installed at all and the RLS guarantee of Law 5 / Law 227 rests entirely on the SQLAlchemy before_execute interceptor rather than on Postgres row-level security. SEVERITY IS ENVIRONMENT-DEPENDENT: this machine's dev DB is empty, so I cannot confirm what a populated DB would install. The orchestrator must re-run this against staging/prod to size it."
+    },
+    {
+      "id": "CG-04",
+      "title": "LAW 217 CONFIRMED SATISFIED -- no auto-migration on web-replica boot (recorded to prevent regression)",
+      "citations": [
+        "backend/lifespan.py:60-85 -> `_bootstrap_runtime()`; docstring :61-64 'Migrations are run exclusively by the CI/CD deploy pipeline per Law 217. Web replicas must NEVER auto-migrate on boot.'; :72 `auto_migration_applied = False`; :80-84 logger.info('Startup health: auto_migration_applied=%s migration_reason=%s', ...)",
+        "backend/infrastructure/database/database.py:558-573 -> `_guard_dev_only(operation)` raises RuntimeError(f'{operation} is disabled on PostgreSQL. Use a reviewed Alembic migration instead of Base.metadata.create_all/drop_all.') when _IS_POSTGRES, and RuntimeError(f'{operation} is disabled in production. Use a reviewed Alembic migration.') when app_env=='production'",
+        "backend/infrastructure/database/database.py:576-578 -> create_tables() calls _guard_dev_only('create_tables')",
+        "backend/infrastructure/database/database.py:588-590 -> reset_tables() calls _guard_dev_only('reset_tables')",
+        "backend/lifespan.py -- contains NO import of alembic (grep: 0 hits)"
+      ],
+      "raw_output": "grep 'alembic' backend/lifespan.py -> 0 matches\nbackend/lifespan.py:72 -> auto_migration_applied = False\nbackend/infrastructure/database/database.py:565-569 -> if _IS_POSTGRES: raise RuntimeError(f\"{operation} is disabled on PostgreSQL. ...\")\nbackend/infrastructure/database/database.py:570-573 -> if str(getattr(settings,'app_env','development')).lower()=='production': raise RuntimeError(f\"{operation} is disabled in production. ...\")",
+      "note": "VERIFIED GOOD -- no fix needed. The only place alembic is invoked programmatically is backend/infrastructure/database/migrations.py:10-28 (get_alembic_config / upgrade / downgrade helpers), which is a manual operator path, not a boot path. Note also backend/infrastructure/database/migrations.py:12 correctly points at `Path(__file__).resolve().parent.parent.parent / 'alembic' / 'alembic.ini'` -- i.e. the CODE already knows the ini is at backend/alembic/alembic.ini, which is further proof that BOOT-005's diagnosis ('missing script_location') is wrong."
+    },
+    {
+      "id": "CG-05",
+      "title": "No alembic.ini at any auto-discoverable path; CI/Makefile/Dockerfile entrypoints must all pass -c",
+      "citations": [
+        "backend/alembic.ini -- DOES NOT EXIST (Test-Path = False)",
+        "backend/alembic/alembic.ini:5 -> `script_location = %(here)s` (THE ONLY alembic.ini; recursive search at depth 2 returns exactly one file)",
+        "backend/alembic/alembic.ini:13 -> `prepend_sys_path = %(here)s`",
+        "backend/infrastructure/database/migrations.py:12 -> `alembic_ini = str(Path(__file__).resolve().parent.parent.parent / \"alembic\" / \"alembic.ini\")`"
+      ],
+      "raw_output": "$ Test-Path backend\\alembic.ini        -> False\n$ Test-Path backend\\alembic\\alembic.ini -> True\n$ Get-ChildItem -Recurse -Depth 2 -Filter alembic.ini  -> D:\\...\\backend\\alembic\\alembic.ini   (exactly one)\n$ (repo root) python -m alembic -c backend/alembic.ini heads  -> FAILED: No 'script_location' key found in configuration.   EXIT=-1\n$ (backend/)   alembic heads                         -> FAILED: No 'script_location' key found in configuration.   EXIT=-1\n$ (backend/)   alembic -c alembic/alembic.ini heads -> 20261001_0001 (head)   EXIT=0",
+      "note": "Distinct from BOOT-005 (which is about the error message) -- this is about the missing discovery shim. I did NOT grep .github/workflows or Makefiles exhaustively for bare `alembic ` invocations; that scan is left for the CI dimension. I ran NO alembic upgrade/downgrade (hard rule) -- only read-only `heads` and offline `--sql` generation."
+    },
+    {
+      "id": "CG-06",
+      "title": "Dependency-manifest divergence and pin violations vs TECHNOLOGY_STACK.md",
+      "citations": [
+        "backend/requirements.txt:8 -> `fastapi==0.141.0`",
+        "backend/pyproject.toml:7 -> `\"fastapi==0.115.2\"`   <-- DISAGREES with requirements.txt by 26 minor versions",
+        "backend/requirements.txt:11 -> `starlette`          <-- UNPINNED; violates TECHNOLOGY_STACK.md:24 '>=1.6.0,<1.7.0 ... Pin the range to avoid the build-from-source bug in Debian #1132860' and Law 290",
+        "backend/pyproject.toml:10 -> `\"starlette\"`         <-- also unpinned",
+        "backend/requirements.txt:63 -> `prometheus-fastapi-instrumentator==8.1.0`  (matches TECHNOLOGY_STACK.md:136)",
+        "backend/pyproject.toml:36 -> `\"prometheus-fastapi-instrumentator==7.1.0\"` <-- DISAGREES with requirements.txt",
+        "backend/requirements.txt:62 and backend/pyproject.toml:35 -> `prometheus-client==0.26.0` standalone, which TECHNOLOGY_STACK.md:136 FORBIDS ('Do NOT install prometheus-client standalone')",
+        "installed: ruff 0.15.12 vs TECHNOLOGY_STACK.md:163 'ruff 0.16.6+'",
+        "installed: uv 0.10.11 vs TECHNOLOGY_STACK.md:290 'uv 0.12.12'",
+        "installed: python 3.13.15 (OK), fastapi 0.141.0 (OK), starlette 1.6.0 (OK), prometheus-fastapi-instrumentator 8.1.0 (OK)"
+      ],
+      "raw_output": "Python 3.13.15\nuv 0.10.11 (006b56b12 2026-03-16)\nruff 0.15.12\nfastapi 0.141.0 / starlette 1.6.0\nprometheus-fastapi_instrumentator 8.1.0   (module reports 8.1.0)\n\n$ Select-String backend\\requirements.txt,backend\\pyproject.toml -Pattern 'starlette|fastapi|prometheus'\nbackend\\requirements.txt:8:fastapi==0.141.0\nbackend\\requirements.txt:11:starlette\nbackend\\requirements.txt:62:prometheus-client==0.26.0\nbackend\\requirements.txt:63:prometheus-fastapi-instrumentator==8.1.0\nbackend\\pyproject.toml:7:    \"fastapi==0.115.2\",\nbackend\\pyproject.toml:10:    \"starlette\",\nbackend\\pyproject.toml:35:    \"prometheus-client==0.26.0\",\nbackend\\pyproject.toml:36:    \"prometheus-fastapi-instrumentator==7.1.0\",",
+      "note": "The Starlette pin specifically matters: it exists ONLY to dodge Debian bug #1132860 (build-from-source). With `starlette` unpinned in the manifest that both Dockerfiles install from, a resolver could pull an incompatible build and the guard is gone. T10 already recorded the fastapi divergence; I independently confirm it and add the starlette unpinned pin, the instrumentator 7.1.0-vs-8.1.0 split, and the two minor tool drifts (ruff, uv). Boot-relevant consequence: the environment I booted with has instrumentator 8.1.0, but a container built from pyproject-only would get 7.1.0 -- and /metrics mounting behaviour could differ."
+    },
+    {
+      "id": "CG-07",
+      "title": "docker-compose.prod.yml:5 dangling `db` hostname + prod deploys a pooler that Law 260 forbids",
+      "citations": [
+        "docker-compose.prod.yml:2-28 -> `pgbouncer:` service, `image: edoburu/pgbouncer:latest`",
+        "docker-compose.prod.yml:5 -> `- DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}`  <-- host `db` has NO matching service in this file",
+        "docker-compose.prod.yml:36 -> `- DATABASE_URL=postgresql://...@pgbouncer:6432/${POSTGRES_DB}` (backend -> pgbouncer, and pgbouncer IS defined)",
+        "docker-compose.yml:4 -> `image: postgres:18-alpine` (dev DOES define `db` at :3)",
+        "ARCHITECTURE_STACK.md:786 (Law 260) -> 'Built-in pooler (transaction mode) ... Self-hosted pooler is NOT deployed.'",
+        "ARCHITECTURE_STACK.md:741 (Law 215) -> 'Database is Neon (remote). ... No local Postgres container.'",
+        "TECHNOLOGY_STACK.md:279 -> 'Use for local dev. Includes a local Postgres 16 container.'  <-- says 16; compose uses 18",
+        "TECHNOLOGY_STACK.md:41-42 -> Neon 18 in staging/prod; local PostgreSQL 16 in dev"
+      ],
+      "raw_output": "$ docker compose -f docker-compose.prod.yml config --quiet\nPROD_EXIT=0            # compose validation PASSES -- a dangling hostname inside an env var is NOT a graph error\n\n$ docker compose -f docker-compose.yml config | grep '^  [a-z]'\n  backend: celery-beat: celery-worker-emails: celery-worker-ml:\n  celery-worker-payouts: celery-worker-periodic: db: frontend: valkey:\nDEV_EXIT=0\n\n$ grep -c pgbouncer docker-compose.yml   -> 0",
+      "note": "This is the REAL prod defect that BOOT-004 half-stumbled onto, stated correctly: NOT 'service pgbouncer depends on undefined service db' (impossible -- pgbouncer has no depends_on) but 'pgbouncer is configured to reach a host `db` that no service in docker-compose.prod.yml provides'. It passes `docker compose config` and fails at runtime DNS. Severity: if deployed as written, the entire pgbouncer tier (and therefore every backend/celery/ml_worker DSN, all of which point at @pgbouncer:6432) cannot connect. Also three-way contradiction on the DB: Law 215 says no local Postgres container, compose.yml:3-4 ships postgres:18-alpine, and TECHNOLOGY_STACK.md:279 says postgres:16-alpine. And Law 260 explicitly forbids a self-hosted pooler while prod deploys edoburu/pgbouncer. These are benchmark contradictions for the user/orchestrator to resolve -- I do NOT resolve them. SECRET REDACTION: `docker compose -f docker-compose.prod.yml config` printed a committed Neon owner DSN password and a SECRET_KEY literal from docker-compose.prod.yml; both are REDACTED here. Treat the committed prod credentials as a Law 32 finding for the orchestrator."
+    },
+    {
+      "id": "CG-08",
+      "title": "Boot emits three non-JSON lines alongside the structlog JSON stream (Law 58 / Law 92 formatting)",
+      "citations": [
+        "backend/infrastructure/database/rls_interceptor.py:79 -> `logger.info(\"RLS interceptor installed on database engine\")`",
+        "backend/infrastructure/database/rls_interceptor.py:220 -> `logger.info(\"RLS interceptor installed on database engine\")`",
+        "backend/infrastructure/database/rls_interceptor.py:296 -> `logger.info(\"Installed RLS policies for %d tables\", len(COUNTRY_AWARE_TABLES))`",
+        "backend/main.py:84 -> `setup_middleware(app)` emits `Middleware pipeline registered: 8 layers, 18 middleware`",
+        "backend/main.py:97-103 -> emits the (correct, JSON) OpenTelemetry-disabled WARNING"
+      ],
+      "raw_output": "{\"event\": \"Database query instrumentation enabled\", \"level\": \"info\", \"logger\": \"zozi.db\", ...}\nRLS interceptor installed on database engine            <-- NOT JSON\n{\"query_type\": \"create\", ...}\nInstalled RLS policies for 0 tables                  <-- NOT JSON\n{...sentry_initialized...}\nMiddleware pipeline registered: 8 layers, 18 middleware  <-- NOT JSON\n{...OpenTelemetry tracing disabled...}",
+      "note": "Four of eleven boot lines are bare text interleaved into a structlog JSON stream. Whatever renders these (a printf-style fallback logger installed before structlog is configured, or a different handler on the `zozi.db`/root logger) means log shipping/aggregation (Law 315) will drop or mangle them. I did not trace the renderer -- that is out of this dimension's scope and I flag it rather than guess. Severity: LOW-to-MEDIUM (observability hygiene, not boot-breaking)."
+    },
+    {
+      "id": "CG-09",
+      "title": "Root tests/ has 6 collection errors (Law 71: collection-time failures MUST block CI)",
+      "citations": [
+        "tests/jobs/test_celery_app.py, tests/jobs/test_payout_retry.py, tests/jobs/test_payout_tasks.py -> AttributeError: 'types.SimpleNamespace' object has no attribute ...",
+        "tests/domains/finance/test_cash_management.py, tests/domains/suppliers/test_supplier_service.py, tests/finance/test_finance_service.py -> (truncated in the -q summary)"
+      ],
+      "raw_output": "$ PYTHONPATH=backend python -m pytest tests --collect-only -q   (repo root)\nERROR tests/domains/finance/test_cash_management.py\nERROR tests/domains/suppliers/test_supplier_service.py\nERROR tests/finance/test_finance_service.py\nERROR tests/jobs/test_celery_app.py - AttributeError: 'types.SimpleNamespace'...\nERROR tests/jobs/test_payout_retry.py - AttributeError: 'types.SimpleNamespac...\nERROR tests/jobs/test_payout_tasks.py - AttributeError: 'types.SimpleNamespac...\n!!! Interrupted: 6 errors during collection !!!\n1734 tests collected, 6 errors in 6.37s\nROOT_TESTS_EXIT=2\n\n$ (cwd backend) python -m pytest tests --collect-only -q\n4728 tests collected in 42.51s\nBACKEND_TESTS_EXIT=0",
+      "note": "Discovered incidentally while characterising BOOT-008. The two test trees behave very differently: backend/tests/ is clean (4728, exit 0); root tests/ has 6 hard collection errors (1734 collected, exit 2). The `types.SimpleNamespace` AttributeError pattern strongly suggests the root conftest stubs the settings object incompletely for Celery job modules -- but I did NOT diagnose it (out of scope, and I must not invent). Flagged for the testing dimension. Law 71 requires these to block CI, so either CI is not running root tests/ (likely, given BOOT-008) or it is not blocking."
+    },
+    {
+      "id": "CG-10",
+      "title": "BOOT-006's real root cause: sys.path shadowing of `providers` by the empty test package",
+      "citations": [
+        "backend/tests/providers/__init__.py -- EXISTS and is EMPTY (no statements; no import, no __all__)",
+        "backend/tests/providers/test_functional_providers.py:671-672 -> `from providers.payments.registry import PaymentGatewayRegistry` / `from providers.payments.base import BasePaymentGateway`",
+        "backend/providers/ -- the real package (__init__.py _base.py _helpers.py async_workers.py config.py http.py observability.py)"
+      ],
+      "raw_output": "$ (repo root) python -c \"import sys,os; sys.path.insert(0, os.path.abspath('backend/tests')); import providers; print('BINDING  ->', providers.__file__); print('__path__ ->', list(providers.__path__)); print('has payments?', hasattr(providers,'payments')); print('count    ->', len([n for n in dir(providers) if not n.startswith('_')]))\"\nBINDING  -> D:\\...\\backend\\tests\\providers\\__init__.py\n__path__ -> ['D:\\...\\backend\\tests\\providers']\nhas payments? False\ncount    -> 0\n\n$ (cwd backend) PYTHONPATH=backend python -m pytest tests/providers --collect-only -q\n1312 tests collected in 1.82s\nEXIT=0",
+      "note": "Routed here rather than kept as BOOT-006, because BOOT-006's own claim (8393 ruff errors at a non-existent path, line 679) is false in every particular. The MECHANISM is confirmed and is a genuine, un-fixed defect: when backend/tests precedes backend on sys.path (which pytest's rootdir insertion does), `import providers` resolves to the empty test package and every `from providers.X import Y` in those tests fails at runtime with a misleading 'cannot import name' / 'has no attribute' error. It does NOT break collection (1312 collected, exit 0), so it presents as confusing per-test failures rather than a collection error -- which is exactly why it was misattributed to ruff. Severity: MEDIUM (silently wrong test target). Corroborates CROSS_AGENT_FINDINGS T1 on the collection count."
+    },
+    {
+      "id": "CG-11",
+      "title": "VERIFIED FACTS, no defect -- recorded so later passes do not re-litigate them",
+      "citations": [
+        "ARCHITECTURE_STACK.md:607 (Law 81) / :744 (Law 218) -> /health, /health/deps, /health/ready",
+        "backend/main.py:106-111 -> `@app.get(\"/health\")`",
+        "TECHNOLOGY_STACK.md:24 -> Starlette >=1.6.0,<1.7.0 (Debian #1132860 build-from-source bug pin)"
+      ],
+      "raw_output": "$ ... all three present in app.openapi()['paths']:\n  /health              ['get']\n  /health/deps         ['get']\n  /health/ready        ['get']\n  (+ 29 other per-module /health paths)\n\n$ PROMETHEUS_ENABLED=true ... print('ROUTES_PROM', len(app.routes))\nROUTES_PROM 85\nHAS_METRICS True\nPATHS_PROM 738\n\n$ PROMETHEUS_ENABLED unset:\nROUTES 84\n\n$ starlette 1.6.0 installed -> inside the >=1.6.0,<1.7.0 window\n$ prometheus_fastapi_instrumentator -> 8.1.0\n$ LAW 217: grep 'alembic' backend/lifespan.py -> 0 matches",
+      "note": "(a) Law 81/218: all three health routes are MOUNTED and present in the OpenAPI surface. Live HTTP 200 status NOT probed: TestClient enters the app lifespan, which the subcontract forbids ('Never run a command that ... starts a server'). Test result for Law 81/218 = not_run, for that reason. (b) /metrics appears ONLY when PROMETHEUS_ENABLED is truthy (84 -> 85 routes, PATHS unchanged at 738) -- confirms T14. (c) The Debian #1132860 Starlette pin is satisfied by the installed 1.6.0, but NOT by the unpinned manifests (CG-06). (d) Law 217 fully satisfied (CG-04)."
+    }
+  ],
+  "not_run": [
+    {
+      "what": "next build / pnpm build",
+      "why": "Requires pnpm install (explicitly forbidden) and a full production build that writes frontend/web_app/.next. Substituted `tsc --noEmit`, which is strictly MORE sensitive here because next.config.ts:6-8 ignoreBuildErrors hides build-time type errors."
+    },
+    {
+      "what": "Live HTTP probe of /health, /health/deps, /health/ready (Law 81/218 status codes)",
+      "why": "TestClient would start the ASGI app and its lifespan; the subcontract forbids starting a server. Route MOUNTING was verified from the OpenAPI surface instead."
+    },
+    {
+      "what": "alembic upgrade / downgrade / any DB-mutating command",
+      "why": "Explicitly forbidden by the hard rules. Only read-only `alembic heads` and offline `--sql` generation were run."
+    },
+    {
+      "what": "docker compose up / build / start of any kind",
+      "why": "Explicitly forbidden. Only `docker compose config` (validation) was run, on both compose files."
+    },
+    {
+      "what": "git (any subcommand)",
+      "why": "Forbidden by the contract. Consequently NO claim in this file rests on a commit: every ALREADY_FIXED/DISAGREEMENT judgement is made from the working tree only. In particular BOOT-005's already-fixed `migration_helpers` and BOOT-004/BOOT-006's refutations are working-tree facts, not history facts."
+    },
+    {
+      "what": "pnpm install / npm install",
+      "why": "Forbidden. All frontend evidence comes from the already-installed frontend/web_app/node_modules (TypeScript 5.9.3)."
+    },
+    {
+      "what": "Executing the 1312 collected provider tests (not just collecting them)",
+      "why": "Execution would hit the sys.path-shadowing defect (CG-10) and, per CROSS_AGENT_FINDINGS T1, leaked sk_test_dummy credentials and a boto3 ModuleNotFoundError at infrastructure/storage/storage.py:27 -- none of which is this dimension's claim to adjudicate, and running them risks side effects. Collection-only was sufficient to refute BOOT-006."
+    }
+  ],
+  "secrets_redacted": "REDACTED. `docker compose -f docker-compose.prod.yml config` echoes every service environment verbatim and its raw output contained (a) a hardcoded Neon owner DSN password and (b) a SECRET_KEY literal, both committed in docker-compose.prod.yml. I did not copy either value into this verdict file or into my report to the orchestrator; only variable NAMES, service names and dependency topology are quoted. Two further secret-shaped literals appear in docker-compose.prod.yml: STRIPE_SECRET_KEY is a `sk_test_dummy` placeholder (benign) and SENTRY_DSN points at `https://dummy@sentry.io/123456` (i.e. prod would ship errors to the REAL public Sentry SaaS, which contradicts TECHNOLOGY_STACK.md:134's self-hosted GlitchTip destination -- routed to CG-07 for the orchestrator). No live credential is reproduced anywhere in this file.",
+  "prohibitions_observed": [
+    "Edited ONLY _audit/compiler/verdicts/00_boot_smoke.json (exact filename requested, no collision with the packet name).",
+    "No file under backend/, frontend/, .github/, monitoring/ or docker-compose*.yml was modified -- all reads were read-only.",
+    "_audit/dimensions/*.md and _audit/TO_BE_RESOLVE.md untouched.",
+    "No git command run.",
+    "No pnpm install / npm install run.",
+    "No container started, built or configured beyond `docker compose config` validation.",
+    "No alembic upgrade/downgrade and no DB-mutating command.",
+    "No secret value printed in this file or in the report."
+  ],
+  "output_path": "_audit/compiler/verdicts/00_boot_smoke.json"
+}

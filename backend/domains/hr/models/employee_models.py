@@ -174,11 +174,11 @@ class Employee(Base):
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     
-    user = relationship("User", foreign_keys=[user_id], backref="employee_profile")
+    user = relationship("User", foreign_keys=[user_id], backref="employee_profile", lazy="selectin")
     office = relationship("Office", backref="employees")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys=[country_code], lazy="selectin")
     reports_to = relationship("Employee", remote_side=[id], backref="subordinates")
-    hiring_manager = relationship("User", foreign_keys=[hiring_manager_id])
+    hiring_manager = relationship("User", foreign_keys=[hiring_manager_id], lazy="selectin")
     org_unit = relationship("OrgUnit", backref="employees")
     addresses = relationship("EmployeeAddress", back_populates="employee", cascade="all, delete-orphan")
     dependents = relationship("EmployeeDependent", back_populates="employee", cascade="all, delete-orphan")
@@ -256,7 +256,7 @@ class EmployeeLeaveRequest(Base):
     country_code = Column(String(2), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="leave_requests")
-    approver = relationship("User", foreign_keys=[approved_by_id])
+    approver = relationship("User", foreign_keys=[approved_by_id], lazy="selectin")
 
     __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'cancelled', 'withdrawn')", name="chk_employee_leave_requests_status_valid"), {"schema": "hr"})
 
@@ -353,7 +353,7 @@ class EmployeeDocument(Base):
     country_code = Column(String(2), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="documents")
-    verifier = relationship("User", foreign_keys=[verified_by_id])
+    verifier = relationship("User", foreign_keys=[verified_by_id], lazy="selectin")
 
 
 class EmployeeDependent(Base):
@@ -408,7 +408,7 @@ class EmployeeAddress(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     
     employee = relationship("Employee", back_populates="addresses")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys=[country_code], lazy="selectin")
 
 
 class COIReport(Base):
@@ -430,7 +430,7 @@ class COIReport(Base):
     country_code = Column(String(2), nullable=True, index=True)
     employee = relationship("Employee", foreign_keys=[employee_id], backref="coi_reports")
     internal_employee = relationship("Employee", foreign_keys=[internal_employee_id])
-    approver = relationship("User", foreign_keys=[approved_by_id])
+    approver = relationship("User", foreign_keys=[approved_by_id], lazy="selectin")
 
 
 class TravelRequest(Base):
@@ -452,7 +452,7 @@ class TravelRequest(Base):
     country_code = Column(String(2), nullable=True, index=True)
     
     employee = relationship("Employee", backref="travel_requests")
-    approver = relationship("User", foreign_keys=[approved_by_id])
+    approver = relationship("User", foreign_keys=[approved_by_id], lazy="selectin")
 
     __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'cancelled', 'completed')", name="chk_employee_travel_requests_status_valid"), {"schema": "hr"})
 

@@ -13,10 +13,10 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    func,
 )
 from sqlalchemy.orm import relationship
 from . import Base
-from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 # Re-export chat models from canonical location (chat.py)
 from domains.comms.models.chat import (  # noqa: F401
@@ -42,8 +42,8 @@ class SupportTicket(Base):
     subject = Column(String, nullable=False)
     priority = Column(String, default="medium")
     status = Column(String, default="open")
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     replies = relationship("SupportTicketReply", back_populates="ticket")
     attachments = relationship("TicketAttachment", back_populates="ticket")
@@ -57,7 +57,9 @@ class SupportTicketReply(Base):
     ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id", ondelete="SET NULL"), nullable=False, index=True)
     sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False, index=True)
     message = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     ticket = relationship("SupportTicket", back_populates="replies")
     attachments = relationship("TicketAttachment", back_populates="ticket_reply")
@@ -70,7 +72,9 @@ class TicketAttachment(Base):
     ticket_reply_id = Column(Integer, ForeignKey("comms.support_ticket_replies.id", ondelete="SET NULL"), nullable=True, index=True)
     ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id", ondelete="SET NULL"), nullable=True, index=True)
     file_url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     ticket_reply = relationship("SupportTicketReply", back_populates="attachments")
     ticket = relationship("SupportTicket", back_populates="attachments")
@@ -86,7 +90,10 @@ class NewsSource(Base):
     api_key_required = Column(Boolean, default=False)
     category = Column(String(50), default="general")
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class InternalNotice(Base):
@@ -99,7 +106,10 @@ class InternalNotice(Base):
     is_active = Column(Boolean, default=True)
     valid_from = Column(DateTime, nullable=True)
     valid_to = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class EscalationSLARule(Base):
@@ -112,4 +122,6 @@ class EscalationSLARule(Base):
     escalate_to_role = Column(String(40), nullable=False)
     notify_via = Column(String(100), default="email,sms")
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)

@@ -6,7 +6,7 @@ import { test, expect, type Page, type Route } from "@playwright/test";
 //  4. Supplier Search     5. Voice Search   6. Image Search
 // ═══════════════════════════════════════════════════════════════════════════
 
-const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):8000/;
+const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):3100/;
 
 const MOCK_PRODUCTS = [
   { id: 101, name: "Classic T-Shirt", price: 29.99, category: "fashion", stock: 15, is_active: true, image_url: null, description: "A comfy tee", supplier: "FashionHub", rating: 4.5, sales_count: 120, tags: "cotton, casual" },
@@ -33,7 +33,7 @@ async function setupSharedMocks(page: Page) {
   await page.route("**/cart/", async (route) => fulfillJson(route, []));
 
   // Products — smart filtering mock
-  await page.route(new RegExp(`${API_HOST.source}/products(\\?.*)?$`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`), async (route) => {
     const url = new URL(route.request().url());
     const q = url.searchParams.get("q");
     let filtered = [...MOCK_PRODUCTS];
@@ -48,10 +48,10 @@ async function setupSharedMocks(page: Page) {
   });
 
   // Suppliers
-  await page.route(new RegExp(`${API_HOST.source}/products/suppliers$`), async (route) => fulfillJson(route, MOCK_SUPPLIERS));
+  await page.route(new RegExp(`${API_HOST.source}/__api/products/suppliers$`), async (route) => fulfillJson(route, MOCK_SUPPLIERS));
 
   // Autocomplete
-  await page.route(new RegExp(`${API_HOST.source}/search/autocomplete\\?.*`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/search/autocomplete\\?.*`), async (route) => {
     const url = new URL(route.request().url());
     const q = url.searchParams.get("q")?.toLowerCase() || "";
     const suggestions = MOCK_PRODUCTS.filter((p) => p.name.toLowerCase().includes(q)).map((p) => p.name);
@@ -59,13 +59,13 @@ async function setupSharedMocks(page: Page) {
   });
 
   // Other
-  await page.route(new RegExp(`${API_HOST.source}/search/trending\\?.*`), async (route) => fulfillJson(route, { queries: ["wireless headphones", "running shoes", "yoga mat"] }));
-  await page.route(new RegExp(`${API_HOST.source}/search/visual$`), async (route) => fulfillJson(route, { similarProducts: MOCK_PRODUCTS.slice(0, 3), similarProductIds: [101, 102, 103] }));
-  await page.route(new RegExp(`${API_HOST.source}/banners`), async (route) => fulfillJson(route, []));
-  await page.route(new RegExp(`${API_HOST.source}/flash-sales$`), async (route) => fulfillJson(route, []));
-  await page.route(new RegExp(`${API_HOST.source}/suppliers\\?.*`), async (route) => fulfillJson(route, { items: [], total: 0 }));
-  await page.route(new RegExp(`${API_HOST.source}/suppliers/resolve/.*`), async (route) => fulfillJson(route, {}, 404));
-  await page.route(new RegExp(`${API_HOST.source}/countries$`), async (route) => fulfillJson(route, [{ code: "US", name: "United States", currency: "USD", is_active: true }]));
+  await page.route(new RegExp(`${API_HOST.source}/__api/search/trending\\?.*`), async (route) => fulfillJson(route, { queries: ["wireless headphones", "running shoes", "yoga mat"] }));
+  await page.route(new RegExp(`${API_HOST.source}/__api/search/visual$`), async (route) => fulfillJson(route, { similarProducts: MOCK_PRODUCTS.slice(0, 3), similarProductIds: [101, 102, 103] }));
+  await page.route(new RegExp(`${API_HOST.source}/__api/banners`), async (route) => fulfillJson(route, []));
+  await page.route(new RegExp(`${API_HOST.source}/__api/flash-sales$`), async (route) => fulfillJson(route, []));
+  await page.route(new RegExp(`${API_HOST.source}/__api/suppliers\\?.*`), async (route) => fulfillJson(route, { items: [], total: 0 }));
+  await page.route(new RegExp(`${API_HOST.source}/__api/suppliers/resolve/.*`), async (route) => fulfillJson(route, {}, 404));
+  await page.route(new RegExp(`${API_HOST.source}/__api/countries$`), async (route) => fulfillJson(route, [{ code: "US", name: "United States", currency: "USD", is_active: true }]));
 }
 
 async function goToProducts(page: Page) {
@@ -94,8 +94,8 @@ test.describe("Category Selection", () => {
   test("category param is sent to /products endpoint", async ({ page }) => {
     let capturedUrl = "";
     // Wait for any existing route to be unregistered by using a fresh route
-    await page.unroute(new RegExp(`${API_HOST.source}/products(\\?.*)?$`));
-    await page.route(new RegExp(`${API_HOST.source}/products(\\?.*)?$`), async (route) => {
+    await page.unroute(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`));
+    await page.route(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`), async (route) => {
       capturedUrl = route.request().url();
       await fulfillJson(route, MOCK_PRODUCTS);
     });
@@ -115,20 +115,20 @@ test.describe("Price Filter", () => {
 
   test("min_price param is passed to /products endpoint", async ({ page }) => {
     let capturedUrl = "";
-    await page.unroute(new RegExp(`${API_HOST.source}/products(\\?.*)?$`));
-    await page.route(new RegExp(`${API_HOST.source}/products(\\?.*)?$`), async (route) => {
+    await page.unroute(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`));
+    await page.route(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`), async (route) => {
       capturedUrl = route.request().url();
       await fulfillJson(route, MOCK_PRODUCTS);
     });
-    await page.goto("/products?min_price=50", { waitUntil: "domcontentloaded" });
+    await page.goto("/products?minPrice=50", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
     expect(capturedUrl).toContain("min_price=50");
   });
 
   test("price_asc sort param is passed to /products endpoint", async ({ page }) => {
     let capturedUrl = "";
-    await page.unroute(new RegExp(`${API_HOST.source}/products(\\?.*)?$`));
-    await page.route(new RegExp(`${API_HOST.source}/products(\\?.*)?$`), async (route) => {
+    await page.unroute(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`));
+    await page.route(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`), async (route) => {
       capturedUrl = route.request().url();
       await fulfillJson(route, MOCK_PRODUCTS);
     });
@@ -148,12 +148,12 @@ test.describe("Rating Filter", () => {
 
   test("min_rating param is passed to /products endpoint", async ({ page }) => {
     let capturedUrl = "";
-    await page.unroute(new RegExp(`${API_HOST.source}/products(\\?.*)?$`));
-    await page.route(new RegExp(`${API_HOST.source}/products(\\?.*)?$`), async (route) => {
+    await page.unroute(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`));
+    await page.route(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`), async (route) => {
       capturedUrl = route.request().url();
       await fulfillJson(route, MOCK_PRODUCTS);
     });
-    await page.goto("/products?min_rating=4", { waitUntil: "domcontentloaded" });
+    await page.goto("/products?minRating=4", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
     expect(capturedUrl).toContain("min_rating=4");
   });
@@ -183,8 +183,8 @@ test.describe("Supplier Search", () => {
 
   test("/products/suppliers endpoint is called on page load", async ({ page }) => {
     let called = false;
-    await page.unroute(new RegExp(`${API_HOST.source}/products/suppliers$`));
-    await page.route(new RegExp(`${API_HOST.source}/products/suppliers$`), async (route) => {
+    await page.unroute(new RegExp(`${API_HOST.source}/__api/products/suppliers$`));
+    await page.route(new RegExp(`${API_HOST.source}/__api/products/suppliers$`), async (route) => {
       called = true;
       await fulfillJson(route, MOCK_SUPPLIERS);
     });
@@ -255,9 +255,9 @@ test.describe("Search Bar Rendering", () => {
   });
 
   test("quick filter pills (New Arrivals, Trending, Deals) are visible", async ({ page }) => {
-    await expect(page.getByText("New Arrivals")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("Trending")).toBeVisible();
-    await expect(page.getByText("Deals")).toBeVisible();
+    await expect(page.getByRole("button", { name: "New Arrivals" })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "Trending" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Deals" })).toBeVisible();
   });
 });
 
@@ -271,8 +271,8 @@ test.describe("Edge Cases", () => {
 
   test("autocomplete endpoint is called when user types", async ({ page }) => {
     let called = false;
-    await page.unroute(new RegExp(`${API_HOST.source}/search/autocomplete\\?.*`));
-    await page.route(new RegExp(`${API_HOST.source}/search/autocomplete\\?.*`), async (route) => {
+    await page.unroute(new RegExp(`${API_HOST.source}/__api/search/autocomplete\\?.*`));
+    await page.route(new RegExp(`${API_HOST.source}/__api/search/autocomplete\\?.*`), async (route) => {
       called = true;
       await fulfillJson(route, { suggestions: ["Classic T-Shirt"] });
     });
@@ -286,8 +286,8 @@ test.describe("Edge Cases", () => {
 
   test("products page calls /products endpoint on initial load", async ({ page }) => {
     let called = false;
-    await page.unroute(new RegExp(`${API_HOST.source}/products(\\?.*)?$`));
-    await page.route(new RegExp(`${API_HOST.source}/products(\\?.*)?$`), async (route) => {
+    await page.unroute(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`));
+    await page.route(new RegExp(`${API_HOST.source}/__api/products(\\?.*)?$`), async (route) => {
       called = true;
       await fulfillJson(route, MOCK_PRODUCTS);
     });

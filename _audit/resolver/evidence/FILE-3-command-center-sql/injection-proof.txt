@@ -1,0 +1,97 @@
+=== SEC-004 INJECTION PROOF: analytics command_center_query_service ===
+
+Pre-fix and post-fix runs of the SAME throwaway script (never committed to the repo):
+  C:\Users\user\AppData\Local\Temp\opencode\file3_prefix_probe.py
+It calls _validate_where_clause(<payload>) and the table allowlist, printing the
+result of each. Payload set:
+  1=1 or pg_sleep(5)=1
+  1=1 or 1=1
+  id=1 or benchmark(10000000,sha1(1))
+
+--------------------------------------------------------------------------------
+BEFORE THE FIX  (verbatim captured output)
+--------------------------------------------------------------------------------
+ACCEPTED  '1=1 or pg_sleep(5)=1'  -> returned '1=1 or pg_sleep(5)=1'  <<< INJECTION REACHES SQL
+ACCEPTED  '1=1 or 1=1'  -> returned '1=1 or 1=1'  <<< INJECTION REACHES SQL
+ACCEPTED  'id=1 or benchmark(10000000,sha1(1))'  -> returned 'id=1 or benchmark(10000000,sha1(1))'  <<< INJECTION REACHES SQL
+
+--- table allowlist behaviour (must stay intact) ---
+  'users' -> 'users'
+  ' USERS ' -> 'users'
+  'users; DROP TABLE users' -> ValueError: Table 'users; DROP TABLE users' is not allowed in command center queries
+  'pg_sleep' -> ValueError: Table 'pg_sleep' is not allowed in command center queries
+
+--------------------------------------------------------------------------------
+END-TO-END, BEFORE THE FIX  (what the driver actually received)
+--------------------------------------------------------------------------------
+script: file3_prefix_sql_probe.py  (fake Session records the statement; no DB touched)
+safe_count(db, "orders", "1=1 or pg_sleep(5)=1")
+
+SQL   : SELECT COUNT(*) FROM orders WHERE 1=1 or pg_sleep(5)=1
+PARAMS: {}
+INJECTION PRESENT IN EMITTED SQL: True
+
+=> boolean + time-based blind SQLi, ZERO bound parameters. Orchestrator's
+   third-pass finding CONFIRMED, and it is genuinely exploitable.
+
+--------------------------------------------------------------------------------
+AFTER THE FIX  (verbatim captured output, same payloads, same script)
+--------------------------------------------------------------------------------
+REJECTED  '1=1 or pg_sleep(5)=1'  -> ValueError: Raw WHERE fragments are not accepted by safe_count; pass a SQLAlchemy boolean expression or Predicate terms so every value stays bound
+REJECTED  '1=1 or 1=1'  -> ValueError: Raw WHERE fragments are not accepted by safe_count; pass a SQLAlchemy boolean expression or Predicate terms so every value stays bound
+REJECTED  'id=1 or benchmark(10000000,sha1(1))' -> ValueError: Raw WHERE fragments are not accepted by safe_count; pass a SQLAlchemy boolean expression or Predicate terms so every value stays bound
+
+--- table allowlist behaviour (UNCHANGED by the fix) ---
+  'users' -> 'users'
+  ' USERS ' -> 'users'
+  'users; DROP TABLE users' -> ValueError: Table 'users; DROP TABLE users' is not allowed in command center queries
+  'pg_sleep' -> ValueError: Table 'pg_sleep' is not allowed in command center queries
+
+Each rejection also emitted a WARNING-level security event (Law 43), e.g.:
+  WARNING:domains.analytics.services.aggregation.command_center_query_service:
+  command_center_query_service.safe_count refused a raw WHERE fragment
+  (possible SQL injection attempt): 1=1 or pg_sleep(5)=1
+
+END-TO-END, AFTER THE FIX: safe_count raised ValueError at
+_validate_where_clause BEFORE any statement was built, so no SQL was emitted:
+  ValueError: Raw WHERE fragments are not accepted by safe_count; pass a
+  SQLAlchemy boolean expression or Predicate terms so every value stays bound
+
+--------------------------------------------------------------------------------
+POSITIVE PATH AFTER THE FIX  (values are bound, never interpolated)
+--------------------------------------------------------------------------------
+script: file3_postfix_probe.py
+
+--- structured predicates ---
+  sql   : SELECT count(*) AS count_1 FROM orders WHERE orders.status = :wq_0 AND orders.country_code = :wq_1 AND orders.created_at >= :wq_2 AND orders.total_amount > :wq_3 AND orders.deleted_at IS NULL
+  params: {'wq_0': 'pending', 'wq_1': 'US', 'wq_2': datetime(2026,10,2, tzinfo=utc), 'wq_3': 100.0}
+--- IN expansion ---
+  sql   : SELECT count(*) AS count_1 FROM users WHERE users.role IN (:wq_0_0, :wq_0_1)
+  params: {'wq_0_0': 'customer', 'wq_0_1': 'supplier'}
+--- BETWEEN ---
+  sql   : SELECT count(*) AS count_1 FROM orders WHERE orders.total_amount BETWEEN :wq_0_lo AND :wq_0_hi
+  params: {'wq_0_lo': 10, 'wq_0_hi': 500}
+--- LIKE ---
+  sql   : SELECT count(*) AS count_1 FROM search_logs WHERE search_logs.query LIKE :wq_0
+  params: {'wq_0': '%shoe%'}
+--- Core boolean expression ---
+  sql   : SELECT count(*) AS count_1 FROM users WHERE users.is_active IS true
+--- no predicate ---
+  sql   : SELECT count(*) AS count_1 FROM users
+  params: {}
+
+INLINE-VALUE LEAK CHECK -> values appearing inline in SQL: NONE
+
+TABLE ALLOWLIST -> names in _ALLOWED_TABLES: 20 ; failures: NONE - all render
+
+unknown tables must raise ValueError:
+  'secrets' -> ValueError OK
+  'orders; DROP TABLE orders' -> ValueError OK
+  'information_schema.tables' -> ValueError OK
+  '' -> ValueError OK
+  'orders users' -> ValueError OK
+
+column / operator identifiers must be rejected:
+  Predicate(column='status = 1 or pg_sleep(5)=1', ...) -> ValueError OK
+  Predicate(column='status', operator='eq; drop table orders', ...) -> ValueError OK
+  Predicate(column='status', operator='union', ...) -> ValueError OK

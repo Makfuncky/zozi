@@ -10,15 +10,9 @@ import json
 import logging
 import time
 import urllib.error
+import urllib.request
 
 import os
-
-try:
-    import requests
-    HAS_HUGGINGFACE = True
-except ImportError:
-    HAS_HUGGINGFACE = False
-    requests = None
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +33,25 @@ _HF_HEADERS = lambda: {"Authorization": f"Bearer {HF_API_TOKEN}"} if HF_API_TOKE
 _TRANSIENT_STATUS_CODES = {408, 425, 429, 500, 502, 503, 504}
 
 
+class _HttpResponse:
+    def __init__(self, response):
+        self._response = response
+        self.status_code = response.status
+        self.headers = dict(response.headers)
+        self._body = response.read()
+
+    def json(self):
+        return json.loads(self._body.decode("utf-8"))
+
+    @property
+    def content(self):
+        return self._body
+
+    @property
+    def text(self):
+        return self._body.decode("utf-8")
+
+
 def _post_hf_request(
     model: str,
     *,
@@ -53,21 +66,21 @@ def _post_hf_request(
 
     for attempt in range(attempts):
         try:
-            response = requests.post(
+            payload_data = json.dumps(json or {}).encode("utf-8") if json else (data or b"")
+            req = urllib.request.Request(
                 f"{HF_API_BASE}/{model}",
-                headers={**_HF_HEADERS(), **(extra_headers or {})},
-                json=json,
-                data=data,
-                timeout=timeout,
+                data=payload_data,
+                headers={**_HF_HEADERS(), **(extra_headers or {}), "Content-Type": "application/json"},
+                method="POST",
             )
-            if response.status_code == 200:
-                return response
-            last_response = response
-            if response.status_code not in _TRANSIENT_STATUS_CODES:
-                return response
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                return _HttpResponse(response)
+        except urllib.error.HTTPError as exc:
+            if exc.code not in _TRANSIENT_STATUS_CODES:
+                return _HttpResponse(exc)
+            last_response = _HttpResponse(exc)
         except (
             urllib.error.URLError,
-            requests.exceptions.RequestException,
             TimeoutError,
             OSError,
         ) as exc:
@@ -98,7 +111,6 @@ def _blip_caption(image_bytes: bytes) -> str:
                 return data.get("generated_text", "")
     except (
         urllib.error.URLError,
-        requests.exceptions.RequestException,
         json.JSONDecodeError,
         TimeoutError,
         ValueError,
@@ -128,7 +140,6 @@ def _zero_shot_classify(text: str, labels: "list[str]") -> str:
                 return labels_out[0]
     except (
         urllib.error.URLError,
-        requests.exceptions.RequestException,
         json.JSONDecodeError,
         TimeoutError,
         ValueError,
@@ -165,7 +176,6 @@ def call_hf_image_api(model: str, image_bytes: bytes, timeout: int = 60) -> "Opt
             logger.warning("HF model %s: HTTP %d — %.200s", model, resp.status_code, resp.text)
     except (
         urllib.error.URLError,
-        requests.exceptions.RequestException,
         TimeoutError,
         OSError,
     ) as exc:

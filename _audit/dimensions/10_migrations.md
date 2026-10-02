@@ -1,23 +1,25 @@
 # Forensic Audit: Alembic Migrations
 
-**Status:** VERIFIED  
-**Date:** 2026-09-30  
+**Status:** VERIFIED — state changed since 2026-09-30  
+**Date:** 2026-10-01  
 **Scope:** backend/alembic/versions/*.py, backend/alembic/env.py, backend/alembic/alembic.ini
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Total migration files | 66 |
+| Total migration files | 75 |
 | Baseline migrations | 1 (`b81bfc888610`) |
-| Current head | `20260930_0001` |
-| Divergent heads | 0 (linear chain) |
+| Current head | `20261001_0001` |
+| Divergent heads | 5 (`20260930_0002`, `20260930_0003`, `20260930_0006`, `20260930_0007`, `20261001_0001`) |
 | Missing down revisions | 0 |
 | Naming convention violations | 64/66 (97%) |
 | Merge migration anomalies | 1 (`2026_09_03_0000`) |
 | Missing model indexes | 6 models with no explicit Index declarations |
 
 **project_completion_blocker:** yes — 64 of 66 migration filenames violate `check_migration_naming.py`, and one merge migration (`2026_09_03_0000`) claims to join two revisions that are in the same linear chain (not actually divergent). Additionally, `alembic heads` cannot execute at runtime because `backend/alembic/` shadows the installed `alembic` package when running from the `backend` directory.
+
+> **State change note:** The 2026-09-30 audit reported 0 divergent heads with head `20260930_0001`. Between 2026-09-30 and 2026-10-01, 4 new migration files were added (`20260930_0002`, `20260930_0003`, `20260930_0006`, `20260930_0007`) plus `20261001_0001` on 2026-10-01. These were not wired into the existing linear chain, creating 5 new divergent heads.
 
 ---
 

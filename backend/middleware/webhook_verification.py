@@ -251,31 +251,31 @@ def compute_webhook_signature(
     return f"t={timestamp},v1={signature}"
 
 
-def redis_client():
-    """Get Redis client for replay protection (delegates to the shared factory)."""
-    from infrastructure.utils.redis_client import redis_client as _redis_client_factory
+def valkey_client():
+    """Get Valkey client for replay protection (delegates to the shared factory)."""
+    from infrastructure.valkey.client import valkey_client as _valkey_client_factory
 
-    return _redis_client_factory()
+    return _valkey_client_factory()
 
 
 class ReplayAttackProtection:
     """Protects against replay attacks."""
 
     def __init__(self, window_seconds: int = 300):
-        self.redis = redis_client()
+        self.valkey = valkey_client()
         self.window = window_seconds
 
     def is_replayed(self, signature: str) -> bool:
         """Check if signature has been seen before."""
-        if not self.redis:
+        if not self.valkey:
             return False
 
         try:
             key = f"signature:{signature}"
-            if self.redis.exists(key):
+            if self.valkey.exists(key):
                 return True
 
-            self.redis.setex(key, self.window, "1")
+            self.valkey.setex(key, self.window, "1")
             return False
         except Exception:
             return False

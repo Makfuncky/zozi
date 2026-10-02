@@ -43,7 +43,10 @@ from typing import Sequence, Union
 
 from alembic import op
 from sqlalchemy.engine import Connection
-from sqlalchemy.sql import quoted_name as sql_identifier
+from sqlalchemy.sql import quoted_name
+
+def sql_identifier(name: str):
+    return quoted_name(name, False)
 
 revision: str = "20260729_2030"
 down_revision: Union[str, None] = "20260729_1914"
@@ -319,7 +322,7 @@ def downgrade() -> None:
 
         # ── 3. Reassemble data into the flat table ─────────────────────────
         selects = [
-            f"SELECT * FROM public.{p}" for p in partitions
+            f"SELECT * FROM public.{p_id}" for p_id in map(sql_identifier, partitions)
         ]
         if selects:
             union_all = " UNION ALL ".join(selects)

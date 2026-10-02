@@ -71,10 +71,10 @@ def main():
     while True:
         try:
             from infrastructure.utils.background_jobs import get_job, _update_job
-            from infrastructure.utils.redis_client import redis_client as get_redis
+            from infrastructure.valkey.client import valkey_client as get_valkey
 
-            r = get_redis()
-            if r is None or str(type(r)) == "_NoOpRedis":
+            r = get_valkey()
+            if r is None or str(type(r)) == "_NoOpValkey":
                 logger.warning("Redis unavailable, polling in-memory jobs only")
                 time.sleep(POLL_INTERVAL)
                 continue

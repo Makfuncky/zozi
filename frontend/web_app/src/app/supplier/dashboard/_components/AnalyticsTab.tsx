@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Download } from "@/lib/icons";
-import { useCurrencyStore } from "@/stores/currencyStore";
+import { useCurrencyStore } from "@/lib/currencyStore";
 import {
   ANALYTICS_STATS,
   type DashboardPeriod,

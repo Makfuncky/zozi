@@ -62,6 +62,9 @@ EXCLUDE_PATHS = {
     # DB seeder: loads domain models/engine to populate reference data; an
     # infrastructure script that must import domains (same sanctioned-shim rule).
     "infrastructure/database/seed_data.py",
+    # DB seeder: loads domain models via lazy imports inside function bodies
+    # to populate reference data; same sanctioned-shim rule as seed_data.py.
+    "infrastructure/database/seed/_common.py",
 }
 
 # For each scanned layer root, the top-level modules it must NOT statically import.

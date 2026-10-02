@@ -1,6 +1,6 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
-const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):8000/;
+const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):3100/;
 
 const supplierSummary = {
   id: 41,
@@ -43,11 +43,11 @@ async function mockLoggedOutChrome(page: Page) {
 }
 
 async function mockSupplierStorefrontApis(page: Page) {
-  await page.route(new RegExp(`${API_HOST.source}/suppliers/resolve/.+`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/suppliers/resolve/.+`), async (route) => {
     await fulfillJson(route, supplierSummary);
   });
 
-  await page.route(new RegExp(`${API_HOST.source}/suppliers/41/products\\?.*`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/suppliers/41/products\\?.*`), async (route) => {
     await fulfillJson(route, {
       items: [
         {
@@ -70,7 +70,7 @@ async function mockSupplierStorefrontApis(page: Page) {
     });
   });
 
-  await page.route(new RegExp(`${API_HOST.source}/suppliers/41$`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/suppliers/41$`), async (route) => {
     await fulfillJson(route, {
       ...supplierSummary,
       email: "supplier@dreammart.test",
@@ -96,17 +96,17 @@ async function mockSupplierStorefrontApis(page: Page) {
 }
 
 async function mockProductsPageApis(page: Page) {
-  await page.route(new RegExp(`${API_HOST.source}/products/suppliers$`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/products/suppliers$`), async (route) => {
     await fulfillJson(route, ["Dream Mart", "Northwind", "Sunrise Goods"]);
   });
 
-  await page.route(new RegExp(`${API_HOST.source}/products/autocomplete\\?.*`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/products/autocomplete\\?.*`), async (route) => {
     const url = new URL(route.request().url());
     const query = url.searchParams.get("q") ?? "";
     await fulfillJson(route, query ? [query] : []);
   });
 
-  await page.route(new RegExp(`${API_HOST.source}/suppliers\\?.*`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/suppliers\\?.*`), async (route) => {
     const url = new URL(route.request().url());
     const query = (url.searchParams.get("q") ?? "").toLowerCase();
     const names = (url.searchParams.get("names") ?? "").toLowerCase();
@@ -117,7 +117,7 @@ async function mockProductsPageApis(page: Page) {
     });
   });
 
-  await page.route(new RegExp(`${API_HOST.source}/products\\?.*`), async (route) => {
+  await page.route(new RegExp(`${API_HOST.source}/__api/products\\?.*`), async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",

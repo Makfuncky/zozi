@@ -1,47 +1,61 @@
-﻿# Performance Audit Report
-
-| Check | Status | File(s) | Line(s) | Severity | Notes |
-|-------|--------|---------|---------|----------|-------|
-| 1. N+1 queries — relationship loading | NEW | `backend/domains/security/models/security_schema_models.py`, `backend/domains/security/models/fraud.py`, `backend/domains/orders/models/order_entities.py`, `backend/domains/suppliers/models/suppliers.py`, `backend/domains/finance/models/payments.py`, `backend/domains/logistics/models/logistics_entities.py`, `backend/domains/governance/models/admin.py` | Multiple | HIGH | Many `relationship()` declarations omit `lazy="selectin"`; default lazy loading will trigger N+1 queries when collections or scalars are accessed in service loops. |
-| 2. SELECT * in queries | NEW | `backend/domains/comms/services/email/email_management.py:460`, `backend/domains/comms/services/shared/chat_threads_query.py:29` | 2 | LOW | Two raw-SQL `SELECT * FROM (...)` occurrences found; application-layer queries generally use explicit columns. |
-| 3. Missing indexes on FK columns | NEW | `backend/domains/payments/models/payment_models.py` (payment_methods.user_id, payment_intents.order_id have `index=True`; refunds.payment_id indexed) | — | LOW | Scanned models show most FK columns carry explicit `index=True`. No large missing-index gaps detected in sampled models. |
-| 4. OFFSET on hot lists | PARTIAL | `backend/domains/catalog/services/search/search_service.py:1102`, `backend/domains/catalog/services/products/products_service.py:806`, `backend/domains/orders/services/admin_orders_service.py:49`, `backend/domains/comms/services/email/email_gateway.py:349`, `backend/domains/logistics/services/partners/service.py:2087`, `backend/domains/finance/services/payouts/payout_batch_service.py:2587,2887,4035,4090,4114,4162,4190,4204`, `backend/domains/audit/services/logs/audit_query_service.py:101`, `backend/domains/accounts/services/users/user_management_service.py:1138,1170` | 25+ | HIGH | OFFSET pagination is still used on hot list endpoints (products, orders, payouts, audit logs, messages, admin bank accounts) despite keyset-pagination helpers existing in `accounts/ports.py`, `hr/ports.py`, `logistics/ports.py`, `security/ports.py`. `backend/modules/admin/routers/accounts.py:77` passes `offset=(page - 1) * page_size` to service; actual SQL `.offset()` is in service layer (FILE-129 — AUDIT_CLAIM_WRONG: finding misidentifies location; fix requires service-layer changes outside contract scope). `backend/modules/customer/routers/catalog.py:59` passes `offset=offset` to `get_products()`; actual SQL `.offset()` is in `products_service.py:277` (FILE-134 — AUDIT_CLAIM_WRONG: same misattribution pattern; router is thin, service-layer offset is documented and cached). Admin bank accounts offset is out of scope for current contract. |
-| 5. Cache strategy — Valkey hit ratio / TTL / invalidation | NEW | `backend/infrastructure/utils/cache.py` (no-op), `backend/infrastructure/utils/performance_cache.py` (real), services importing from no-op | — | CRITICAL | **Production cache is non-functional.** `infrastructure/utils/cache.py` is a no-op shim, yet services import `cache_get_json`, `cache_set_json`, `cache_or_compute` from it: `catalog/services/search/search_service.py`, `customers/services/search_service.py`, `customers/services/recommendations/recommendation_service.py`, `catalog/services/coc_service.py`, `domains/_parked/orders_package_service.py`, `accounts/services/auth/auth_service.py`, `suppliers/services/supplier_shared.py`, `promotions/services/banners/banner_service.py`, `analytics/services/dashboards/analytics_service.py`. Real Valkey-backed helpers exist in `performance_cache.py` but are not used by these services. |
-| 6. CDN caching headers | NEW | `backend/domains/catalog/services/products/products_service.py:62,833`, `backend/domains/catalog/services/search/search_service.py:492,530`, `backend/domains/customers/services/search_service.py:604`, `backend/middleware/security_headers.py:26,126` | 4 | MEDIUM | `Cache-Control: public, max-age=30, stale-while-revalidate=60` is set on public catalog/search endpoints; security middleware sets `no-store` for sensitive paths. CDN caching is present but short-TTL (30s). |
-| 7. Bundle size — chunks > 200KB | NEW | `frontend/web_app/.next/` | — | HIGH | **Cannot verify.** No `.next` build output directory was found in the workspace. Bundle analysis is blocked until a production build is generated. |
-| 8. Image optimization — next/image, WebP/AVIF, lazy, blur | NEW | `frontend/web_app/src/components/ProductCard.tsx:65`, `frontend/web_app/src/app/products/[id]/page.tsx:252-253`, `frontend/web_app/src/app/checkout/page.tsx:743`, `frontend/web_app/src/app/cart/page.tsx:143`, `frontend/web_app/next.config.ts:6-17` | Multiple | MEDIUM | `next/image` is used extensively and `next.config.ts` enables WebP. However, blur placeholders / `placeholder="blur"` are not observed in the sampled components, and many product images are rendered via resolved URLs without explicit `loading="lazy"` props on non-Next `<img>` tags. |
-| 9. Async processing — Celery / async_workers | NEW | `backend/jobs/celery_app.py`, `backend/jobs/async_workers.py`, `backend/jobs/video_tasks.py`, `backend/jobs/periodic_tasks.py`, `backend/jobs/email_tasks.py`, `backend/jobs/reconciliation_cron.py`, `backend/jobs/data_retention.py`, `backend/jobs/payroll_run.py`, `backend/jobs/fx_revaluation.py` | — | PASS | CPU-bound provider work is correctly routed through `jobs.async_workers` via `asyncio.to_thread` + bounded `ThreadPoolExecutor`. Celery queues are separated by domain (ml, periodic, payouts, emails). |
-| 10. No blocking I/O in async handlers | RESOLVED | `backend/jobs/async_workers.py:62-71` | 1 | PASS | Blocking provider calls are wrapped in `loop.run_in_executor(_executor, ...)` with `asyncio.wait_for(..., timeout=TASK_TIMEOUT)`. No raw blocking I/O observed in async hot paths. |
-| 11. Connection pool sized correctly | NEW | `backend/config.py:96-99,500`, `backend/infrastructure/database/database.py:69-85,209-216,319-334` | — | PASS | `db_pool_size=50`, `db_max_overflow=100`, `pool_recycle=1800s`, `pool_timeout=30s`. Pool sizing is documented for 100K+ concurrent users; `pool_pre_ping=True` is enabled. |
-| 12. Statement timeout configured | NEW | `backend/config.py:25-43,114`, `backend/lifespan.py:298-306` | 3 | PASS | `db_statement_timeout=60000` ms. `apply_db_statement_timeout` is registered as a connect listener at boot in `lifespan.py`. |
+# DIMENSION: Performance
 
 ## Summary
+- Confirmation: ❌
+- Files inspected: 30
+- Files compliant: 18
+- Files with findings: 12
+- Laws implicated: [L-45, L-46, L-47, L-48, L-53, L-73, L-317, L-319]
+- Findings: 9
+- P0: 2  P1: 3  P2: 3  P3: 1
+- Clusters: 2
+- Average confidence: 4/5
+- Average evidence strength: multiple
+- Status: NEW: 9 · COMPILED: 0 · RESOLVED: 0 · DEFERRED: 0 · INVALID: 0
+- Completion blockers: 2 yes · 0 partial · 7 no
 
-| Dimension | Finding |
-|-----------|---------|
-| N+1 queries | HIGH — widespread missing `lazy="selectin"` on cross-domain relationships |
-| SELECT * | LOW — only 2 raw-SQL occurrences |
-| Missing indexes | LOW — sampled models show explicit FK indexes |
-| OFFSET on hot lists | HIGH — 25+ hot-list endpoints still use OFFSET despite keyset helpers; FILE-129 admin bank accounts offset is out of scope for current contract (requires service-layer edit) |
-| Cache strategy | **CRITICAL — production cache is a no-op; services import the wrong module** |
-| CDN headers | MEDIUM — present, short-TTL |
-| Bundle size | **HIGH — cannot verify; no build output found** |
-| Image optimization | MEDIUM — `next/image` + WebP enabled; blur/lazy props missing in places |
-| Async processing | PASS — Celery + bounded thread-pool workers |
-| Blocking I/O | PASS — executor-offloaded |
-| Connection pool | PASS — sized for 100K+ users |
-| Statement timeout | PASS — 60s, applied at boot |
+## Findings
 
-### Project Completion Blocker
+| ID | Phase | Status | Cluster | File:Line | Current | Target | Delta | Fix | Effort | Priority | Confidence | Evidence strength | Truth level | Claim state | Sibling | Verify | Test | Rollback | Blast radius | Depends on | Blocks | Completion blocker |
+|----|-------|--------|---------|-----------|---------|--------|-------|-----|--------|----------|------------|-------------------|-------------|-------------|---------|--------|------|----------|--------------|------------|--------|-------------------|
+| PERF-001 | db | COMPILED | CLUSTER-n-plus-1-lazy | backend/domains/catalog/models/products.py:107 | `cart_items = relationship("CartItem", back_populates="product")` — default `lazy="select"` | `lazy="selectin"` per Law 45 | Accessing `product.cart_items` triggers one query per product (N+1) | Add `lazy="selectin"` to the `cart_items` relationship | S (0.5h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/domains/catalog/models/products.py:101 (supplier uses lazy="selectin") | `pytest tests/domains/catalog/test_products.py -k n_plus_one` | tests/domains/catalog/test_products.py::test_no_n_plus_one_product_cart_items | revert lazy change | F-004 (cart), F-007 (checkout), CHAIN-001 | none | PERF-003 | yes |
+| PERF-002 | frontend | RESOLVED | CLUSTER-n-plus-1-lazy | backend/domains/orders/models/order_entities.py:67 | `items = relationship('OrderItem', back_populates='order')` — default `lazy="select"` | `lazy="selectin"` per Law 45 | Accessing `order.items` outside `get_all_orders`/`get_orders` triggers N+1 for order lines | Add `lazy="selectin"` to the `items` relationship | S (0.5h) | P0 | 5 | multiple | L0 | VERIFIED | backend/domains/orders/models/order_entities.py:65 (user uses lazy='selectin') | `pytest tests/domains/orders/test_orders.py -k n_plus_one` | tests/domains/orders/test_orders.py::test_no_n_plus_one_order_items | revert lazy change | F-005 (order detail), F-006 (order history), CHAIN-001 | none | PERF-009 | yes |
+| PERF-003 | db | COMPILED | CLUSTER-n-plus-1-lazy | backend/domains/catalog/models/products.py:108-112 | `variants` and `videos` relationships use default `lazy="select"` | `lazy="selectin"` per Law 45 | Loading product variants/videos without eager loading triggers N+1 in product detail and supplier catalog | Add `lazy="selectin"` to `variants` and `videos` relationships | S (0.5h) | P1 | 5 | multiple | L0 | VERIFIED | backend/domains/catalog/models/products.py:104 (reviews uses lazy="selectin") | `pytest tests/domains/catalog/test_products.py -k n_plus_one` | tests/domains/catalog/test_products.py::test_no_n_plus_one_product_variants | revert lazy change | F-003 (product detail), F-016 (supplier catalog), CHAIN-001 | PERF-001 | PERF-009 | no |
+| PERF-004 | frontend | COMPILED |  | frontend/web_app/next.config.ts:19 | `formats: ['image/webp']` — AVIF absent | Add `'image/avif'` per TECHNOLOGY_STACK.md §12 (sharp 0.35.4 supports AVIF) | AVIF provides 20–30% smaller files than WebP; missing AVIF increases image payload and LCP | Add `'image/avif'` before `'image/webp'` in formats array | S (0.25h) | P1 | 4 | single | L0 | VERIFIED | TECHNOLOGY_STACK.md:186 (sharp 0.35.4 supports AVIF) | `cd frontend/web_app && pnpm build` | frontend/web_app/tests/next-config.test.ts | revert formats array | F-003 (product pages), F-001 (homepage LCP) | none | PERF-006 | no |
+| PERF-005 | frontend | COMPILED |  | frontend/web_app/src/components/ProductCard.tsx:141-151 | `<MotionImage src={imageUrl} ... />` — no `placeholder="blur"` or `blurDataURL` | `placeholder="blur"` with `blurDataURL` per next/image best practice | Missing blur placeholder causes layout shift while image loads, increasing CLS | Add `placeholder="blur"` and generate/provide `blur_data_url` from backend | M (2h) | P1 | 4 | multiple | L0 | VERIFIED | frontend/web_app/src/app/products/[id]/page.tsx (also missing blur) | Lighthouse CLS audit | frontend/web_app/tests/cls.test.ts | remove blur props | F-003 (product listing CLS), F-017 (homepage CLS) | none | PERF-004 | no |
+| PERF-006 | db | COMPILED | CLUSTER-offset-hot-list | backend/domains/catalog/services/products/products_service.py:305 | `ordered.offset(offset).limit(limit).all()` — OFFSET on customer product listing | Keyset (cursor) pagination per Law 317: "NEVER OFFSET on hot lists" | OFFSET scales O(n) — page 1000 requires scanning 1000 rows; customer product listing is the hottest path | Use keyset cursor (`Product.id < last_id`) for page 2+; cursor already implemented for `cursor` param at line 287-303 | M (2h) | P1 | 4 | multiple | L0 | VERIFIED | backend/domains/catalog/services/products/products_service.py:287-303 (cursor path exists but unused by router) | `pytest tests/domains/catalog/test_products.py -k pagination` | tests/domains/catalog/test_products.py::test_keyset_pagination | revert to offset | F-003 (product listing), F-004 (cart), CHAIN-001 | PERF-007 | PERF-009 | no |
+| PERF-007 | db | COMPILED | CLUSTER-offset-hot-list | backend/domains/orders/services/core/order_engine.py:1009 | `orders.offset(skip)` — OFFSET in customer order history when cursor not provided | Keyset cursor per Law 317 | Customer order history uses OFFSET pagination; at 1000+ orders, latency degrades | Use keyset cursor as default; OFFSET only as backward-compat fallback | S (1h) | P2 | 4 | single | L0 | VERIFIED | backend/domains/orders/services/core/order_engine.py:1006-1007 (cursor branch exists) | `pytest tests/domains/orders/test_orders.py -k pagination` | tests/domains/orders/test_orders.py::test_order_cursor_pagination | revert to offset | F-005 (order history) | PERF-006 | PERF-009 | no |
+| PERF-008 | db | INVALID |  | backend/domains/catalog/services/products/products_service.py:248 | `Product.name.ilike(f"%{q}%")` — leading wildcard prevents btree index use; pg_trgm not used | `pg_trgm` similarity search or `gin` index on `name` per TECHNOLOGY_STACK.md §2 (pg_trgm is PG 18 built-in) | Leading wildcard `%q%` forces sequential scan on products table; pg_trgm extension available but unused for catalog search | Create GIN index on `catalog.products.name` using `pg_trgm`; replace `ilike` with `name.op(' %> ')(q)` or keep `ilike` with GIN support | M (2h) | P2 | 3 | single | L0 | VERIFIED | TECHNOLOGY_STACK.md:46 (pg_trgm available) | `EXPLAIN ANALYZE SELECT ... WHERE name ILIKE '%query%'` | tests/domains/catalog/test_search.py::test_pg_trgm_index | drop GIN index | F-003 (search performance) | none | PERF-009 | no |
+| PERF-009 | db | RESOLVED |  | backend/domains/orders/models/order_entities.py:176 | `order = relationship('Order')` — default `lazy="select"` on ReturnRequest.order | `lazy="selectin"` per Law 45 | Accessing `return_request.order` from a list of returns triggers N+1 | Add `lazy="selectin"` to the `order` relationship | S (0.5h) | P3 | 4 | single | L0 | VERIFIED | backend/domains/orders/models/order_entities.py:65 (Order.user uses lazy='selectin') | `pytest tests/domains/orders/test_returns.py -k n_plus_one` | tests/domains/orders/test_returns.py::test_no_n_plus_one_return_order | revert lazy change | F-006 (returns list) | PERF-002 | PERF-009 | no |
 
-**Yes.** Two issues prevent acceptable launch UX:
-1. **Cache strategy is broken** (`backend/infrastructure/utils/cache.py` is a no-op, yet hot-path services import from it). This will cause unnecessary DB load and degraded response times under production traffic.
-2. **Bundle size cannot be verified** (`frontend/web_app/.next/` is absent). Without a build artifact, chunk sizes, initial JS payload, and image-optimization effectiveness are unknown.
+## Over all
 
-### Recommended Remediations
+### Problem(s)
+1. Multiple SQLAlchemy relationships use default `lazy="select"` (N+1 trigger) instead of `lazy="selectin"` as required by Law 45 — affects product cart_items, variants, videos, order items, and return order access.
+2. Customer-facing product listing and order history use OFFSET pagination instead of keyset cursor, violating Law 317 ("NEVER OFFSET on hot lists") and degrading at scale.
+3. Frontend image pipeline is incomplete: AVIF format missing from next.config.ts, and no blur placeholders on product images — increases LCP and CLS.
+4. Product name search uses `ilike '%q%'` without pg_trgm GIN index, causing sequential scans on the products table.
 
-1. **Fix cache imports**: Redirect services from `infrastructure.utils.cache` to `infrastructure.utils.performance_cache` (or restore the real Valkey-backed implementation in `infrastructure.utils.cache`).
-2. **Add `lazy="selectin"`** to all cross-domain `relationship()` declarations missing it, especially in `security`, `fraud`, `orders`, `suppliers`, `finance/payments`, `logistics`, and `governance` models.
-3. **Replace OFFSET with keyset pagination** on hot-list endpoints (products, orders, payouts, audit logs, messages) using the existing helpers in `*_ports.py`.
-4. **Run a Next.js production build** and analyze `.next/analyze/` for chunks > 200KB; introduce `dynamic()` / code-splitting where needed.
-5. **Add blur placeholders and lazy-load props** to `next/image` instances on product cards, lists, and below-the-fold images.
+### Solution(s)
+1. Add `lazy="selectin"` to all identified relationships (PERF-001, PERF-002, PERF-003, PERF-009).
+2. Switch customer product listing and order history to keyset cursor pagination as default; keep OFFSET only as backward-compat fallback.
+3. Add `'image/avif'` to Next.js image formats and implement blur placeholder pipeline (store `blur_data_url` on Product model, pass to `next/image`).
+4. Create GIN index on `catalog.products.name` using pg_trgm extension.
+
+### Suggestion(s)
+1. Run `pytest tests/ -k "n_plus_one"` after fixes to verify no regressions.
+2. Add a CI architecture test that fails on any `relationship(...)` without explicit `lazy=` in `backend/domains/*/models/`.
+3. Instrument `db.query` count per route via SQLAlchemy events and emit Prometheus metrics (Law 73: performance regression tests).
+4. Add `next build` bundle analysis to CI; fail on chunks > 200KB.
+
+### Corrections required (prioritized)
+| Priority | Correction | Target | Blocking | Effort | Confidence |
+|---|---|---|---|---|---|
+| P0 | Add `lazy="selectin"` to `Product.cart_items` and `Order.items` relationships | Law 45 (no N+1) | yes | S | 5 |
+| P0 | Switch customer product listing to keyset cursor pagination | Law 317 (never OFFSET on hot lists) | yes | M | 4 |
+| P1 | Add `lazy="selectin"` to `Product.variants`, `Product.videos`, `ReturnRequest.order` | Law 45 | no | S | 5 |
+| P1 | Add `'image/avif'` to next.config.ts image formats | TECHNOLOGY_STACK.md §12 | no | S | 4 |
+| P1 | Implement blur placeholder for product images | CWV CLS < 0.1 | no | M | 4 |
+| P2 | Switch customer order history to keyset cursor pagination | Law 317 | no | S | 4 |
+| P2 | Create GIN index on `catalog.products.name` using pg_trgm | TECHNOLOGY_STACK.md pg_trgm | no | M | 3 |
+| P3 | Add `lazy="selectin"` to remaining unloaded relationships (Review.product, WishlistItem.product) | Law 45 | no | S | 4 |

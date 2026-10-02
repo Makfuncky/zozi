@@ -65,7 +65,7 @@ def upgrade() -> None:
             "status IN ('pending','processing','shipped','delivered','returned','cancelled')",
         )
 
-    with op.batch_alter_table("support_tickets", schema=None) as batch_op:
+    with op.batch_alter_table("support_tickets", schema="comms") as batch_op:
         batch_op.create_check_constraint(
             "chk_ticket_status_valid",
             "status IN ('open','in_progress','resolved','closed')",
@@ -82,7 +82,7 @@ def downgrade() -> None:
     with op.batch_alter_table("notifications", schema=None) as batch_op:
         batch_op.drop_constraint("chk_notification_status_valid", type_="check")
 
-    with op.batch_alter_table("support_tickets", schema=None) as batch_op:
+    with op.batch_alter_table("support_tickets", schema="comms") as batch_op:
         batch_op.drop_constraint("chk_ticket_status_valid", type_="check")
 
     with op.batch_alter_table("shipments", schema=None) as batch_op:

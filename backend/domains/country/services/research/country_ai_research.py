@@ -431,8 +431,8 @@ class CountryAIResearchService:
         if isinstance(gdp_per_capita, dict):
             try:
                 gdp_pc = float(gdp_per_capita.get("value", 0))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("AI module generation failed: %s", exc)
         income_tier = "low"
         if gdp_pc:
             if gdp_pc > 30000:

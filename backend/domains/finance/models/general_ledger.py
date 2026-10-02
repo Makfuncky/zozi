@@ -30,7 +30,7 @@ class FiscalPeriod(Base):
     closed_at = Column(DateTime, nullable=True)
     closed_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     closed_by_user = relationship('User', foreign_keys=[closed_by_id], lazy='selectin')
 
 class TransactionLedger(Base):
@@ -72,7 +72,7 @@ class TransactionLedger(Base):
     notes = Column(Text, nullable=True)
     amount = Column(Numeric(12, 2), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class SupplierSettlement(Base):
@@ -99,7 +99,7 @@ class SupplierSettlement(Base):
     eligible_at = Column(DateTime, nullable=True)
     bank_transaction_id = Column(Integer, nullable=True)
     currency = Column(String(3), default='USD')
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True, nullable=False)
@@ -129,7 +129,7 @@ class JournalEntry(Base):
     is_deleted = Column(Boolean, default=False, index=True, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     lines = relationship('JournalEntryLine', back_populates='entry', cascade='all, delete-orphan', lazy='selectin')
     period = relationship('FiscalPeriod', foreign_keys=[period_id], lazy='selectin')
     reversal_of = relationship('JournalEntry', remote_side=[id], foreign_keys=[reversal_of_id], lazy='selectin')
@@ -154,7 +154,7 @@ class JournalEntryLine(Base):
     description = Column(Text, nullable=True)
     entity_type = Column(String(50), nullable=True)
     entity_id = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     entry = relationship('JournalEntry', back_populates='lines', lazy='selectin')
     account = relationship('Account', lazy='selectin')
@@ -175,10 +175,11 @@ class Account(Base):
     code = Column(String(20), unique=True, nullable=False)
     name = Column(String(200), nullable=False)
     normal_side = Column(String(10), nullable=False)
+    account_type = Column(String(30), nullable=True)
     currency = Column(String(3), default='USD')
     is_active = Column(Boolean, default=True)
     display_order = Column(Integer, default=0)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     group = relationship('AccountGroup', back_populates='accounts', lazy='selectin')
     journal_lines = relationship('JournalEntryLine', back_populates='account', lazy='selectin')
@@ -201,7 +202,7 @@ class AccountGroup(Base):
     account_type = Column(String(30), nullable=False)
     normal_side = Column(String(10), nullable=False)
     display_order = Column(Integer, default=0)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     accounts = relationship('Account', back_populates='group', lazy='selectin')
 
@@ -252,7 +253,7 @@ class ARLedgerEntry(Base):
     settled_at = Column(DateTime, nullable=True)
     description = Column(Text, nullable=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
@@ -283,7 +284,7 @@ class APLedger(Base):
     paid_at = Column(DateTime, nullable=True)
     description = Column(Text, nullable=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
@@ -338,7 +339,7 @@ class Invoice(Base):
     delivered_at = Column(DateTime, nullable=True)
     paid_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True, nullable=False)
@@ -367,7 +368,7 @@ class InvoiceItem(Base):
     discount_amount = Column(Numeric(10, 2), nullable=True)
     tax_rate = Column(Numeric(5, 2), nullable=True)
     line_total = Column(Numeric(10, 2), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     invoice = relationship('Invoice', back_populates='items', lazy='selectin')
 
@@ -398,7 +399,7 @@ class RefundLedger(Base):
     processed_at = Column(DateTime, nullable=True)
     currency = Column(String(3), default='OMR')
     status = Column(String(30), default='pending')
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
@@ -433,7 +434,7 @@ class BankTransaction(Base):
     reconciled_at = Column(DateTime, nullable=True)
     transaction_date = Column(DateTime, nullable=True)
     status = Column(String(30), default='pending')
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     flagged = Column(Boolean, nullable=True, default=False)
     flag_reason = Column(Text, nullable=True)
@@ -463,7 +464,7 @@ class VATRemittance(Base):
     remitted_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String(30), default='pending')
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
 
 class CashAccount(Base):
@@ -483,7 +484,7 @@ class CashAccount(Base):
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
 
@@ -507,7 +508,7 @@ class CashTransaction(Base):
     reference = Column(String(100), nullable=True)
     category = Column(String(50), nullable=True)
     performed_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
 
 class TreasuryAccount(Base):
@@ -531,7 +532,7 @@ class TreasuryAccount(Base):
     balance = Column(Numeric(12, 2), default=0)
     is_active = Column(Boolean, default=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class TreasuryTransaction(Base):
@@ -577,7 +578,7 @@ class CashFlowForecast(Base):
     opening_balance = Column(Numeric(12, 2), default=0)
     closing_balance = Column(Numeric(12, 2), default=0)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class CashPositionSnapshot(Base):
     __tablename__ = 'cash_position_snapshots'
@@ -596,7 +597,7 @@ class CashPositionSnapshot(Base):
     balance = Column(Numeric(12, 2), default=0)
     currency = Column(String(3), default='USD')
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class GatewaySettlementSchedule(Base):
     __tablename__ = 'gateway_settlement_schedules'
@@ -616,7 +617,7 @@ class GatewaySettlementSchedule(Base):
     currency = Column(String(3), default='USD')
     status = Column(String(30), default='pending')
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class PendingJournalEntry(Base):
     """Maker-Checker: pending journal entries awaiting second approval."""
@@ -643,7 +644,7 @@ class PendingJournalEntry(Base):
     rejection_reason = Column(Text, nullable=True)
     approved_at = Column(DateTime, nullable=True)
     journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     creator = relationship('User', foreign_keys=[created_by_id], lazy='selectin')
     approver = relationship('User', foreign_keys=[approved_by_id], lazy='selectin')
 
@@ -668,7 +669,7 @@ class PayoutBatch(Base):
     dispatched_at = Column(DateTime, nullable=True)
     settled_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     creator = relationship('User', foreign_keys=[created_by_id], lazy='selectin')
     approver = relationship('User', foreign_keys=[approved_by_id], lazy='selectin')
@@ -718,7 +719,7 @@ class BankMappingRule(Base):
     priority = Column(Integer, default=100)
     is_active = Column(Boolean, default=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class BankStatementImport(Base):
@@ -745,7 +746,7 @@ class BankStatementImport(Base):
     status = Column(String(20), default='imported')
     imported_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class BankStatementLine(Base):
     """A single line from an imported bank statement awaiting mapping/reconciliation."""
@@ -772,7 +773,7 @@ class BankStatementLine(Base):
     posted_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     reconciled_transaction_id = Column(Integer, ForeignKey('finance.bank_transactions.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class FixedAsset(Base):
     """Fixed asset register with straight-line depreciation schedule."""
@@ -800,7 +801,7 @@ class FixedAsset(Base):
     status = Column(String(20), default='active')
     country_code = Column(String(2), nullable=True, index=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class Accrual(Base):
@@ -827,7 +828,7 @@ class Accrual(Base):
     reversal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class ScannedExpense(Base):
     """Bill scanned via OCR that becomes an expense + GL posting after approval."""
@@ -858,7 +859,7 @@ class ScannedExpense(Base):
     posted_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     reviewed_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
@@ -885,7 +886,7 @@ class AutomationRule(Base):
     config = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     logs = relationship('AutomationLog', back_populates='rule', lazy='selectin')
 
@@ -909,7 +910,7 @@ class AutomationLog(Base):
     message = Column(Text, nullable=True)
     records_affected = Column(Integer, default=0)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     created_by_id = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
@@ -935,7 +936,7 @@ class Vendor(Base):
     payment_terms_days = Column(Integer, default=30)
     country_code = Column(String(2), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class Customer(Base):
@@ -958,7 +959,7 @@ class Customer(Base):
     credit_limit = Column(Numeric(14, 2), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class CostCenter(Base):
@@ -977,7 +978,7 @@ class CostCenter(Base):
     name = Column(String(160), nullable=False)
     country_code = Column(String(2), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class APBill(Base):
@@ -1004,7 +1005,7 @@ class APBill(Base):
     paid_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     vendor = relationship('Vendor', foreign_keys=[vendor_id], lazy='selectin')
 
@@ -1032,7 +1033,7 @@ class ARInvoice(Base):
     paid_journal_entry_id = Column(Integer, ForeignKey('finance.journal_entries.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     customer = relationship('Customer', foreign_keys=[customer_id], lazy='selectin')
 
@@ -1057,7 +1058,7 @@ class BankAccount(Base):
     gl_account_code = Column(String(20), default='1010')
     country_code = Column(String(2), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class Budget(Base):
@@ -1078,7 +1079,7 @@ class Budget(Base):
     country_code = Column(String(2), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     period = relationship('FiscalPeriod', foreign_keys=[fiscal_period_id], lazy='selectin')
 
@@ -1126,7 +1127,7 @@ class RecurringTemplate(Base):
     country_code = Column(String(2), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     created_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 class FinanceAuditLog(Base):
@@ -1149,7 +1150,7 @@ class FinanceAuditLog(Base):
     entity_id = Column(Integer, nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
     detail = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class FinanceAutomationLog(Base):
     """Audit trail for automation runs (OCR, reconciliation, depreciation, mapping)."""
@@ -1170,6 +1171,6 @@ class FinanceAutomationLog(Base):
     detail = Column(JSON, nullable=True)
     run_by_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

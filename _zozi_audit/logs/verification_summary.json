@@ -1,0 +1,409 @@
+{
+  "generated_at": "2026-10-02T20:35:12.068561+00:00",
+  "findings_in": 1324,
+  "verdicts": 1324,
+  "confirmed": 236,
+  "false_positive": 18,
+  "already_fixed": 44,
+  "wrong_location": 76,
+  "unverifiable": 950,
+  "false_positive_rate_pct": 7.1,
+  "not_actionable_pct": 10.4,
+  "independently_confirmed_pct": 17.8,
+  "p0_total": 110,
+  "p0_confirmed": 26,
+  "p0_false_or_wrong": 7,
+  "p0_noise_pct": 6.4,
+  "by_cluster": {
+    "CLUSTER-boot-preflight": {
+      "UNVERIFIABLE": 1
+    },
+    "(none)": {
+      "UNVERIFIABLE": 139,
+      "ALREADY_FIXED": 1
+    },
+    "CLUSTER-extra-module": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-extra-domain": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-version-drift": {
+      "UNVERIFIABLE": 13
+    },
+    "CLUSTER-package-manager": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-base-image": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-supply-chain": {
+      "UNVERIFIABLE": 6,
+      "FALSE_POSITIVE": 1
+    },
+    "CLUSTER-allowlist": {
+      "UNVERIFIABLE": 20
+    },
+    "CLUSTER-root-discipline": {
+      "FALSE_POSITIVE": 1
+    },
+    "CLUSTER-job-resilience": {
+      "UNVERIFIABLE": 14
+    },
+    "CLUSTER-orphan-job": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ci-cd": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-deploy": {
+      "ALREADY_FIXED": 2
+    },
+    "CLUSTER-runbooks": {
+      "WRONG_LOCATION": 3
+    },
+    "CLUSTER-docs": {
+      "WRONG_LOCATION": 1
+    },
+    "CLUSTER-infra-imports-above": {
+      "UNVERIFIABLE": 15
+    },
+    "CLUSTER-middleware-imports-above": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-module-imports-infrastructure": {
+      "UNVERIFIABLE": 69
+    },
+    "CLUSTER-cross-domain-direct": {
+      "UNVERIFIABLE": 92
+    },
+    "CLUSTER-circular-import": {
+      "WRONG_LOCATION": 17
+    },
+    "CLUSTER-middleware": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-silent-except": {
+      "UNVERIFIABLE": 99
+    },
+    "CLUSTER-forbidden-package": {
+      "UNVERIFIABLE": 5
+    },
+    "CLUSTER-lockfile": {
+      "ALREADY_FIXED": 1
+    },
+    "CLUSTER-rls": {
+      "UNVERIFIABLE": 4
+    },
+    "CLUSTER-float-money": {
+      "CONFIRMED": 63,
+      "ALREADY_FIXED": 18,
+      "UNVERIFIABLE": 72,
+      "FALSE_POSITIVE": 5
+    },
+    "CLUSTER-ap-stub-function-notimplementederror": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ap-unimplemented-placeholder": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ap-todo-only-implementation": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ap-empty-handler-pass": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-provider-resilience": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-long-function": {
+      "UNVERIFIABLE": 60
+    },
+    "CLUSTER-deep-nesting": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-todo-hygiene": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-event-spine": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-stub-subscriber": {
+      "UNVERIFIABLE": 4
+    },
+    "CLUSTER-ungated-route": {
+      "UNVERIFIABLE": 48
+    },
+    "CLUSTER-unknown-gate": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ws-auth": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-raw-getenv": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-payment-webhook": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-payment-credentials": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-tf-rel-lazy": {
+      "WRONG_LOCATION": 53,
+      "CONFIRMED": 113,
+      "FALSE_POSITIVE": 8
+    },
+    "CLUSTER-tf-fk-ondelete": {
+      "UNVERIFIABLE": 10
+    },
+    "CLUSTER-tf-timestamp-default": {
+      "UNVERIFIABLE": 79
+    },
+    "CLUSTER-tf-missing-country_code": {
+      "UNVERIFIABLE": 18
+    },
+    "CLUSTER-tf-missing-created_at": {
+      "UNVERIFIABLE": 5
+    },
+    "CLUSTER-tf-missing-updated_at": {
+      "UNVERIFIABLE": 8
+    },
+    "CLUSTER-tf-schema-missing": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-tf-missing-is_deleted": {
+      "UNVERIFIABLE": 4
+    },
+    "CLUSTER-tf-schema-unknown": {
+      "UNVERIFIABLE": 4
+    },
+    "CLUSTER-db-pool": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-read-replica": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-idempotency": {
+      "ALREADY_FIXED": 9,
+      "CONFIRMED": 1
+    },
+    "CLUSTER-print-logging": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-pii-logs": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-duplicate-file": {
+      "UNVERIFIABLE": 3,
+      "ALREADY_FIXED": 2
+    },
+    "CLUSTER-n-plus-1": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-select-star": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-offset-pagination": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-search-index": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-web-states": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-web-routes": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-web-rewrites": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-test-no-assert": {
+      "UNVERIFIABLE": 7
+    },
+    "CLUSTER-test-broken": {
+      "UNVERIFIABLE": 6
+    },
+    "CLUSTER-mobile-deps": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-provider-extra": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-provider-health": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-provider-config": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-provider-timeout": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-orphan-provider": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-web-images": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-settings-contract": {
+      "CONFIRMED": 12
+    },
+    "CLUSTER-bundle": {
+      "ALREADY_FIXED": 1
+    },
+    "CLUSTER-env-undeclared": {
+      "CONFIRMED": 42
+    },
+    "CLUSTER-env-raw": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-contradiction-target_vs_code": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-contradiction-frontend_vs_backend": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-contradiction-doc_vs_code": {
+      "WRONG_LOCATION": 1
+    },
+    "CLUSTER-orphan-feature": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ghost-feature": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-intent-stub": {
+      "ALREADY_FIXED": 1,
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-chain-chain-002": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-chain-chain-003": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-chain-chain-005": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-chain-chain-006": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-browser-runner-broken": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-worm": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ssrf": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-design-primitives": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-cache-coverage": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-count-queries": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-ap-todo-only": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-coverage-route": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-interaction-form": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-category-taxonomy": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-interaction-modal": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-handover": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-quality-assurance": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-interaction-state": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-interaction-button": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-color-drift": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-finance-automation": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-table-index": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-table-governance": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-table-relation": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-table-drift": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-feature-gate": {
+      "UNVERIFIABLE": 8
+    },
+    "CLUSTER-workflow-runtime": {
+      "UNVERIFIABLE": 2,
+      "ALREADY_FIXED": 8
+    },
+    "CLUSTER-http-headers": {
+      "CONFIRMED": 5
+    },
+    "CLUSTER-http-csp": {
+      "UNVERIFIABLE": 10
+    },
+    "CLUSTER-http-cors": {
+      "FALSE_POSITIVE": 3
+    },
+    "CLUSTER-law-architecture": {
+      "UNVERIFIABLE": 6
+    },
+    "CLUSTER-law-structure": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-law-code-quality": {
+      "UNVERIFIABLE": 7
+    },
+    "CLUSTER-law-migration": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-law-security": {
+      "UNVERIFIABLE": 3
+    },
+    "CLUSTER-law-database": {
+      "UNVERIFIABLE": 5
+    },
+    "CLUSTER-law-config": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-law-provider": {
+      "UNVERIFIABLE": 2
+    },
+    "CLUSTER-law-performance": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-law-docs": {
+      "UNVERIFIABLE": 1
+    },
+    "CLUSTER-http-cookies": {
+      "ALREADY_FIXED": 1
+    },
+    "CLUSTER-startup": {
+      "WRONG_LOCATION": 1,
+      "UNVERIFIABLE": 1
+    }
+  }
+}

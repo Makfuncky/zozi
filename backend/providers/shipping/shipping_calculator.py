@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """
 Shipping Rate Calculator
-========================
+=======================
 Calculate shipping costs based on weight, dimensions, distance, and carrier.
 Includes major carriers: FedEx, UPS, DHL, Aramex, local post.
 Pure Python — zone-based pricing model.
@@ -11,9 +11,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional
 
+from infrastructure.observability.circuit_breaker import get_circuit_breaker
+
 HAS_SHIPPING = True  # Pure Python implementation, no external SDK required
 
 logger = logging.getLogger(__name__)
+
+_SHIPPING_BREAKER = get_circuit_breaker("shipping", failure_threshold=5, recovery_timeout=30)
 
 # ---------------------------------------------------------------------------
 # Carrier definitions
@@ -199,6 +203,14 @@ def calculate_shipping_rate(
     width_cm = float(package.get("width_cm", 0))
     height_cm = float(package.get("height_cm", 0))
     dest_country = destination.get("country", "")
+
+    if _SHIPPING_BREAKER.state.value == "open":
+        return {
+            "error": "Shipping rate service temporarily unavailable (circuit breaker open).",
+            "carrier": carrier or "unknown",
+            "total": 0.0,
+            "currency": "USD",
+        }
 
     if weight_kg <= 0:
         return {

@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Testing
+.pytest_cache/
+.hypothesis/
+tests/
+test_output*.txt
+
+# Environment
+.env
+.env.example
+
+# Logs
+logs/
+*.log
+
+# Temp files
+_tmp_*.py
+health_test_*.py
+alembic_chain.*
+
+# Audit
+_audit/
+
+# Misc
+.ruff_cache/
+var/

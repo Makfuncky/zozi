@@ -1,15 +1,17 @@
 """Flexible application settings used across mixed recovery-era modules."""
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import secrets
 import warnings
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator, ValidationError
+from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,65 +20,21 @@ logger = logging.getLogger(__name__)
 
 try:
     from dotenv import load_dotenv
-    APP_ENV = os.getenv("APP_ENV", "development")
-    if APP_ENV in ("development", "test"):
+    _app_env = os.environ.get("APP_ENV", "development")
+    if _app_env in ("development", "test"):
         ROOT = Path(__file__).resolve().parent.parent
         load_dotenv(ROOT / ".env", override=False)
 except ImportError:
     pass
 
-_BOOL_KEYS = {
-    "debug",
-    "backup_enabled",
-    "readiness_require_valkey",
-    "readiness_require_email",
-    "readiness_require_payments",
-    "email_scheduler_enabled",
-    "bootstrap_schema_on_startup",
-    "run_legacy_migrations_on_startup",
-    "seed_data_on_startup",
-    "loadtest_profile_enabled",
-    "finance_scheduler_enabled",
-    "finance_scheduler_process_payouts",
-    "finance_scheduler_dispatch_payouts",
-    "finance_scheduler_dispatch_dry_run",
-    "bank_api_enabled",
-    "stripe_connect_auto_create_accounts",
-    "security_headers_enabled",
-    "hsts_enabled",
-    "cookie_secure",
-    "rate_limit_enabled",
-    "presigned_uploads_enabled",
-    "country_ai_enabled",
-    "country_ai_web_search_enabled",
-    "celery_task_always_eager",
-}
-_INT_KEYS = {
-    "access_token_expire_minutes",
-    "refresh_token_expire_days",
-    "smtp_port",
-    "max_upload_size_mb",
-    "max_backups",
-    "backup_max_files",
-    "backup_interval_minutes",
-    "background_job_workers",
-    "background_job_ttl_seconds",
-    "payout_holding_days",
-    "finance_auto_reconcile_batch_limit",
-    "bank_api_timeout_seconds",
-    "db_pool_size",
-    "db_max_overflow",
-    "db_pool_recycle",
-    "db_connect_timeout",
-    "db_statement_timeout",
-    "s3_presign_ttl_seconds",
-    "country_ai_cache_ttl_seconds",
-    "country_ai_max_concurrent_jobs",
-    "finance_ai_timeout",
-    "ml_workers",
-}
-_FLOAT_KEYS = {"vat_rate", "zozi_commission_rate", "whatsapp_min_delay"}
-
+# NOTE(CFG-008): the legacy `_BOOL_KEYS` / `_INT_KEYS` / `_FLOAT_KEYS` coercion
+# dicts that used to live here were removed. They were declared and never read:
+# a repo-wide grep found zero consumers by name, zero through the
+# `from config import *` shim in infrastructure/utils/config.py (underscore
+# names are excluded from `__all__` at the bottom of this file), and zero via
+# getattr. Typed coercion is pydantic-settings' job (Law 84 / Law 203).
+# `_S3_TO_R2` below is the contrasting example of a module dict that IS live —
+# it is consumed by `_migrate_s3_to_r2`.
 _S3_TO_R2 = {
     "s3_bucket": "r2_bucket",
     "s3_region": "r2_region",
@@ -87,16 +45,38 @@ _S3_TO_R2 = {
     "s3_presign_ttl_seconds": "r2_presign_ttl_seconds",
 }
 
+# Hosts that mean "this machine". A deployed profile (staging/production) must
+# never be configured to talk to itself where a real peer is required: the
+# frontend in production is Cloudflare Pages (Law 216), and a loopback
+# FRONTEND_URL is what silently produced a `ws://localhost:3000` connect-src in
+# the production CSP (Law 36 / Law 285) and killed every WebSocket (Law 114).
+_LOOPBACK_HOST_TOKENS = ("localhost", "127.0.0.1", "0.0.0.0", "[::1]", "::1")
+
+
+def _contains_loopback_host(value: str) -> bool:
+    """True when a URL or DSN points at the local machine.
+
+    Substring matching on purpose, so it matches the sibling CORS check at
+    `_validate_production` (`"localhost" in cors_origins`) rather than inventing
+    a second, stricter parser that would disagree with it.
+    """
+    lowered = str(value or "").lower()
+    return any(token in lowered for token in _LOOPBACK_HOST_TOKENS)
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="", extra="ignore")
+    # NOTE: env_ignore_empty lets an explicitly-empty env var (e.g.
+    # `FIELD_ENCRYPTION_KEY=`) fall back to the default instead of tripping the
+    # min_length/secret Field constraints below.
+    model_config = SettingsConfigDict(env_prefix="", extra="ignore", env_ignore_empty=True)
 
     app_name: str = Field(default="ZOZI Marketplace")
     app_version: str = Field(default="1.0.0")
+    log_level: str = Field(default="INFO")
     debug: bool = Field(default=False)
     app_env: str = Field(default="development")
     runtime_profile: str = Field(default="standard")
-    secret_key: str = Field(default="")
+    secret_key: str = Field(default="", min_length=32, secret=True, validate_default=False)
     algorithm: str = Field(default="HS256")
     jwt_algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=15)
@@ -117,11 +97,24 @@ class Settings(BaseSettings):
     access_token_cookie_name: str = Field(default="access_token")
     refresh_cookie_samesite: str = Field(default="lax")
     cors_origins: str = Field(default="http://localhost:3000,http://127.0.0.1:3000")
-    database_url: str = Field(default="")
-    database_url_direct: str = Field(default="")
+    database_url: str = Field(
+        default="",
+        pattern=r"^(?:|postgres(?:ql)?(?:\+[A-Za-z0-9_]+)?://.*|sqlite(?:\+[A-Za-z0-9_]+)?://.*)$",
+    )
+    database_url_direct: str = Field(default="", min_length=10)
     database_replica_url: str = Field(default="")
+    postgres_db: str = Field(default="")
+    postgres_user: str = Field(default="")
+    postgres_password: str = Field(default="")
+    db_ssl_mode: str = Field(default="")
+    field_encryption_salt: str = Field(default="")
+    seed_admin_password: str = Field(default="")
+    seed_customer_password: str = Field(default="")
+    seed_supplier_password: str = Field(default="")
+    seed_logistics_password: str = Field(default="")
+    seed_employee_password: str = Field(default="")
     db_pool_size: int = Field(default=50, ge=1, le=100)
-    db_max_overflow: int = Field(default=100)
+    db_max_overflow: int = Field(default=40, ge=30, le=1000)
     db_pool_recycle: int = Field(default=1800)
     db_connect_timeout: int = Field(default=30)
     db_statement_timeout: int = Field(default=60000)
@@ -148,7 +141,7 @@ class Settings(BaseSettings):
     smtp_port: int = Field(default=587)
     smtp_user: str = Field(default="")
     smtp_password: str = Field(default="")
-    email_from: str = Field(default="noreply@zozi.com")
+    email_from: str = Field(default="")
     whatsapp_min_delay: float = Field(default=3.0)
     frontend_url: str = Field(default="http://localhost:3000")
     backend_url: str = Field(default="http://localhost:8000")
@@ -164,7 +157,10 @@ class Settings(BaseSettings):
     hash_salt: str = Field(default="")
     twilio_account_sid: str = Field(default="")
     twilio_auth_token: str = Field(default="")
-    valkey_url: str = Field(default="valkey://localhost:6379")
+    valkey_url: str = Field(
+        default="",
+        pattern=r"^(?:|valkey://.*|rediss?://.*|unix://.*)$",
+    )
     default_currency: str = Field(default="OMR")
     resend_api_key: str = Field(default="")
     resend_webhook_secret: str = Field(default="")
@@ -174,9 +170,9 @@ class Settings(BaseSettings):
     facebook_client_secret: str = Field(default="")
     sso_client_id: str = Field(default="")
     customer_email_verification_mode: str = Field(default="auto")
-    readiness_require_valkey: bool = Field(default=False)
-    readiness_require_email: bool = Field(default=False)
-    readiness_require_payments: bool = Field(default=False)
+    readiness_require_valkey: bool = Field(default=True, alias="readiness_require_valkey")
+    readiness_require_email: bool = Field(default=True)
+    readiness_require_payments: bool = Field(default=True)
     email_scheduler_enabled: bool = Field(default=False)
     background_job_workers: int = Field(default=2)
     background_job_ttl_seconds: int = Field(default=3600)
@@ -189,8 +185,8 @@ class Settings(BaseSettings):
     run_legacy_migrations_on_startup: bool = Field(default=False)
     seed_data_on_startup: bool = Field(default=True)
     loadtest_profile_enabled: bool = Field(default=False)
-    vat_rate: float = Field(default=0.0)
-    zozi_commission_rate: float = Field(default=0.1)
+    vat_rate: Decimal = Field(default=Decimal("0.00"), ge=Decimal("0"), le=Decimal("1"))
+    zozi_commission_rate: Decimal = Field(default=Decimal("0.10"), ge=Decimal("0"), le=Decimal("1"))
     default_commission_rate_pct: float = Field(default=15.0)
     payout_holding_days: int = Field(default=7)
     finance_auto_reconcile_batch_limit: int = Field(default=100)
@@ -219,7 +215,7 @@ class Settings(BaseSettings):
     hf_api_token: str = Field(default="")
     stripe_connect_auto_create_accounts: bool = Field(default=False)
     sentry_dsn: str = Field(default="")
-    field_encryption_key: str = Field(default="")
+    field_encryption_key: str = Field(default="", min_length=64, secret=True, validate_default=False)
     field_encryption_key_from_env: str = Field(default="")
     field_encryption_key_file: str = Field(default="")
     field_encryption_key_source: str = Field(default="auto")
@@ -235,7 +231,7 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = Field(default=True)
     trusted_proxy_ips: str = Field(default="")
     fraud_proxy_seed_ips: str = Field(default="")
-    audit_chain_key: str = Field(default="")
+    audit_chain_key: str = Field(default="", min_length=32, secret=True, validate_default=False)
     location_cors_origins: str = Field(default="")
     default_accounts_json: str = Field(default="")
     login_lockout_ttl: int = Field(default=900)
@@ -255,8 +251,6 @@ class Settings(BaseSettings):
     paypal_client_id: str = Field(default="")
     paypal_secret: str = Field(default="")
     tap_api_base_url: str = Field(default="")
-    default_accounts_json: str = Field(default="")
-
     ollama_base_url: str = Field(default="http://localhost:11434")
     ollama_model: str = Field(default="moondream:latest")
     ollama_text_model: str = Field(default="phi3:mini")
@@ -279,6 +273,7 @@ class Settings(BaseSettings):
     push_mode: str = Field(default="dev")
     fcm_server_key: str = Field(default="")
     fcm_project_id: str = Field(default="")
+    log_retention_days: int = Field(default=30)
 
     env: str = Field(default="development", alias="app_env")
     cors_origins_list: list[str] = Field(default=[])
@@ -289,36 +284,146 @@ class Settings(BaseSettings):
         for key, value in values.items():
             normalized_values[key.lower()] = value
 
-        env_backup = {}
-        for key in list(normalized_values.keys()):
-            env_key = key.upper()
-            if env_key in os.environ:
-                env_backup[env_key] = os.environ.pop(env_key)
-
-        try:
-            if "db_pool_size" in normalized_values:
-                pool_size_value = normalized_values["db_pool_size"]
-                try:
-                    pool_size = int(pool_size_value)
-                except (TypeError, ValueError):
-                    raise ValidationError.from_exception_data(
-                        "Settings",
-                        [{"type": "int_parsing", "loc": ("db_pool_size",), "input": pool_size_value}],
-                    )
-                if pool_size < 1 or pool_size > 100:
-                    raise ValidationError.from_exception_data(
-                        "Settings",
-                        [{"type": "greater_than", "loc": ("db_pool_size",), "input": pool_size, "ctx": {"gt": 0}}],
-                    )
-
-            normalized_values.pop("_env_file", None)
-            normalized_values.pop("_env_file_encoding", None)
-            super().__init__(**normalized_values)
-        finally:
-            for env_key, env_val in env_backup.items():
-                os.environ[env_key] = env_val
+        normalized_values.pop("_env_file", None)
+        normalized_values.pop("_env_file_encoding", None)
+        super().__init__(**normalized_values)
 
         object.__setattr__(self, "_field_encryption_key_cache", None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_db_pool_size(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        pool_size_value = data.get("db_pool_size")
+        if pool_size_value is not None:
+            try:
+                pool_size = int(pool_size_value)
+            except (TypeError, ValueError):
+                raise ValidationError.from_exception_data(
+                    "Settings",
+                    [{"type": "int_parsing", "loc": ("db_pool_size",), "input": pool_size_value}],
+                )
+            if pool_size < 1 or pool_size > 100:
+                raise ValidationError.from_exception_data(
+                    "Settings",
+                    [{"type": "greater_than", "loc": ("db_pool_size",), "input": pool_size, "ctx": {"gt": 0}}],
+                )
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_db_max_overflow(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        overflow_value = data.get("db_max_overflow")
+        if overflow_value is not None:
+            try:
+                max_overflow = int(overflow_value)
+            except (TypeError, ValueError):
+                raise ValidationError.from_exception_data(
+                    "Settings",
+                    [{"type": "int_parsing", "loc": ("db_max_overflow",), "input": overflow_value}],
+                )
+            if max_overflow < 30:
+                raise ValidationError.from_exception_data(
+                    "Settings",
+                    [{"type": "greater_than", "loc": ("db_max_overflow",), "input": max_overflow, "ctx": {"gt": 29}}],
+                )
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_key_lengths(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        app_env = str(data.get("app_env", "development") or "development").strip().lower()
+        if app_env != "production":
+            return data
+
+        secret_key = str(data.get("secret_key", "") or "").strip()
+        if secret_key and len(secret_key) < 64:
+            raise ValueError("SECRET_KEY must be at least 64 characters")
+
+        audit_chain_key = str(data.get("audit_chain_key", "") or "").strip()
+        if audit_chain_key and len(audit_chain_key) < 32:
+            raise ValueError("AUDIT_CHAIN_KEY must be at least 32 characters")
+
+        field_encryption_key = str(data.get("field_encryption_key", "") or "").strip()
+        if field_encryption_key and len(field_encryption_key) < 64:
+            raise ValueError("FIELD_ENCRYPTION_KEY must be at least 64 characters")
+
+        return data
+
+    @model_validator(mode="after")
+    def _validate_required_secrets_in_non_production(self) -> "Settings":
+        app_env = str(self.app_env or "development").strip().lower()
+        if app_env == "production":
+            return self
+
+        _required_secrets = [
+            "secret_key",
+            "database_url",
+            "database_url_direct",
+            "postgres_db",
+            "postgres_user",
+            "postgres_password",
+            "field_encryption_salt",
+            "stripe_secret_key",
+            "stripe_publishable_key",
+            "stripe_webhook_secret",
+            "tap_secret_key",
+            "tap_webhook_secret",
+            "tap_api_base_url",
+            "paytabs_server_key",
+            "paytabs_webhook_secret",
+            "paytabs_profile_id",
+            "paytabs_api_base_url",
+            "paytabs_callback_url",
+            "thawani_secret_key",
+            "thawani_publishable_key",
+            "thawani_api_base_url",
+            "thawani_webhook_secret",
+            "openai_api_key",
+            "encryption_key",
+            "kms_encryption_key",
+            "hash_salt",
+            "sentry_dsn",
+            "twilio_account_sid",
+            "twilio_auth_token",
+            "whatsapp_account_sid",
+            "whatsapp_auth_token",
+            "whatsapp_from_number",
+            "resend_api_key",
+            "resend_webhook_secret",
+            "google_client_id",
+            "google_client_secret",
+            "facebook_client_id",
+            "facebook_client_secret",
+            "sso_client_id",
+            "audit_chain_key",
+            "trusted_proxy_ips",
+            "r2_bucket",
+            "r2_endpoint_url",
+            "r2_access_key_id",
+            "r2_secret_access_key",
+            "bank_api_auth_token",
+            "bank_api_source_account_id",
+            "hf_api_token",
+            "paypal_secret",
+            "paypal_client_id",
+            "paypal_webhook_secret",
+        ]
+        missing = [
+            key for key in _required_secrets
+            if not str(getattr(self, key, "") or "").strip()
+        ]
+        if missing:
+            raise ValueError(
+                f"Required secret settings are not configured: {', '.join(missing)}. "
+                f"Set them in .env or the environment. APP_ENV={app_env!r}"
+            )
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -337,9 +442,6 @@ class Settings(BaseSettings):
             "S3_SECRET_ACCESS_KEY": "r2_secret_access_key",
             "S3_PRESIGN_TTL_SECONDS": "r2_presign_ttl_seconds",
         }
-        for s3_env, r2_field in s3_env_map.items():
-            if r2_field not in data and os.getenv(s3_env):
-                data[r2_field] = os.getenv(s3_env)
         return data
 
     def __getattr__(self, name: str) -> Any:
@@ -435,6 +537,38 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode="after")
+    def _validate_database_url_scheme(self) -> "Settings":
+        app_env = str(self.app_env or "").lower()
+        if app_env != "production":
+            return self
+        database_url = str(self.database_url or "").strip()
+        if database_url and not database_url.startswith("postgresql+asyncpg://"):
+            raise ValueError(
+                "DATABASE_URL must use the 'postgresql+asyncpg://' scheme in production. "
+                f"Current value: {database_url!r}"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_valkey_url_scheme(self) -> "Settings":
+        app_env = str(self.app_env or "").lower()
+        if app_env != "production":
+            return self
+        valkey_url = str(self.valkey_url or "").strip()
+        if valkey_url and not valkey_url.startswith("valkey://"):
+            raise ValueError(
+                "VALKEY_URL must use the 'valkey://' scheme in production. "
+                f"Current value: {valkey_url!r}"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _sync_jwt_algorithm(self) -> "Settings":
+        algorithm = str(self.algorithm or "HS256").strip()
+        object.__setattr__(self, "jwt_algorithm", algorithm)
+        return self
+
+    @model_validator(mode="after")
     def _validate_production(self) -> "Settings":
         app_env = str(self.app_env or "").lower()
         if app_env != "production":
@@ -469,6 +603,22 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL is required in production")
         if database_url.startswith("sqlite"):
             raise ValueError("SQLite is not allowed in production; use PostgreSQL")
+        if not database_url.startswith("postgresql+asyncpg://"):
+            raise ValueError(
+                "DATABASE_URL must use the 'postgresql+asyncpg://' scheme in production. "
+                f"Current value: {database_url!r}"
+            )
+
+        database_url_direct = str(self.database_url_direct or "").strip()
+        if not database_url_direct:
+            raise ValueError("DATABASE_URL_DIRECT is required in production")
+        if database_url_direct.startswith("sqlite"):
+            raise ValueError("SQLite is not allowed in production; use PostgreSQL")
+        if not database_url_direct.startswith("postgresql+asyncpg://"):
+            raise ValueError(
+                "DATABASE_URL_DIRECT must use the 'postgresql+asyncpg://' scheme in production. "
+                f"Current value: {database_url_direct!r}"
+            )
 
         pool_size = int(self.db_pool_size or 20)
         if pool_size < 1 or pool_size > 100:
@@ -531,6 +681,23 @@ class Settings(BaseSettings):
         celery_result_backend = str(self.celery_result_backend or "").strip()
         if not celery_broker_url or not celery_result_backend:
             raise ValueError("CELERY (celery_broker_url, celery_result_backend) is required in production")
+        # The check above is non-emptiness only, so a SQLite broker (forbidden as
+        # a Celery broker — TECHNOLOGY_STACK §20) used to pass it. Enforce the
+        # scheme the technology stack mandates. Values are deliberately NOT
+        # echoed in the message: a broker URL can carry a password (Law 82).
+        for celery_var, celery_url in (
+            ("CELERY_BROKER_URL", celery_broker_url),
+            ("CELERY_RESULT_BACKEND", celery_result_backend),
+        ):
+            if celery_url.startswith("sqlite"):
+                raise ValueError(
+                    f"{celery_var} must be a Valkey URL in production; SQLite is "
+                    "forbidden as a Celery broker or result backend"
+                )
+            if not celery_url.startswith(("valkey://", "redis://", "rediss://")):
+                raise ValueError(
+                    f"{celery_var} must use the 'valkey://' scheme in production"
+                )
 
         bank_api_enabled = bool(self.bank_api_enabled)
         if bank_api_enabled:
@@ -596,6 +763,49 @@ class Settings(BaseSettings):
         backend_url = str(self.backend_url or "").strip()
         if not frontend_url or not backend_url:
             raise ValueError("FRONTEND_URL and BACKEND_URL are required in production")
+        # Non-emptiness is not enough. middleware/security_headers.py builds the
+        # production CSP connect-src from FRONTEND_URL alone, so a loopback value
+        # published `ws://localhost:3000` as an allowed WebSocket origin and
+        # silently blocked every realtime connection in production (Law 36,
+        # Law 114, Law 285). Values are NOT echoed: a base URL can carry
+        # credentials (Law 82).
+        if _contains_loopback_host(frontend_url) or _contains_loopback_host(backend_url):
+            raise ValueError(
+                "FRONTEND_URL and BACKEND_URL must not point at loopback in production. "
+                "The development defaults (http://localhost:3000 / :8000) must not "
+                "survive into the production profile (Law 86); set the public "
+                "Cloudflare Pages / API URLs."
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def _validate_staging(self) -> "Settings":
+        app_env = str(self.app_env or "").lower()
+        if app_env != "staging":
+            return self
+
+        if self.debug:
+            raise ValueError("debug must be False in staging")
+
+        cors_origins = str(self.cors_origins or "").strip()
+        if "localhost" in cors_origins or "127.0.0.1" in cors_origins:
+            raise ValueError("CORS_ORIGINS must not contain localhost/127.0.0.1 in staging")
+
+        database_url = str(self.database_url or "").strip()
+        if database_url.startswith("sqlite"):
+            raise ValueError("SQLite is not allowed in staging; use PostgreSQL")
+
+        # Staging is a real shared deployment (Law 205, Law 220) that signs its
+        # WORM chain and serves real traffic. It must not inherit the development
+        # base URLs any more than production must (Law 86).
+        frontend_url = str(self.frontend_url or "").strip()
+        backend_url = str(self.backend_url or "").strip()
+        if _contains_loopback_host(frontend_url) or _contains_loopback_host(backend_url):
+            raise ValueError(
+                "FRONTEND_URL and BACKEND_URL must not point at loopback in staging; "
+                "the staging profile must not inherit the development defaults (Law 86)."
+            )
 
         return self
 
@@ -610,7 +820,7 @@ class Settings(BaseSettings):
 
         env_alias = str(getattr(self, "field_encryption_key_from_env", "") or "").strip()
         if env_alias:
-            indirect = str(os.getenv(env_alias, "") or "").strip()
+            indirect = str(os.environ.get(env_alias, "") or "").strip()
             if indirect:
                 return indirect
 
@@ -700,6 +910,9 @@ class Settings(BaseSettings):
         if has_explicit_local_directive:
             resolved = self._resolve_local_field_encryption_key()
             if resolved:
+                salt = str(getattr(self, "field_encryption_salt", "") or "").strip()
+                if salt:
+                    resolved = hashlib.sha256((resolved + salt).encode()).hexdigest()
                 object.__setattr__(self, "_field_encryption_key_cache", resolved)
                 return resolved
 
@@ -725,26 +938,113 @@ class Settings(BaseSettings):
         if not resolved and source == "auto":
             resolved = self._load_field_encryption_key_from_aws_ssm()
 
+        if isinstance(resolved, str) and resolved:
+            salt = str(getattr(self, "field_encryption_salt", "") or "").strip()
+            if salt:
+                resolved = hashlib.sha256((resolved + salt).encode()).hexdigest()
+
         if resolved:
             object.__setattr__(self, "_field_encryption_key_cache", resolved)
         return resolved
 
 
-settings = Settings()
+def _validate_deployed_profile(instance: Settings) -> None:
+    """Law 86 for the values a `Settings` validator cannot police.
 
-if settings.app_env == "production" and settings.storage_backend != "r2":
-    raise ValueError(
-        "STORAGE_BACKEND must be 'r2' in production. "
-        f"Current value: {settings.storage_backend!r}"
-    )
+    `_finalize_settings` runs on the process-wide singleton, i.e. on the actual
+    boot path, exactly like the pre-existing `storage_backend != "r2"` guard.
+    That placement is deliberate: these rules are requirements on a DEPLOYMENT's
+    configuration, and putting them on every `Settings(...)` construction would
+    make them assertions about every ad-hoc instantiation too.
 
-for _key in (
-    "stripe_secret_key",
-    "stripe_webhook_secret",
-    "stripe_api_version",
-    "tap_secret_key",
-    "tap_webhook_secret",
-    "tap_webhook_url",
-    "frontend_url",
-):
-    object.__setattr__(settings, _key, getattr(settings, _key))
+    development and test keep the in-repo defaults. staging and production must
+    choose deliberately:
+      * a backup path under the deployment tree is inside the container image and
+        is destroyed on every redeploy, so `backup_enabled=True` would report
+        backups as on while silently persisting none (Law 232, Law 307);
+      * a local upload_dir is only meaningful when the storage backend is local —
+        production pins STORAGE_BACKEND=r2 (see `_finalize_settings`);
+      * an AI endpoint without a scheme is a typo the client cannot use (Law 84).
+    """
+    app_env = str(instance.app_env or "").strip().lower()
+    if app_env not in ("staging", "production"):
+        return
+
+    deployment_root = str(BASE_DIR).lower()
+
+    if instance.backup_enabled:
+        backup_dir = str(instance.backup_dir or "").strip()
+        if not backup_dir or deployment_root in backup_dir.lower():
+            raise ValueError(
+                f"BACKUP_DIR must be an explicit path outside the deployment tree while "
+                f"BACKUP_ENABLED is true in {app_env}. The built-in default "
+                f"'{BASE_DIR / 'uploads' / 'backups'}' is a development path and is "
+                "ephemeral inside a container, so backups written there are lost on every "
+                "redeploy. Set BACKUP_DIR to a durable mount, or set BACKUP_ENABLED=false. "
+                "(Law 86, Law 232, Law 307)"
+            )
+
+    if str(instance.storage_backend or "").strip().lower() != "r2":
+        upload_dir = str(instance.upload_dir or "").strip()
+        if not upload_dir or deployment_root in upload_dir.lower():
+            raise ValueError(
+                f"UPLOAD_DIR must be an explicit path outside the deployment tree while "
+                f"STORAGE_BACKEND is '{instance.storage_backend}' in {app_env}. The built-in "
+                "default is a development path. Set UPLOAD_DIR to a durable mount, or set "
+                "STORAGE_BACKEND=r2. (Law 86, TECHNOLOGY_STACK §20)"
+            )
+
+    ollama_base_url = str(instance.ollama_base_url or "").strip()
+    if not ollama_base_url.startswith(("http://", "https://")):
+        raise ValueError(
+            f"OLLAMA_BASE_URL must be an absolute http(s) URL in {app_env}; the "
+            "configured value does not start with a scheme. (Law 84)"
+        )
+
+
+def _finalize_settings(instance: Settings) -> Settings:
+    if instance.app_env == "production" and instance.storage_backend != "r2":
+        raise ValueError(
+            "STORAGE_BACKEND must be 'r2' in production. "
+            f"Current value: {instance.storage_backend!r}"
+        )
+
+    _validate_deployed_profile(instance)
+
+    for _key in (
+        "stripe_secret_key",
+        "stripe_webhook_secret",
+        "stripe_api_version",
+        "tap_secret_key",
+        "tap_webhook_secret",
+        "tap_webhook_url",
+        "frontend_url",
+    ):
+        object.__setattr__(instance, _key, getattr(instance, _key))
+    return instance
+
+
+def get_settings() -> Settings:
+    """Return the process-wide Settings singleton, built on first access.
+
+    Instantiating ``Settings`` at import time made ``import backend.config``
+    fail (env/secrets validation) before callers could configure anything, so
+    the singleton is created lazily on first ``settings`` attribute access.
+    """
+    existing = globals().get("settings")
+    if existing is not None:
+        return existing
+    instance = _finalize_settings(Settings())
+    globals()["settings"] = instance
+    return instance
+
+
+def __getattr__(name: str) -> Any:
+    if name == "settings":
+        return get_settings()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+__all__ = [name for name in list(globals()) if not name.startswith("_")]
+if "settings" not in __all__:
+    __all__.append("settings")

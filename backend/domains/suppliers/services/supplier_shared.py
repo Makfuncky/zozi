@@ -34,9 +34,6 @@ from domains.comms.ports import Notification, SupplierProfile
 from domains.finance.ports import BankTransaction, SupplierSettlement, Payout
 from domains.logistics.ports import LogisticsPartner, Shipment, ShipmentEvent
 from domains.orders.ports import Order, OrderItem
-# from providers.ai.ai_variant_config import ai_service  # unused
-# TODO: Module not yet created
-# from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
 from domains.logistics.ports import normalize_country_code
 from domains.audit.ports import AuditAction, audit_log
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
@@ -50,8 +47,47 @@ from infrastructure.utils.variant_key import compute_variant_key
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "MIN_RETURN_WINDOW_DAYS",
+    "DEFAULT_MAX_RETURN_WINDOW_DAYS",
+    "build_list_page_payload",
+    "build_public_supplier_cache_key",
+    "normalize_optional_product_text",
+    "normalize_product_visibility_regions",
+    "serialize_product_visibility_regions",
+    "load_shipments_for_orders",
+    "load_users_by_ids",
+    "parse_optional_datetime",
+    "persist_supplier_product",
+    "map_bulk_upload_error",
+    "build_bulk_upload_error",
+    "load_supplier_ai_audit_summary",
+    "run_supplier_ai_audit",
+    "queue_supplier_ai_audit",
+    "parse_optional_return_window_days",
+    "get_supplier_max_return_window_days",
+    "parse_supplier_return_window_days",
+    "coerce_optional_bool",
+    "sanitize_profile_string",
+    "sanitize_profile_json",
+    "normalize_product_video_reference",
+    "resolve_category_id",
+    "normalize_variant_axes",
+    "normalize_variant_attributes",
+    "build_variant_title",
+    "product_code_segment",
+    "generate_variant_product_code",
+    "parse_product_variants_payload",
+    "replace_product_variants",
+    "serialize_product_variant",
+    "slugify_supplier_storefront",
+    "deserialize_profile_json",
+    "serialize_profile_json",
+    "build_supplier_product_payload",
+]
 
-def _build_list_page_payload(items: list[Any], total: int, *, offset: int = 0, page_size: Optional[int] = None) -> dict[str, Any]:
+
+def build_list_page_payload(items: list[Any], total: int, *, offset: int = 0, page_size: Optional[int] = None) -> dict[str, Any]:
     resolved_page_size = page_size if page_size is not None else len(items)
     if resolved_page_size <= 0:
         resolved_page_size = max(total, 1)
@@ -71,18 +107,18 @@ MIN_RETURN_WINDOW_DAYS = 10
 DEFAULT_MAX_RETURN_WINDOW_DAYS = 30
 
 
-def _build_public_supplier_cache_key(prefix: str, payload: dict[str, Any]) -> str:
+def build_public_supplier_cache_key(prefix: str, payload: dict[str, Any]) -> str:
     return build_versioned_cache_key("public_suppliers", prefix, payload)
 
 
-def _normalize_optional_product_text(value: object) -> Optional[str]:
+def normalize_optional_product_text(value: object) -> Optional[str]:
     if value is None:
         return None
     normalized = str(value).strip()
     return normalized or None
 
 
-def _normalize_product_visibility_regions(value: object) -> list[str]:
+def normalize_product_visibility_regions(value: object) -> list[str]:
     if value in (None, "", [], (), {}):
         return []
 
@@ -113,16 +149,16 @@ def _normalize_product_visibility_regions(value: object) -> list[str]:
     return normalized[:200]
 
 
-def _serialize_product_visibility_regions(value: object) -> list[str]:
+def serialize_product_visibility_regions(value: object) -> list[str]:
     if value in (None, "", [], (), {}):
         return []
     try:
-        return _normalize_product_visibility_regions(value)
+        return normalize_product_visibility_regions(value)
     except HTTPException:
         return []
 
 
-def _load_shipments_for_orders(order_ids: list[int], db: Session) -> dict[int, list[Shipment]]:
+def load_shipments_for_orders(order_ids: list[int], db: Session) -> dict[int, list[Shipment]]:
     if not order_ids:
         return {}
 
@@ -139,7 +175,7 @@ def _load_shipments_for_orders(order_ids: list[int], db: Session) -> dict[int, l
     return shipments_by_order
 
 
-def _load_users_by_ids(user_ids: list[int], db: Session) -> dict[int, User]:
+def load_users_by_ids(user_ids: list[int], db: Session) -> dict[int, User]:
     if not user_ids:
         return {}
 
@@ -147,7 +183,7 @@ def _load_users_by_ids(user_ids: list[int], db: Session) -> dict[int, User]:
     return {cast(int, user.id): user for user in users}
 
 
-def _parse_optional_datetime(value: Optional[object]) -> Optional[datetime]:
+def parse_optional_datetime(value: Optional[object]) -> Optional[datetime]:
     if value in (None, "", b""):
         return None
     if isinstance(value, datetime):
@@ -157,7 +193,7 @@ def _parse_optional_datetime(value: Optional[object]) -> Optional[datetime]:
         return datetime.fromisoformat(normalized)
 
 
-def _persist_supplier_product(
+def persist_supplier_product(
     *,
     name: str,
     description: str,
@@ -197,17 +233,17 @@ def _persist_supplier_product(
                 status_code=422,
                 detail=f"Products in category '{category}' are restricted in your country ({supplier_country}).",
             )
-    normalized_return_window_days = _parse_supplier_return_window_days(
+    normalized_return_window_days = parse_supplier_return_window_days(
         return_window_days,
         supplier_id=current_user["id"],
         db=db,
     )
-    parsed_variants = _parse_product_variants_payload(variants_payload)
-    normalized_subcategory = _normalize_optional_product_text(subcategory)
-    normalized_visibility_regions = _normalize_product_visibility_regions(visibility_regions)
+    parsed_variants = parse_product_variants_payload(variants_payload)
+    normalized_subcategory = normalize_optional_product_text(subcategory)
+    normalized_visibility_regions = normalize_product_visibility_regions(visibility_regions)
 
     # Map the free-text category to a seeded taxonomy row (graceful if absent).
-    category_id = _resolve_category_id(category, db)
+    category_id = resolve_category_id(category, db)
 
     # Generate unique product slug from name
     slug_base = re.sub(r"[^a-z0-9]+", "-", (name or "product").strip().lower()).strip("-") or "product"
@@ -243,7 +279,7 @@ def _persist_supplier_product(
         supplier_id=current_user["id"],
         country_code=country_code,
         category_id=category_id,
-        variant_axes=_normalize_variant_axes(variant_axes),
+        variant_axes=normalize_variant_axes(variant_axes),
         bg_preset=bg_preset,
         attributes=json.dumps(extra_attributes) if extra_attributes else None,
     )
@@ -253,11 +289,11 @@ def _persist_supplier_product(
         from domains.catalog.ports import ProductVideo
         db.add(ProductVideo(product_id=new_product.id, video_url=video_url, upload_status="completed"))
     if parsed_variants:
-        _replace_product_variants(new_product, parsed_variants, db)
+        replace_product_variants(new_product, parsed_variants, db)
     return new_product
 
 
-def _map_bulk_upload_error(detail: object) -> dict[str, object]:
+def map_bulk_upload_error(detail: object) -> dict[str, object]:
     message = str(detail or "").strip()
     lowered = message.lower()
 
@@ -285,18 +321,18 @@ def _map_bulk_upload_error(detail: object) -> dict[str, object]:
     return {}
 
 
-def _build_bulk_upload_error(index: int, detail: object, *, name: Optional[str] = None) -> dict[str, object]:
+def build_bulk_upload_error(index: int, detail: object, *, name: Optional[str] = None) -> dict[str, object]:
     payload: dict[str, object] = {
         "index": index,
         "error": str(detail),
     }
     if name:
         payload["name"] = name
-    payload.update(_map_bulk_upload_error(detail))
+    payload.update(map_bulk_upload_error(detail))
     return payload
 
 
-def _load_supplier_ai_audit_summary() -> Optional[dict[str, Any]]:
+def load_supplier_ai_audit_summary() -> Optional[dict[str, Any]]:
     try:
         if not _AI_IMAGE_SMOKE_REPORT.is_file():
             return None
@@ -358,7 +394,7 @@ def run_supplier_ai_audit(limit: int = 0) -> dict[str, Any]:
         message = (completed.stderr or completed.stdout or "AI smoke run failed").strip()
         raise RuntimeError(message)
 
-    summary = _load_supplier_ai_audit_summary()
+    summary = load_supplier_ai_audit_summary()
     if summary is None:
         raise RuntimeError("AI smoke run completed but no audit summary was produced")
 
@@ -379,7 +415,7 @@ def queue_supplier_ai_audit(current_user: dict, limit: int = 0) -> dict[str, Any
     )
 
 
-def _parse_optional_return_window_days(value: Optional[object]) -> Optional[int]:
+def parse_optional_return_window_days(value: Optional[object]) -> Optional[int]:
     if value in (None, "", b""):
         return None
     try:
@@ -392,7 +428,7 @@ def _parse_optional_return_window_days(value: Optional[object]) -> Optional[int]
     return days
 
 
-def _get_supplier_max_return_window_days(supplier_id: int, db: Session) -> int:
+def get_supplier_max_return_window_days(supplier_id: int, db: Session) -> int:
     supplier_profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
     raw_value = getattr(supplier_profile, "max_return_days", None) if supplier_profile else None
     try:
@@ -403,16 +439,16 @@ def _get_supplier_max_return_window_days(supplier_id: int, db: Session) -> int:
     return max(MIN_RETURN_WINDOW_DAYS, parsed)
 
 
-def _parse_supplier_return_window_days(
+def parse_supplier_return_window_days(
     value: Optional[object],
     *,
     supplier_id: int,
     db: Session,
 ) -> Optional[int]:
-    days = _parse_optional_return_window_days(value)
+    days = parse_optional_return_window_days(value)
     if days is None:
         return None
-    max_days = _get_supplier_max_return_window_days(supplier_id, db)
+    max_days = get_supplier_max_return_window_days(supplier_id, db)
     if days > max_days:
         raise HTTPException(
             status_code=400,
@@ -421,7 +457,7 @@ def _parse_supplier_return_window_days(
     return days
 
 
-def _coerce_optional_bool(value: Optional[object], default: bool = True) -> bool:
+def coerce_optional_bool(value: Optional[object], default: bool = True) -> bool:
     if value in (None, "", b""):
         return default
     if isinstance(value, bool):
@@ -435,7 +471,7 @@ def _coerce_optional_bool(value: Optional[object], default: bool = True) -> bool
     return bool(value)
 
 
-def _sanitize_profile_string(value: object) -> Optional[str]:
+def sanitize_profile_string(value: object) -> Optional[str]:
     if value is None:
         return None
     if not isinstance(value, str):
@@ -444,18 +480,18 @@ def _sanitize_profile_string(value: object) -> Optional[str]:
     return html.escape(normalized) if normalized else None
 
 
-def _sanitize_profile_json(value: Any) -> Any:
+def sanitize_profile_json(value: Any) -> Any:
     if isinstance(value, str):
-        return _sanitize_profile_string(value)
+        return sanitize_profile_string(value)
     if isinstance(value, list):
-        return [_sanitize_profile_json(item) for item in value if item not in (None, "")]
+        return [sanitize_profile_json(item) for item in value if item not in (None, "")]
     if isinstance(value, dict):
         sanitized: dict[str, Any] = {}
         for raw_key, raw_value in value.items():
             key = str(raw_key).strip()
             if not key:
                 continue
-            sanitized_value = _sanitize_profile_json(raw_value)
+            sanitized_value = sanitize_profile_json(raw_value)
             if sanitized_value in (None, "", [], {}):
                 continue
             sanitized[key] = sanitized_value
@@ -463,7 +499,7 @@ def _sanitize_profile_json(value: Any) -> Any:
     return value
 
 
-def _normalize_product_video_reference(value: Optional[object]) -> Optional[str]:
+def normalize_product_video_reference(value: Optional[object]) -> Optional[str]:
     if value in (None, "", b""):
         return None
     normalized = str(value).strip()
@@ -488,7 +524,7 @@ def _normalize_product_video_reference(value: Optional[object]) -> Optional[str]
     raise HTTPException(status_code=400, detail="Product video must be a YouTube, Vimeo, MP4, or WebM reference")
 
 
-def _resolve_category_id(category: Optional[str], db: Session) -> Optional[int]:
+def resolve_category_id(category: Optional[str], db: Session) -> Optional[int]:
     """Map a free-text category label to a seeded ``categories`` row id."""
     if not category:
         return None
@@ -511,7 +547,7 @@ def _resolve_category_id(category: Optional[str], db: Session) -> Optional[int]:
     return row[0] if row else None
 
 
-def _normalize_variant_axes(value: object) -> Optional[list]:
+def normalize_variant_axes(value: object) -> Optional[list]:
     """Validate/normalize the product-level variant axis definitions."""
     if value in (None, "", b""):
         return None
@@ -537,7 +573,7 @@ def _normalize_variant_axes(value: object) -> Optional[list]:
     return axes or None
 
 
-def _normalize_variant_attributes(value: object) -> dict[str, str]:
+def normalize_variant_attributes(value: object) -> dict[str, str]:
     if value in (None, "", b""):
         return {}
     parsed = value
@@ -557,7 +593,7 @@ def _normalize_variant_attributes(value: object) -> dict[str, str]:
     return normalized
 
 
-def _build_variant_title(size: Optional[str], color: Optional[str], material: Optional[str], attributes: dict[str, str], fallback: Optional[str]) -> str:
+def build_variant_title(size: Optional[str], color: Optional[str], material: Optional[str], attributes: dict[str, str], fallback: Optional[str]) -> str:
     if fallback:
         return fallback
     parts = [size or "", color or "", material or "", *attributes.values()]
@@ -565,15 +601,15 @@ def _build_variant_title(size: Optional[str], color: Optional[str], material: Op
     return title or "Variant"
 
 
-def _product_code_segment(value: Optional[object], fallback: str, max_length: int) -> str:
+def product_code_segment(value: Optional[object], fallback: str, max_length: int) -> str:
     normalized = re.sub(r"[^A-Z0-9]+", "", str(value or "").upper())[:max_length]
     return normalized or fallback
 
 
-def _generate_variant_product_code(product: Product, variant_payload: dict[str, object], index: int) -> str:
-    category_code = _product_code_segment(getattr(product, "category", None), "GEN", 3)
-    name_code = _product_code_segment(getattr(product, "name", None), "ITEM", 5)
-    option_code = _product_code_segment(
+def generate_variant_product_code(product: Product, variant_payload: dict[str, object], index: int) -> str:
+    category_code = product_code_segment(getattr(product, "category", None), "GEN", 3)
+    name_code = product_code_segment(getattr(product, "name", None), "ITEM", 5)
+    option_code = product_code_segment(
         variant_payload.get("size") or variant_payload.get("color") or variant_payload.get("title"),
         f"V{index + 1:02d}",
         4,
@@ -581,7 +617,7 @@ def _generate_variant_product_code(product: Product, variant_payload: dict[str, 
     return f"PRD-{category_code}-{name_code}-{option_code}-{int(product.id):06d}-{index + 1:02d}"
 
 
-def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, object]]:
+def parse_product_variants_payload(value: Optional[object]) -> list[dict[str, object]]:
     if value in (None, "", b""):
         return []
     parsed = value
@@ -602,18 +638,18 @@ def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, o
         if not isinstance(raw_variant, dict):
             raise HTTPException(status_code=400, detail=f"Variant #{index + 1} must be an object")
 
-        size = _sanitize_profile_string(raw_variant.get("size"))
-        color = _sanitize_profile_string(raw_variant.get("color"))
-        material = _sanitize_profile_string(raw_variant.get("material"))
-        pattern = _sanitize_profile_string(raw_variant.get("pattern"))
-        gender = _sanitize_profile_string(raw_variant.get("gender"))
-        title = _sanitize_profile_string(raw_variant.get("title"))
-        sku = _sanitize_profile_string(raw_variant.get("sku"))
-        barcode = _sanitize_profile_string(raw_variant.get("barcode"))
-        product_code = _sanitize_profile_string(raw_variant.get("product_code"))
-        image_url = _sanitize_profile_string(raw_variant.get("image_url"))
-        attributes = _normalize_variant_attributes(raw_variant.get("attributes") or raw_variant.get("attributes_json"))
-        is_active = _coerce_optional_bool(raw_variant.get("is_active"), True)
+        size = sanitize_profile_string(raw_variant.get("size"))
+        color = sanitize_profile_string(raw_variant.get("color"))
+        material = sanitize_profile_string(raw_variant.get("material"))
+        pattern = sanitize_profile_string(raw_variant.get("pattern"))
+        gender = sanitize_profile_string(raw_variant.get("gender"))
+        title = sanitize_profile_string(raw_variant.get("title"))
+        sku = sanitize_profile_string(raw_variant.get("sku"))
+        barcode = sanitize_profile_string(raw_variant.get("barcode"))
+        product_code = sanitize_profile_string(raw_variant.get("product_code"))
+        image_url = sanitize_profile_string(raw_variant.get("image_url"))
+        attributes = normalize_variant_attributes(raw_variant.get("attributes") or raw_variant.get("attributes_json"))
+        is_active = coerce_optional_bool(raw_variant.get("is_active"), True)
 
         try:
             stock = int(raw_variant.get("stock", 0) or 0)
@@ -624,7 +660,7 @@ def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, o
 
         raw_price = raw_variant.get("price")
         try:
-            price = float(raw_price) if raw_price not in (None, "") else None
+            price = Decimal(str(raw_price)) if raw_price not in (None, "") else None
         except (TypeError, ValueError) as exc:
             raise HTTPException(status_code=400, detail=f"Variant #{index + 1} price must be a number") from exc
         if price is not None and price < 0:
@@ -636,7 +672,7 @@ def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, o
         except (TypeError, ValueError):
             sort_order = index
 
-        title = _build_variant_title(size, color, material, attributes, title)
+        title = build_variant_title(size, color, material, attributes, title)
 
         for field_name, field_value in (("sku", sku), ("barcode", barcode), ("product_code", product_code)):
             if field_value:
@@ -666,7 +702,7 @@ def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, o
     return variants
 
 
-def _replace_product_variants(product: Product, variants_payload: list[dict[str, object]], db: Session) -> None:
+def replace_product_variants(product: Product, variants_payload: list[dict[str, object]], db: Session) -> None:
     """Idempotent upsert of product variants by ``variant_key`` (Phase 3b).
 
     Replaces the old delete+reinsert behaviour. Matching variants are updated
@@ -707,7 +743,7 @@ def _replace_product_variants(product: Product, variants_payload: list[dict[str,
             continue
 
         if not payload.get("product_code"):
-            payload["product_code"] = _generate_variant_product_code(product, payload, index)
+            payload["product_code"] = generate_variant_product_code(product, payload, index)
         payload.pop("name", None)
         payload["country_code"] = product.country_code
 
@@ -733,14 +769,14 @@ def _replace_product_variants(product: Product, variants_payload: list[dict[str,
     db.flush()
 
 
-def _serialize_product_variant(variant: ProductVariant, product_price: object) -> dict[str, object]:
+def serialize_product_variant(variant: ProductVariant, product_price: object) -> dict[str, object]:
     try:
         attributes = json.loads(variant.attributes_json) if variant.attributes_json else {}
         if not isinstance(attributes, dict):
             attributes = {}
     except (TypeError, ValueError, json.JSONDecodeError):
         attributes = {}
-    effective_price = float(variant.price) if variant.price is not None else float(product_price or 0)
+    effective_price = variant.price if variant.price is not None else to_decimal(product_price)
     return {
         "id": variant.id,
         "product_id": variant.product_id,
@@ -754,7 +790,7 @@ def _serialize_product_variant(variant: ProductVariant, product_price: object) -
         "sku": variant.sku,
         "barcode": variant.barcode,
         "product_code": variant.product_code,
-        "price": float(variant.price) if variant.price is not None else None,
+        "price": str(variant.price) if variant.price is not None else None,
         "effective_price": effective_price,
         "stock": variant.stock,
         "media_url": variant.media_url,
@@ -767,13 +803,13 @@ def _serialize_product_variant(variant: ProductVariant, product_price: object) -
     }
 
 
-def _slugify_supplier_storefront(value: Optional[str]) -> str:
+def slugify_supplier_storefront(value: Optional[str]) -> str:
     if not value:
         return ""
     return re.sub(r"^-+|-+$", "", re.sub(r"[\s_-]+", "-", re.sub(r"[^\w\s-]", "", value.lower().strip())))
 
 
-def _deserialize_profile_json(raw: Any, default: Any) -> Any:
+def deserialize_profile_json(raw: Any, default: Any) -> Any:
     if raw in (None, "", b""):
         return default
     if isinstance(raw, (list, dict)):
@@ -785,7 +821,7 @@ def _deserialize_profile_json(raw: Any, default: Any) -> Any:
     return parsed if isinstance(parsed, type(default)) else default
 
 
-def _serialize_profile_json(value: Any, expected: str) -> str:
+def serialize_profile_json(value: Any, expected: str) -> str:
     if isinstance(value, str):
         stripped = value.strip()
         if not stripped:
@@ -806,14 +842,14 @@ def _serialize_profile_json(value: Any, expected: str) -> str:
         if not isinstance(value, dict):
             raise HTTPException(status_code=400, detail="Social links must be a JSON object")
 
-    return json.dumps(_sanitize_profile_json(value))
+    return json.dumps(sanitize_profile_json(value))
 
 
-def _build_supplier_product_payload(product: Product, sales_count: int = 0, revenue: float = 0.0) -> dict:
+def build_supplier_product_payload(product: Product, sales_count: int = 0, revenue: float = 0.0) -> dict:
     price = product.price
     compare_price = product.compare_price
     if compare_price and compare_price > (price or 0) and price:
-        discount_pct: Optional[float] = round((float(compare_price) - float(price)) / float(compare_price) * 100, 2)
+        discount_pct: Optional[float] = float(round((compare_price - price) / compare_price * 100, 2))
     else:
         discount_pct = None
     return {
@@ -840,7 +876,7 @@ def _build_supplier_product_payload(product: Product, sales_count: int = 0, reve
         "ai_description": product.ai_description,
         "sizes": product.sizes,
         "materials": product.materials,
-        "visibility_regions": _serialize_product_visibility_regions(product.visibility_regions),
+        "visibility_regions": serialize_product_visibility_regions(product.visibility_regions),
         "additional_images": product.images,
         "weight": product.weight,
         "dimensions": product.dimensions,
@@ -857,7 +893,7 @@ def _build_supplier_product_payload(product: Product, sales_count: int = 0, reve
         "view_count": getattr(product, "view_count", 0),
         "rating_count": getattr(product, "rating_count", 0),
         "updated_at": product.updated_at.isoformat() if product.updated_at else None,
-        "variants": [_serialize_product_variant(variant, product.price) for variant in (product.variants or [])],
+        "variants": [serialize_product_variant(variant, product.price) for variant in (product.variants or [])],
         "created_at": product.created_at.isoformat(),
         "sales_count": sales_count,
         "revenue": revenue,

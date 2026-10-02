@@ -91,12 +91,14 @@ __all__ = [
     "GatewaySettlementSchedule",
     "Invoice", "InvoiceItem",
     "JournalEntry", "JournalEntryLine",
-    "PayoutBatch", "PayoutBatchItem", "PendingJournalEntry",
+    "Payout", "PayoutBatch", "PayoutBatchItem", "PendingJournalEntry",
+    "Payment", "PaymentGatewayConnection", "PaymentReconciliationRun",
     "RecurringTemplate", "RefundLedger",
     "ScannedExpense", "SupplierSettlement",
     "TransactionLedger", "TreasuryAccount", "TreasuryTransaction",
     "VATRemittance", "Vendor",
     "CommissionAgreement", "CommissionCategoryRate",
     "CommissionLedgerEntry", "ProductCommissionOverride",
+    "LogisticsPartnerPayout",
 ]
 

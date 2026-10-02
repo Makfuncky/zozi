@@ -11,7 +11,7 @@ from infrastructure.security.dependencies import require_supplier, require_admin
 from infrastructure.database.schemas import ListPage
 from rbac.dependencies import require_feature
 
-from domains.finance.services.ledger.general_ledger_service import (
+from domains.finance.services.ledger.general_ledger import (
     delete_supplier_commission_override,
     get_effective_rate,
     get_global_config,

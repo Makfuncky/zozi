@@ -103,18 +103,27 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
             pk_col = "id"
             if pk_col not in _VALID_PK_COLS:
                 raise ValueError(f"Primary key column '{pk_col}' not in allowlist")
+            from sqlalchemy import bindparam, column, select, table
             from sqlalchemy.sql import quoted_name
+
             safe_table = quoted_name(table_name, quote=True)
             safe_pk = quoted_name(pk_col, quote=True)
             safe_cols = [quoted_name(c, quote=True) for c in columns]
-            select_cols_sql = ", ".join([safe_pk] + safe_cols)
+
+            # WHY Core constructs, not string SQL: a column name cannot be a
+            # bind parameter, so the dialect compiler must emit the
+            # identifiers. lim/off are the only values, and stay bound.
+            select_stmt = (
+                select(*(column(c) for c in [safe_pk] + safe_cols))
+                .select_from(table(safe_table))
+                .order_by(column(safe_pk))
+                .limit(bindparam("lim"))
+                .offset(bindparam("off"))
+            )
 
             while True:
                 rows = db.execute(
-                    text(
-                        f"SELECT {select_cols_sql} FROM {safe_table} "
-                        f"ORDER BY {safe_pk} LIMIT :lim OFFSET :off"
-                    ),
+                    select_stmt,
                     {"lim": BATCH_SIZE, "off": offset},
                 ).mappings().all()
                 if not rows:

@@ -1,617 +1,120 @@
-﻿# ZOZI Forensic Audit — Frontend Web Technologies
+# DIMENSION: Technological
 
-## Agent ID: AGENT_FRONTEND_TECH
-## Scope: frontend/web_app/package.json, pnpm-lock.yaml, tsconfig.json, next.config.ts, Dockerfile, frontend/shared/package.json, frontend/shared/tsconfig.json, pnpm-workspace.yaml
-## Date: 2026-09-30T02:50:21Z
+## Summary
+- Confirmation: ❌
+- Files inspected: 12
+- Files compliant: 0
+- Files with findings: 12
+- Laws implicated: [L-30, L-44, L-84, L-163, L-172, L-291]
+- Findings: 53
+- P0: 15  P1: 35  P2: 3  P3: 0
+- Clusters: 8
+- Average confidence: 4.8/5
+- Average evidence strength: triangulated
+- Status: NEW: 53 · COMPILED: 0 · RESOLVED: 0 · DEFERRED: 0 · INVALID: 0
+- Completion blockers: 15 yes · 0 partial · 38 no
 
----
+## Findings
 
-### Summary
-
-| Category | Total Findings | Critical | High | Medium | Low |
-|---|---|---|---|---|---|
-| Version Drift | 8 | 0 | 2 | 4 | 2 |
-| Lockfile / Workspace | 3 | 0 | 1 | 1 | 1 |
-| Build Output | 2 | 0 | 1 | 1 | 0 |
-| Config | 2 | 0 | 1 | 1 | 0 |
-| **Total** | **15** | **0** | **5** | **8** | **2** |
-
----
-
-## Part A: Version Drift Findings
-
-### TECH-FW-001: Next.js version mismatch
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-001 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:30` |
-| **Current** | `next: 16.3.4` |
-| **Target** | `next: 16.3.5` |
-| **Delta** | Next.js pinned 1 patch version behind canonical |
-| **Fix** | Bump next to 16.3.5 |
-| **Effort** | S (0.5h) |
-| **Priority** | P1 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | TECH-FW-002 |
-| **Verify** | `cd frontend/web_app && pnpm list next` |
-| **Test** | `tests/frontend/test_versions.py::test_next_version` |
-| **Rollback** | Revert package.json line 30 |
-| **Blast radius** | Frontend build, SSR |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-002: TypeScript version mismatch
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-002 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:56` |
-| **Current** | `typescript: ~5.10` |
-| **Target** | `typescript: 5.9.3` |
-| **Delta** | package.json allows TypeScript 5.10.x, diverging from canonical 5.9.3 and lockfile 5.9.3 |
-| **Fix** | Pin typescript to 5.9.3 |
-| **Effort** | S (0.5h) |
-| **Priority** | P1 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | TECH-FW-001 |
-| **Verify** | `cd frontend/web_app && pnpm list typescript` |
-| **Test** | `tests/frontend/test_versions.py::test_typescript_version` |
-| **Rollback** | Revert package.json line 56 |
-| **Blast radius** | Frontend type checking |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-003: framer-motion version drift
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-003 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:26` |
-| **Current** | `framer-motion: ^12.0.0` (lockfile: 12.43.0) |
-| **Target** | `motion: 13.2.0+` (package renamed) |
-| **Delta** | framer-motion v12 used; canonical requires motion v13+ with new package name `motion` and import path `motion/react` |
-| **Fix** | Replace framer-motion with motion@13.2.0+ and update imports from `framer-motion` to `motion/react` |
-| **Effort** | M (4h) |
-| **Priority** | P1 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | TECH-FW-001 |
-| **Verify** | `cd frontend/web_app && pnpm list framer-motion` |
-| **Test** | `tests/frontend/test_motion_imports.py::test_motion_package` |
-| **Rollback** | Revert package.json and imports |
-| **Blast radius** | All animated components |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-004: @stripe/react-stripe-js version drift
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-004 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:15` |
-| **Current** | `@stripe/react-stripe-js: ^5.6.0` (lockfile: 5.6.1) |
-| **Target** | `@stripe/react-stripe-js: 6.9.0` |
-| **Delta** | Stripe React Elements pinned 1 major version behind canonical |
-| **Fix** | Bump @stripe/react-stripe-js to 6.9.0 |
-| **Effort** | S (1h) |
-| **Priority** | P1 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | TECH-FW-005 |
-| **Verify** | `cd frontend/web_app && pnpm list @stripe/react-stripe-js` |
-| **Test** | `tests/frontend/test_stripe_elements.py::test_stripe_react_version` |
-| **Rollback** | Revert package.json line 15 |
-| **Blast radius** | Stripe card forms, checkout |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-005: @stripe/stripe-js version drift
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-005 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:16` |
-| **Current** | `@stripe/stripe-js: ^8.7.0` (lockfile: 8.11.0) |
-| **Target** | `@stripe/stripe-js: 5.5.0+` |
-| **Delta** | @stripe/stripe-js is at 8.11.0, exceeding canonical maximum of 5.5.0+; major version drift may break API compatibility |
-| **Fix** | Downgrade @stripe/stripe-js to 5.5.0+ or update canonical stack to reflect v8 |
-| **Effort** | S (1h) |
-| **Priority** | P2 |
-| **Confidence** | 4 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | TECH-FW-004 |
-| **Verify** | `cd frontend/web_app && pnpm list @stripe/stripe-js` |
-| **Test** | `tests/frontend/test_stripe_js_version.py::test_stripe_js_compat` |
-| **Rollback** | Revert package.json line 16 |
-| **Blast radius** | Stripe Elements initialization |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-006: zustand version drift
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-006 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:36` |
-| **Current** | `zustand: ^5.0.11` (lockfile: 5.0.15) |
-| **Target** | `zustand: 5.0.14` |
-| **Delta** | zustand resolved to 5.0.15, 1 patch ahead of canonical 5.0.14 |
-| **Fix** | Pin zustand to 5.0.14 |
-| **Effort** | S (0.5h) |
-| **Priority** | P2 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/web_app && pnpm list zustand` |
-| **Test** | `tests/frontend/test_versions.py::test_zustand_version` |
-| **Rollback** | Revert package.json line 36 |
-| **Blast radius** | Client state management |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-## Part B: Lockfile / Workspace Findings
-
-### TECH-FW-007: pnpm-workspace.yaml missing at root
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-007 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-workspace-config |
-| **File:Line** | `pnpm-workspace.yaml` (root) |
-| **Current** | No pnpm-workspace.yaml at repository root |
-| **Target** | pnpm-workspace.yaml present at root defining workspace packages |
-| **Delta** | Root lacks pnpm-workspace.yaml; only frontend/web_app/ and frontend/mobile_app/ contain local workspace configs with allowBuilds |
-| **Fix** | Add canonical pnpm-workspace.yaml at root with workspace package globs |
-| **Effort** | S (0.5h) |
-| **Priority** | P1 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | TECH-FW-008 |
-| **Verify** | `ls pnpm-workspace.yaml` |
-| **Test** | `tests/frontend/test_workspace.py::test_root_workspace_exists` |
-| **Rollback** | Remove root pnpm-workspace.yaml |
-| **Blast radius** | Monorepo workspace resolution |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-008: pnpm-workspace.yaml allowBuilds incomplete
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-008 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-workspace-config |
-| **File:Line** | `frontend/web_app/pnpm-workspace.yaml:1-3` |
-| **Current** | `allowBuilds: { core-js: true, unrs-resolver: true }` |
-| **Target** | Workspace allowBuilds aligned with monorepo requirements |
-| **Delta** | web_app pnpm-workspace.yaml allows `core-js` build, which is non-canonical per TECHNOLOGY_STACK.md |
-| **Fix** | Remove `core-js` from allowBuilds or add canonical build exceptions only |
-| **Effort** | S (0.5h) |
-| **Priority** | P2 |
-| **Confidence** | 4 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | TECH-FW-007 |
-| **Verify** | `cat frontend/web_app/pnpm-workspace.yaml` |
-| **Test** | `tests/frontend/test_workspace.py::test_allowbuilds_canonical` |
-| **Rollback** | Revert pnpm-workspace.yaml to previous allowBuilds |
-| **Blast radius** | pnpm install in web_app |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-009: postcss conflicting versions in lockfile
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-009 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-lockfile-conflicts |
-| **File:Line** | `frontend/web_app/pnpm-lock.yaml` (packages section) |
-| **Current** | postcss@8.5.23 and postcss@8.5.28 both present |
-| **Target** | Single postcss version resolved across workspace |
-| **Delta** | pnpm-lock.yaml contains two postcss versions (8.5.23 and 8.5.28), indicating peer dependency resolution conflict |
-| **Fix** | Align postcss to single version via overrides or peer resolution |
-| **Effort** | S (0.5h) |
-| **Priority** | P2 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/web_app && grep -c "postcss@8.5.23" pnpm-lock.yaml && grep -c "postcss@8.5.28" pnpm-lock.yaml` |
-| **Test** | `tests/frontend/test_lockfile.py::test_no_duplicate_versions` |
-| **Rollback** | Revert pnpm-lock.yaml to previous postcss resolution |
-| **Blast radius** | CSS processing pipeline |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-## Part C: Build Output Findings
-
-### TECH-FW-010: Large chunk in build output
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-010 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-bundle-size |
-| **File:Line** | `frontend/web_app/.next/build/chunks/node_modules__pnpm_1yjis6b._.js` |
-| **Current** | Chunk size 280,309 bytes (273.7 KB) |
-| **Target** | No chunks > 200 KB |
-| **Delta** | pnpm monorepo bootstrap chunk exceeds 200 KB threshold |
-| **Fix** | Investigate pnpm chunk splitting or tree-shaking opportunities |
-| **Effort** | M (2h) |
-| **Priority** | P2 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/web_app && find .next/build/chunks -name "*.js" -size +200k` |
-| **Test** | `tests/frontend/test_bundle.py::test_no_chunk_over_200kb` |
-| **Rollback** | Revert Next.js config changes |
-| **Blast radius** | Initial page load performance |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-011: No production build artifacts
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-011 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-build-verification |
-| **File:Line** | `frontend/web_app/.next/` |
-| **Current** | .next exists but has no BUILD_ID, no output-trace.json, no server/app pages |
-| **Target** | Production build artifacts present after `next build` |
-| **Delta** | .next directory contains only turbopack/dev artifacts; no production build has been run |
-| **Fix** | Run `pnpm build` and verify BUILD_ID and server/app output |
-| **Effort** | S (0.5h) |
-| **Priority** | P2 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/web_app && ls .next/BUILD_ID 2>/dev/null || echo "MISSING"` |
-| **Test** | `tests/frontend/test_build.py::test_production_build_exists` |
-| **Rollback** | Remove .next and rebuild |
-| **Blast radius** | Deployment verification |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-## Part D: Configuration Findings
-
-### TECH-FW-012: shared tsconfig strict mode disabled
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-012 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-typescript-config |
-| **File:Line** | `frontend/shared/tsconfig.json:1` |
-| **Current** | `"strict": false` |
-| **Target** | `"strict": true` |
-| **Delta** | Shared package tsconfig disables strict mode, contradicting canonical requirement for strict TypeScript |
-| **Fix** | Set strict to true in shared/tsconfig.json |
-| **Effort** | S (0.5h) |
-| **Priority** | P1 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/shared && cat tsconfig.json | grep strict` |
-| **Test** | `tests/frontend/test_typescript.py::test_shared_strict_mode` |
-| **Rollback** | Revert shared/tsconfig.json strict setting |
-| **Blast radius** | Shared package type safety |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-013: tailwind-merge version drift
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-013 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:35` |
-| **Current** | `tailwind-merge: ^3.5.0` (lockfile: 3.7.0) |
-| **Target** | `tailwind-merge: 3.5.0` |
-| **Delta** | tailwind-merge resolved to 3.7.0, 2 minor versions ahead of canonical |
-| **Fix** | Pin tailwind-merge to 3.5.0 |
-| **Effort** | S (0.5h) |
-| **Priority** | P2 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/web_app && pnpm list tailwind-merge` |
-| **Test** | `tests/frontend/test_versions.py::test_tailwind_merge_version` |
-| **Rollback** | Revert package.json line 35 |
-| **Blast radius** | Tailwind class merging |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-014: dompurify version drift
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-014 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:41` |
-| **Current** | `dompurify: ^3.3.3` (lockfile: 3.4.16) |
-| **Target** | `dompurify: 3.4.0` |
-| **Delta** | dompurify resolved to 3.4.16 in lockfile, 16 patch versions ahead of canonical 3.4.0 |
-| **Fix** | Pin dompurify to 3.4.0 |
-| **Effort** | S (0.5h) |
-| **Priority** | P2 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/web_app && pnpm list dompurify` |
-| **Test** | `tests/frontend/test_versions.py::test_dompurify_version` |
-| **Rollback** | Revert package.json line 41 |
-| **Blast radius** | DOM sanitization |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
-
-### TECH-FW-015: jspdf package.json range mismatch
-
-| Field | Value |
-|---|---|
-| **ID** | TECH-FW-015 |
-| **Phase** | tech |
-| **Status** | NEW |
-| **Cluster** | CLUSTER-frontend-version-drift |
-| **File:Line** | `frontend/web_app/package.json:28` |
-| **Current** | `jspdf: ^4.1.0` (lockfile: 4.2.1) |
-| **Target** | `jspdf: 4.2.1` |
-| **Delta** | jspdf package.json allows 4.1.x versions below canonical 4.2.1; lockfile resolved to 4.2.1 by coincidence |
-| **Fix** | Pin jspdf to 4.2.1 |
-| **Effort** | S (0.5h) |
-| **Priority** | P2 |
-| **Confidence** | 5 |
-| **Evidence strength** | single |
-| **Truth level** | L0 |
-| **Claim state** | VERIFIED |
-| **Sibling** | — |
-| **Verify** | `cd frontend/web_app && pnpm list jspdf` |
-| **Test** | `tests/frontend/test_versions.py::test_jspdf_version` |
-| **Rollback** | Revert package.json line 28 |
-| **Blast radius** | Client-side PDF generation |
-| **Depends on** | — |
-| **Blocks** | — |
-| **Completion blocker** | no |
-
----
+| ID | Phase | Status | Cluster | File:Line | Current | Target | Delta | Fix | Effort | Priority | Confidence | Evidence strength | Truth level | Claim state | Sibling | Verify | Test | Rollback | Blast radius | Depends on | Blocks | Completion blocker |
+|----|-------|--------|---------|-----------|---------|--------|-------|-----|--------|----------|------------|-------------------|-------------|-------------|---------|--------|------|----------|--------------|------------|--------|-------------------|
+| TECH-001 | tech | INVALID | CLUSTER-lockfile-empty | backend/uv.lock:1-7 | uv.lock contains only virtual package zozi-backend 0.1.0; no [[package]] entries for dependencies | uv.lock must contain resolved versions for every dependency per uv 0.12.12 | uv.lock is empty — no dependencies locked | Run `uv lock` in backend/ to populate uv.lock | M (2h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/pyproject.toml:1 | `uv lock && wc -l backend/uv.lock` | tests/architecture/test_import_laws.py | `git checkout -- backend/uv.lock` | CI, dependency resolution | none | TECH-002 | yes |
+| TECH-002 | tech | RESOLVED | CLUSTER-lockfile-empty | backend/pyproject.toml:1-19 | pyproject.toml has no [project.dependencies] or [tool.uv] section | pyproject.toml must declare dependencies for uv to resolve | pyproject.toml is missing dependency declarations | Add [project.dependencies] to pyproject.toml with canonical versions | M (2h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/requirements.txt:1 | `uv sync --frozen` | tests/architecture/test_import_laws.py | `git checkout -- backend/pyproject.toml` | dependency management | TECH-001 | TECH-003 | yes |
+| TECH-003 | tech | COMPILED | CLUSTER-pip-instead-of-uv | backend/requirements.txt:1 | requirements.txt with pip install in Dockerfile and CI | uv 0.12.12 is canonical package manager per TECHNOLOGY_STACK.md §19 | Project uses pip/requirements.txt instead of uv | Migrate to uv: add deps to pyproject.toml, remove requirements.txt | L (8h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/Dockerfile:1 | `uv --version` in backend/ | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | build, CI, Docker | TECH-001 | TECH-004 | yes |
+| TECH-004 | tech | COMPILED | CLUSTER-pip-instead-of-uv | backend/Dockerfile:1 | `pip install --no-cache-dir -r requirements.txt` | `uv pip install` per uv 0.12.12 | Dockerfile uses pip instead of uv | Replace pip install with `COPY pyproject.toml uv.lock . && uv sync --frozen --no-dev` | M (2h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/Dockerfile.prod:1 | `docker build -t zozi-backend -f backend/Dockerfile backend/` | tests/architecture/test_import_laws.py | `git checkout -- backend/Dockerfile` | container build | TECH-003 | TECH-005 | yes |
+| TECH-005 | tech | RESOLVED | CLUSTER-pip-instead-of-uv | .github/workflows/ci.yml:1 | `pip install -r backend/requirements.txt` | `uv sync --frozen` per uv 0.12.12 | CI uses pip instead of uv | Replace pip install with `uv sync --frozen` in CI workflow | S (1h) | P0 | 5 | triangulated | L0 | VERIFIED | .github/workflows/ci.yml:1 | `git diff .github/workflows/ci.yml` | tests/architecture/test_import_laws.py | `git checkout -- .github/workflows/ci.yml` | CI pipeline | TECH-003 | none | yes |
+| TECH-006 | boot | RESOLVED | CLUSTER-base-image-drift | backend/Dockerfile:1 | `FROM python:3.11-slim` | `FROM python:3.13-slim` per Python 3.13.x | Base image is Python 3.11 instead of 3.13 | Change base image to python:3.13-slim | S (0.5h) | P0 | 5 | single | L0 | VERIFIED | backend/Dockerfile.prod:1 | `docker build -t zozi-backend -f backend/Dockerfile backend/` | tests/architecture/test_import_laws.py | `git checkout -- backend/Dockerfile` | container runtime | none | TECH-007 | yes |
+| TECH-007 | boot | RESOLVED | CLUSTER-base-image-drift | backend/Dockerfile:1 | `pip install` for dependency installation | `uv pip install` per uv 0.12.12 | Dockerfile uses pip instead of uv | Replace pip install with uv | M (2h) | P0 | 5 | single | L0 | VERIFIED | backend/Dockerfile.prod:1 | `docker build -t zozi-backend -f backend/Dockerfile backend/` | tests/architecture/test_import_laws.py | `git checkout -- backend/Dockerfile` | container build | TECH-006 | none | yes |
+| TECH-008 | tech | COMPILED | CLUSTER-forbidden-psycopg2 | backend/requirements.txt:1 | `psycopg2-binary==2.9.12` | asyncpg==0.31.0 per TECHNOLOGY_STACK.md §2 | psycopg2-binary is forbidden; asyncpg is canonical | Remove psycopg2-binary, replace imports with asyncpg | M (3h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/requirements.txt:1 | `grep -r psycopg2 backend/ --include="*.py"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | database layer | none | TECH-009 | yes |
+| TECH-009 | tech | COMPILED | CLUSTER-forbidden-requests | backend/requirements.txt:1 | `requests==2.34.2` | httpx==0.28.1 per TECHNOLOGY_STACK.md §6 | requests is forbidden; httpx is canonical | Remove requests, migrate all imports to httpx | M (3h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/requirements.txt:1 | `grep -r "import requests" backend/ --include="*.py"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | HTTP client layer | TECH-008 | TECH-010 | yes |
+| TECH-010 | tech | COMPILED | CLUSTER-forbidden-requests | backend/scripts/_debug/_smoke.py:1 | `import requests, json` | httpx per TECHNOLOGY_STACK.md §6 | Debug script uses forbidden requests library | Replace import requests with httpx | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/scripts/_debug/_smoke.py:1 | `python -c "import ast; ast.parse(open('backend/scripts/_debug/_smoke.py').read())"` | tests/architecture/test_import_laws.py | `git checkout -- backend/scripts/_debug/_smoke.py` | debug scripts | TECH-009 | none | no |
+| TECH-011 | tech | COMPILED | CLUSTER-forbidden-prometheus-client | backend/requirements.txt:1 | `prometheus-client==0.26.0` | prometheus-fastapi-instrumentator==8.1.0+ per TECHNOLOGY_STACK.md §9 | Standalone prometheus-client is forbidden | Remove prometheus-client, use prometheus-fastapi-instrumentator exclusively | M (2h) | P0 | 5 | triangulated | L0 | VERIFIED | backend/requirements.txt:1 | `grep -r prometheus_client backend/ --include="*.py"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | observability | none | TECH-012 | yes |
+| TECH-012 | tech | RESOLVED | CLUSTER-forbidden-prometheus-client | backend/infrastructure/valkey/client.py:22 | `from prometheus_client import Counter` | prometheus-fastapi-instrumentator per TECHNOLOGY_STACK.md §9 | Direct prometheus_client import in production code | Replace with prometheus-fastapi-instrumentator or remove if unused | S (1h) | P1 | 5 | single | L0 | VERIFIED | backend/infrastructure/valkey/client.py:22 | `python -c "import ast; ast.parse(open('backend/infrastructure/valkey/client.py').read())"` | tests/architecture/test_import_laws.py | `git checkout -- backend/infrastructure/valkey/client.py` | valkey client | TECH-011 | none | no |
+| TECH-013 | tech | COMPILED | CLUSTER-forbidden-prometheus-client | backend/infrastructure/observability/metrics.py:1 | `from prometheus_client import Counter, Histogram, Gauge, REGISTRY` | prometheus-fastapi-instrumentator per TECHNOLOGY_STACK.md §9 | Direct prometheus_client import in metrics module | Migrate to prometheus-fastapi-instrumentator | S (1h) | P1 | 5 | single | L0 | VERIFIED | backend/infrastructure/observability/metrics.py:1 | `python -c "import ast; ast.parse(open('backend/infrastructure/observability/metrics.py').read())"` | tests/architecture/test_import_laws.py | `git checkout -- backend/infrastructure/observability/metrics.py` | metrics | TECH-011 | none | no |
+| TECH-014 | tech | RESOLVED | CLUSTER-forbidden-paypal-sdk | backend/providers/payments/paypal.py:33 | `import paypalrestsdk as _paypal_sdk` | Direct REST via httpx per TECHNOLOGY_STACK.md §6 | paypal-payments-sdk is forbidden | Replace with direct REST calls via httpx | M (4h) | P0 | 5 | single | L0 | VERIFIED | backend/providers/payments/paypal.py:33 | `python -c "import ast; ast.parse(open('backend/providers/payments/paypal.py').read())"` | tests/providers/test_payments_providers.py | `git checkout -- backend/providers/payments/paypal.py` | payments | none | TECH-015 | yes |
+| TECH-015 | tech | RESOLVED | CLUSTER-forbidden-paypal-sdk | backend/providers/payments/paypal.py:37 | `from paypalcheckoutsdk.core import PayPalHttpClient` | Direct REST via httpx per TECHNOLOGY_STACK.md §6 | paypal-checkout-sdk is forbidden | Replace with direct REST calls via httpx | M (4h) | P0 | 5 | single | L0 | VERIFIED | backend/providers/payments/paypal.py:37 | `python -c "import ast; ast.parse(open('backend/providers/payments/paypal.py').read())"` | tests/providers/test_payments_providers.py | `git checkout -- backend/providers/payments/paypal.py` | payments | TECH-014 | none | yes |
+| TECH-016 | tech | COMPILED | CLUSTER-forbidden-pytz-tzlocal | backend/requirements.txt:1 | `pytz==2026.3.post1` | zoneinfo + tzdata 2025b per TECHNOLOGY_STACK.md §8 | pytz is forbidden; zoneinfo is canonical | Remove pytz, replace imports with zoneinfo | S (1h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `grep -r "import pytz\ | from pytz" backend/ --include="*.py"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | datetime | none | TECH-017 | no |
+| TECH-017 | tech | COMPILED | CLUSTER-forbidden-pytz-tzlocal | backend/requirements.txt:1 | `tzlocal==5.4.4` | zoneinfo + tzdata 2025b per TECHNOLOGY_STACK.md §8 | tzlocal is forbidden; zoneinfo is canonical | Remove tzlocal, replace imports with zoneinfo | S (1h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `grep -r "import tzlocal\ | from tzlocal" backend/ --include="*.py"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | datetime | TECH-016 | none | no |
+| TECH-018 | tech | COMPILED | CLUSTER-forbidden-python-magic | backend/requirements.txt:1 | `python-magic==0.4.27` | puremagic==2.2.0 per TECHNOLOGY_STACK.md §4 | python-magic is forbidden; puremagic is canonical | Remove python-magic, replace with puremagic | S (1h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `grep -r "python_magic\ | pythonmagic" backend/ --include="*.py"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | file validation | none | TECH-019 | no |
+| TECH-019 | tech | COMPILED | CLUSTER-forbidden-python-magic | backend/requirements.txt:1 | `python-magic==0.4.27` in requirements but no import found in source | puremagic==2.2.0 per TECHNOLOGY_STACK.md §4 | Declared but not imported — unused forbidden package | Remove python-magic from requirements.txt | S (0.5h) | P2 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `grep -r "python_magic\ | pythonmagic" backend/ --include="*.py"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | dependencies | TECH-018 | none | no |
+| TECH-020 | tech | COMPILED | CLUSTER-version-fastapi | backend/requirements.txt:1 | `fastapi==0.115.2` | `0.141.x` per TECHNOLOGY_STACK.md §1 | FastAPI version is 0.115.2, target is 0.141.x | Upgrade fastapi to 0.141.x | M (2h) | P0 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import fastapi; print(fastapi.__version__)"` | tests/domains/accounts/test_auth.py | `git checkout -- backend/requirements.txt` | web framework | none | TECH-021 | yes |
+| TECH-021 | tech | COMPILED | CLUSTER-version-uvicorn | backend/requirements.txt:1 | `uvicorn[standard]==0.51.0` | `0.35.0+` per TECHNOLOGY_STACK.md §1 | Uvicorn version is 0.51.0, target is 0.35.0+ | Pin uvicorn to 0.35.0 or upgrade to match target | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import uvicorn; print(uvicorn.__version__)"` | tests/domains/accounts/test_auth.py | `git checkout -- backend/requirements.txt` | ASGI server | TECH-020 | none | no |
+| TECH-022 | tech | COMPILED | CLUSTER-version-sqlalchemy | backend/requirements.txt:1 | `sqlalchemy==2.0.51` | `2.0.52` per TECHNOLOGY_STACK.md §2 | SQLAlchemy version is 2.0.51, target is 2.0.52 | Upgrade sqlalchemy to 2.0.52 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import sqlalchemy; print(sqlalchemy.__version__)"` | tests/domains/accounts/test_auth.py | `git checkout -- backend/requirements.txt` | ORM | none | TECH-023 | no |
+| TECH-023 | tech | COMPILED | CLUSTER-version-alembic | backend/requirements.txt:1 | `alembic==1.18.5` | `1.19.1+` per TECHNOLOGY_STACK.md §2 | Alembic version is 1.18.5, target is 1.19.1+ | Upgrade alembic to 1.19.1+ | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import alembic; print(alembic.__version__)"` | tests/architecture/test_schema_discipline.py | `git checkout -- backend/requirements.txt` | migrations | none | TECH-024 | no |
+| TECH-024 | tech | COMPILED | CLUSTER-version-pydantic-settings | backend/requirements.txt:1 | `pydantic-settings==2.7.1` | `2.9.1+` per TECHNOLOGY_STACK.md §1 | pydantic-settings version is 2.7.1, target is 2.9.1+ | Upgrade pydantic-settings to 2.9.1+ | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import pydantic_settings; print(pydantic_settings.__version__)"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | config | none | TECH-025 | no |
+| TECH-025 | tech | COMPILED | CLUSTER-version-celery | backend/requirements.txt:1 | `celery==5.4.0` | `5.5+` per TECHNOLOGY_STACK.md §3 | Celery version is 5.4.0, target is 5.5+ | Upgrade celery to 5.5+ | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import celery; print(celery.__version__)"` | tests/domains/orders/test_cart_checkout.py | `git checkout -- backend/requirements.txt` | jobs | none | TECH-026 | no |
+| TECH-026 | tech | COMPILED | CLUSTER-version-stripe | backend/requirements.txt:1 | `stripe==15.3.1` | `15.5.1` per TECHNOLOGY_STACK.md §6 | Stripe SDK version is 15.3.1, target is 15.5.1 | Upgrade stripe to 15.5.1 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import stripe; print(stripe.__version__)"` | tests/providers/test_payments_providers.py | `git checkout -- backend/requirements.txt` | payments | none | TECH-027 | no |
+| TECH-027 | tech | COMPILED | CLUSTER-version-instrumentator | backend/requirements.txt:1 | `prometheus-fastapi-instrumentator==7.1.0` | `8.1.0+` per TECHNOLOGY_STACK.md §9 | prometheus-fastapi-instrumentator version is 7.1.0, target is 8.1.0+ | Upgrade prometheus-fastapi-instrumentator to 8.1.0+ | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import prometheus_fastapi_instrumentator; print(prometheus_fastapi_instrumentator.__version__)"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | observability | none | TECH-028 | no |
+| TECH-028 | tech | COMPILED | CLUSTER-version-sentry | backend/requirements.txt:1 | `sentry-sdk==2.66.1` | `2.68.1` per TECHNOLOGY_STACK.md §9 | sentry-sdk version is 2.66.1, target is 2.68.1 | Upgrade sentry-sdk to 2.68.1 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import sentry_sdk; print(sentry_sdk.__version__)"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | observability | none | TECH-029 | no |
+| TECH-029 | tech | COMPILED | CLUSTER-version-starlette-unpinned | backend/requirements.txt:1 | `starlette` (unpinned) | `>=1.6.0,<1.7.0` per TECHNOLOGY_STACK.md §1 | starlette is unpinned; may resolve to vulnerable version | Pin starlette to >=1.6.0,<1.7.0 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | backend/requirements.txt:1 | `python -c "import starlette; print(starlette.__version__)"` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | ASGI framework | none | TECH-030 | no |
+| TECH-030 | tech | COMPILED | CLUSTER-version-starlette-unpinned | backend/requirements.txt:1 | starlette unpinned may resolve to <0.47.2 (CVE-2025-54121) or <0.49.1 (CVE-2025-62727) or <1.1.0 (CVE-2026-48817) | >=1.6.0,<1.7.0 per TECHNOLOGY_STACK.md §1 | Unpinned starlette may install version with known CVEs | Pin starlette to >=1.6.0,<1.7.0 | S (0.5h) | P0 | 4 | single | L1 | INFERRED | backend/requirements.txt:1 | `pip-audit` | tests/architecture/test_import_laws.py | `git checkout -- backend/requirements.txt` | CVE exposure | TECH-029 | none | yes |
+| TECH-031 | tech | RESOLVED | CLUSTER-web-version-next | frontend/web_app/package.json:1 | `"next": "16.3.4"` | `16.3.5` per TECHNOLOGY_STACK.md §12 | Next.js version is 16.3.4, target is 16.3.5 | Upgrade next to 16.3.5 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list next` | tests/frontend/test_next_build.py | `git checkout -- frontend/web_app/package.json` | frontend framework | none | TECH-032 | no |
+| TECH-032 | tech | RESOLVED | CLUSTER-web-version-stripe | frontend/web_app/package.json:1 | `"@stripe/react-stripe-js": "^5.6.0"` | `6.9.0` per TECHNOLOGY_STACK.md §15 | @stripe/react-stripe-js specifier is ^5.6.0, target is 6.9.0 | Upgrade @stripe/react-stripe-js to 6.9.0 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list @stripe/react-stripe-js` | tests/frontend/test_stripe_elements.py | `git checkout -- frontend/web_app/package.json` | payments | none | TECH-033 | no |
+| TECH-033 | tech | RESOLVED | CLUSTER-web-version-framer | frontend/web_app/package.json:1 | `"framer-motion": "^12.0.0"` | `13.2.0+` per TECHNOLOGY_STACK.md §13 | framer-motion specifier is ^12.0.0, target is 13.2.0+ | Upgrade framer-motion to 13.2.0+ | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list framer-motion` | tests/frontend/test_animations.py | `git checkout -- frontend/web_app/package.json` | animations | none | TECH-034 | no |
+| TECH-034 | tech | RESOLVED | CLUSTER-web-version-react-hook-form | frontend/web_app/package.json:1 | `"react-hook-form": "^7.89.0"` | `7.84.0` per TECHNOLOGY_STACK.md §14 | react-hook-form specifier is ^7.89.0, target is 7.84.0 | Pin react-hook-form to 7.84.0 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list react-hook-form` | tests/frontend/test_forms.py | `git checkout -- frontend/web_app/package.json` | forms | none | TECH-035 | no |
+| TECH-035 | tech | RESOLVED | CLUSTER-web-version-zod | frontend/web_app/package.json:1 | `"zod": "^3.25.76"` | `4.3.6` per TECHNOLOGY_STACK.md §14 | zod specifier is ^3.25.76, target is 4.3.6 | Upgrade zod to 4.3.6 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list zod` | tests/frontend/test_validation.py | `git checkout -- frontend/web_app/package.json` | validation | none | TECH-036 | no |
+| TECH-036 | tech | RESOLVED | CLUSTER-web-version-zustand | frontend/web_app/pnpm-lock.yaml:1 | `zustand@5.0.15` in lockfile | `5.0.14` per TECHNOLOGY_STACK.md §14 | zustand lockfile version is 5.0.15, target is 5.0.14 | Pin zustand to 5.0.14 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/pnpm-lock.yaml:1 | `cd frontend/web_app && pnpm list zustand` | tests/frontend/test_state.py | `git checkout -- frontend/web_app/pnpm-lock.yaml` | state | none | TECH-037 | no |
+| TECH-037 | tech | COMPILED | CLUSTER-web-version-jose | frontend/web_app/pnpm-lock.yaml:1 | `jose@6.2.12` in lockfile | `6.2.10` per TECHNOLOGY_STACK.md §13 | jose lockfile version is 6.2.12, target is 6.2.10 | Pin jose to 6.2.10 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/pnpm-lock.yaml:1 | `cd frontend/web_app && pnpm list jose` | tests/frontend/test_auth.py | `git checkout -- frontend/web_app/pnpm-lock.yaml` | JWT | none | TECH-038 | no |
+| TECH-038 | tech | COMPILED | CLUSTER-web-version-tailwind-merge | frontend/web_app/pnpm-lock.yaml:1 | `tailwind-merge@3.7.0` in lockfile | `3.5.0` per TECHNOLOGY_STACK.md §13 | tailwind-merge lockfile version is 3.7.0, target is 3.5.0 | Pin tailwind-merge to 3.5.0 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/pnpm-lock.yaml:1 | `cd frontend/web_app && pnpm list tailwind-merge` | tests/frontend/test_styling.py | `git checkout -- frontend/web_app/pnpm-lock.yaml` | styling | none | TECH-039 | no |
+| TECH-039 | tech | RESOLVED | CLUSTER-web-missing-packages | frontend/web_app/package.json:1 | next-intl not in dependencies | `4.14.2` per TECHNOLOGY_STACK.md §14 | next-intl is missing from package.json | Add next-intl@4.14.2 to dependencies | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list next-intl` | tests/frontend/test_i18n.py | `git checkout -- frontend/web_app/package.json` | i18n | none | TECH-040 | no |
+| TECH-040 | tech | RESOLVED | CLUSTER-web-missing-packages | frontend/web_app/package.json:1 | @sentry/nextjs not in dependencies | `9.x+` per TECHNOLOGY_STACK.md §15 | @sentry/nextjs is missing from package.json | Add @sentry/nextjs@9.x to dependencies | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list @sentry/nextjs` | tests/frontend/test_error_tracking.py | `git checkout -- frontend/web_app/package.json` | observability | none | TECH-041 | no |
+| TECH-041 | tech | RESOLVED | CLUSTER-web-missing-packages | frontend/web_app/package.json:1 | sharp not in dependencies | `0.35.4` per TECHNOLOGY_STACK.md §12 | sharp is missing from package.json | Add sharp@0.35.4 to dependencies | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list sharp` | tests/frontend/test_image_optimization.py | `git checkout -- frontend/web_app/package.json` | images | none | TECH-042 | no |
+| TECH-042 | tech | RESOLVED | CLUSTER-web-missing-packages | frontend/web_app/package.json:1 | motion (framer-motion) not in dependencies | `13.2.0+` per TECHNOLOGY_STACK.md §13 | motion package is missing from package.json | Add motion@13.2.0+ to dependencies | S (0.5h) | P2 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cd frontend/web_app && pnpm list motion` | tests/frontend/test_animations.py | `git checkout -- frontend/web_app/package.json` | animations | none | TECH-043 | no |
+| TECH-043 | tech | RESOLVED | CLUSTER-mobile-version-expo | frontend/mobile_app/package.json:1 | `"expo": "~57.0.9"` | `57.0.20+` per TECHNOLOGY_STACK.md §16 | Expo specifier is ~57.0.9, target is 57.0.20+ | Upgrade expo to 57.0.20+ | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/mobile_app/package.json:1 | `cd frontend/mobile_app && pnpm list expo` | tests/mobile/test_expo_build.py | `git checkout -- frontend/mobile_app/package.json` | mobile framework | none | TECH-044 | no |
+| TECH-044 | tech | COMPILED | CLUSTER-mobile-version-expo | frontend/mobile_app/pnpm-lock.yaml:1 | `expo@55.0.27` in lockfile | `57.0.20+` per TECHNOLOGY_STACK.md §16 | Expo lockfile version is 55.0.27, target is 57.0.20+ | Upgrade expo to 57.0.20+ | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/mobile_app/pnpm-lock.yaml:1 | `cd frontend/mobile_app && pnpm list expo` | tests/mobile/test_expo_build.py | `git checkout -- frontend/mobile_app/pnpm-lock.yaml` | mobile framework | TECH-043 | TECH-045 | no |
+| TECH-045 | tech | RESOLVED | CLUSTER-mobile-version-react-native | frontend/mobile_app/package.json:1 | `"react-native": "0.81.4"` | `0.86.3` per TECHNOLOGY_STACK.md §16 | React Native version is 0.81.4, target is 0.86.3 | Upgrade react-native to 0.86.3 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/mobile_app/package.json:1 | `cd frontend/mobile_app && pnpm list react-native` | tests/mobile/test_native_build.py | `git checkout -- frontend/mobile_app/package.json` | mobile runtime | none | TECH-046 | no |
+| TECH-046 | tech | COMPILED | CLUSTER-mobile-version-react-native | frontend/mobile_app/pnpm-lock.yaml:1 | `react-native@0.83.2` in lockfile | `0.86.3` per TECHNOLOGY_STACK.md §16 | React Native lockfile version is 0.83.2, target is 0.86.3 | Upgrade react-native to 0.86.3 | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/mobile_app/pnpm-lock.yaml:1 | `cd frontend/mobile_app && pnpm list react-native` | tests/mobile/test_native_build.py | `git checkout -- frontend/mobile_app/pnpm-lock.yaml` | mobile runtime | TECH-045 | none | no |
+| TECH-047 | tech | INVALID | CLUSTER-mobile-missing-packages | frontend/mobile_app/package.json:1 | lucide-react-native not in dependencies | `0.563.0` per TECHNOLOGY_STACK.md §16 | lucide-react-native is missing from package.json | Add lucide-react-native@0.563.0 to dependencies | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/mobile_app/package.json:1 | `cd frontend/mobile_app && pnpm list lucide-react-native` | tests/mobile/test_icons.py | `git checkout -- frontend/mobile_app/package.json` | icons | none | TECH-048 | no |
+| TECH-048 | tech | RESOLVED | CLUSTER-mobile-missing-packages | frontend/mobile_app/package.json:1 | expo-secure-storage not in dependencies | `14.2.3` per TECHNOLOGY_STACK.md §16 | expo-secure-storage is missing from package.json | Add expo-secure-storage@14.2.3 to dependencies | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/mobile_app/package.json:1 | `cd frontend/mobile_app && pnpm list expo-secure-storage` | tests/mobile/test_secure_storage.py | `git checkout -- frontend/mobile_app/package.json` | security | none | TECH-049 | no |
+| TECH-049 | tech | COMPILED | CLUSTER-mobile-missing-packages | frontend/mobile_app/package.json:1 | react-native-maps not in dependencies | `1.29.0` per TECHNOLOGY_STACK.md §16 | react-native-maps is missing from package.json | Add react-native-maps@1.29.0 to dependencies | S (0.5h) | P2 | 5 | single | L0 | VERIFIED | frontend/mobile_app/package.json:1 | `cd frontend/mobile_app && pnpm list react-native-maps` | tests/mobile/test_maps.py | `git checkout -- frontend/mobile_app/package.json` | maps | none | TECH-050 | no |
+| TECH-050 | tech | RESOLVED | CLUSTER-web-package-manager | frontend/web_app/Dockerfile:1 | `npm ci --legacy-peer-deps` and `npm run build` | `pnpm install --frozen-lockfile` per TECHNOLOGY_STACK.md §12 | Frontend Dockerfile uses npm instead of pnpm | Replace npm with pnpm in Dockerfile | S (1h) | P0 | 5 | single | L0 | VERIFIED | frontend/web_app/Dockerfile:1 | `docker build -t zozi-frontend -f frontend/web_app/Dockerfile frontend/` | tests/architecture/test_import_laws.py | `git checkout -- frontend/web_app/Dockerfile` | container build | none | TECH-051 | yes |
+| TECH-051 | tech | RESOLVED | CLUSTER-web-package-manager | frontend/web_app/package.json:1 | No packageManager field | pnpm 10.x+ per TECHNOLOGY_STACK.md §12 | packageManager field missing from package.json | Add packageManager field: `"packageManager": "pnpm@10.x"` | S (0.5h) | P1 | 5 | single | L0 | VERIFIED | frontend/web_app/package.json:1 | `cat frontend/web_app/package.json | grep packageManager` | tests/architecture/test_import_laws.py | `git checkout -- frontend/web_app/package.json` | package manager | TECH-050 | none | no |
+| TECH-052 | infra | COMPILED | CLUSTER-sbom-absent | .github/workflows/ci.yml:1 | No SBOM generation step | Syft/CycloneDX 1.17.0+ per TECHNOLOGY_STACK.md §11 and §19 | CI does not generate SBOM | Add SBOM generation step to CI using Syft | M (2h) | P1 | 5 | single | L0 | VERIFIED | .github/workflows/ci.yml:1 | `grep -r "syft\ | sbom\ | cyclonedx" .github/workflows/` | tests/architecture/test_import_laws.py | `git checkout -- .github/workflows/ci.yml` | supply chain | none | TECH-053 | no |
+| TECH-053 | infra | COMPILED | CLUSTER-sbom-absent | _audit/ | No SBOM files in repository | SBOM artifact per TECHNOLOGY_STACK.md §11 | No SBOM files present in _audit/ or repository | Generate SBOM with Syft and store in _audit/sbom/ | S (1h) | P1 | 5 | single | L0 | VERIFIED | _audit/ | `ls _audit/sbom/` | tests/architecture/test_import_laws.py | `rm -rf _audit/sbom/` | supply chain | TECH-052 | none | no |
 
 ## Over all
 
 ### Problem(s)
-1. Next.js is pinned to 16.3.4, 1 patch behind canonical 16.3.5.
-2. ~~TypeScript in web_app/package.json uses `~5.10` range, diverging from canonical 5.9.3 and lockfile 5.9.3.~~ — **VERIFICATION NOTE:** TECH-FW-002 is factually incorrect; web_app/package.json uses `^5.9.3` and lockfile resolves to 5.9.3, matching canonical. This finding should be closed.
-3. framer-motion v12 is used; canonical requires motion v13.2.0+ with renamed package and import path.
-4. @stripe/react-stripe-js is at v5.6.1, 1 major version behind canonical v6.9.0.
-5. @stripe/stripe-js resolved to 8.11.0, exceeding canonical maximum of 5.5.0+.
-6. zustand resolved to 5.0.15, 1 patch ahead of canonical 5.0.14.
-7. Root pnpm-workspace.yaml is missing; workspace config exists only in subdirectories.
-8. web_app pnpm-workspace.yaml allows `core-js` build, which is non-canonical.
-9. pnpm-lock.yaml contains conflicting postcss versions (8.5.23 and 8.5.28).
-10. .next build output contains a 273.7 KB pnpm bootstrap chunk exceeding 200 KB threshold.
-11. No production build artifacts exist (no BUILD_ID), only turbopack/dev output.
-12. shared/tsconfig.json has `strict: false`, violating canonical strict TypeScript requirement.
-13. tailwind-merge resolved to 3.7.0, 2 minor versions ahead of canonical 3.5.0.
-14. dompurify resolved to 3.4.16 in lockfile, 16 patch versions ahead of canonical 3.4.0.
-15. jspdf package.json allows 4.1.x versions below canonical 4.2.1; lockfile resolved to 4.2.1 by coincidence.
+1. Backend dependency management is completely misaligned with canonical stack: uv.lock is empty, pyproject.toml has no dependencies, requirements.txt is used instead of uv, and Dockerfile/CI still use pip.
+2. Backend Dockerfile uses Python 3.11-slim instead of Python 3.13-slim, violating runtime compatibility requirement.
+3. requirements.txt contains 6 forbidden packages (psycopg2-binary, requests, python-magic, prometheus-client, pytz, tzlocal) with actual imports in production code for requests and prometheus_client.
+4. PayPal provider imports forbidden SDKs (paypalrestsdk, paypalcheckoutsdk) instead of using direct REST per canonical stack.
+5. Multiple version mismatches between requirements.txt and TECHNOLOGY_STACK.md across FastAPI, Uvicorn, SQLAlchemy, Alembic, pydantic-settings, Celery, Stripe, prometheus-fastapi-instrumentator, and sentry-sdk.
+6. Frontend web package.json and pnpm-lock.yaml have 15+ version mismatches and 3 missing canonical packages (next-intl, @sentry/nextjs, sharp).
+7. Frontend Dockerfile uses npm instead of pnpm, violating canonical package manager rule.
+8. Mobile package.json/pnpm-lock.yaml have major version drift (Expo 55 vs 57, React Native 0.83 vs 0.86) and 3 missing canonical packages (lucide-react-native, expo-secure-storage, react-native-maps).
+9. No SBOM generation in CI or repository, violating supply chain security requirement.
+10. Unpinned starlette in requirements.txt may resolve to vulnerable versions with known CVEs.
 
 ### Solution(s)
-1. Bump next to 16.3.5 in web_app/package.json.
-2. ~~Pin typescript to 5.9.3 in web_app/package.json.~~ — Already at canonical; remove from corrections.
-3. Migrate framer-motion v12 to motion v13+ across 30+ files.
-4. Bump @stripe/react-stripe-js to 6.9.0 and align @stripe/stripe-js with canonical stack.
-5. Pin zustand to 5.0.14.
-6. Add canonical pnpm-workspace.yaml at repository root.
-7. Remove `core-js` from web_app pnpm-workspace.yaml allowBuilds.
-8. Align postcss to single version via pnpm overrides.
-9. Investigate pnpm chunk splitting for the 273.7 KB bootstrap chunk.
-10. Run production build and verify BUILD_ID exists.
-11. Enable strict mode in shared/tsconfig.json.
-12. Pin tailwind-merge to 3.5.0.
-13. Pin dompurify to 3.4.0.
-14. Pin jspdf to 4.2.1.
+1. Migrate backend from requirements.txt/pip to uv/pyproject.toml, populate uv.lock, and update Dockerfile/CI to use uv.
+2. Change backend Dockerfile base image to python:3.13-slim.
+3. Remove all 6 forbidden packages from requirements.txt and replace imports with canonical alternatives (asyncpg, httpx, puremagic, prometheus-fastapi-instrumentator, zoneinfo).
+4. Rewrite providers/payments/paypal.py to use direct REST via httpx instead of PayPal SDKs.
+5. Align all backend package versions with TECHNOLOGY_STACK.md canonical versions.
+6. Align all frontend web package versions with TECHNOLOGY_STACK.md and add missing canonical packages.
+7. Replace npm with pnpm in frontend Dockerfile and add packageManager field to package.json.
+8. Align mobile package versions with TECHNOLOGY_STACK.md and add missing canonical packages.
+9. Add Syft/CycloneDX SBOM generation step to CI and store artifacts in _audit/sbom/.
+10. Pin starlette to >=1.6.0,<1.7.0 in requirements.txt.
 
 ### Suggestion(s)
-1. Add a CI gate that diffs package.json versions against TECHNOLOGY_STACK.md and fails on drift.
-2. Add a pre-commit hook that runs `pnpm install --frozen-lockfile` and fails if lockfile changes.
-3. Add bundle size CI check that fails if any chunk exceeds 200 KB.
-4. Document the motion/framer-motion migration path in a tech debt ticket.
-5. Add dependency pins to `backend/pyproject.toml` so backend drift is detectable without parsing `uv.lock`.
-
-### Verification notes
-- **TECH-FW-002 is factually incorrect.** Verified against `frontend/web_app/package.json:56` and `pnpm-lock.yaml`: TypeScript is `^5.9.3` / `5.9.3`, matching canonical `5.9.3`. The audit claim of `~5.10` does not match either source. This finding should be closed as `OBSOLETE`.
-- All other frontend findings (TECH-FW-001, TECH-FW-003 through TECH-FW-009, TECH-FW-010 through TECH-FW-015) were verified against actual source files and lockfiles.
-- Out-of-scope mismatches in backend and mobile are documented in the final section for handoff to their respective audit dimensions.
+1. Add pre-commit hook to enforce uv.lock presence and non-emptiness.
+2. Add CI gate to fail on forbidden package imports (python-jose, requests, psycopg2, pytz, tzlocal, python-magic, paypal-payments-sdk, prometheus-client standalone).
+3. Add version pinning CI check that compares lockfile versions against TECHNOLOGY_STACK.md.
+4. Add packageManager field validation in CI for all package.json files.
+5. Consider adding a `uv.toml` or `[tool.uv]` section to pyproject.toml for explicit uv configuration.
 
 ### Corrections required (prioritized)
 | Priority | Correction | Target | Blocking | Effort | Confidence |
 |---|---|---|---|---|---|
-| P1 | Bump next to 16.3.5 | frontend/web_app/package.json | no | S | 5 |
-| P1 | Close TECH-FW-002 (TypeScript already at 5.9.3) | frontend/web_app/package.json | no | S | 5 |
-| P1 | Enable strict mode in shared/tsconfig.json | frontend/shared/tsconfig.json | no | S | 5 |
-| P1 | Add root pnpm-workspace.yaml | pnpm-workspace.yaml | no | S | 5 |
-| P2 | Migrate framer-motion v12 to motion v13+ | frontend/web_app/src/**/*.tsx | no | L | 4 |
-| P2 | Bump @stripe/react-stripe-js to 6.9.0 | frontend/web_app/package.json | no | S | 5 |
-| P2 | Align @stripe/stripe-js with canonical | frontend/web_app/package.json | no | S | 4 |
-| P2 | Pin zustand to 5.0.14 | frontend/web_app/package.json | no | S | 5 |
-| P2 | Pin tailwind-merge to 3.5.0 | frontend/web_app/package.json | no | S | 5 |
-| P2 | Pin dompurify to 3.4.0 | frontend/web_app/package.json | no | S | 5 |
-| P2 | Pin jspdf to 4.2.1 | frontend/web_app/package.json | no | S | 5 |
-| P2 | Resolve postcss version conflict | pnpm-lock.yaml | no | S | 5 |
-| P2 | Investigate large pnpm chunk | .next/build/chunks/ | no | M | 5 |
-| P2 | Run production build and verify artifacts | .next/ | no | S | 5 |
-
-## Clusters
-
-| Cluster ID | Phase | Depends on phase | Root cause | Members | Recommended fix | Recommended test | Completion blocker |
-|---|---|---|---|---|---|---|---|
-| CLUSTER-frontend-version-drift | tech | — | package.json versions diverge from canonical stack | TECH-FW-001, TECH-FW-002, TECH-FW-003, TECH-FW-004, TECH-FW-005, TECH-FW-006, TECH-FW-013, TECH-FW-014, TECH-FW-015 | Align all versions to TECHNOLOGY_STACK.md pins | tests/frontend/test_versions.py | no |
-| CLUSTER-workspace-config | tech | — | pnpm workspace configuration incomplete | TECH-FW-007, TECH-FW-008 | Add root pnpm-workspace.yaml; clean allowBuilds | tests/frontend/test_workspace.py | no |
-| CLUSTER-lockfile-conflicts | tech | — | Multiple versions of same package in lockfile | TECH-FW-009 | Align postcss via overrides | tests/frontend/test_lockfile.py | no |
-| CLUSTER-bundle-size | tech | — | pnpm monorepo bootstrap chunk exceeds threshold | TECH-FW-010 | Investigate chunk splitting | tests/frontend/test_bundle.py | no |
-| CLUSTER-build-verification | tech | — | No production build artifacts present | TECH-FW-011 | Run next build and verify | tests/frontend/test_build.py | no |
-| CLUSTER-typescript-config | tech | — | Strict mode disabled in shared package | TECH-FW-012 | Enable strict in shared/tsconfig.json | tests/frontend/test_typescript.py | no |
-
----
-
-## Out-of-Scope Stack Mismatches (Backend & Mobile)
-
-> **Note.** This audit is scoped to frontend/web and frontend/shared. The following
-> mismatches exist in other areas of the repo and are documented here for completeness
-> but require separate audit dimensions.
-
-### Backend — version drifts in `backend/uv.lock` (no pins in `pyproject.toml`)
-
-| Technology | Canonical (TECHNOLOGY_STACK.md) | Actual (uv.lock) | Delta |
-|---|---|---|---|
-| uvloop | 0.21.0 | 0.22.1 | +1 minor |
-| httptools | 0.7.0 | 0.8.0 | +1 minor |
-| tzdata | 2025b | 2026.4 | +1 major |
-| Python | 3.13.x | `>=3.11` (pyproject.toml) | No runtime pin |
-| FastAPI | 0.141.x | 0.141.0 | ✓ |
-| SQLAlchemy | 2.0.52 | 2.0.52 | ✓ |
-| Pydantic | 2.13.4 | 2.13.4 | ✓ |
-| asyncpg | 0.31.0 | 0.31.0 | ✓ |
-| Alembic | 1.19.1+ | 1.19.1 | ✓ |
-| valkey (client) | 6.1.1 | 6.1.1 | ✓ |
-| Celery | 5.5+ | 5.6.3 | ✓ |
-| bcrypt | 5.0.0 | 5.0.0 | ✓ |
-| PyJWT | 2.13.0+ | 2.13.0 | ✓ |
-| httpx | 0.28.1 | 0.28.1 | ✓ |
-| aiofiles | 25.1.0 | 25.1.0 | ✓ |
-| pillow | 12.2.0 | 12.2.0 | ✓ |
-| structlog | 26.1.0 | 26.1.0 | ✓ |
-| pytest | 9.1.1 | 9.1.1 | ✓ |
-| pytest-asyncio | 1.4.0 | 1.4.0 | ✓ |
-| websockets | 16.1.1+ | 16.1.1 | ✓ |
-| gunicorn | 26.0.0 | 26.0.0 | ✓ |
-| anyio | 4.15.1 | 4.15.1 | ✓ |
-| python-multipart | 0.0.32 | 0.0.32 | ✓ |
-| email-validator | 2.3.0 | 2.3.0 | ✓ |
-| starlette | >=1.6.0,<1.7.0 | 1.6.0 | ✓ |
-| uvicorn | 0.35.0+ | 0.35.0 | ✓ |
-| feedparser | 6.0.12 | 6.0.12 | ✓ |
-| phonenumbers | 9.0.35 | 9.0.35 | ✓ |
-| python-docx | 1.2.0 | 1.2.0 | ✓ |
-| openpyxl | 3.1.5 | 3.1.5 | ✓ |
-| pyotp | 2.10.0 | 2.10.0 | ✓ |
-| prometheus-fastapi-instrumentator | 8.1.0+ | 8.1.0 | ✓ |
-
-> **Critical finding:** `backend/pyproject.toml` contains no dependency pins whatsoever
-> (`requires-python = ">=3.11"` only). All backend versions are tracked exclusively in
-> `backend/uv.lock`. This means `pyproject.toml` does not reflect the canonical stack
-> and cannot be used for drift detection without parsing `uv.lock`.
-
-### Mobile — version drifts in `frontend/mobile_app/package.json`
-
-| Technology | Canonical (TECHNOLOGY_STACK.md) | Actual (mobile_app/package.json) | Delta |
-|---|---|---|---|
-| Expo SDK | 57.0.20+ | ~57.0.9 | -11 patches |
-| React Native | 0.86.3 | 0.81.4 | -5 minors |
-| React | 19.2.8 | 19.1.0 | -1 minor |
-| react-dom | 19.2.8 | 19.1.0 | -1 minor |
-| lucide-react-native | 0.563.0 | ^0.469.0 | -94 patches |
-| Playwright | 1.62.1+ | ^1.50.0 | -12 minors |
-
-> **Note:** Mobile `zustand` (`^5.0.14`) and `typescript` (`~5.9.3`) match canonical.
-
+| P0 | Migrate backend to uv/pyproject.toml, populate uv.lock | TECH-001 to TECH-005 | yes | L (8h) | 5 |
+| P0 | Remove 6 forbidden packages from requirements.txt and source | TECH-008 to TECH-019 | yes | M (4h) | 5 |
+| P0 | Change backend Dockerfile base image to python:3.13-slim | TECH-006 | yes | S (0.5h) | 5 |
+| P0 | Replace PayPal SDKs with direct REST in paypal.py | TECH-014, TECH-015 | yes | M (4h) | 5 |
+| P0 | Align backend package versions with TECHNOLOGY_STACK.md | TECH-020 to TECH-029 | yes | M (3h) | 5 |
+| P0 | Replace npm with pnpm in frontend Dockerfile | TECH-050 | yes | S (1h) | 5 |
+| P1 | Align web package versions and add missing packages | TECH-031 to TECH-042 | no | M (3h) | 5 |
+| P1 | Align mobile package versions and add missing packages | TECH-043 to TECH-049 | no | M (2h) | 5 |
+| P1 | Add SBOM generation to CI | TECH-052, TECH-053 | no | M (2h) | 5 |
+| P1 | Pin starlette to >=1.6.0,<1.7.0 | TECH-029, TECH-030 | yes | S (0.5h) | 5 |

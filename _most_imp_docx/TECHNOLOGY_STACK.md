@@ -453,4 +453,125 @@
 | `RATE_LIMIT_ENABLED` | No | All | Enable rate limiting globally (default true). | All | Activates FastAPI rate-limit dependency on public endpoints. | Prevents brute-force and DoS (Law 37). | Keep `true`; disable only for specific load-test scenarios. |
 | `CUSTOMER_EMAIL_VERIFICATION_MODE` | No | No | Email verification mode for customers (default `auto`). | All | Controls whether customers must verify email before accessing the platform. | Balances onboarding friction against account abuse. | `auto` (verify when suspicious); `strict` for high-risk markets. |
 | `READINESS_REQUIRE_REDIS` | No | No | Require Valkey for readiness probe (default false). | All | Makes `/health/ready` fail if Valkey is unreachable. | Useful for staging/prod where Valkey is required. | Set `true` in production; `false` in dev where Valkey may be absent. |
-| `READINESS_REQUIRE_EMAIL` | No | No | Require email provider for readiness probe (default false). | All | Makes `/health/ready` fail if email provider is unreachable. | Prevents false healthy status when email is broken. | Set `true` if email delivery is crit
+| `READINESS_REQUIRE_EMAIL` | No | No | Require email provider for readiness probe (default false). | All | Makes `/health/ready` fail if email provider is unreachable. | Prevents false healthy status when email is broken. | Set `true` if email delivery is critical. |
+| `READINESS_REQUIRE_PAYMENTS` | No | No | Require payment provider for readiness probe (default false). | All | Makes `/health/ready` fail if payment provider is unreachable. | Prevents false healthy status when payments are broken. | Set `true` in production. |
+| `APP_NAME` | No | No | Application name (default `ZOZI Marketplace`). | All | Display name for logs, docs, and metadata. | Set per environment if branding differs. |
+| `APP_VERSION` | No | No | Application version (default `1.0.0`). | All | Version tag for deployments and health checks. | Bump on every release. |
+| `RUNTIME_PROFILE` | No | No | Runtime mode: `standard` or `loadtest` (default `standard`). | All | Switches between normal and load-test profiles. | Set to `loadtest` only during intentional load tests. |
+| `JWT_ALGORITHM` | No | No | JWT signing algorithm (default `HS256`). | All | Algorithm used to sign and verify JWTs. | Keep `HS256`; rotate SECRET_KEY on compromise. |
+| `ACCESS_TOKEN_COOKIE_NAME` | No | No | Access token cookie name (default `access_token`). | All | Cookie name for browser-based JWT auth. | Required for Next.js middleware auth. |
+| `REFRESH_COOKIE_SAMESITE` | No | No | SameSite attribute for refresh cookie (default `lax`). | All | Controls cross-site cookie behavior. | `lax` for dev; `none` with HTTPS in production. |
+| `DATABASE_URL_DIRECT` | No | No | Direct (non-pooled) PostgreSQL DSN for Alembic. | All | Schema migrations bypass pooler. | Must use `postgresql+asyncpg://` in production. |
+| `DATABASE_REPLICA_URL` | No | No | Read-replica PostgreSQL connection string. | Prod | Read-heavy queries via `get_read_db()`. | Set when read replicas are provisioned; otherwise leave empty. |
+| `POSTGRES_DB` | No | No | PostgreSQL database name. | Dev | Local database name for development. | Matches docker-compose service. |
+| `POSTGRES_USER` | No | No | PostgreSQL username. | Dev | Local DB user for development. | Matches docker-compose service. |
+| `POSTGRES_PASSWORD` | No | No | PostgreSQL password. | Dev | Local DB password for development. | Matches docker-compose service. |
+| `DB_SSL_MODE` | No | No | PostgreSQL SSL mode (default empty). | All | TLS mode for DB connections. | `require` for Neon; empty for local. |
+| `FIELD_ENCRYPTION_SALT` | **YES** | Dev | Salt for field-level encryption key derivation. | All | Peppers the encryption key with environment-specific salt. | Required in non-production; store in Coolify. |
+| `SEED_ADMIN_PASSWORD` | **YES** | Dev | Admin seed user password (dev only). | Dev | Seeds initial admin user in development. | Dev only; never set in production. |
+| `SEED_CUSTOMER_PASSWORD` | **YES** | Dev | Customer seed user password (dev only). | Dev | Seeds initial customer user in development. | Dev only; never set in production. |
+| `SEED_SUPPLIER_PASSWORD` | **YES** | Dev | Supplier seed user password (dev only). | Dev | Seeds initial supplier user in development. | Dev only; never set in production. |
+| `SEED_LOGISTICS_PASSWORD` | **YES** | Dev | Logistics seed user password (dev only). | Dev | Seeds initial logistics user in development. | Dev only; never set in production. |
+| `SEED_EMPLOYEE_PASSWORD` | **YES** | Dev | Employee seed user password (dev only). | Dev | Seeds initial employee user in development. | Dev only; never set in production. |
+| `STRIPE_API_VERSION` | No | No | Stripe API version override. | All | Pins Stripe API version for compatibility. | Set to tested version; update with migration plan. |
+| `STRIPE_CONNECT_AUTO_CREATE_ACCOUNTS` | No | No | Auto-create Stripe Connect accounts (default false). | All | Supplier onboarding automation. | Enable when supplier self-service onboarding is live. |
+| `TAP_WEBHOOK_URL` | No | No | Tap webhook callback URL. | All | Public URL Tap calls for payment events. | Must be reachable from Tap servers. |
+| `TAP_API_BASE_URL` | No | No | Tap API base URL (default `https://api.tap.company`). | All | Root URL for Tap direct REST calls. | Set to correct regional Tap endpoint per country. |
+| `PAYTABS_SERVER_KEY` | **YES** | No | PayTabs server API key. | All | Authenticates PayTabs API requests. | Direct REST via httpx; store in Coolify. |
+| `PAYTABS_WEBHOOK_SECRET` | **YES** | No | PayTabs webhook signing secret. | All | Verifies PayTabs webhook authenticity. | Set when PayTabs webhooks are configured. |
+| `PAYTABS_PROFILE_ID` | No | No | PayTabs merchant profile ID. | All | Identifies merchant profile in PayTabs. | Required for PayTabs payment page creation. |
+| `PAYTABS_API_BASE_URL` | No | No | PayTabs API base URL (default `https://secure.paytabs.com`). | All | Root URL for PayTabs REST API. | Override only for regional PayTabs endpoints. |
+| `PAYTABS_CALLBACK_URL` | No | No | PayTabs redirect callback URL. | All | URL PayTabs redirects to after payment. | Must be publicly reachable from PayTabs servers. |
+| `THAWANI_SECRET_KEY` | **YES** | No | Thawani secret API key. | All | Authenticates Thawani API requests. | Direct REST via httpx; store in Coolify. |
+| `THAWANI_PUBLISHABLE_KEY` | No | No | Thawani publishable key. | All | Public key for Thawani checkout sessions. | Required for Thawani payment page initialization. |
+| `THAWANI_API_BASE_URL` | No | No | Thawani API base URL (default `https://uatcheckout.thawani.om/api/v1`). | All | Root URL for Thawani REST API. | Override to production URL when going live. |
+| `THAWANI_WEBHOOK_SECRET` | **YES** | No | Thawani webhook signing secret. | All | Verifies Thawani webhook authenticity. | Set when Thawani webhooks are configured. |
+| `PAYPAL_CLIENT_ID` | No | No | PayPal OAuth client ID. | All | Identifies app in PayPal OAuth2 flow. | Set from PayPal Developer Dashboard. |
+| `PAYPAL_SECRET` | **YES** | No | PayPal OAuth client secret. | All | Authenticates PayPal OAuth2 token request. | Required for all PayPal API calls. |
+| `PAYPAL_MODE` | No | No | PayPal environment mode: `sandbox` or `live` (default `sandbox`). | All | Selects PayPal API environment. | Set `live` only in production Coolify environment. |
+| `PAYPAL_WEBHOOK_SECRET` | **YES** | No | PayPal webhook signing secret. | All | Verifies PayPal webhook authenticity. | Set when PayPal webhooks are configured. |
+| `SMTP_USER` | No | No | SMTP auth username. | All | SMTP authentication identity. | Required for authenticated SMTP relay. |
+| `SMTP_PASSWORD` | **YES** | No | SMTP auth password. | All | SMTP authentication credential. | Required for authenticated SMTP relay. |
+| `EMAIL_FROM` | No | No | Sender address (default `noreply@zozi.com`). | All | From address for all transactional emails. | Must match authenticated SMTP identity. |
+| `UPLOAD_DIR` | No | No | Local upload directory path. | Dev | Filesystem path for local uploads. | Dev only; R2 in production. |
+| `BACKUP_DIR` | No | No | Local backup directory path. | Dev | Filesystem path for database backups. | Dev only; R2 in production. |
+| `ENCRYPTION_KEY` | **YES** | Prod | **Deprecated alias** for `FIELD_ENCRYPTION_KEY`. | Prod | Backward-compat mapping resolved in `backend/config.py`. | Migrate to FIELD_ENCRYPTION_KEY. |
+| `KMS_ENCRYPTION_KEY` | **YES** | Prod | KMS master key for field encryption envelope. | Prod | Additional key layer for field-level encryption. | Required in production; store in Coolify. |
+| `HASH_SALT` | **YES** | Prod | Salt for one-way hash functions. | Prod | Peppers password and token hashes. | Required in production; store in Coolify. |
+| `TWILIO_ACCOUNT_SID` | No | No | Twilio account SID (self-hosted SMS/WhatsApp). | All | Identifies Twilio account for SMS/WhatsApp sends. | Set when Twilio is the active SMS/WhatsApp provider. |
+| `TWILIO_AUTH_TOKEN` | **YES** | No | Twilio auth token. | All | Authenticates Twilio API calls. | Required for any Twilio send. |
+| `DEFAULT_CURRENCY` | No | No | Default currency code (default `OMR`). | All | Fallback currency when detection fails. | Required for price display and payment processing. |
+| `RESEND_API_KEY` | **YES** | No | Resend API key (alternative SMTP provider). | All | Authenticates Resend HTTP API. | Alternative to SMTP; simpler for transactional email. |
+| `RESEND_WEBHOOK_SECRET` | **YES** | No | Resend webhook signing secret. | All | Verifies Resend webhook authenticity. | Tracks delivery, bounces, complaints. |
+| `GOOGLE_CLIENT_ID` | No | No | Google OAuth client ID. | All | Identifies app in Google OAuth flow. | Register in Google Cloud Console; set in Coolify. |
+| `GOOGLE_CLIENT_SECRET` | **YES** | No | Google OAuth client secret. | All | Authenticates app in Google OAuth token exchange. | Required for OAuth token exchange. |
+| `FACEBOOK_CLIENT_ID` | No | No | Facebook OAuth client ID. | All | Identifies app in Facebook OAuth flow. | Register in Meta Developer Console. |
+| `FACEBOOK_CLIENT_SECRET` | **YES** | No | Facebook OAuth client secret. | All | Authenticates app in Facebook OAuth token exchange. | Required for OAuth token exchange. |
+| `SSO_CLIENT_ID` | No | No | SSO client ID. | All | Identifies app in SSO/OAuth flow. | Required for SSO in production. |
+| `CUSTOMER_EMAIL_VERIFICATION_MODE` | No | No | Email verification mode for customers (default `auto`). | All | Controls whether customers must verify email before accessing the platform. | `auto` (verify when suspicious); `strict` for high-risk markets. |
+| `BACKGROUND_JOBS_ENABLED` | No | No | Enable background job processing (default false). | All | Master switch for background job workers. | Enable when background job workers are deployed. |
+| `CELERY_BROKER_URL` | No | Prod | Valkey broker URL (default `valkey://localhost:6379/1`). | All | Message broker for Celery task queue. | Valkey replaces Redis as the canonical broker. |
+| `CELERY_RESULT_BACKEND` | No | No | Valkey result backend URL. | All | Stores Celery task results and state. | Required for task status tracking and result retrieval. |
+| `CELERY_TASK_ALWAYS_EAGER` | No | No | Run tasks synchronously (default false). | Dev | Runs Celery tasks in-process for testing. | Set `true` only in test environments; never in production. |
+| `FINANCE_SCHEDULER_ENABLED` | No | No | Enable finance scheduler jobs (default false). | All | Master switch for all scheduled finance jobs. | Enable only when finance scheduler is deployed and tested. |
+| `FINANCE_SCHEDULER_PROCESS_PAYOUTS` | No | No | Enable automatic payout processing (default false). | All | Enables the payout processing Celery task. | Enable after payout provider is configured and tested. |
+| `FINANCE_SCHEDULER_DISPATCH_PROVIDER` | No | No | Payout provider selector. | All | Selects which payment gateway to use for payouts. | Set to the active payout provider slug. |
+| `FINANCE_SCHEDULER_DISPATCH_PAYOUTS` | No | No | Enable payout dispatch jobs (default false). | All | Enables the payout dispatch Celery task. | Enable after payout processing is verified. |
+| `FINANCE_SCHEDULER_DISPATCH_DRY_RUN` | No | No | Run payout dispatch in dry-run mode (default true). | All | Simulates payout dispatch without executing real transfers. | Set `false` only when payout dispatch is verified in staging. |
+| `FINANCE_AUTO_RECONCILE_BATCH_LIMIT` | No | No | Max batch size for auto-reconciliation (default 100). | All | Limits rows per reconciliation batch job. | Tune based on DB capacity and reconciliation SLA. |
+| `BANK_API_ENABLED` | No | No | Enable bank API integration (default false). | All | Feature gate for bank verification and payout APIs. | Set `true` only when bank integration is live for the country. |
+| `BANK_API_BASE_URL` | No | No | Bank API base URL. | All | Root URL for bank API calls. | Required when BANK_API_ENABLED is true. |
+| `BANK_API_BATCH_PATH` | No | No | Bank API batch endpoint path. | All | Relative path for batch bank operations. | Keep in sync with bank's API spec. |
+| `BANK_API_AUTH_TOKEN` | **YES** | No | Bank API bearer token. | All | Authenticates requests to the bank API. | Required for all bank API calls when enabled. |
+| `BANK_API_SOURCE_ACCOUNT_ID` | No | No | Bank source account identifier. | All | Identifies the platform's primary bank account. | Required for payout initiation and balance queries. |
+| `BANK_API_TIMEOUT_SECONDS` | No | No | Bank API call timeout (default 30). | All | HTTP timeout for bank API requests. | Prevents worker hangs on slow bank responses. |
+| `MEDIA_STORAGE_BASE` | No | No | Media storage base URL or path. | All | Root path or URL for media assets. | Required in production; R2 URL or local path. |
+| `HF_API_TOKEN` | **YES** | No | HuggingFace API token (if used). | All | Authenticates HuggingFace Inference API. | Set only if HuggingFace models are actively used. |
+| `SENTRY_DSN` | No | Prod | GlitchTip DSN for exception tracking. | Prod | Exception reporting wire format; sends to self-hosted GlitchTip. | Always in production; fallback to structlog if GlitchTip is unreachable. |
+| `FIELD_ENCRYPTION_KEY` | **YES** | Prod | AES-256-GCM master key for field-level encryption. | Prod | Master key for PII, financial, and TOTP secrets. | Generate with `secrets.token_hex(32)`; store only in Coolify. |
+| `FIELD_ENCRYPTION_KEY_SOURCE` | No | No | Key source selector: `auto`, `env`, `vault`, `aws_ssm` (default `auto`). | All | Selects where the field encryption key is loaded from. | `auto` tries env, then Vault, then AWS SSM. |
+| `FIELD_ENCRYPTION_KEY_FROM_ENV` | No | No | Name of the env var that holds the field encryption key. | All | Indirect key reference for 12-factor deployments. | Set to the env var name containing the key. |
+| `FIELD_ENCRYPTION_KEY_FILE` | No | No | Filesystem path to a file containing the field encryption key. | All | File-based key loading for container secrets. | Mount as Kubernetes secret or Docker secret. |
+| `FIELD_ENCRYPTION_KEY_VAULT_ADDR` | No | No | HashiCorp Vault address. | All | Vault endpoint for key retrieval. | Required when using Vault as key source. |
+| `FIELD_ENCRYPTION_KEY_VAULT_TOKEN` | **YES** | No | HashiCorp Vault authentication token. | All | Authenticates Vault API calls. | Required when using Vault as key source. |
+| `FIELD_ENCRYPTION_KEY_VAULT_PATH` | No | No | HashiCorp Vault secret path. | All | Path to the secret containing the field encryption key. | Required when using Vault as key source. |
+| `FIELD_ENCRYPTION_KEY_VAULT_FIELD` | No | No | HashiCorp Vault secret field name (default `field_encryption_key`). | All | Key within the Vault secret containing the encryption key. | Override only if Vault schema differs. |
+| `FIELD_ENCRYPTION_KEY_AWS_SSM_PARAMETER` | No | No | AWS SSM parameter name for the field encryption key. | All | SSM parameter path for key retrieval. | Required when using AWS SSM as key source. |
+| `FIELD_ENCRYPTION_KEY_AWS_REGION` | No | No | AWS region for SSM parameter retrieval. | All | AWS region for SSM API calls. | Required when using AWS SSM as key source. |
+| `TRUSTED_PROXY_IPS` | No | No | Comma-separated trusted proxy IPs for `X-Forwarded-For`. | Prod | Extracts real client IP behind Cloudflare Tunnel and reverse proxy. | Set to Cloudflare egress IPs; leave empty in dev. |
+| `FRAUD_PROXY_SEED_IPS` | No | No | Seed IPs for fraud proxy-detection heuristics. | All | Baseline IPs for impossible-travel and proxy fraud scoring. | Populate with known proxy/VPN datacenter IP ranges. |
+| `AUDIT_CHAIN_KEY` | **YES** | Prod | Audit chain HMAC key (WORM log integrity). | Prod | Signs each audit log entry to detect post-hoc tampering. | Generate fresh per environment; rotation requires re-signing audit history. |
+| `LOCATION_CORS_ORIGINS` | No | No | Additional CORS origins for location services. | All | CORS allowlist for location API routes. | Set if location API is accessed from additional origins. |
+| `DEFAULT_ACCOUNTS_JSON` | No | No | JSON configuration for default chart of accounts. | All | Seeds financial accounts on first run. | Set to JSON string defining account structure. |
+| `LOGIN_LOCKOUT_TTL` | No | No | Account lockout duration seconds (default 900). | All | How long an account stays locked after failed attempts. | 900s (15 min) is the default; tune per security policy. |
+| `COUNTRY_AI_OLLAMA_MODEL` | No | No | Ollama model for country AI assistant (default `llama3.1`). | All | Model used by the country-specific AI assistant. | Pull llama3.1 to production Ollama instance; tune per country. |
+| `ZOZI_RETENTION_DELETE_ARCHIVED` | No | No | Enable automatic deletion of archived records (default false). | All | Feature gate for data retention cleanup jobs. | Enable when retention policies are defined and tested. |
+| `WHATSAPP_ACCOUNT_SID` | No | No | Twilio WhatsApp account SID. | All | Identifies Twilio WhatsApp account for sends. | Set when Twilio WhatsApp is the active provider. |
+| `WHATSAPP_AUTH_TOKEN` | **YES** | No | Twilio WhatsApp auth token. | All | Authenticates Twilio WhatsApp API calls. | Required for any WhatsApp send. |
+| `WHATSAPP_FROM_NUMBER` | No | No | Twilio WhatsApp sender phone number. | All | E.164 phone number for WhatsApp outbound messages. | Must be registered with Twilio for WhatsApp. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | No | OpenTelemetry collector endpoint (default empty). | All | Exports traces and metrics to OTLP collector. | Required when OpenTelemetry is enabled. |
+| `OTP_TTL_SECONDS` | No | No | OTP validity duration seconds (default 300). | All | How long a one-time password remains valid. | 300s (5 min) is the default; reduce for higher security. |
+| `OTP_MAX_ATTEMPTS` | No | No | Max OTP verification attempts (default 5). | All | Locks OTP after this many failed attempts. | 5 is the default; reduce for higher security. |
+| `OLLAMA_BASE_URL` | No | No | Ollama server URL (default `http://localhost:11434`). | All | Endpoint for local ONNX/ollama inference. | Point to production Ollama instance in Coolify. |
+| `OLLAMA_MODEL` | No | No | Default Ollama vision model (default `moondream:latest`). | All | Model tag for vision-capable Ollama inference. | Pull model to production Ollama instance before deploy. |
+| `OLLAMA_TEXT_MODEL` | No | No | Default Ollama text model (default `phi3:mini`). | All | Model tag for text-only Ollama inference. | Pull model to production Ollama instance before deploy. |
+| `BG_MAX_CONCURRENT` | No | No | Max concurrent background removal jobs (default 2). | All | Semaphore limit for CPU-bound rembg processes. | Tune to available CPU cores and memory. |
+| `BG_MAX_SESSION_CACHE` | No | No | Max cached rembg sessions (default 2). | All | Limits ONNX session reuse pool for background removal. | Keep at 2 unless memory allows more concurrent sessions. |
+| `BG_MAX_IMAGE_DIM` | No | No | Max image dimension px (default 1024). | All | Caps input image size before background removal. | 1024 is a safe default; increase only with more memory. |
+| `BG_LITE_MAX_DIM` | No | No | Max dimension for lite model (default 1024). | All | Size cap when using the lightweight rembg model variant. | Use 512 for fast previews; 1024 for production quality. |
+| `BG_MEMORY_WARN_MB` | No | No | Memory warning threshold MB (default 256). | All | Triggers a warning when rembg session exceeds this RSS. | Set below actual container memory limit with headroom. |
+| `BG_SKIP_HEAVY_MODELS` | No | No | Skip heavy rembg models by default (default true). | All | Prefers the lite rembg model unless explicitly overridden. | Keep `true` in dev; set `false` in production for best quality. |
+| `DEFAULT_COUNTRY` | No | No | Default country code (ISO 3166-1 alpha-2; default `AE`). | All | Fallback country when detection fails or no session context. | Required for RLS context and localization before user country is known. | Set to primary market country in production. |
+| `LOCATION_HTTP_TIMEOUT` | No | No | HTTP timeout seconds for location service (default 4.0). | All | Timeout for geolocation API calls. | 4s is the default; reduce if latency is unacceptable. |
+| `LOCATION_CACHE_TTL` | No | No | Location result cache TTL seconds (default 3600). | All | Valkey TTL for cached geolocation results. | 3600s (1h) is the default; reduce for more dynamic location data. |
+| `LOCATION_USER_AGENT` | No | No | User-Agent header for location service requests. | All | Identifies the service to geolocation providers. | Keep the default; override only if required by provider. |
+| `SMS_MODE` | No | No | SMS mode: `dev` or `live` (default `dev`). | All | Selects SMS provider and behavior. | Set to `live` in production when SMS is active. |
+| `SMS_SERIAL_PORT` | No | No | Serial port for self-hosted SMS modem (default `COM3`). | Dev | Serial device path for GSM modem. | Dev only; irrelevant in production. |
+| `SMS_SERIAL_BAUD` | No | No | Serial baud rate for SMS modem (default 9600). | Dev | Baud rate for GSM modem communication. | Dev only; irrelevant in production. |
+| `SMS_ANDROID_URL` | No | No | Android SMS gateway URL. | Dev | HTTP endpoint for Android-based SMS gateway. | Dev only; irrelevant in production. |
+| `SMS_RETRY_ATTEMPTS` | No | No | SMS send retry attempts (default 3). | All | Number of retries on transient SMS failures. | 3 is the default; reduce for cost control. |
+| `SMS_RETRY_DELAY` | No | No | SMS retry delay seconds (default 2). | All | Delay between SMS retry attempts. | 2s is the default; increase for rate-limited providers. |
+| `PUSH_MODE` | No | No | Push notification mode: `dev` or `live` (default `dev`). | All | Selects push notification provider. | Set to `live` in production when push is active. |
+| `FCM_SERVER_KEY` | **YES** | No | Firebase Cloud Messaging server key. | All | Authenticates FCM API calls for push notifications. | Required when FCM is the active push provider. |
+| `FCM_PROJECT_ID` | No | No | Firebase project ID for FCM. | All | Identifies Firebase project for FCM. | Required when FCM is the active push provider. |
+| `LOG_RETENTION_DAYS` | No | No | Log retention period days (default 30). | All | How long logs are kept before rotation/deletion. | 30 days is the default; tune per compliance requirement. |

@@ -1,5 +1,5 @@
-/**
- * Admin HR & Permissions — Playwright E2E Tests
+﻿/**
+ * Admin HR & Permissions â€” Playwright E2E Tests
  *
  * Covers /admin/staff (staff directory) and /admin/permissions
  * (permission categories, roles, user overrides).
@@ -41,7 +41,7 @@ async function mockAdminSession(page: Page) {
   await btn.waitFor();
   const form = btn.locator("xpath=ancestor::form[1]");
   await form.locator("input:not([type='password']):visible").first().fill("admin@zozi.com");
-  await form.locator("input[type='password']:visible").first().fill("admin123");
+  await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
   await btn.click();
   await page.waitForTimeout(5000);
   await page.goto("/admin/staff", { waitUntil: "domcontentloaded", timeout: 120_000 });
@@ -130,7 +130,7 @@ test.describe("Admin HR & Permissions", () => {
     await mockAdminSession(page);
   });
 
-  // ═══════════════ Staff Directory ═══════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Staff Directory â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   test("staff directory lists staff and supports create", async ({ page }) => {
     await page.waitForTimeout(2000);
@@ -149,7 +149,7 @@ test.describe("Admin HR & Permissions", () => {
     await page.waitForTimeout(1000);
   });
 
-  // ═══════════════ Permissions ═══════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Permissions â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   test("permissions categories tab lists categories and supports create", async ({ page }) => {
     await page.goto("/admin/permissions", { waitUntil: "domcontentloaded", timeout: 120_000 });
@@ -182,4 +182,5 @@ test.describe("Admin HR & Permissions", () => {
     await expect(page.getByRole("button", { name: /^admin$/i })).toBeVisible({ timeout: 5000 });
   });
 });
+
 

@@ -63,7 +63,7 @@ def admin_list_badge_billings(skip: int, limit: int, supplier_id: Optional[int],
 def admin_record_badge_billing_payment(billing_id: int, body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_record_badge_billing_payment(
+    return ctrl.admin_record_badge_billing_payment(
         billing_id=billing_id,
         payment_method=body.payment_method,
         current_admin=current_admin,
@@ -71,8 +71,6 @@ def admin_record_badge_billing_payment(billing_id: int, body, db: Session, curre
         transaction_ref=body.transaction_ref,
         notes=body.notes,
     )
-    db.commit()
-    return result
 
 
 def admin_list_supplier_settlements(skip: int, limit: int, supplier_id: Optional[int], status: Optional[str], db: Session, current_admin: dict):
@@ -130,83 +128,66 @@ def admin_test_bank_settings_connection(db: Session, current_admin: dict):
 def admin_upsert_bank_settings(body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_upsert_finance_bank_settings(body.model_dump(), current_admin, db)
-    db.commit()
-    return result
+    return ctrl.admin_upsert_finance_bank_settings(body.model_dump(), current_admin, db)
 
 
 def admin_record_vat_remittance(body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_record_vat_remittance(body.model_dump(), current_admin, db)
-    db.commit()
-    return result
+    return ctrl.admin_record_vat_remittance(body.model_dump(), current_admin, db)
 
 
 def admin_create_bank_transaction(data, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_create_bank_transaction(data.model_dump(), db)
-    db.commit()
-    return result
+    return ctrl.admin_create_bank_transaction(data.model_dump(), db)
 
 
 def admin_import_bank_transactions(items: list, auto_reconcile: bool, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_import_bank_transactions(
+    return ctrl.admin_import_bank_transactions(
         [item.model_dump() for item in items],
         current_admin,
         db,
         auto_reconcile=auto_reconcile,
     )
-    db.commit()
-    return result
 
 
 def admin_reconcile_transaction(txn_id: int, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_reconcile_transaction(txn_id, current_admin, db)
-    db.commit()
-    return result
+    return ctrl.admin_reconcile_transaction(txn_id, current_admin, db)
 
 
 def admin_flag_transaction(txn_id: int, body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_flag_transaction(txn_id, body.reason, db)
-    db.commit()
-    return result
+    return ctrl.admin_flag_transaction(txn_id, body.reason, db)
 
 
 def admin_resolve_transaction(txn_id: int, body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_resolve_transaction_exception(txn_id, body.model_dump(), current_admin, db)
-    db.commit()
-    return result
+    return ctrl.admin_resolve_transaction_exception(txn_id, body.model_dump(), current_admin, db)
 
 
 def admin_auto_reconcile_transactions(limit: int, source: Optional[str], category: Optional[str], db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_auto_reconcile_transactions(
+    return ctrl.admin_auto_reconcile_transactions(
         current_admin,
         db,
         limit=limit,
         source=source,
         category=category,
     )
-    db.commit()
-    return result
 
 
 def admin_trigger_supplier_payouts(body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
     results = ctrl.admin_trigger_supplier_payouts(db, settlement_ids=(body.settlement_ids if body else None))
-    db.commit()
     return {"processed": len(results), "payouts": results}
 
 
@@ -214,7 +195,6 @@ def admin_trigger_logistics_payouts(body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
     results = ctrl.admin_trigger_logistics_payouts(db, settlement_ids=(body.settlement_ids if body else None))
-    db.commit()
     return {"processed": len(results), "payouts": results}
 
 
@@ -229,22 +209,19 @@ def admin_dispatch_payouts(kind: str, provider: Optional[str], dry_run: bool, ba
             dry_run=dry_run,
         )
 
-    result = ctrl.admin_dispatch_transfer_batch(
+    return ctrl.admin_dispatch_transfer_batch(
         kind,
         current_admin,
         db,
         provider=provider,
         dry_run=dry_run,
     )
-    db.commit()
-    return result
 
 
 def admin_record_cod_remittance(settlement_id: int, body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_record_cod_remittance(settlement_id, body.amount, current_admin, db)
-    db.commit()
     return {"status": "ok", "settlement_id": result.id, "cod_remittance_status": result.cod_remittance_status}
 
 
@@ -257,17 +234,13 @@ def admin_list_cod_remittance_receipts(skip: int, limit: int, partner_id: Option
 def admin_verify_cod_remittance_receipt(receipt_id: int, body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_verify_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note if body else None)
-    db.commit()
-    return result
+    return ctrl.admin_verify_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note if body else None)
 
 
 def admin_reject_cod_remittance_receipt(receipt_id: int, body, db: Session, current_admin: dict):
     from infrastructure.utils.auth import require_permission
     require_permission("payouts.verify", current_admin)
-    result = ctrl.admin_reject_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note or "")
-    db.commit()
-    return result
+    return ctrl.admin_reject_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note or "")
 
 
 # ── Supplier controllers ─────────────────────────────────────────────────────
@@ -318,7 +291,7 @@ def logistics_list_ledger(skip: int, limit: int, db: Session, current_user: dict
 
 # ── Geography / commission controllers ──────────────────────────────────────
 
-from domains.finance.services.ledger.general_ledger_service import (
+from domains.finance.services.ledger.general_ledger import (
     get_global_config, update_global_config, list_category_rates, update_category_rate,
     list_badge_tiers, update_badge_tier, list_ledger_entries, create_ledger_adjustment,
     preview_commission, list_all_supplier_commissions, get_supplier_commission,
@@ -388,7 +361,7 @@ def update_badge_tier_route(country_code: str, tier_id: int, payload, current_us
 
 # ── Commission / ledger wrappers (controller-shaped, moved from service) ─────
 
-from domains.finance.services.ledger.general_ledger_service import (
+from domains.finance.services.ledger.general_ledger import (
     get_global_config as _get_global_config,
     update_global_config as _update_global_config,
     list_category_rates as _list_category_rates,

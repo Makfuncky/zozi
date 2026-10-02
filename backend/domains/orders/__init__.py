@@ -13,7 +13,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "AdminOrdersService": ("domains.orders.services.admin_orders_service", "AdminOrdersService"),
     "AdminOrdersStatusService": ("domains.orders.services.admin_orders_status_service", "AdminOrdersStatusService"),
     "AdminCatalogOrdersService": ("domains.orders.services.admin_catalog_orders_service", "AdminCatalogOrdersService"),
-    "OrdersPackageService": ("domains.orders.services.orders_package_service", "OrdersPackageService"),
     "OrderEngine": ("domains.orders.services.core.order_engine", "OrderEngine"),
     "CartService": ("domains.orders.services.cart.service", "CartService"),
     "CheckoutService": ("domains.orders.services.checkout.service", "CheckoutService"),

@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
     name="tasks.data_retention.run_data_retention",
     max_retries=1,
     default_retry_delay=300,
+    time_limit=1800,
+    soft_time_limit=1500,
 )
 def run_data_retention(self) -> dict[str, Any]:
     """Run the operational customer retention cycle (churn / lifecycle sweeps)."""
@@ -49,6 +51,8 @@ def run_data_retention(self) -> dict[str, Any]:
     bind=True,
     name="tasks.data_retention.cleanup_expired_tokens",
     max_retries=0,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def cleanup_expired_tokens(self) -> dict[str, Any]:
     """Clean up expired JWT tokens from the Valkey blacklist."""

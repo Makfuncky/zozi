@@ -170,7 +170,7 @@ class TestProviderBaseClasses:
 class TestProviderHealthChecks:
     """Provider health check / status functions must be callable."""
 
-    def test_redis_health_status_callable(self):
+    def test_valkey_health_status_callable(self):
         from infrastructure.valkey.client import get_valkey_health_status
         result = get_valkey_health_status()
         assert isinstance(result, dict)

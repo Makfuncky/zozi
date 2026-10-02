@@ -1,0 +1,196 @@
+{
+  "batch": 14,
+  "files": [
+    {
+      "path": "backend/domains/comms/models/fraud.py",
+      "findings": [
+        {
+          "id": "TF-093",
+          "status": "VALID",
+          "evidence": "MeetingRecording model at line 12 has no country_code column; inherits only from Base, no TenantMixin. Columns present: id, is_deleted, room_id, started_by_id, recording_url, duration_seconds, status_code, started_at, ended_at, created_at, updated_at.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Table is user-facing (tied to started_by_id user reference). Missing country_code violates Law 5 and Law 20."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/comms/models/incident.py",
+      "findings": [
+        {
+          "id": "TF-079",
+          "status": "VALID",
+          "evidence": "IncidentActionItem at line 45 has no country_code column. Inherits only from Base. Columns: id, war_room_id, assignee_id, title, description, status, priority, due_date, created_at, completed_at, updated_at, is_deleted.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-080",
+          "status": "VALID",
+          "evidence": "IncidentThread at line 31 has no country_code column. Inherits only from Base. Columns: id, war_room_id, participant_id, message, created_at, updated_at, is_deleted.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-081",
+          "status": "VALID",
+          "evidence": "IncidentWarRoom at line 11 has started_at (line 20, server_default=func.now()) and resolved_at/closed_at but no created_at column. Missing the canonical created_at audit column required by Law 23.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "started_at is present but does not replace created_at per Law 23 audit column requirements."
+        },
+        {
+          "id": "TF-082",
+          "status": "VALID",
+          "evidence": "IncidentWarRoom at line 11 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-124",
+          "status": "VALID",
+          "evidence": "WarRoomTemplate at line 64 has created_at (line 73, server_default=func.now()) but no updated_at column. Missing the canonical updated_at audit column required by Law 23.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Model missing updated_at; violates Law 23 audit column requirements."
+        },
+        {
+          "id": "TF-125",
+          "status": "VALID",
+          "evidence": "WarRoomTemplate at line 64 has no country_code column. Inherits only from Base. Columns: id, name, severity, auto_assign, template_data, is_deleted, created_at.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/comms/models/marketing.py",
+      "findings": [
+        {
+          "id": "TF-033",
+          "status": "VALID",
+          "evidence": "CampaignRecipient class at line 119 has created_at = Column(DateTime, default=utcnow) at line 140. Uses Python-side default instead of server_default=func.now() required by Law 21.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Python-side default violates Law 21 (DB-side server_default required)."
+        },
+        {
+          "id": "TF-034",
+          "status": "VALID",
+          "evidence": "CampaignRecipient at line 119 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-042",
+          "status": "VALID",
+          "evidence": "EmailCampaignLog class at line 99 has created_at = Column(DateTime, default=utcnow) at line 117. Uses Python-side default instead of server_default=func.now() required by Law 21.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Python-side default violates Law 21 (DB-side server_default required)."
+        },
+        {
+          "id": "TF-043",
+          "status": "VALID",
+          "evidence": "EmailCampaignLog at line 99 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-044",
+          "status": "VALID",
+          "evidence": "EmailCampaign class at line 39 has created_at = Column(DateTime, default=utcnow) at line 54. Uses Python-side default instead of server_default=func.now() required by Law 21.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Python-side default violates Law 21 (DB-side server_default required)."
+        },
+        {
+          "id": "TF-045",
+          "status": "INVALID",
+          "evidence": "EmailCampaign at line 39 inherits from TenantMixin which provides country_code = Column(String(2), nullable=False, index=True) at infrastructure/database/mixins.py:52. The model also declares an explicit index on country_code (ix_email_campaigns_country_created).",
+          "counter_evidence": "EmailCampaign(Base, TenantMixin) includes country_code via TenantMixin. The cited finding that the table is missing country_code is false.",
+          "benchmark_mismatch": "",
+          "notes": "False positive: TenantMixin supplies country_code. Finding incorrectly flags EmailCampaign as missing country_code."
+        },
+        {
+          "id": "TF-046",
+          "status": "VALID",
+          "evidence": "EmailDeliveryEvent class at line 144 has created_at = Column(DateTime, default=utcnow) at line 161. Uses Python-side default instead of server_default=func.now() required by Law 21.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Python-side default violates Law 21 (DB-side server_default required)."
+        },
+        {
+          "id": "TF-047",
+          "status": "VALID",
+          "evidence": "EmailDeliveryEvent at line 144 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-050",
+          "status": "VALID",
+          "evidence": "EmailRuntimeConfig at line 185 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-051",
+          "status": "VALID",
+          "evidence": "EmailSuppression class at line 163 has created_at = Column(DateTime, default=utcnow) at line 183. Uses Python-side default instead of server_default=func.now() required by Law 21.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Python-side default violates Law 21 (DB-side server_default required)."
+        },
+        {
+          "id": "TF-052",
+          "status": "VALID",
+          "evidence": "EmailSuppression at line 163 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-053",
+          "status": "VALID",
+          "evidence": "EmailTemplate class at line 65 has created_at = Column(DateTime, default=utcnow) at line 81. Uses Python-side default instead of server_default=func.now() required by Law 21.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Python-side default violates Law 21 (DB-side server_default required)."
+        },
+        {
+          "id": "TF-054",
+          "status": "VALID",
+          "evidence": "EmailTemplate at line 65 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        },
+        {
+          "id": "TF-099",
+          "status": "VALID",
+          "evidence": "NewsletterSubscriber class at line 84 has created_at = Column(DateTime, default=utcnow) at line 96. Uses Python-side default instead of server_default=func.now() required by Law 21.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Python-side default violates Law 21 (DB-side server_default required)."
+        },
+        {
+          "id": "TF-100",
+          "status": "VALID",
+          "evidence": "NewsletterSubscriber at line 84 has no country_code column. Inherits only from Base.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "User-facing table missing country_code for RLS scoping per Law 5."
+        }
+      ]
+    }
+  ]
+}

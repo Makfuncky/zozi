@@ -1,5 +1,5 @@
-/**
- * Admin Commission Management — Playwright E2E Tests
+﻿/**
+ * Admin Commission Management â€” Playwright E2E Tests
  *
  * Covers /admin/commission page: overview config, category rates,
  * and badge tiers.
@@ -41,7 +41,7 @@ async function mockAdminSession(page: Page) {
   await btn.waitFor();
   const form = btn.locator("xpath=ancestor::form[1]");
   await form.locator("input:not([type='password']):visible").first().fill("admin@zozi.com");
-  await form.locator("input[type='password']:visible").first().fill("admin123");
+  await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
   await btn.click();
   await page.waitForTimeout(5000);
   await page.goto("/admin/commission", { waitUntil: "domcontentloaded", timeout: 120_000 });
@@ -65,7 +65,7 @@ test.describe("Admin Commission Management", () => {
       { id: 2, badge_level: "silver", commission_rate: 0.08, min_fulfilled_orders: 50, is_active: true },
     ];
 
-    // Global config (commission.py router — /commission/global)
+    // Global config (commission.py router â€” /commission/global)
     await page.route("**/commission/global", async (route) => {
       if (route.request().method() === "GET") {
         await fulfillJson(route, {
@@ -172,4 +172,5 @@ test.describe("Admin Commission Management", () => {
     await expect(page.getByText(/gold/i)).toBeVisible();
   });
 });
+
 

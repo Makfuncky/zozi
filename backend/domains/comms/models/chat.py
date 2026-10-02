@@ -10,6 +10,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import relationship
 from . import Base
@@ -49,8 +50,8 @@ class VideoRoom(Base):
     transcription_enabled = Column(Boolean, default=True)
     started_at = Column(DateTime, nullable=True)
     ended_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, default=_utcnow, server_default=func.now())
+    updated_at = Column(DateTime, default=_utcnow, server_default=func.now(), onupdate=_utcnow)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     participants = relationship("VideoRoomParticipant", back_populates="room", cascade="all, delete-orphan")
     recordings = relationship("VideoRoomRecording", back_populates="room", cascade="all, delete-orphan")
@@ -67,6 +68,8 @@ class VideoRoomParticipant(Base):
     role = Column(String(20), default="participant")
     joined_at = Column(DateTime, default=_utcnow)
     left_at = Column(DateTime, nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
+    updated_at = Column(DateTime, default=_utcnow, server_default=func.now(), onupdate=_utcnow)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     room = relationship("VideoRoom", back_populates="participants")
     user = relationship("User")
@@ -82,7 +85,7 @@ class DirectChatRoom(Base):
     is_masked = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, default=_utcnow, server_default=func.now())
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("DirectChatMessage", back_populates="room", cascade="all, delete-orphan")
     __table_args__ = (UniqueConstraint("participant_one_id", "participant_two_id", name="uq_direct_chat_pair"), {"schema": "comms"})
@@ -147,6 +150,9 @@ class VideoRoomRecording(Base):
     status = Column(String(20), default="recording")
     started_at = Column(DateTime, default=_utcnow)
     ended_at = Column(DateTime, nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
+    created_at = Column(DateTime, default=_utcnow, server_default=func.now())
+    updated_at = Column(DateTime, default=_utcnow, server_default=func.now(), onupdate=_utcnow)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     room = relationship("VideoRoom", back_populates="recordings")
     starter = relationship("User", foreign_keys=[started_by_id])
@@ -157,12 +163,14 @@ class DirectChatMessage(Base):
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("comms.direct_chat_rooms.id", ondelete='CASCADE'), nullable=False, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
     sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, default=_utcnow, server_default=func.now())
+    updated_at = Column(DateTime, default=_utcnow, server_default=func.now(), onupdate=_utcnow)
     room = relationship("DirectChatRoom", back_populates="messages")
     sender = relationship("User", foreign_keys=[sender_id])
 
@@ -195,6 +203,7 @@ class GroupChatMessage(Base):
     read_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     room = relationship("GroupChatRoom", back_populates="messages")
     sender = relationship("User", foreign_keys=[sender_id])
 

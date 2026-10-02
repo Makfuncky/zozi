@@ -1,0 +1,44 @@
+{
+  "batch": 40,
+  "files": [
+    {
+      "path": "frontend/web_app/next.config.ts",
+      "findings": [
+        {
+          "id": "PERF-004",
+          "status": "VALID",
+          "evidence": "Line 19 of next.config.ts contains `formats: ['image/webp']` — only WebP is listed; AVIF is absent from the image formats array.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Finding is confirmed. sharp 0.35.4 (TECHNOLOGY_STACK.md §12) supports AVIF, so adding 'image/avif' before 'image/webp' is benchmark-aligned and actionable."
+        }
+      ]
+    },
+    {
+      "path": "frontend/web_app/src/ (multiple files)",
+      "findings": [
+        {
+          "id": "BLOCKER-005",
+          "status": "VALID",
+          "evidence": "Running `pnpm tsc --noEmit` in frontend/web_app produces 106 TypeScript errors across multiple files (checkout, employee/attendance, supplier/bulk, supplier/dashboard, AuthForms, ProductCard, Heading, serverCountry, shared components, Logo.native.tsx, Button.native.tsx, GlassCard.native.tsx, Input.native.tsx). The finding claims '60+' but actual count is 106.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §12 requires TypeScript strict mode; 106 compilation errors contradict this requirement. Additionally, next.config.ts line 7 sets `ignoreBuildErrors: true`, which hides rather than fixes the errors, masking the benchmark violation during Next.js builds.",
+          "notes": "Finding is confirmed and slightly understated. The `ignoreBuildErrors: true` in next.config.ts allows builds to succeed despite TypeScript errors, but this is a workaround, not a fix."
+        }
+      ]
+    },
+    {
+      "path": "frontend/web_app/src/components/ProductCard.tsx",
+      "findings": [
+        {
+          "id": "PERF-005",
+          "status": "VALID",
+          "evidence": "Lines 141-151 of ProductCard.tsx contain `<MotionImage src={imageUrl} alt={displayName} fill sizes=... className=\"object-cover\" animate=... transition=... onLoad=... onError=... />` — no `placeholder=\"blur\"` or `blurDataURL` prop is present.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Finding is confirmed. Next.js best practice for next/image is to use blur placeholders to reduce CLS. The component already tracks `imgLoaded` state for a shimmer placeholder, but the Next.js Image component itself lacks the blur props."
+        }
+      ]
+    }
+  ]
+}

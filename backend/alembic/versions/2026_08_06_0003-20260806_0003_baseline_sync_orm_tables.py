@@ -18,7 +18,6 @@ from alembic import op
 from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
-import infrastructure.utils.encryption  # noqa: F401
 revision = "20260806_0003"
 down_revision = "20260806_0002"
 branch_labels = None

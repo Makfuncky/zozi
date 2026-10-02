@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
     name="tasks.accrual_reversal.reverse_accrual_task",
     max_retries=1,
     default_retry_delay=300,
+    time_limit=300,
+    soft_time_limit=240,
 )
 def reverse_accrual_task(
     self,

@@ -25,24 +25,71 @@ import time
 import urllib.error
 import urllib.request
 
+from infrastructure.observability.circuit_breaker import (
+    CircuitBreakerError,
+    get_circuit_breaker,
+)
+
+from providers._helpers import retry_call
+
 logger = logging.getLogger(__name__)
 
-# Always available — no external SDK needed
 HAS_SMS = True
-
-# Mode from environment
 SMS_MODE = os.getenv("SMS_MODE", "dev").lower()
 
-# GSM modem settings
 SMS_SERIAL_PORT = os.getenv("SMS_SERIAL_PORT", "COM3")
 SMS_SERIAL_BAUD = int(os.getenv("SMS_SERIAL_BAUD", "9600"))
 
-# Android SMS Gateway settings
 SMS_ANDROID_URL = os.getenv("SMS_ANDROID_URL", "")
 
-# Retry settings
 SMS_RETRY_ATTEMPTS = int(os.getenv("SMS_RETRY_ATTEMPTS", "3"))
 SMS_RETRY_DELAY = int(os.getenv("SMS_RETRY_DELAY", "2"))
+
+_SMS_BREAKER = get_circuit_breaker("sms", failure_threshold=5, recovery_timeout=30)
+
+
+def _try_gsm_send_once(phone_number: str, message: str) -> dict:
+    """Single GSM send attempt. Returns a result dict or raises on failure."""
+    import serial
+
+    # Truncate to single SMS length
+    if len(message) > 160:
+        message = message[:157] + "..."
+
+    with serial.Serial(SMS_SERIAL_PORT, SMS_SERIAL_BAUD, timeout=10) as ser:
+        # Test modem
+        ser.write(b'AT\r\n')
+        time.sleep(0.3)
+        resp = ser.read(ser.in_waiting).decode(errors="ignore")
+        if "OK" not in resp:
+            raise RuntimeError("modem_not_responding")
+
+        # Set text mode
+        ser.write(b'AT+CMGF=1\r\n')
+        time.sleep(0.3)
+        resp = ser.read(ser.in_waiting).decode(errors="ignore")
+        if "OK" not in resp:
+            raise RuntimeError("text_mode_failed")
+
+        # Set character set
+        ser.write(b'AT+CSCS="GSM"\r\n')
+        time.sleep(0.3)
+
+        # Send recipient
+        ser.write(f'AT+CMGS="{phone_number}"\r\n'.encode())
+        time.sleep(0.5)
+        resp = ser.read(ser.in_waiting).decode(errors="ignore")
+        if ">" not in resp:
+            raise RuntimeError("no_prompt")
+
+        # Send message body + Ctrl+Z
+        ser.write(f'{message}\x1a'.encode())
+        time.sleep(3)
+        resp = ser.read(ser.in_waiting).decode(errors="ignore")
+
+        if "+CMGS:" in resp:
+            return {"sent": True, "channel": "sms", "to": phone_number}
+        raise RuntimeError(resp.strip() or "send_failed")
 
 
 def _send_sms_gsm(phone_number: str, message: str) -> dict:
@@ -57,76 +104,18 @@ def _send_sms_gsm(phone_number: str, message: str) -> dict:
         logger.warning("[SMS GSM] pyserial not installed. Install: pip install pyserial")
         return {"sent": False, "channel": "sms", "preview": True, "to": phone_number}
 
-    # Truncate to single SMS length
-    if len(message) > 160:
-        message = message[:157] + "..."
-
-    for attempt in range(1, SMS_RETRY_ATTEMPTS + 1):
-        try:
-            with serial.Serial(SMS_SERIAL_PORT, SMS_SERIAL_BAUD, timeout=10) as ser:
-                # Test modem
-                ser.write(b'AT\r\n')
-                time.sleep(0.3)
-                resp = ser.read(ser.in_waiting).decode(errors="ignore")
-                if "OK" not in resp:
-                    logger.warning("[SMS GSM] Modem not responding (attempt %d)", attempt)
-                    if attempt < SMS_RETRY_ATTEMPTS:
-                        time.sleep(SMS_RETRY_DELAY)
-                        continue
-                    return {"sent": False, "channel": "sms", "error": "modem_not_responding", "to": phone_number}
-
-                # Set text mode
-                ser.write(b'AT+CMGF=1\r\n')
-                time.sleep(0.3)
-                resp = ser.read(ser.in_waiting).decode(errors="ignore")
-                if "OK" not in resp:
-                    if attempt < SMS_RETRY_ATTEMPTS:
-                        time.sleep(SMS_RETRY_DELAY)
-                        continue
-                    return {"sent": False, "channel": "sms", "error": "text_mode_failed", "to": phone_number}
-
-                # Set character set
-                ser.write(b'AT+CSCS="GSM"\r\n')
-                time.sleep(0.3)
-
-                # Send recipient
-                ser.write(f'AT+CMGS="{phone_number}"\r\n'.encode())
-                time.sleep(0.5)
-                resp = ser.read(ser.in_waiting).decode(errors="ignore")
-                if ">" not in resp:
-                    if attempt < SMS_RETRY_ATTEMPTS:
-                        time.sleep(SMS_RETRY_DELAY)
-                        continue
-                    return {"sent": False, "channel": "sms", "error": "no_prompt", "to": phone_number}
-
-                # Send message body + Ctrl+Z
-                ser.write(f'{message}\x1a'.encode())
-                time.sleep(3)
-                resp = ser.read(ser.in_waiting).decode(errors="ignore")
-
-                if "+CMGS:" in resp:
-                    logger.info("[SMS GSM] Sent to %s (attempt %d)", phone_number, attempt)
-                    return {"sent": True, "channel": "sms", "to": phone_number, "attempts": attempt}
-                else:
-                    if attempt < SMS_RETRY_ATTEMPTS:
-                        time.sleep(SMS_RETRY_DELAY)
-                        continue
-                    return {"sent": False, "channel": "sms", "error": resp.strip(), "to": phone_number}
-
-        except serial.SerialException as exc:
-            logger.error("[SMS GSM] Serial error (attempt %d): %s", attempt, exc)
-            if attempt < SMS_RETRY_ATTEMPTS:
-                time.sleep(SMS_RETRY_DELAY)
-                continue
-            return {"sent": False, "channel": "sms", "error": str(exc), "to": phone_number}
-        except Exception as exc:
-            logger.error("[SMS GSM] Error (attempt %d): %s", attempt, exc)
-            if attempt < SMS_RETRY_ATTEMPTS:
-                time.sleep(SMS_RETRY_DELAY)
-                continue
-            return {"sent": False, "channel": "sms", "error": str(exc), "to": phone_number}
-
-    return {"sent": False, "channel": "sms", "error": "max_retries_exceeded", "to": phone_number}
+    try:
+        result, _ = retry_call(
+            _try_gsm_send_once,
+            phone_number,
+            message,
+            attempts=SMS_RETRY_ATTEMPTS,
+            delay=SMS_RETRY_DELAY,
+            return_attempt=True,
+        )
+        return result
+    except Exception as exc:
+        return {"sent": False, "channel": "sms", "error": str(exc), "to": phone_number}
 
 
 def _send_sms_android(phone_number: str, message: str) -> dict:
@@ -187,6 +176,9 @@ def send_sms(phone_number: str, message: str, **kwargs) -> dict:
     if SMS_MODE == "dev":
         logger.info("[DEV SMS] To: %s\n%s", phone_number, message)
         return {"sent": False, "channel": "sms", "preview": True, "to": phone_number}
+    if _SMS_BREAKER.state.value == "open":
+        logger.warning("SMS circuit breaker open — skipping send to %s", phone_number)
+        return {"sent": False, "channel": "sms", "error": "circuit_breaker_open", "to": phone_number}
     elif SMS_MODE == "gsm":
         return _send_sms_gsm(phone_number, message)
     elif SMS_MODE == "android":

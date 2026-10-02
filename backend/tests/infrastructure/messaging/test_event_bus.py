@@ -1,12 +1,12 @@
 """Tests for the FILE-112 event_bus fixes.
 
 Verifies:
-  1. WIR-005: handler invocation retries with exponential backoff (max 5,
-     1-2-4-8s + jitter).
-  2. WIR-023: permanently failed handler payloads are routed to the Valkey
-     dead-letter queue (``event_dead_letter``).
-  3. WIR-028: events are appended to Valkey Stream (``event_stream``).
-  4. WIR-035: ``unsubscribe()``, ``clear()``, and graceful ``shutdown()``.
+   1. WIR-005: handler invocation retries with exponential backoff (max 5,
+      1-2-4-8s + jitter).
+   2. WIR-023: permanently failed handler payloads are routed to the Valkey
+      dead-letter queue (``event_dead_letter``).
+   3. WIR-028: events are appended to Valkey Stream (``event_stream``).
+   4. WIR-035: ``unsubscribe()``, ``clear()``, and graceful ``shutdown()``.
 """
 from __future__ import annotations
 
@@ -31,10 +31,27 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only")
 # ---------------------------------------------------------------------------
 
 def _reset_bus():
-    """Return event_bus module to a clean state between tests."""
+    """Return event_bus module to a clean state between tests.
+
+    Clears both the in-memory subscriber registry and the Valkey DLQ + stream
+    so that test assertions against ``DLQ_KEY`` / ``STREAM_KEY`` are never
+    polluted by prior runs or previous pytest invocations sharing db=0.
+    """
     import infrastructure.messaging.events.event_bus as bus
     bus.clear()
     bus._subscribers = {}
+    try:
+        client = bus._get_valkey_client()
+        if client is not None:
+            # delete removes the list/stream entirely in one round-trip.
+            if hasattr(client, "delete"):
+                client.delete(bus.DLQ_KEY)
+                client.delete(bus.STREAM_KEY)
+            elif hasattr(client, "unlink"):
+                client.unlink(bus.DLQ_KEY)
+                client.unlink(bus.STREAM_KEY)
+    except Exception:  # noqa: BLE001 - cleanup must not fail tests
+        pass
     return bus
 
 
@@ -118,6 +135,9 @@ class TestDeadLetterQueue:
         if client is None or not hasattr(client, "lpush"):
             pytest.skip("Valkey not available")
 
+        # Ensure clean DLQ state regardless of test ordering / parallel runs
+        client.delete(bus.DLQ_KEY)
+
         def always_failing(payload):
             raise RuntimeError("dlq-test")
 
@@ -139,12 +159,16 @@ class TestDeadLetterQueue:
         if client is None or not hasattr(client, "lpush"):
             pytest.skip("Valkey not available")
 
+        client.delete(bus.DLQ_KEY)
+
         def good_handler(payload):
             return "ok"
 
         bus.subscribe("test.event", good_handler)
         bus.publish("test.event", {"id": 11})
         assert client.llen(bus.DLQ_KEY) == 0
+
+        client.delete(bus.DLQ_KEY)
 
 
 # ---------------------------------------------------------------------------
@@ -165,13 +189,18 @@ class TestValkeyStreams:
         # xlen should be >= 1
         length = client.xlen(bus.STREAM_KEY)
         assert length >= 1
-        # Read back the entry
+        # Read back the entry.
+        # Valkey xread returns (stream_name, [(message_id, {field: val, ...}), ...])
+        # when decode_responses=True and fields were inserted as a dict.
         entries = client.xread({bus.STREAM_KEY: "0-0"}, count=1)
-        assert len(entries) == 1
+        assert len(entries) == 1, f"Expected 1 stream group, got {len(entries)}: {entries}"
         stream_name, msgs = entries[0]
         assert stream_name == bus.STREAM_KEY
-        assert len(msgs) >= 1
+        assert len(msgs) >= 1, f"Expected >= 1 stream message, got {len(msgs)}"
         msg = msgs[0]
+        # msg may be (message_id, {field: val, ...}) or just {field: val, ...}
+        if isinstance(msg, tuple):
+            msg = msg[1] if len(msg) == 2 and isinstance(msg[1], dict) else msg
         assert msg["event_type"] == "test.event"
         payload = json.loads(msg["payload"])
         assert payload == {"id": 20}
@@ -188,7 +217,7 @@ class TestValkeyStreams:
 # ---------------------------------------------------------------------------
 
 class TestGracefulShutdown:
-    """WIR-035: unsubscribe, clear, and shutdown hooks."""
+    """WIR-035: unsubscribe, clear, and graceful ``shutdown()``."""
 
     def test_unsubscribe_removes_handler(self):
         import infrastructure.messaging.events.event_bus as bus
@@ -223,7 +252,10 @@ class TestGracefulShutdown:
         shutdown_msgs = []
         for _, msgs in entries:
             for msg in msgs:
-                if msg.get("shutdown") == "true":
+                # msg may be (message_id, {field: val, ...}) or just {field: val, ...}
+                if isinstance(msg, tuple):
+                    msg = msg[1] if len(msg) == 2 and isinstance(msg[1], dict) else msg
+                if hasattr(msg, "get") and msg.get("shutdown") == "true":
                     shutdown_msgs.append(msg)
         assert len(shutdown_msgs) >= 1
         client.xtrim(bus.STREAM_KEY, approximate=False, maxlen=0)

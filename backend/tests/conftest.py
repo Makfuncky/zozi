@@ -48,7 +48,14 @@ os.environ.setdefault("CSRF_DISABLED", "true")
 # Set required env vars for testing
 # NOTE: These test passwords are for local development/testing only.
 # In CI, override via environment variables for stronger secrets.
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only")
+# SECRET_KEY must satisfy Settings' own min_length=32 validator
+# (config.py): a 28-char value made Settings() raise at import time, which
+# errored collection for any test module that builds Settings and aborted the
+# whole architecture suite. This is a test-only value, never a real secret.
+os.environ.setdefault(
+    "SECRET_KEY",
+    "test-secret-key-for-pytest-only-do-not-use-in-production",
+)
 os.environ.setdefault("SEED_ADMIN_PASSWORD", os.getenv("TEST_ADMIN_PASSWORD", "T3st_Adm!n_Secure#2024"))
 os.environ.setdefault("SEED_SUPPLIER_PASSWORD", os.getenv("TEST_SUPPLIER_PASSWORD", "T3st_Supp!er_Secure#2024"))
 os.environ.setdefault("SEED_CUSTOMER_PASSWORD", os.getenv("TEST_CUSTOMER_PASSWORD", "T3st_Cust0mer_Secure#2024"))

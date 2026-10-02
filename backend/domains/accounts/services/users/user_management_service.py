@@ -100,7 +100,7 @@ from infrastructure.utils.constants import (
     _ADMIN_MAX_PAGE_SIZE,
     STAFF_ROLES,
 )
-from infrastructure.utils.pagination import cursor_paginate_asc
+from infrastructure.utils.pagination import cursor_paginate_asc, keyset_paginate
 logger = structlog.get_logger(__name__)
 
 
@@ -1117,80 +1117,87 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
 # ---------------------------------------------------------------------------
 
 
-def list_pending_bank_accounts(kind: str, db: Session, current_user: dict, limit: int = 200, offset: int = 0) -> list[dict]:
+def list_pending_bank_accounts(kind: str, db: Session, current_user: dict, limit: int = 200, cursor: Optional[str] = None) -> dict:
     """List bank accounts awaiting verification for a given kind (supplier|logistics_partner)."""
     _require_admin(current_user)
     if kind not in _ALLOWED_BANK_ACCOUNT_KINDS:
-        raise AppError(message=f"kind must be one of {list(_ALLOWED_BANK_ACCOUNT_KINDS, status_code=400, error_code="ERROR")}")
+        raise AppError(message=f"kind must be one of {list(_ALLOWED_BANK_ACCOUNT_KINDS)}", status_code=400, error_code="ERROR")
 
     safe_limit = min(max(1, limit), 200)
-    safe_offset = max(0, offset)
 
     if kind == "supplier":
-        rows = (
+        query = (
             db.query(SupplierBankAccount, User.email, SupplierProfile.business_name)
             .join(User, SupplierBankAccount.supplier_id == User.id)
             .outerjoin(SupplierProfile, SupplierProfile.user_id == User.id)
             .filter(SupplierBankAccount.verification_status == "pending")
-            .order_by(SupplierBankAccount.created_at.asc())
-            .offset(safe_offset)
-            .limit(safe_limit)
-            .all()
         )
-        return [
-            {
-                "id": r.id,
-                "supplier_id": r.supplier_id,
-                "entity_name": business_name or username or str(r.supplier_id),
-                "beneficiary_name": r.beneficiary_name,
-                "bank_name": r.bank_name,
-                "branch_name": r.branch_name,
-                "account_number": r.account_number,
-                "iban": r.iban,
-                "swift_code": r.swift_code,
-                "routing_number": r.routing_number,
-                "currency": r.currency,
-                "bank_country": r.bank_country,
-                "verification_status": r.verification_status,
-                "provider": r.provider,
-                "provider_recipient_id": r.provider_recipient_id,
-                "provider_status": r.provider_status,
-                "created_at": r.created_at.isoformat() if r.created_at else None,
-            }
-            for r, username, business_name in rows
-        ]
+        sort_keys = [(SupplierBankAccount.created_at, "asc")]
+        result = keyset_paginate(query, sort_keys=sort_keys, cursor=cursor, page_size=safe_limit)
+        rows = result["items"]
+        return {
+            "items": [
+                {
+                    "id": r[0].id,
+                    "supplier_id": r[0].supplier_id,
+                    "entity_name": r[2] or r[1] or str(r[0].supplier_id),
+                    "beneficiary_name": r[0].beneficiary_name,
+                    "bank_name": r[0].bank_name,
+                    "branch_name": r[0].branch_name,
+                    "account_number": r[0].account_number,
+                    "iban": r[0].iban,
+                    "swift_code": r[0].swift_code,
+                    "routing_number": r[0].routing_number,
+                    "currency": r[0].currency,
+                    "bank_country": r[0].bank_country,
+                    "verification_status": r[0].verification_status,
+                    "provider": r[0].provider,
+                    "provider_recipient_id": r[0].provider_recipient_id,
+                    "provider_status": r[0].provider_status,
+                    "created_at": r[0].created_at.isoformat() if r[0].created_at else None,
+                }
+                for r in rows
+            ],
+            "next_cursor": result["next_cursor"],
+            "page_size": result["page_size"],
+            "has_next": result["has_next"],
+        }
     else:
-        rows = (
+        query = (
             db.query(LogisticsPartnerBankAccount, LogisticsPartner.name)
             .join(LogisticsPartner, LogisticsPartnerBankAccount.partner_id == LogisticsPartner.id)
             .filter(LogisticsPartnerBankAccount.verification_status == "pending")
-            .order_by(LogisticsPartnerBankAccount.created_at.asc())
-            .offset(safe_offset)
-            .limit(safe_limit)
-            .all()
         )
-        return [
-            {
-                "id": r.id,
-                "partner_id": r.partner_id,
-                "entity_name": partner_name or str(r.partner_id),
-                "beneficiary_name": r.beneficiary_name,
-                "bank_name": r.bank_name,
-                "branch_name": r.branch_name,
-                "account_number": r.account_number,
-                "iban": r.iban,
-                "swift_code": r.swift_code,
-                "routing_number": r.routing_number,
-                "currency": r.currency,
-                "bank_country": r.bank_country,
-                "verification_status": r.verification_status,
-                "provider": r.provider,
-                "provider_recipient_id": r.provider_recipient_id,
-                "provider_status": r.provider_status,
-                "created_at": r.created_at.isoformat() if r.created_at else None,
-            }
-            for r, partner_name in rows
-        ]
+        sort_keys = [(LogisticsPartnerBankAccount.created_at, "asc")]
+        result = keyset_paginate(query, sort_keys=sort_keys, cursor=cursor, page_size=safe_limit)
+        rows = result["items"]
+        return {
+            "items": [
+                {
+                    "id": r[0].id,
+                    "partner_id": r[0].partner_id,
+                    "entity_name": r[1] or str(r[0].partner_id),
+                    "beneficiary_name": r[0].beneficiary_name,
+                    "bank_name": r[0].bank_name,
+                    "branch_name": r[0].branch_name,
+                    "account_number": r[0].account_number,
+                    "iban": r[0].iban,
+                    "swift_code": r[0].swift_code,
+                    "routing_number": r[0].routing_number,
+                    "currency": r[0].currency,
+                    "bank_country": r[0].bank_country,
+                    "verification_status": r[0].verification_status,
+                    "provider": r[0].provider,
+                    "provider_recipient_id": r[0].provider_recipient_id,
+                    "provider_status": r[0].provider_status,
+                    "created_at": r[0].created_at.isoformat() if r[0].created_at else None,
+                }
+                for r in rows
+            ],
+            "next_cursor": result["next_cursor"],
+            "page_size": result["page_size"],
+            "has_next": result["has_next"],
+        }
 
 
 def verify_bank_account(

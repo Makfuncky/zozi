@@ -9,7 +9,7 @@ from infrastructure.database.database import get_db
 from infrastructure.database.schemas import CommissionCategoryRateCreate, CommissionBadgeTierCreate
 from infrastructure.security.dependencies import require_admin
 from rbac.dependencies import require_feature
-from domains.finance.services.ledger.general_ledger_service import (
+from domains.finance.services.ledger.general_ledger import (
     create_category_rate,
     list_category_rates,
     update_category_rate,

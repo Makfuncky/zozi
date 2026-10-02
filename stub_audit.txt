@@ -1,0 +1,720 @@
+backend/domains\analytics\subscribers.py:kpi_snapshot_requested
+payload: dict) -> None:
+    country_code = payload.get("country_code")
+    kpi = payload.get("kpi")
+    logger.info("analytics: KPI snapshot requested country=%s kpi=%s", country_code, kpi)
+    # TODO(PART 1.12): dispatch the actual snapshot recompute once the
+    # consolidated analytics service lives in this domain.
+
+
+def register_analytics_subscribers() -> None:
+    subscribe(EVENT_ANALYTICS_KPI_SNAPSHOT_REQUESTED, _on_kpi_snapshot_requested)
+
+
+__all__ = ["_on_kpi_snapshot_requested", "regist
+---
+backend/domains\audit\subscribers.py:order_status_changed
+payload: dict) -> None:
+    """Log order status changes for audit trail."""
+    logger.debug("audit: order status changed payload=%s", payload)
+
+
+def _on_governance_incident_created(payload: dict) -> None:
+    """Record governance incidents in the audit trail."""
+    logger.debug("audit: governance incident payload=%s", payload)
+
+
+def register_audit_subscribers() -> None:
+    subscribe("order.status_changed", _on_order_status_changed)
+    subscribe("governance.incident.created", _on_governance_i
+---
+backend/domains\audit\subscribers.py:governance_incident_created
+payload: dict) -> None:
+    """Record governance incidents in the audit trail."""
+    logger.debug("audit: governance incident payload=%s", payload)
+
+
+def register_audit_subscribers() -> None:
+    subscribe("order.status_changed", _on_order_status_changed)
+    subscribe("governance.incident.created", _on_governance_incident_created)
+
+
+__all__ = ["_on_order_status_changed", "_on_governance_incident_created", "register_audit_subscribers"]
+---
+backend/domains\comms\subscribers.py:ticket_status_changed
+payload: Dict[str, Any]) -> None:
+    """Notify the ticket owner when their ticket status changes."""
+    from domains.comms.services.shared.ticket.tickets_service import (
+        get_ticket_by_id_safe,
+    )
+
+    ticket_id = payload.get("ticket_id")
+    if not ticket_id:
+        return
+    ticket = get_ticket_by_id_safe(ticket_id)
+    if ticket is None:
+        return
+    _send_notification(
+        user_id=ticket.user_id,
+        type_="ticket_update",
+        title="Ticket updated",
+        
+---
+backend/domains\comms\subscribers.py:ticket_replied
+payload: Dict[str, Any]) -> None:
+    """Notify the ticket owner when a staff member replies."""
+    from domains.comms.services.shared.ticket.tickets_service import (
+        get_ticket_by_id_safe,
+    )
+
+    ticket_id = payload.get("ticket_id")
+    if not ticket_id:
+        return
+    ticket = get_ticket_by_id_safe(ticket_id)
+    if ticket is None:
+        return
+    is_admin = payload.get("is_admin", False)
+    if is_admin:
+        _send_notification(
+            user_id=ticket.user_id,
+     
+---
+backend/domains\comms\subscribers.py:notification_created
+payload: Dict[str, Any]) -> None:
+    """Hook for downstream notification delivery (push, email, SMS)."""
+    channel = payload.get("channel", "in_app")
+    if channel != "in_app":
+        logger.info(
+            "comms notification delivery queued",
+            notification_id=payload.get("notification_id"),
+            channel=channel,
+        )
+
+
+def _on_escalation_triggered(payload: Dict[str, Any]) -> None:
+    """Log escalation events and notify the escalated-to role."""
+    logger.info(
+ 
+---
+backend/domains\comms\subscribers.py:escalation_triggered
+payload: Dict[str, Any]) -> None:
+    """Log escalation events and notify the escalated-to role."""
+    logger.info(
+        "escalation triggered",
+        sla_log_id=payload.get("sla_log_id"),
+        escalated_to_role=payload.get("escalated_to_role"),
+        priority=payload.get("priority"),
+    )
+
+
+# ── cross-domain event subscribers ────────────────────────────────────────
+# These listen for events published by OTHER domains (orders, accounts, etc.)
+# and create comms-side effects (notific
+---
+backend/domains\comms\subscribers.py:order_created
+payload: Dict[str, Any]) -> None:
+    """Send an order-confirmation notification."""
+    user_id = payload.get("user_id")
+    order_id = payload.get("order_id")
+    if user_id and order_id:
+        _send_notification(
+            user_id=user_id,
+            type_="order_created",
+            title="Order placed",
+            message="Your order #{} has been received.".format(order_id),
+            link="/orders/{}".format(order_id),
+        )
+
+
+def _on_order_status_changed(payload: Dict[str, An
+---
+backend/domains\comms\subscribers.py:order_status_changed
+payload: Dict[str, Any]) -> None:
+    """Notify the customer when their order status changes."""
+    user_id = payload.get("user_id")
+    order_id = payload.get("order_id")
+    new_status = payload.get("new_status")
+    if user_id and order_id:
+        _send_notification(
+            user_id=user_id,
+            type_="order_update",
+            title="Order update",
+            message="Order #{} is now {}.".format(order_id, new_status),
+            link="/orders/{}".format(order_id),
+        )
+---
+backend/domains\comms\subscribers.py:user_registered
+payload: Dict[str, Any]) -> None:
+    """Send a welcome notification to newly registered users."""
+    user_id = payload.get("user_id")
+    if user_id:
+        _send_notification(
+            user_id=user_id,
+            type_="welcome",
+            title="Welcome!",
+            message="Thank you for joining. Explore our marketplace!",
+            link="/",
+        )
+
+
+def _on_product_deleted(payload: Dict[str, Any]) -> None:
+    """Notify customers when a product in their order is no longer av
+---
+backend/domains\comms\subscribers.py:product_deleted
+payload: Dict[str, Any]) -> None:
+    """Notify customers when a product in their order is no longer available."""
+    product_id = payload.get("product_id")
+    product_name = payload.get("product_name", "A product")
+    if product_id is None:
+        return
+    try:
+        from domains.orders.ports import Order, OrderItem
+
+        db_gen = get_db()
+        db = next(db_gen)
+        try:
+            affected_orders = (
+                db.query(Order)
+                .join(OrderItem, OrderItem.
+---
+backend/domains\country\subscribers.py:config_published
+event: Any) -> None:
+    logger.info(
+        "country config published: code=%s version=%s by=%s",
+        event.country_code,
+        event.version,
+        event.published_by,
+    )
+    # Future: invalidate country-scoped caches, notify dependent domains.
+
+
+def _on_staff_assigned(event: Any) -> None:
+    logger.info(
+        "country staff assigned: code=%s user=%s role=%s",
+        event.country_code,
+        event.user_id,
+        event.role_in_country,
+    )
+
+
+def _on_tax_changed(event: An
+---
+backend/domains\country\subscribers.py:staff_assigned
+event: Any) -> None:
+    logger.info(
+        "country staff assigned: code=%s user=%s role=%s",
+        event.country_code,
+        event.user_id,
+        event.role_in_country,
+    )
+
+
+def _on_tax_changed(event: Any) -> None:
+    logger.info(
+        "country tax rate changed: code=%s category=%s rate=%s",
+        event.country_code,
+        event.category_id,
+        event.tax_rate,
+    )
+
+
+def register_country_subscribers() -> None:
+    """Attach country-domain listeners to the canonical eve
+---
+backend/domains\country\subscribers.py:tax_changed
+event: Any) -> None:
+    logger.info(
+        "country tax rate changed: code=%s category=%s rate=%s",
+        event.country_code,
+        event.category_id,
+        event.tax_rate,
+    )
+
+
+def register_country_subscribers() -> None:
+    """Attach country-domain listeners to the canonical event bus."""
+    subscribe(CountryConfigPublished, _on_config_published)
+    subscribe(CountryStaffAssigned, _on_staff_assigned)
+    subscribe(CountryTaxRateChanged, _on_tax_changed)
+---
+backend/domains\customers\subscribers.py:order_completed
+payload: dict) -> None:
+    """React to a completed order: emit referral/review signals downstream."""
+    # PART 1.12: emit referral point events / refresh customer health once the
+    # customers write services own that logic.
+    logger.debug("customers: order completed payload=%s", payload)
+
+
+def _on_payment_refunded(payload: dict) -> None:
+    """React to a refund: may affect customer health scoring."""
+    logger.debug("customers: payment refunded payload=%s", payload)
+
+
+def register_custo
+---
+backend/domains\customers\subscribers.py:payment_refunded
+payload: dict) -> None:
+    """React to a refund: may affect customer health scoring."""
+    logger.debug("customers: payment refunded payload=%s", payload)
+
+
+def register_customers_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_completed)
+    subscribe("payments.refund.completed", _on_payment_refunded)
+
+
+__all__ = ["_on_order_completed", "_on_payment_refunded", "register_customers_subscribers"]
+---
+backend/domains\finance\subscribers.py:payment_confirmed
+payload: Dict[str, Any]) -> None:
+    """React to a payment confirmed in the payments domain.
+
+    The finance domain accrues commission and posts the corresponding
+    transaction-ledger entry once a payment settles.
+    """
+    logger.info(
+        "payment confirmed: order_id=%s amount=%s — accrue commission",
+        payload.get("order_id", "?"),
+        payload.get("amount", "?"),
+    )
+    # Future: post commission accrual to TransactionLedger, update balances.
+
+
+def _on_payment_refunded(p
+---
+backend/domains\finance\subscribers.py:payment_refunded
+payload: Dict[str, Any]) -> None:
+    """React to a payment refunded in the payments domain."""
+    logger.info(
+        "payment refunded: order_id=%s amount=%s — post refund ledger entry",
+        payload.get("order_id", "?"),
+        payload.get("amount", "?"),
+    )
+    # Future: post RefundLedger entry, reverse commission accrual.
+
+
+def _on_order_completed(payload: Dict[str, Any]) -> None:
+    """React to an order completion in the orders domain."""
+    logger.info(
+        "order completed
+---
+backend/domains\finance\subscribers.py:order_completed
+payload: Dict[str, Any]) -> None:
+    """React to an order completion in the orders domain."""
+    logger.info(
+        "order completed: order_id=%s — post settlement journal",
+        payload.get("order_id", "?"),
+    )
+    # Future: post SupplierSettlement journal entry when order fulfils.
+
+
+def register_finance_subscribers() -> None:
+    """Register all finance-domain event listeners on the canonical event bus."""
+    subscribe("payments.confirmed", _on_payment_confirmed)
+    subscribe("paym
+---
+backend/domains\logistics\subscribers.py:shipment_created
+payload: Dict[str, Any]) -> None:
+    """React to a shipment being created.
+
+    Triggers tracking initialization and customer notification.
+    """
+    logger.info(
+        "shipment created: shipment_id=%s order_id=%s carrier=%s — init tracking",
+        payload.get("shipment_id", "?"),
+        payload.get("order_id", "?"),
+        payload.get("carrier", "?"),
+    )
+    # Future: init tracking record, notify customer of shipment creation.
+
+
+def _on_shipment_in_transit(payload: Dict[str, Any]) 
+---
+backend/domains\logistics\subscribers.py:shipment_in_transit
+payload: Dict[str, Any]) -> None:
+    """React to a shipment entering transit.
+
+    Triggers status update and ETA recalculation.
+    """
+    logger.info(
+        "shipment in transit: shipment_id=%s order_id=%s location=%s — update status",
+        payload.get("shipment_id", "?"),
+        payload.get("order_id", "?"),
+        payload.get("current_location", "?"),
+    )
+    # Future: update tracking status, recalculate ETA, notify customer.
+
+
+def _on_shipment_delivered(payload: Dict[str, Any]) -
+---
+backend/domains\logistics\subscribers.py:shipment_delivered
+payload: Dict[str, Any]) -> None:
+    """React to a shipment being delivered.
+
+    Triggers delivery confirmation and order completion check.
+    """
+    logger.info(
+        "shipment delivered: shipment_id=%s order_id=%s — confirm delivery",
+        payload.get("shipment_id", "?"),
+        payload.get("order_id", "?"),
+    )
+    # Future: confirm delivery, trigger order completion flow.
+
+
+def _on_order_created(payload: Dict[str, Any]) -> None:
+    """React to an order being created in the orde
+---
+backend/domains\logistics\subscribers.py:order_created
+payload: Dict[str, Any]) -> None:
+    """React to an order being created in the orders domain.
+
+    Triggers shipment pre-allocation for the order's country.
+    """
+    logger.info(
+        "order created: order_id=%s country=%s — pre-allocate shipment",
+        payload.get("order_id", "?"),
+        payload.get("country_code", "?"),
+    )
+    # Future: pre-allocate shipment slot, assign default carrier by country.
+
+
+def _on_order_cancelled(payload: Dict[str, Any]) -> None:
+    """React to an or
+---
+backend/domains\logistics\subscribers.py:order_cancelled
+payload: Dict[str, Any]) -> None:
+    """React to an order being cancelled.
+
+    Triggers shipment cancellation and carrier release.
+    """
+    logger.info(
+        "order cancelled: order_id=%s reason=%s — cancel shipment",
+        payload.get("order_id", "?"),
+        payload.get("reason", "?"),
+    )
+    # Future: cancel pending shipments, release carrier allocation.
+
+
+def register_logistics_subscribers() -> None:
+    """Register all logistics-domain event listeners on the canonical event bu
+---
+backend/domains\media\subscribers.py:media_asset_created
+payload: dict) -> None:
+    logger.debug("media.asset.created received: %s", payload)
+
+
+def handle_media_asset_deleted(payload: dict) -> None:
+    logger.debug("media.asset.deleted received: %s", payload)
+
+
+def handle_upload_session_completed(payload: dict) -> None:
+    logger.debug("media.upload_session.completed received: %s", payload)
+
+
+__all__ = [
+    "handle_media_asset_created",
+    "handle_media_asset_deleted",
+    "handle_upload_session_completed",
+]
+---
+backend/domains\media\subscribers.py:media_asset_deleted
+payload: dict) -> None:
+    logger.debug("media.asset.deleted received: %s", payload)
+
+
+def handle_upload_session_completed(payload: dict) -> None:
+    logger.debug("media.upload_session.completed received: %s", payload)
+
+
+__all__ = [
+    "handle_media_asset_created",
+    "handle_media_asset_deleted",
+    "handle_upload_session_completed",
+]
+---
+backend/domains\media\subscribers.py:upload_session_completed
+payload: dict) -> None:
+    logger.debug("media.upload_session.completed received: %s", payload)
+
+
+__all__ = [
+    "handle_media_asset_created",
+    "handle_media_asset_deleted",
+    "handle_upload_session_completed",
+]
+---
+backend/domains\orders\subscribers.py:order_created
+event: Any) -> None:
+    """React to an order being created.
+
+    Triggers notification dispatch, fraud evaluation, and inventory reservation.
+    """
+    logger.info(
+        "order created: order_id=%s user_id=%s — dispatch notifications, evaluate fraud",
+        getattr(event, "order_id", "?"),
+        getattr(event, "user_id", "?"),
+    )
+    # Future: reserve inventory, enqueue fraud check, send confirmation notification.
+
+
+def _on_order_confirmed(event: Any) -> None:
+    """React to an ord
+---
+backend/domains\orders\subscribers.py:order_confirmed
+event: Any) -> None:
+    """React to an order being confirmed.
+
+    Triggers supplier notification and payout hold creation.
+    """
+    logger.info(
+        "order confirmed: order_id=%s — notify suppliers, create payout hold",
+        getattr(event, "order_id", "?"),
+    )
+    # Future: notify suppliers, create payout hold, start SLA timer.
+
+
+def _on_order_shipped(event: Any) -> None:
+    """React to an order being shipped.
+
+    Triggers shipment tracking initialization and customer notificati
+---
+backend/domains\orders\subscribers.py:order_shipped
+event: Any) -> None:
+    """React to an order being shipped.
+
+    Triggers shipment tracking initialization and customer notification.
+    """
+    logger.info(
+        "order shipped: order_id=%s tracking=%s — init tracking, notify customer",
+        getattr(event, "order_id", "?"),
+        getattr(event, "tracking_number", "?"),
+    )
+    # Future: init shipment tracking, send shipping notification.
+
+
+def _on_order_delivered(event: Any) -> None:
+    """React to an order being delivered.
+
+    Tr
+---
+backend/domains\orders\subscribers.py:order_delivered
+event: Any) -> None:
+    """React to an order being delivered.
+
+    Triggers payout release and review request.
+    """
+    logger.info(
+        "order delivered: order_id=%s — release payout, request review",
+        getattr(event, "order_id", "?"),
+    )
+    # Future: release supplier payout, request customer review.
+
+
+def _on_order_cancelled(event: Any) -> None:
+    """React to an order being cancelled.
+
+    Triggers inventory release, refund initiation, and supplier notification.
+    """
+   
+---
+backend/domains\orders\subscribers.py:order_cancelled
+event: Any) -> None:
+    """React to an order being cancelled.
+
+    Triggers inventory release, refund initiation, and supplier notification.
+    """
+    logger.info(
+        "order cancelled: order_id=%s reason=%s — release inventory, initiate refund",
+        getattr(event, "order_id", "?"),
+        getattr(event, "reason", "?"),
+    )
+    # Future: release reserved inventory, initiate refund, notify suppliers.
+
+
+def register_orders_subscribers() -> None:
+    """Register all orders-domain even
+---
+backend/domains\payments\subscribers.py:payment_authorized
+payload: Dict[str, Any]) -> None:
+    """Order marked as authorized but pending capture."""
+    logger.info(
+        "payment authorized: payment_id=%s order_id=%s country=%s amount=%s",
+        payload.get("payment_id", "?"),
+        payload.get("order_id", "?"),
+        payload.get("country_code", "?"),
+        payload.get("amount", "?"),
+    )
+    # Future: mark order as authorized in orders domain (via ports or by
+    # raising OrderAuthorized event downstream).
+
+
+def _on_payment_captured(pa
+---
+backend/domains\payments\subscribers.py:payment_captured
+payload: Dict[str, Any]) -> None:
+    """Funds settled — downstream effects: order confirmation, finance accrual."""
+    logger.info(
+        "payment captured: payment_id=%s order_id=%s country=%s amount=%s",
+        payload.get("payment_id", "?"),
+        payload.get("order_id", "?"),
+        payload.get("country_code", "?"),
+        payload.get("amount", "?"),
+    )
+    # Future: trigger OrderConfirmed and FinanceCommissionAccrued events.
+
+
+def _on_payment_failed(payload: Dict[str, Any]) -> N
+---
+backend/domains\payments\subscribers.py:payment_failed
+payload: Dict[str, Any]) -> None:
+    """Payment failed — log + alert + cancel pending order."""
+    logger.warning(
+        "payment failed: payment_id=%s order_id=%s error=%s",
+        payload.get("payment_id", "?"),
+        payload.get("order_id", "?"),
+        payload.get("error_code", "?"),
+    )
+    # Future: cancel order in pending state, send notification via comms.
+
+
+def _on_payment_refunded(payload: Dict[str, Any]) -> None:
+    """Refund processed — downstream: ledger reversal + custom
+---
+backend/domains\payments\subscribers.py:payment_refunded
+payload: Dict[str, Any]) -> None:
+    """Refund processed — downstream: ledger reversal + customer comms."""
+    logger.info(
+        "payment refunded: payment_id=%s refund_id=%s amount=%s",
+        payload.get("payment_id", "?"),
+        payload.get("refund_id", "?"),
+        payload.get("amount", "?"),
+    )
+    # Future: post refund ledger entry + send refund email/SMS.
+
+
+def register_payments_subscribers() -> None:
+    """Register all payments-domain event listeners on the canonical event b
+---
+backend/domains\promotions\subscribers.py:order_completed
+payload: dict) -> None:
+    """Track coupon usage when an order completes."""
+    logger.debug("promotions: order completed payload=%s", payload)
+
+
+def _on_user_registered(payload: dict) -> None:
+    """Issue welcome coupons for new users."""
+    logger.debug("promotions: user registered payload=%s", payload)
+
+
+def register_promotions_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_completed)
+    subscribe("accounts.user.registered", _on_user_registered)
+
+
+__all__ = ["_o
+---
+backend/domains\promotions\subscribers.py:user_registered
+payload: dict) -> None:
+    """Issue welcome coupons for new users."""
+    logger.debug("promotions: user registered payload=%s", payload)
+
+
+def register_promotions_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_completed)
+    subscribe("accounts.user.registered", _on_user_registered)
+
+
+__all__ = ["_on_order_completed", "_on_user_registered", "register_promotions_subscribers"]
+---
+backend/domains\security\subscribers.py:order_created
+payload: dict) -> None:
+    """Run fraud checks when an order is created."""
+    logger.debug("security: order created payload=%s", payload)
+
+
+def _on_user_login(payload: dict) -> None:
+    """Monitor login patterns for threat detection."""
+    logger.debug("security: user login payload=%s", payload)
+
+
+def register_security_subscribers():
+    """Register all security event subscribers.
+
+    Call this at app startup (e.g., from lifespan.py) to activate handlers.
+    Kept as a function (not import
+---
+backend/domains\security\subscribers.py:user_login
+payload: dict) -> None:
+    """Monitor login patterns for threat detection."""
+    logger.debug("security: user login payload=%s", payload)
+
+
+def register_security_subscribers():
+    """Register all security event subscribers.
+
+    Call this at app startup (e.g., from lifespan.py) to activate handlers.
+    Kept as a function (not import-time side effects) so the module stays
+    importable without triggering subscriptions.
+    """
+    subscribe("orders.order.created", _on_order_created)
+    subs
+---
+backend/domains\suppliers\subscribers.py:order_completed
+payload: dict) -> None:
+    """React to a completed order: refresh supplier analytics and health signals."""
+    logger.debug("suppliers: order completed payload=%s", payload)
+
+
+def _on_payment_refunded(payload: dict) -> None:
+    """React to a refund: may affect supplier settlement and health scoring."""
+    logger.debug("suppliers: payment refunded payload=%s", payload)
+
+
+def _on_product_moderated(payload: dict) -> None:
+    """React to product moderation outcome: update supplier document/veri
+---
+backend/domains\suppliers\subscribers.py:payment_refunded
+payload: dict) -> None:
+    """React to a refund: may affect supplier settlement and health scoring."""
+    logger.debug("suppliers: payment refunded payload=%s", payload)
+
+
+def _on_product_moderated(payload: dict) -> None:
+    """React to product moderation outcome: update supplier document/verification state."""
+    logger.debug("suppliers: product moderated payload=%s", payload)
+
+
+def _on_logistics_shipment_updated(payload: dict) -> None:
+    """React to shipment status changes: reconcile sup
+---
+backend/domains\suppliers\subscribers.py:product_moderated
+payload: dict) -> None:
+    """React to product moderation outcome: update supplier document/verification state."""
+    logger.debug("suppliers: product moderated payload=%s", payload)
+
+
+def _on_logistics_shipment_updated(payload: dict) -> None:
+    """React to shipment status changes: reconcile supplier order fulfillment state."""
+    logger.debug("suppliers: shipment updated payload=%s", payload)
+
+
+def register_suppliers_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_
+---
+backend/domains\suppliers\subscribers.py:logistics_shipment_updated
+payload: dict) -> None:
+    """React to shipment status changes: reconcile supplier order fulfillment state."""
+    logger.debug("suppliers: shipment updated payload=%s", payload)
+
+
+def register_suppliers_subscribers() -> None:
+    subscribe("orders.order.completed", _on_order_completed)
+    subscribe("payments.refund.completed", _on_payment_refunded)
+    subscribe("catalog.product.moderated", _on_product_moderated)
+    subscribe("logistics.shipment.updated", _on_logistics_shipment_updated)
+
+
+__
+---
+
+Total stubs: 44

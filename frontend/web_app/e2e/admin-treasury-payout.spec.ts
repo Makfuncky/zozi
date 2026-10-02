@@ -1,5 +1,5 @@
-/**
- * Admin Treasury & Payout — Playwright E2E Tests
+﻿/**
+ * Admin Treasury & Payout â€” Playwright E2E Tests
  *
  * Covers Treasury dashboard, ledger filtering, cash position,
  * and payout batches on /admin/finance?section=treasury.
@@ -7,7 +7,7 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
-const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):8000/;
+const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):3100/;
 
 async function fulfillJson(route: Route, body: unknown, status = 200) {
   await route.fulfill({
@@ -43,7 +43,7 @@ async function mockAdminSession(page: Page) {
   await btn.waitFor();
   const form = btn.locator("xpath=ancestor::form[1]");
   await form.locator("input:not([type='password']):visible").first().fill("admin@zozi.com");
-  await form.locator("input[type='password']:visible").first().fill("admin123");
+  await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
   await btn.click();
   await page.waitForTimeout(5000);
   await page.goto("/admin/finance?section=treasury", { waitUntil: "domcontentloaded", timeout: 120_000 });
@@ -156,4 +156,5 @@ test.describe("Admin Treasury & Payout", () => {
     await expect(page.getByText(/payout/i)).toBeVisible();
   });
 });
+
 

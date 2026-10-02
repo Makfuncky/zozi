@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -30,16 +30,16 @@ async function loginAsAdmin(page: Page) {
   const count = await inputs.count();
   if (count >= 2) {
     await inputs.nth(0).fill("admin@zozi.com");
-    await inputs.nth(1).fill("admin123");
+    await inputs.nth(1).fill("E2eAdmin#2026");
   } else {
     await page.locator("input[name='username']:visible, input[type='email']:visible").first().fill("admin@zozi.com");
-    await page.locator("input[type='password']:visible").first().fill("admin123");
+    await page.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
   }
   await submitButton.click();
   await waitForSessionFlag(page);
 }
 
-test.describe("Finance Module — E2E Lifecycle", () => {
+test.describe("Finance Module â€” E2E Lifecycle", () => {
   let page: Page;
 
   test.beforeAll(async ({ browser }) => {
@@ -89,7 +89,7 @@ test.describe("Finance Module — E2E Lifecycle", () => {
     const code = "9999";
     const name = "Test E2E Account";
 
-    // Click to expand/create — use "CREATE" button
+    // Click to expand/create â€” use "CREATE" button
     const createBtn = page.locator("button:has-text('CREATE'), button:has-text('Create'), button:has-text('New'), button[aria-label*='create' i]").first();
     if (await createBtn.isVisible()) {
       await createBtn.click();
@@ -206,3 +206,4 @@ test.describe("Finance Module — E2E Lifecycle", () => {
     });
   });
 });
+

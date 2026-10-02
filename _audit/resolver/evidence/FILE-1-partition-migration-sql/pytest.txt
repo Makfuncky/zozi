@@ -1,0 +1,148 @@
+================================================================================
+FILE-1-partition-migration-sql  ·  STATIC + LINT EVIDENCE
+================================================================================
+Agent        : RES-FILE-1-partition-migration-sql
+Contract     : _audit/resolver/contracts/FILE-1-partition-migration-sql.md
+Contract hash: D2D6AC7CB4EAF020A3BAD15486B047DEA281F4F21DBA55989FF16E6034E4F1B3
+File         : backend/alembic/versions/
+               2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif.py
+Finding      : SEC-002  (security / SQL construction)
+Executed at  : 2026-10-02T18:58:26Z (UTC)
+
+--------------------------------------------------------------------------------
+NO PYTEST RUN APPLIES
+--------------------------------------------------------------------------------
+Contract §14 ("Test-change authorization: None") authorises NO test changes, and
+§20 ("Paired test: Test path: none permitted (see 14). Use 19 plus the evidence
+in 15.") directs this file block to be proven by the static verify command (§19)
+plus the evidence in §15.
+
+Contract §9 freezes all existing tests ("None. Do not modify any existing
+test."), and §13 forbids deletion. No test file was created, read for
+modification, or executed. This file was verified entirely statically.
+
+================================================================================
+EVIDENCE ITEM 1 - Contract §15 static proof: raw form is GONE
+================================================================================
+Command:
+  Select-String -Path <file> -Pattern 'public\.\{p\}'
+
+Output:
+  matches: 0
+
+Verdict: PASS (0 hits, exit count 0). The raw partition name no longer
+         reaches a SQL string.
+
+================================================================================
+EVIDENCE ITEM 2 - Contract §15 static proof: identifier form is PRESENT
+================================================================================
+Command:
+  Select-String -Path <file> -Pattern 'p_id'
+
+Output:
+  305: p_id = sql_identifier(p)
+  310: {"schema": SCHEMA_PUBLIC, "tbl": parent_table, "p": p_id},
+  325: f"SELECT * FROM public.{p_id}" for p_id in map(sql_identifier, partitions)
+  342: p_id = sql_identifier(p)
+  345: {"schema": SCHEMA_PUBLIC, "p": p_id},
+
+Contract §15 variant, 'public\.\{p_id\}':
+  matches: 1
+  325: f"SELECT * FROM public.{p_id}" for p_id in map(sql_identifier, partitions)
+
+Verdict: PASS (5 hits for 'p_id', 1 hit on the SELECT path, matching the
+         contract's >= 1 criterion).
+
+================================================================================
+EVIDENCE ITEM 3 - Contract §19 verify command
+================================================================================
+Command:
+  python -c "import ast;ast.parse(open(r'<file>',encoding='utf-8').read())"
+
+Output:
+  (no output)
+  exit: 0
+
+Verdict: PASS. File parses cleanly under Python's AST parser.
+
+================================================================================
+EVIDENCE ITEM 4 - Alembic linear history (Law 49) - READ-ONLY
+================================================================================
+Note: `python -m alembic` is not usable in this tree (alembic ships no
+__main__); the console script is used instead. No database was contacted -
+`heads` reads only migration script metadata from disk.
+
+Command:
+  cd backend; alembic -c alembic/alembic.ini heads
+
+Output:
+  20261001_0001 (head)
+  EXIT: 0
+
+Verdict: PASS. Exactly one head. History remains linear (Law 49).
+         No `upgrade`, `downgrade`, or any DB-writing command was run.
+
+================================================================================
+EVIDENCE ITEM 5 - ruff lint
+================================================================================
+ruff version: 0.15.12  (installed at
+  C:\Users\user\AppData\Local\Programs\Python\Python310\Scripts\ruff.exe;
+  ruff is NOT present in backend/.venv/Scripts)
+
+Command:
+  ruff check backend/alembic/versions/2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif.py
+
+Output:
+  All checks passed!
+  EXIT: 0
+
+Verdict: PASS. No lint regressions.
+
+================================================================================
+BEHAVIOURAL EQUIVALENCE PROOF (contract §3 - frozen downgrade behaviour)
+================================================================================
+The emitted SQL is byte-for-byte identical before and after the change.
+`sql_identifier()` is `quoted_name(name, False)`; for a bind-free f-string
+interpolation, `f"{quoted_name(x, False)}"` renders exactly `x`.
+
+Executed (Python 3.13 / SQLAlchemy 2.0.52):
+  partitions=['audit_logs_y2026_m07','audit_logs_y2026_m08','audit_logs_default_x']
+  BEFORE: [f'SELECT * FROM public.{p}' for p in partitions]
+  AFTER : [f'SELECT * FROM public.{p_id}' for p_id in map(sql_identifier, partitions)]
+
+Output:
+  BEFORE:
+     SELECT * FROM public.audit_logs_y2026_m07
+     SELECT * FROM public.audit_logs_y2026_m08
+     SELECT * FROM public.audit_logs_default_x
+  AFTER :
+     SELECT * FROM public.audit_logs_y2026_m07
+     SELECT * FROM public.audit_logs_y2026_m08
+     SELECT * FROM public.audit_logs_default_x
+  BYTE IDENTICAL: True
+
+  UNION_ALL (after):
+     SELECT * FROM public.audit_logs_y2026_m07 UNION ALL SELECT * FROM public.audit_logs_y2026_m08 UNION ALL SELECT * FROM public.audit_logs_default_x
+
+Consequence: the post-downgrade schema state is provably unchanged.
+Contract §3 (detach -> LIKE ... INCLUDING ALL -> union copy -> drop parent)
+is preserved in full. No statement was added, removed, or reordered.
+upgrade() was not touched. Partition-name derivation was not touched.
+
+================================================================================
+FILE INTEGRITY
+================================================================================
+  Pre-edit  SHA256: 877309B3D8901B917BF260C90BBB0A6483E21D0BC104E0A35C318742B5372593
+  Post-edit SHA256: F92D5E4584BB8478823128F442AA446CEFA24A9134B5B2A1FC2EAB8D9207C375
+
+  Line count : 352 before, 352 after (no line added or deleted)
+  Encoding   : UTF-8, no BOM (leading bytes 22 22 22)
+  Line endings: 352 CRLF, 0 bare LF (unchanged)
+
+  NOTE on `git diff`: the diff against HEAD also shows a hunk at lines 43-49
+  (splitting `from sqlalchemy.sql import quoted_name as sql_identifier` into an
+  import plus a local `sql_identifier` def). That hunk was ALREADY present in
+  the working tree before this agent began - it is visible in the pre-edit
+  read-back and is NOT part of this contract's change. The only line this
+  contract changed is line 325.
+================================================================================

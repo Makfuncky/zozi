@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Admin Payment Gateway Management - Playwright E2E Tests
  *
  * Tests gateway-template selection, saving, and connection testing on the
@@ -8,7 +8,7 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
-// ── helpers ────────────────────────────────────────────────────────────────
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function fulfillJson(route: Route, body: unknown, status = 200) {
   await route.fulfill({
@@ -119,12 +119,12 @@ async function mockAdminSession(page: Page) {
   }
 
   await page.goto("/admin/login", { waitUntil: "domcontentloaded", timeout: 120_000 });
-  await submitCredentialForm(page, "admin@zozi.com", "admin123");
+  await submitCredentialForm(page, "admin@zozi.com", "E2eAdmin#2026");
   try {
     await waitForSessionFlag(page, 30_000);
   } catch {
     await page.goto("/admin/login", { waitUntil: "domcontentloaded", timeout: 120_000 });
-    await submitCredentialForm(page, "admin", "admin123");
+    await submitCredentialForm(page, "admin", "E2eAdmin#2026");
   }
 
   await waitForSessionFlag(page, 60_000);
@@ -156,7 +156,7 @@ async function mockPaymentsApi(page: Page) {
     });
   });
 
-  // Gateway list — includes all 6 built-in providers
+  // Gateway list â€” includes all 6 built-in providers
   await page.route("**/payments/config/gateways", async (route) => {
     if (route.request().method() !== "GET") {
       await route.continue();
@@ -222,7 +222,7 @@ function _makeGateway(code: string, name: string, adapterSupported: boolean) {
   };
 }
 
-// ── Gateway Provider Dropdown ──────────────────────────────────────────────
+// â”€â”€ Gateway Provider Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test.describe("admin payment gateway management", () => {
   test.describe.configure({ timeout: 120_000 });
@@ -434,4 +434,5 @@ test.describe("admin payment gateway management", () => {
     }
   });
 });
+
 

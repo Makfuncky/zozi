@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, ShoppingCart } from "@/lib/icons";
-import { useCurrencyStore } from "@/stores/currencyStore";
+import { useCurrencyStore } from "@/lib/currencyStore";
 import { ORDER_STATUS_TONE, type RecentOrderData } from "@/lib/supplierDashboardConfig";
 
 interface RecentOrdersPanelProps {

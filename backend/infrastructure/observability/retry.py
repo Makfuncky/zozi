@@ -25,8 +25,8 @@ class RetryExhausted(Exception):
 
 
 def with_retry(
-    max_attempts: int = 3,
-    base_delay: float = 0.5,
+    max_attempts: int = 5,
+    base_delay: float = 1.0,
     max_delay: float = 30.0,
     exponential_base: float = 2.0,
     jitter: bool = True,
@@ -63,11 +63,13 @@ def with_retry(
                         )
                         logger.warning(
                             "retry_attempt",
-                            function=func_name,
-                            attempt=attempt,
-                            max_attempts=max_attempts,
-                            delay=delay,
-                            error=str(exc),
+                            extra={
+                                "function": func_name,
+                                "attempt": attempt,
+                                "max_attempts": max_attempts,
+                                "delay": delay,
+                                "error": str(exc),
+                            },
                         )
                         if on_retry:
                             on_retry(exc, attempt)
@@ -95,11 +97,13 @@ def with_retry(
                     )
                     logger.warning(
                         "retry_attempt",
-                        function=func_name,
-                        attempt=attempt,
-                        max_attempts=max_attempts,
-                        delay=delay,
-                        error=str(exc),
+                        extra={
+                            "function": func_name,
+                            "attempt": attempt,
+                            "max_attempts": max_attempts,
+                            "delay": delay,
+                            "error": str(exc),
+                        },
                     )
                     if on_retry:
                         on_retry(exc, attempt)

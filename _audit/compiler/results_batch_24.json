@@ -1,0 +1,52 @@
+{
+  "batch": 24,
+  "files": [
+    {
+      "path": "backend/domains/catalog/services/search_service.py",
+      "findings": [
+        {
+          "id": "FEAT-027",
+          "status": "INVALID",
+          "evidence": "Line 41: `except ConnectionError as exc: logger.warning(\"Search embedding provider unreachable: %s\", exc); return 0` — ConnectionError is caught and logged at WARNING, returns 0. This IS graceful degradation per Law 30 (providers degrade gracefully) and Law 75 (external failures log WARNING).",
+          "counter_evidence": "The Delta field in the audit entry itself states \"Graceful degradation implemented\" and Fix is \"None\". The code already satisfies the Target.",
+          "benchmark_mismatch": "None — the finding contradicts itself: it describes compliant behavior but is flagged as NEW.",
+          "notes": "False positive. The search service already implements graceful degradation. The finding appears to have been incorrectly classified as NEW when the code already meets the benchmark requirement."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/finance/services/finance_service.py",
+      "findings": [
+        {
+          "id": "LOGIC-001",
+          "status": "VALID",
+          "evidence": "Line 66: `class CodRemittanceRequest(BaseModel): amount: float` — COD remittance amount is typed as float, violating Law 19 (No float for money).",
+          "counter_evidence": "None — the float type is present in the current source.",
+          "benchmark_mismatch": "Directly contradicts ARCHITECTURE_STACK.md Law 19: \"Monetary values MUST use Decimal or Numeric. Float FORBIDDEN for money.\"",
+          "notes": "Confirmed: float is still used for a monetary request model. Fix should change to `Decimal` with appropriate Field constraints."
+        },
+        {
+          "id": "LOGIC-002",
+          "status": "VALID",
+          "evidence": "Lines 576-593: `def reconcile_in_multi_currency(amount: float, ...)` — signature accepts float; `fx = rate.__float__()` then `converted = round(amount * fx, 2)` uses float arithmetic throughout. The intermediate `rate` Decimal is explicitly cast to float before multiplication.",
+          "counter_evidence": "None — float arithmetic is still performed on monetary values.",
+          "benchmark_mismatch": "Directly contradicts ARCHITECTURE_STACK.md Law 19: float arithmetic introduces rounding errors in financial settlement.",
+          "notes": "Confirmed: the function signature and body both use float for currency conversion. The existing `Decimal` import at line 588 is unused for the actual multiplication."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/finance/services/ledger/general_ledger.py",
+      "findings": [
+        {
+          "id": "FEAT-040",
+          "status": "INVALID",
+          "evidence": "Line 5782: `def calculate_tax(amount: Decimal, country_code: str, db: Session, *, ...)` — the tax calculation function already accepts `Decimal`, not float. The function uses `round_money(to_decimal(amount))` and all arithmetic is Decimal-based.",
+          "counter_evidence": "The finding claims \"tax calculation function signature accepts float\" but the actual signature at line 5782 uses `amount: Decimal`. The function body uses `Decimal` arithmetic throughout (lines 5791-5806).",
+          "benchmark_mismatch": "None — the finding is factually incorrect about the current code state.",
+          "notes": "False positive. The `calculate_tax` function already complies with Law 19. This may have been true in an earlier version of the file but has since been corrected."
+        }
+      ]
+    }
+  ]
+}

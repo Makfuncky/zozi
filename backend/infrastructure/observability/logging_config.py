@@ -32,6 +32,10 @@ PII_PATTERNS = [
     (re.compile(r'\b\d{13,19}\b'), '****'),
     (re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'), '***@***.***'),
     (re.compile(r'\b\d{3}[-\s]?\d{3}[-\s]?\d{4}\b'), '***-***-****'),
+    (re.compile(r'\b\d{3}-\d{2}-\d{4}\b'), '***-**-****'),
+    (re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b'), '***.***.***.***'),
+    (re.compile(r'\b\d{4}-\d{2}-\d{2}\b'), '****-**-**'),
+    (re.compile(r'\b\d{1,5}\s+[\w\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct)\b'), '[ADDRESS]'),
 ]
 
 

@@ -11,7 +11,8 @@ from typing import Any, Optional
 
 import bcrypt
 from fastapi import HTTPException, status
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 
 from infrastructure.utils.config import settings
 
@@ -47,7 +48,7 @@ def _coerce_failed_login_entry(entry: object, *, now: float) -> tuple[int, float
     return 0, now + LOGIN_LOCKOUT_TTL
 
 
-def _get_redis():
+def _get_valkey():
     from infrastructure.valkey.client import valkey_client
 
     client = valkey_client()
@@ -60,7 +61,7 @@ def _get_redis():
 
 
 def get_redis_health_status() -> dict[str, object]:
-    client = _get_redis()
+    client = _get_valkey()
     return {
         "available": client is not None,
         "shared_state": client is not None,
@@ -77,35 +78,35 @@ def _prune_memory_blacklist() -> None:
 
 
 def blacklist_token(jti: str, ttl_seconds: int) -> None:
-    client = _get_redis()
+    client = _get_valkey()
     if client is not None:
         try:
             client.setex(f"bl:{jti}", ttl_seconds, "1")
             return
         except Exception as exc:
-            logger.debug("Redis blacklist_token failed: %s", exc)
+            logger.debug("Valkey blacklist_token failed: %s", exc)
 
     app_env = os.environ.get("APP_ENV", "").lower()
     if app_env == "production":
-        logger.error("Redis unavailable for token blacklist in production - token revocation may fail")
-        raise RuntimeError("Redis unavailable - cannot blacklist token")
+        logger.error("Valkey unavailable for token blacklist in production - token revocation may fail")
+        raise RuntimeError("Valkey unavailable - cannot blacklist token")
     
-    logger.warning("Redis unavailable - falling back to in-memory token blacklist (not shared across workers)")
+    logger.warning("Valkey unavailable - falling back to in-memory token blacklist (not shared across workers)")
     _memory_blacklist[jti] = time.monotonic() + ttl_seconds
     _prune_memory_blacklist()
 
 
 def is_token_blacklisted(jti: str) -> bool:
-    client = _get_redis()
+    client = _get_valkey()
     if client is not None:
         try:
             return client.exists(f"bl:{jti}") == 1
         except Exception as exc:
-            logger.debug("Redis is_token_blacklisted failed: %s", exc)
+            logger.debug("Valkey is_token_blacklisted failed: %s", exc)
 
     app_env = os.environ.get("APP_ENV", "").lower()
     if app_env == "production":
-        logger.error("Redis unavailable for token blacklist check in production - failing closed")
+        logger.error("Valkey unavailable for token blacklist check in production - failing closed")
         return True
 
     expiry = _memory_blacklist.get(jti)
@@ -118,7 +119,7 @@ def is_token_blacklisted(jti: str) -> bool:
 
 
 def record_failed_login(identifier: str) -> int:
-    client = _get_redis()
+    client = _get_valkey()
     key = f"fl:{identifier}"
     if client is not None:
         try:
@@ -127,7 +128,7 @@ def record_failed_login(identifier: str) -> int:
                 client.expire(key, LOGIN_LOCKOUT_TTL)
             return count
         except Exception as exc:
-            logger.debug("Redis record_failed_login failed: %s", exc)
+            logger.debug("Valkey record_failed_login failed: %s", exc)
 
     now = time.monotonic()
     count, expiry = _coerce_failed_login_entry(
@@ -143,14 +144,14 @@ def record_failed_login(identifier: str) -> int:
 
 
 def is_account_locked(identifier: str) -> bool:
-    client = _get_redis()
+    client = _get_valkey()
     key = f"fl:{identifier}"
     if client is not None:
         try:
             raw = client.get(key)
             return raw is not None and int(raw) >= LOGIN_FAIL_MAX
         except Exception as exc:
-            logger.debug("Redis is_account_locked failed: %s", exc)
+            logger.debug("Valkey is_account_locked failed: %s", exc)
 
     entry = _memory_failed_logins.get(identifier)
     if entry is None:
@@ -164,14 +165,14 @@ def is_account_locked(identifier: str) -> bool:
 
 
 def clear_failed_logins(identifier: str) -> None:
-    client = _get_redis()
+    client = _get_valkey()
     key = f"fl:{identifier}"
     if client is not None:
         try:
             client.delete(key)
             return
         except Exception as exc:
-            logger.debug("Redis clear_failed_logins failed: %s", exc)
+            logger.debug("Valkey clear_failed_logins failed: %s", exc)
     _memory_failed_logins.pop(identifier, None)
 
 
@@ -216,24 +217,24 @@ ADMIN_2FA_VERIFY_TTL = 900  # 15 minutes
 
 def mark_refresh_token_used(family_id: str, jti: str) -> None:
     """Mark a specific refresh JTI as used (reuse = family compromised)."""
-    client = _get_redis()
+    client = _get_valkey()
     if client is not None:
         try:
             client.setex(f"rtu:{family_id}:{jti}", REFRESH_TOKEN_USED_TTL, "1")
             return
         except Exception as exc:
-            logger.debug("Redis mark_refresh_token_used failed: %s", exc)
+            logger.debug("Valkey mark_refresh_token_used failed: %s", exc)
     _memory_blacklist[f"rtu:{family_id}:{jti}"] = time.monotonic() + REFRESH_TOKEN_USED_TTL
 
 
 def is_refresh_token_used(family_id: str, jti: str) -> bool:
     """Check if this refresh JTI was already consumed (replay detected)."""
-    client = _get_redis()
+    client = _get_valkey()
     if client is not None:
         try:
             return client.exists(f"rtu:{family_id}:{jti}") == 1
         except Exception as exc:
-            logger.debug("Redis is_refresh_token_used failed: %s", exc)
+            logger.debug("Valkey is_refresh_token_used failed: %s", exc)
     expiry = _memory_blacklist.get(f"rtu:{family_id}:{jti}")
     if expiry is None:
         return False
@@ -245,24 +246,24 @@ def is_refresh_token_used(family_id: str, jti: str) -> bool:
 
 def revoke_refresh_family(family_id: str) -> None:
     """Revoke an entire refresh token family (after reuse detection)."""
-    client = _get_redis()
+    client = _get_valkey()
     if client is not None:
         try:
             client.setex(f"rtf:{family_id}", REFRESH_TOKEN_USED_TTL, "1")
             return
         except Exception as exc:
-            logger.debug("Redis revoke_refresh_family failed: %s", exc)
+            logger.debug("Valkey revoke_refresh_family failed: %s", exc)
     _memory_blacklist[f"rtf:{family_id}"] = time.monotonic() + REFRESH_TOKEN_USED_TTL
 
 
 def is_refresh_family_revoked(family_id: str) -> bool:
     """Check if a refresh token family has been revoked."""
-    client = _get_redis()
+    client = _get_valkey()
     if client is not None:
         try:
             return client.exists(f"rtf:{family_id}") == 1
         except Exception as exc:
-            logger.debug("Redis is_refresh_family_revoked failed: %s", exc)
+            logger.debug("Valkey is_refresh_family_revoked failed: %s", exc)
     expiry = _memory_blacklist.get(f"rtf:{family_id}")
     if expiry is None:
         return False
@@ -287,7 +288,7 @@ def verify_temp_token(token: str) -> dict[str, Any]:
     """Verify a short-lived temp token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     if payload.get("type") != "temp":
         raise HTTPException(status_code=401, detail="Invalid token type")
@@ -312,7 +313,7 @@ def validate_password_complexity(password: str) -> None:
 def _decode_and_validate(token: str, token_type: str) -> dict[str, Any]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError as exc:
+    except jwt.InvalidTokenError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
     if payload.get("type") != token_type:
@@ -344,7 +345,7 @@ def verify_refresh_token(token: str) -> tuple[str, str]:
 def decode_token(token: str, expected_type: str, check_blacklist: bool = True) -> dict[str, Any]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError as exc:
+    except jwt.InvalidTokenError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
     if expected_type and payload.get("type") != expected_type:
         raise HTTPException(
@@ -422,7 +423,7 @@ __all__ = [
     "REFRESH_TOKEN_EXPIRE_DAYS",
     "LOGIN_FAIL_MAX",
     "LOGIN_LOCKOUT_TTL",
-    "_get_redis",
+    "_get_valkey",
     "_memory_blacklist",
     "_memory_failed_logins",
     "blacklist_token",

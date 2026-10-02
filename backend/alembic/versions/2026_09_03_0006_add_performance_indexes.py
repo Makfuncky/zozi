@@ -23,7 +23,10 @@ import sqlalchemy as sa
 from typing import Sequence, Union
 
 from alembic import op
-from sqlalchemy.sql import quoted_name as sql_identifier
+from sqlalchemy.sql import quoted_name
+
+def sql_identifier(name: str):
+    return quoted_name(name, False)
 
 revision: str = "2026_09_03_0006"
 down_revision: Union[str, None] = "2026_09_03_0005"

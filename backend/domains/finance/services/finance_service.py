@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import Body, Depends, Query
-
 ALLOWED_BANK_ACCOUNT_KINDS = {"supplier", "logistics_partner"}
 
 from providers.finance.bank_api import BankApiError, dispatch_batch, test_connection
@@ -51,9 +49,9 @@ from domains.finance.services.treasury.cash_management_service import CashManage
 ctrl = CashManagementService(None)
 
 
-def _get_general_ledger_service():
+def _get_general_ledger():
     """Lazy import to avoid circular dependency."""
-    from domains.finance.services.ledger.general_ledger_service import (
+    from domains.finance.services.ledger.general_ledger import (
         delete_supplier_commission_override as _delete_supplier_commission_override,
         get_product_commission_override as _get_product_commission_override,
         list_product_commission_overrides as _list_product_commission_overrides,
@@ -271,17 +269,17 @@ def admin_reject_cod_remittance_receipt(receipt_id: int, body: ReceiptReviewRequ
 
 def supplier_financial_summary(db: Session, current_user: dict):
     if current_user.get("role") not in ("supplier", "admin"):
-        return {"error": "Supplier access required"}, 403
+        raise PermissionError("Supplier access required")
     return ctrl.supplier_get_financial_summary(current_user["id"], db)
 
 def supplier_list_settlements(skip: int, limit: int, status: Optional[str], db: Session, current_user: dict):
     if current_user.get("role") not in ("supplier", "admin"):
-        return []
+        raise PermissionError("Supplier access required")
     return ctrl.supplier_list_settlements(current_user["id"], db, skip=skip, limit=limit, status=status)
 
 def supplier_list_ledger(skip: int, limit: int, db: Session, current_user: dict):
     if current_user.get("role") not in ("supplier", "admin"):
-        return []
+        raise PermissionError("Supplier access required")
     return ctrl.supplier_list_ledger_entries(current_user["id"], db, skip=skip, limit=limit)
 
 def logistics_financial_summary(db: Session, current_user: dict):
@@ -311,15 +309,14 @@ def logistics_list_ledger(skip: int, limit: int, db: Session, current_user: dict
 # === Merged from commission_service.py ===
 
 
+from decimal import Decimal
 from typing import Optional
-
-from fastapi import Depends, Query
 
 from pydantic import BaseModel, Field
 
 from sqlalchemy.orm import Session
 
-from domains.finance.services.ledger.general_ledger_service import (
+from domains.finance.services.ledger.general_ledger import (
     get_global_config, update_global_config, list_category_rates, update_category_rate,
     list_badge_tiers, update_badge_tier, list_ledger_entries, create_ledger_adjustment,
     preview_commission, list_all_supplier_commissions, get_supplier_commission,
@@ -332,41 +329,41 @@ from infrastructure.database.database import get_db
 from infrastructure.database.schemas import ListPage
 
 class CommissionRateBody(BaseModel):
-    rate: float = Field(..., ge=0.0, le=1.0, description="Commission rate as decimal, e.g. 0.12 for 12%")
+    rate: Decimal = Field(..., ge=0.0, le=1.0, description="Commission rate as decimal, e.g. 0.12 for 12%")
     note: Optional[str] = Field(None, max_length=500)
 
 class GlobalConfigBody(BaseModel):
-    default_rate: Optional[float] = Field(None, ge=0.0, le=1.0)
-    low_value_threshold: Optional[float] = Field(None, ge=0.0)
-    fixed_cap_amount: Optional[float] = Field(None, ge=0.0)
+    default_rate: Optional[Decimal] = Field(None, ge=0.0, le=1.0)
+    low_value_threshold: Optional[Decimal] = Field(None, ge=0.0)
+    fixed_cap_amount: Optional[Decimal] = Field(None, ge=0.0)
     fixed_cap_enabled: Optional[bool] = None
     margin_protection_enabled: Optional[bool] = None
-    margin_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
+    margin_threshold: Optional[Decimal] = Field(None, ge=0.0, le=1.0)
 
 class CategoryRateBody(BaseModel):
-    rate: Optional[float] = Field(None, ge=0.0, le=1.0)
+    rate: Optional[Decimal] = Field(None, ge=0.0, le=1.0)
     is_active: Optional[bool] = None
     notes: Optional[str] = Field(None, max_length=500)
     category_display_name: Optional[str] = Field(None, max_length=150)
 
 class BadgeTierBody(BaseModel):
-    commission_rate: Optional[float] = Field(None, ge=0.0, le=1.0)
-    setup_fee: Optional[float] = Field(None, ge=0.0)
-    recurring_fee: Optional[float] = Field(None, ge=0.0)
+    commission_rate: Optional[Decimal] = Field(None, ge=0.0, le=1.0)
+    setup_fee: Optional[Decimal] = Field(None, ge=0.0)
+    recurring_fee: Optional[Decimal] = Field(None, ge=0.0)
     recurring_interval: Optional[str] = Field(None, max_length=20)
     benefits_json: Optional[str] = None
     min_fulfilled_orders: Optional[int] = None
-    min_monthly_revenue: Optional[float] = None
+    min_monthly_revenue: Optional[Decimal] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
 
 class LedgerAdjustmentBody(BaseModel):
-    new_amount: float = Field(..., ge=0.0)
+    new_amount: Decimal = Field(..., ge=0.0)
     reason: str = Field(..., min_length=5, max_length=1000)
 
 class PreviewBody(BaseModel):
     supplier_id: int
-    order_value: float = Field(..., gt=0.0)
+    order_value: Decimal = Field(..., gt=0.0)
     category_slug: Optional[str] = None
 
 def get_global_config(db: Session, current_user: dict):
@@ -426,7 +423,7 @@ def set_supplier_commission(supplier_id: int, body: CommissionRateBody, db: Sess
     )
 
 def delete_supplier_commission_override(supplier_id: int, db: Session, current_user: dict):
-    _delete_supplier_commission_override, _, _, _ = _get_general_ledger_service()
+    _delete_supplier_commission_override, _, _, _ = _get_general_ledger()
     return _delete_supplier_commission_override(
         supplier_id=supplier_id,
         acting_user=current_user,
@@ -434,14 +431,14 @@ def delete_supplier_commission_override(supplier_id: int, db: Session, current_u
     )
 
 def get_product_commission_override(product_id: int, db: Session, current_user: dict):
-    _, _get_product_commission_override, _, _ = _get_general_ledger_service()
+    _, _get_product_commission_override, _, _ = _get_general_ledger()
     result = _get_product_commission_override(product_id, db)
     if result is None:
         return {"override": None, "message": "No override - using category/badge/default rate"}
     return result
 
 def list_product_commission_overrides(search: Optional[str], supplier_id: Optional[int], limit: int, db: Session, current_user: dict):
-    _, _, _list_product_commission_overrides, _ = _get_general_ledger_service()
+    _, _, _list_product_commission_overrides, _ = _get_general_ledger()
     return _list_product_commission_overrides(
         db,
         search=search,
@@ -450,7 +447,7 @@ def list_product_commission_overrides(search: Optional[str], supplier_id: Option
     )
 
 def set_product_commission_override(product_id: int, body: CommissionRateBody, db: Session, current_user: dict):
-    _, _, _, _set_product_commission_override = _get_general_ledger_service()
+    _, _, _, _set_product_commission_override = _get_general_ledger()
     return _set_product_commission_override(
         product_id=product_id,
         rate=body.rate,
@@ -471,14 +468,14 @@ def get_effective_rate(supplier_id: int, product_id: Optional[int], category_slu
     result = _engine_rate(supplier_id=supplier_id, product_id=product_id,
                           category_slug=category_slug, db=db)
     return {
-        "rate": float(result.applied_rate),
-        "percentage": f"{float(result.applied_rate) * 100:.2f}%",
+        "rate": str(result.applied_rate),
+        "percentage": f"{result.applied_rate * 100:.2f}%",
         "calculation_method": result.calculation_method,
-        "supplier_rate": float(result.supplier_rate),
+        "supplier_rate": str(result.supplier_rate),
         "supplier_rate_source": result.supplier_rate_source,
-        "base_rate": float(result.base_rate),
+        "base_rate": str(result.base_rate),
         "base_rate_source": result.base_rate_source,
-        "product_override_rate": float(result.product_override_rate) if result.product_override_rate else None,
+        "product_override_rate": str(result.product_override_rate) if result.product_override_rate else None,
         "badge_level": result.badge_level,
         "category_slug": result.category_slug,
         "override_flag": result.override_flag,
@@ -490,8 +487,6 @@ def get_effective_rate(supplier_id: int, product_id: Optional[int], category_slu
 
 """Auto-migrated service logic from routers/admin_finance_geography.py."""
 
-
-from fastapi import Depends, Path, Query
 
 from sqlalchemy.orm import Session
 
@@ -590,9 +585,10 @@ def reconcile_in_multi_currency(amount: float, from_currency: str, to_currency: 
         target_rate = rates.get(to_key)
         if base_rate is None or target_rate is None:
             return {"original": amount, "converted": None, "rate": None, "error": f"Rate unavailable for {from_currency}/{to_currency}"}
-        rate = float(target_rate) / float(base_rate)
-        converted = round(amount * rate, 2)
-        return {"original": amount, "converted": converted, "rate": rate}
+        rate = Decimal(str(target_rate)) / Decimal(str(base_rate))
+        fx = rate.__float__()
+        converted = round(amount * fx, 2)
+        return {"original": amount, "converted": converted, "rate": fx}
     except Exception as exc:
         return {"original": amount, "converted": None, "rate": None, "error": str(exc)}
 
@@ -602,9 +598,9 @@ def create_stripe_connect_account(**kwargs):
     return create_connect_account(**kwargs)
 
 
-def general_ledger_service():
+def general_ledger():
     """Access the general ledger service."""
-    from domains.finance.services.ledger.general_ledger_service import GeneralLedgerService
+    from domains.finance.services.ledger.general_ledger import GeneralLedgerService
     return GeneralLedgerService
 
 

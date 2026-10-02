@@ -23,9 +23,6 @@ from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from domains.governance.ports import User
 from domains.catalog.ports import Category
 
-# TODO: Module not yet created
-# from domains.catalog.services.products.products_write_service import create_category as create_category_model, update_category as update_category_model, delete_category as delete_category_model, reorder_categories as reorder_categories_model
-
 from infrastructure.utils.category_tree import rebuild_category_paths
 
 from domains.country.ports import get_country_or_404

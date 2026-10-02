@@ -22,17 +22,11 @@ __all__ = ["Payment", "Payout", "LogisticsPartnerPayout", "PaymentGatewayConnect
 
 
 def _get_table_args():
-    import os
-    db_url = os.getenv("DATABASE_URL", "sqlite:///")
-    is_postgres = db_url.startswith("postgresql") or db_url.startswith("postgres")
-    args = ()
-    if is_postgres:
-        args = (
-            Index("idx_pgc_credentials_gin", "credentials"),
-            Index("idx_pgc_fee_config_gin", "fee_config"),
-            Index("idx_pgc_supported_methods_gin", "supported_methods"),
-        )
-    return args
+    return (
+        Index("idx_pgc_credentials_gin", "credentials"),
+        Index("idx_pgc_fee_config_gin", "fee_config"),
+        Index("idx_pgc_supported_methods_gin", "supported_methods"),
+    )
 
 
 class Payment(Base):
@@ -56,7 +50,7 @@ class Payment(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='SET NULL'), nullable=True, index=True)
     layout_json = Column(Text, nullable=True)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys=[country_code], lazy='selectin')
 
 
 class PaymentReconciliationRun(Base):
@@ -148,8 +142,8 @@ class Payout(Base):
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='SET NULL'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    supplier = relationship("User", foreign_keys=[supplier_id])
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    supplier = relationship("User", foreign_keys=[supplier_id], lazy='selectin')
+    country = relationship("CountryConfig", foreign_keys=[country_code], lazy='selectin')
 
 
 class LogisticsPartnerPayout(Base):
@@ -170,7 +164,7 @@ class LogisticsPartnerPayout(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     method = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
-    partner = relationship("LogisticsPartner", back_populates="payouts")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    partner = relationship("LogisticsPartner", back_populates="payouts", lazy='selectin')
+    country = relationship("CountryConfig", foreign_keys=[country_code], lazy='selectin')
 
 

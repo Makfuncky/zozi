@@ -27,7 +27,7 @@ from starlette.types import ASGIApp
 from infrastructure.utils.auth import decode_token, verify_token
 from infrastructure.utils.config import settings
 from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
-from infrastructure.utils.redis_client import redis_client
+from infrastructure.valkey.client import valkey_client
 from infrastructure.security.ip_utils import get_request_ip
 
 logger = logging.getLogger(__name__)
@@ -293,13 +293,13 @@ class EnhancedGeoBlockingMiddleware(BaseHTTPMiddleware):
     Enhanced geographic access control middleware with:
     - Country-based access blocking
     - Compliance-based geographic restrictions
-    - Redis caching for geolocation lookups
+    - Valkey caching for geolocation lookups
     - Security zone classification
     """
 
-    def __init__(self, app, redis_url: str = None):
+    def __init__(self, app, valkey_url: str = None):
         super().__init__(app)
-        self.redis = redis_client()
+        self.valkey = valkey_client()
         self.cache_ttl = 3600
 
     async def dispatch(self, request: Request, call_next) -> Response:
@@ -322,15 +322,15 @@ class EnhancedGeoBlockingMiddleware(BaseHTTPMiddleware):
         return response
 
     async def _get_client_geolocation(self, client_ip: str) -> str:
-        """Get client country code from IP address with Redis caching."""
+        """Get client country code from IP address with Valkey caching."""
         if client_ip.startswith(("192.168.", "10.", "172.16.", "127.")):
             return "INTERNAL"
 
         cache_key = f"geo:{client_ip}"
 
-        if self.redis:
+        if self.valkey:
             try:
-                cached = self.redis.get(cache_key)
+                cached = self.valkey.get(cache_key)
                 if cached:
                     return cached
             except Exception:
@@ -338,9 +338,9 @@ class EnhancedGeoBlockingMiddleware(BaseHTTPMiddleware):
 
         country_code = self._lookup_country_from_ip(client_ip)
 
-        if self.redis:
+        if self.valkey:
             try:
-                self.redis.setex(cache_key, self.cache_ttl, country_code)
+                self.valkey.setex(cache_key, self.cache_ttl, country_code)
             except Exception:
                 pass
 

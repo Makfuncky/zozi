@@ -98,12 +98,12 @@ class Product(Base):
     subcategory = Column(String(255), nullable=True)
     return_window_days = Column(Integer, default=10)
     is_new = Column(Boolean, default=False)
-    supplier = relationship("User", back_populates="products")
+    supplier = relationship("User", back_populates="products", lazy="selectin")
     category_rel = relationship("Category", back_populates="products")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
-    reviews = relationship("Review", back_populates="product")
-    wishlist_items = relationship("WishlistItem", back_populates="product")
-    wishlists = relationship("Wishlist", back_populates="product")
+    country = relationship("CountryConfig", foreign_keys=[country_code], lazy="selectin")
+    reviews = relationship("Review", back_populates="product", lazy="selectin")
+    wishlist_items = relationship("WishlistItem", back_populates="product", lazy="selectin")
+    wishlists = relationship("Wishlist", back_populates="product", lazy="selectin")
     cart_items = relationship("CartItem", back_populates="product")
     variants = relationship(
         "ProductVariant", back_populates="product",
@@ -128,7 +128,7 @@ class Review(Base):
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
-    user = relationship("User", back_populates="reviews")
+    user = relationship("User", back_populates="reviews", lazy="selectin")
     product = relationship("Product", back_populates="reviews")
 
 
@@ -142,7 +142,7 @@ class WishlistItem(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    user = relationship("User", back_populates="wishlist_items")
+    user = relationship("User", back_populates="wishlist_items", lazy="selectin")
     product = relationship("Product", back_populates="wishlist_items")
 
 
@@ -156,7 +156,7 @@ class Wishlist(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    user = relationship("User", back_populates="wishlists")
+    user = relationship("User", back_populates="wishlists", lazy="selectin")
     product = relationship("Product", back_populates="wishlists")
 
 
@@ -183,7 +183,7 @@ class ProductVariant(Base):
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys=[country_code], lazy="selectin")
     # Deterministic variant identity (Phase 3b). sha256 of the normalized
     # product_id + axes. Enables idempotent upserts and prevents duplicate
     # rows on AI re-runs.

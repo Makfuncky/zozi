@@ -1,9 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 
 test.describe.configure({ timeout: 60_000 });
 
 const USERS: Record<string, { email: string; password: string; loginPage: string; landing: string }> = {
-  admin: { email: "admin@zozi.com", password: "admin123", loginPage: "/admin/login", landing: "/admin/dashboard" },
+  admin: { email: "admin@zozi.com", password: "E2eAdmin#2026", loginPage: "/admin/login", landing: "/admin/dashboard" },
   supplier: { email: "supplier@zozi.com", password: "supplier123", loginPage: "/supplier/login", landing: "/supplier/dashboard" },
   logistics: { email: "logistics@zozi.com", password: "logistics123", loginPage: "/logistics-partner/login", landing: "/logistics-partner/dashboard" },
 };
@@ -82,7 +82,7 @@ for (const [label, cfg] of Object.entries(USERS)) {
     await page.setViewportSize({ width: 1440, height: 900 });
     await formLogin(page, cfg);
 
-    // Sidebar is present on desktop — target <aside> specifically to
+    // Sidebar is present on desktop â€” target <aside> specifically to
     // avoid matching the invisible mobile drawer (also .theme-sidebar-shell).
     const aside = page.locator("aside.theme-sidebar-shell");
     await expect(aside).toBeVisible({ timeout: 8000 });
@@ -110,3 +110,4 @@ for (const [label, cfg] of Object.entries(USERS)) {
     expect(restoredW).toBeGreaterThan(200);
   });
 }
+

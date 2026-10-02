@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch, parseJsonResponse } from "@/lib/api";
+import { useAuth } from "@/lib/useAuth";
 import { ErrorState } from "@/components/employee/ErrorBoundary";
 import { useToastStore } from "@/stores/toastStore";
 import { PanelLoadingState } from "@/components/PanelPage";

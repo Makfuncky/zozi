@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -20,7 +20,7 @@ test.describe("Cross-Border Checkout", () => {
     
     const form = submitButton.locator("xpath=ancestor::form[1]");
     await form.locator("input[type='email']:visible, input[name='username']:visible").first().fill("admin@zozi.com");
-    await form.locator("input[type='password']:visible").first().fill("admin123");
+    await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
     await submitButton.click();
     
     // Navigate to countries
@@ -59,7 +59,7 @@ test.describe("Cross-Border Checkout", () => {
     
     const form = submitButton.locator("xpath=ancestor::form[1]");
     await form.locator("input[type='email']:visible, input[name='username']:visible").first().fill("admin@zozi.com");
-    await form.locator("input[type='password']:visible").first().fill("admin123");
+    await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
     await submitButton.click();
     
     await page.goto("/admin/countries", { waitUntil: "domcontentloaded" });
@@ -86,7 +86,7 @@ test.describe("Cross-Border Checkout", () => {
     
     const form = submitButton.locator("xpath=ancestor::form[1]");
     await form.locator("input[type='email']:visible, input[name='username']:visible").first().fill("admin@zozi.com");
-    await form.locator("input[type='password']:visible").first().fill("admin123");
+    await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
     await submitButton.click();
     
     await page.goto("/admin/countries", { waitUntil: "domcontentloaded" });
@@ -113,7 +113,7 @@ test.describe("Cross-Border Checkout", () => {
     
     const form = submitButton.locator("xpath=ancestor::form[1]");
     await form.locator("input[type='email']:visible, input[name='username']:visible").first().fill("admin@zozi.com");
-    await form.locator("input[type='password']:visible").first().fill("admin123");
+    await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
     await submitButton.click();
     
     await page.goto("/admin/countries", { waitUntil: "domcontentloaded" });

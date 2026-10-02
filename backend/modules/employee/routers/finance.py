@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from domains.finance import ports as finance_ports
-from domains.finance.services.ledger.general_ledger_service import (
+from domains.finance.services.ledger.general_ledger import (
     reverse_journal_entry,
     get_current_fiscal_period,
     get_or_create_fiscal_period,
@@ -1334,7 +1334,7 @@ from domains.audit.ports import AuditAction, audit_log
 from rbac import get_current_user
 from infrastructure.database.database import get_db
 from domains.finance.services.treasury.cash_management_service import list_contractor_milestones
-from domains.finance.services.ledger.general_ledger_service import (
+from domains.finance.services.ledger.general_ledger import (
     ExpenseRoutingEngine,
     get_expense_router,
 )

@@ -27,6 +27,7 @@ from typing import Any
 from typing import cast
 from typing import Optional
 
+from providers.config import settings
 from providers.image import Image, ImageOps, ImageFilter
 
 from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes
@@ -49,7 +50,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-HF_API_TOKEN: str = os.getenv("HF_API_TOKEN", "")
+HF_API_TOKEN: str = settings.hf_api_token
 
 RMBG_MODEL = "briaai/RMBG-2.0"
 BG_REMOVAL_MODEL = os.getenv("BG_REMOVAL_MODEL", "birefnet-general-lite")

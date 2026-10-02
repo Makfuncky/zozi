@@ -933,7 +933,7 @@ async function installRoleFlowMocks(
     await route.continue();
   };
 
-  await page.route("http://localhost:8000/**", backendHandler);
+  await page.route("http://127.0.0.1:3100/**", backendHandler);
   await page.route("http://127.0.0.1:8000/**", backendHandler);
 }
 

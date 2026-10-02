@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
@@ -77,10 +77,10 @@ async function loginAsAdmin(page: Page, destination = "/admin/countries") {
     await passwordInput.fill(password);
     await submitButton.click();
   };
-  await fillAndSubmit("admin@zozi.com", "admin123");
+  await fillAndSubmit("admin@zozi.com", "E2eAdmin#2026");
   try { await waitForSessionFlag(page, 30_000); } catch {
     await page.goto("/admin/login", { waitUntil: "domcontentloaded" });
-    await fillAndSubmit("admin", "admin123");
+    await fillAndSubmit("admin", "E2eAdmin#2026");
   }
   await waitForSessionFlag(page, 60_000);
   await openProtectedRoute(page, destination, /\/admin\/(dashboard|countries)(?:\?|$)/, 120_000);
@@ -104,9 +104,9 @@ async function selectCountryFromLedger(page: Page, code: string) {
   await expect(page.getByTestId("country-config-workspace")).toBeVisible({ timeout: 30_000 });
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Tests
-   ──────────────────────────────────────────────────────────────────────────── */
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 test.describe("Enhanced Country Features", () => {
 
@@ -185,7 +185,7 @@ test.describe("Enhanced Country Features", () => {
     await expect(page.getByText("Product-Level Payout Overrides", { exact: true })).toBeVisible({ timeout: 10_000 });
   });
 
-  test("7. payout rules — add category rule", async ({ page }) => {
+  test("7. payout rules â€” add category rule", async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
     await selectCountryFromLedger(page, "OM");
 
@@ -201,7 +201,7 @@ test.describe("Enhanced Country Features", () => {
     }
   });
 
-  test("8. payout rules — add product rule", async ({ page }) => {
+  test("8. payout rules â€” add product rule", async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
     await selectCountryFromLedger(page, "OM");
 
@@ -327,4 +327,5 @@ test.describe("Enhanced Country Features", () => {
   });
 
 });
+
 

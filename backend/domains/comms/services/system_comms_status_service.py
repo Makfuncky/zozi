@@ -13,8 +13,6 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 
 from sqlalchemy.orm import Session
 
-from jose import JWTError, jwt
-
 from infrastructure.database.database import get_db, get_db_session
 
 from infrastructure.utils.config import settings

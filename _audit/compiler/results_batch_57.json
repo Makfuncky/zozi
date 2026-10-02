@@ -1,0 +1,39 @@
+{
+  "batch": 57,
+  "files": [
+    {
+      "path": "frontend/web_app/src/lib/cartStore.ts",
+      "findings": [
+        {
+          "id": "ALIGN-005",
+          "status": "VALID",
+          "evidence": "Lines 168, 195, 215, 226 use `/cart/items/${id}` for PUT/DELETE; lines 246, 267 use `/cart` for DELETE/GET; line 277 uses `/cart/sync` for PUT. Backend customer orders router (`backend/modules/customer/routers/orders.py:45`) has prefix `/api/v1/customer/orders` with cart endpoints at `/api/v1/customer/orders` (GET), `/api/v1/customer/orders/items` (POST), `/api/v1/customer/orders/items/{product_id}` (PUT/DELETE), `/api/v1/customer/orders/sync` (PUT). Frontend `resolveRequestUrl` in `client.ts:38-44` rewrites `/cart/*` to `/__api/cart/*` (not to `/api/v1/customer/orders/*`).",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Path mismatch confirmed. Frontend uses bare `/cart/*` paths; backend exposes cart under `/api/v1/customer/orders/*`. Also note frontend uses `{id}` in path while backend uses `{product_id}`."
+        },
+        {
+          "id": "ALIGN-007",
+          "status": "INVALID",
+          "evidence": "Web CartItem (lines 7-13) extends Product with `quantity, line_id, cart_item_id?, selected_size?, selected_color?`. Web API calls use `/cart/items/*` (lines 168, 195, 215, 226), `/cart` (lines 246, 267), and `/cart/sync` (line 277).",
+          "counter_evidence": "Finding claims web store syncs to `/api/v1/customer/orders/items/{id}`, but actual code shows `/cart/items/${id}`. Mobile cartStore (`frontend/mobile_app/lib/cartStore.ts`) also uses `/cart/*` paths (lines 53, 77, 91, 101, 113), so path divergence claim is false. Only the CartItem shape divergence is real (web has `line_id, cart_item_id`; mobile lacks them), but the finding mischaracterizes the current API paths.",
+          "benchmark_mismatch": "",
+          "notes": "Finding contains false statements about the current state. Both web and mobile use `/cart/*` paths; only the shape divergence (web `line_id`/`cart_item_id` vs mobile absence) is accurate. The finding should be revised to focus solely on shape divergence without incorrect path claims."
+        }
+      ]
+    },
+    {
+      "path": "frontend/web_app/src/lib/useAdminApi.ts",
+      "findings": [
+        {
+          "id": "ALIGN-008",
+          "status": "VALID",
+          "evidence": "Frontend `list` function (lines 119-123) passes params directly as query params. Backend admin catalog router (`backend/modules/admin/routers/catalog.py:48-49`) uses `page` and `size` query params. Backend customer catalog router (`backend/modules/customer/routers/catalog.py:81-82`) uses `page` and `page_size` query params. Inconsistent param naming across backend list endpoints.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Backend pagination param inconsistency is real. `useAdminApi` is admin-specific and uses `size` correctly for admin endpoints, but the broader backend inconsistency means any frontend consumer switching between admin and customer catalog endpoints would need to handle different param names."
+        }
+      ]
+    }
+  ]
+}

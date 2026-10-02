@@ -25,7 +25,7 @@ const CITY_NAME = "Dubai";
 async function login(request: any, username: string, password: string): Promise<string> {
   const candidates = [username, username.split("@")[0]];
   for (const c of candidates) {
-    const r = await request.post(`${BACKEND}/auth/login`, {
+    const r = await request.post(`${BACKEND}/api/v1/auth/login`, {
       data: { username: c, password },
     });
     if (r.ok()) {
@@ -38,7 +38,7 @@ async function login(request: any, username: string, password: string): Promise<
 }
 
 async function fetchFirstProduct(request: any): Promise<{ id: number }> {
-  const r = await request.get(`${BACKEND}/products?limit=50`, { failOnStatusCode: false });
+  const r = await request.get(`${BACKEND}/api/v1/customer/catalog/products?limit=50`, { failOnStatusCode: false });
   expect(r.ok()).toBeTruthy();
   const data = (await r.json()) as Array<{ id: number; stock?: number; is_active?: boolean }>;
   for (const c of data) {

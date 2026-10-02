@@ -9,14 +9,19 @@ import {
 
 test.describe.configure({ timeout: 120_000 });
 
+const SEED_CUSTOMER_PASSWORD = process.env.SEED_CUSTOMER_PASSWORD || "E2eCustomer#2026";
+const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "E2eAdmin#2026";
+const SEED_SUPPLIER_PASSWORD = process.env.SEED_SUPPLIER_PASSWORD || "E2eSupplier#2026";
+const SEED_LOGISTICS_PASSWORD = process.env.SEED_LOGISTICS_PASSWORD || "E2eLogistics#2026";
+
 test.describe("auth role login smoke", () => {
   test("customer login reaches authenticated customer pages", async ({ page }) => {
     test.slow();
 
-    const hasApiSession = await bootstrapSessionViaApi(page, ["customer@zozi.com", "customer"], "customer123");
+    const hasApiSession = await bootstrapSessionViaApi(page, ["customer@zozi.com", "customer"], SEED_CUSTOMER_PASSWORD);
     if (!hasApiSession) {
       await page.goto("/login");
-      await submitCredentialForm(page, "customer@zozi.com", "customer123");
+      await submitCredentialForm(page, "customer@zozi.com", SEED_CUSTOMER_PASSWORD);
       await waitForSessionFlag(page);
     }
 
@@ -28,10 +33,10 @@ test.describe("auth role login smoke", () => {
     test.slow();
     test.setTimeout(180_000);
 
-    const hasApiSession = await bootstrapSessionViaApi(page, ["admin@zozi.com", "admin"], "admin123");
+    const hasApiSession = await bootstrapSessionViaApi(page, ["admin@zozi.com", "admin"], SEED_ADMIN_PASSWORD);
     if (!hasApiSession) {
       await page.goto("/admin/login");
-      await submitCredentialForm(page, "admin@zozi.com", "admin123");
+      await submitCredentialForm(page, "admin@zozi.com", SEED_ADMIN_PASSWORD);
       await waitForSessionFlag(page);
     }
 
@@ -42,10 +47,10 @@ test.describe("auth role login smoke", () => {
     test.slow();
     test.setTimeout(180_000);
 
-    const hasApiSession = await bootstrapSessionViaApi(page, ["supplier@zozi.com", "supplier"], "supplier123");
+    const hasApiSession = await bootstrapSessionViaApi(page, ["supplier@zozi.com", "supplier"], SEED_SUPPLIER_PASSWORD);
     if (!hasApiSession) {
       await page.goto("/supplier/login");
-      await submitCredentialForm(page, "supplier@zozi.com", "supplier123");
+      await submitCredentialForm(page, "supplier@zozi.com", SEED_SUPPLIER_PASSWORD);
       await waitForSessionFlag(page);
     }
 
@@ -56,10 +61,10 @@ test.describe("auth role login smoke", () => {
     test.slow();
     test.setTimeout(180_000);
 
-    const hasApiSession = await bootstrapSessionViaApi(page, ["logistics@zozi.com", "logistics"], "logistics123");
+    const hasApiSession = await bootstrapSessionViaApi(page, ["logistics@zozi.com", "logistics"], SEED_LOGISTICS_PASSWORD);
     if (!hasApiSession) {
       await page.goto("/logistics-partner/login");
-      await submitCredentialForm(page, "logistics@zozi.com", "logistics123");
+      await submitCredentialForm(page, "logistics@zozi.com", SEED_LOGISTICS_PASSWORD);
       await waitForSessionFlag(page);
     }
 

@@ -1,0 +1,75 @@
+{
+  "_duration_s": 0.17,
+  "migration_revisions": 75,
+  "migration_heads": 1,
+  "blocking_async_count": 0,
+  "cross_domain_imports": 795,
+  "silent_except_count": 199,
+  "anti_patterns": [
+    {
+      "id": "AP-silent-except",
+      "category": "Silent except",
+      "occurrences": 199,
+      "sample": "backend/config.py",
+      "blocker": "partial",
+      "remediation": "Log or re-raise in every handler"
+    }
+  ],
+  "float_money_files": 158,
+  "long_functions": 403,
+  "deep_functions": 87,
+  "untracked_todos": 295,
+  "idempotency_files": 6,
+  "preflight": [
+    {
+      "check": "Boot smoke test",
+      "status": "SKIPPED",
+      "evidence": "--no-tools"
+    },
+    {
+      "check": "Required env vars",
+      "status": "PASS",
+      "evidence": ".env.example declared=193; typed settings fields=188"
+    },
+    {
+      "check": "Database connectivity",
+      "status": "PASS",
+      "evidence": "postgresql://ep-sparkling-dream-za50z6c0-pooler.c-2.eu-west-2.aws.neon.tech:5432/neondb \u2014 ep-sparkling-dream-za50z6c0-pooler.c-2.eu-west-2.aws.neon.tech:5432 reachable (source: .env:DATABASE_URL)"
+    },
+    {
+      "check": "Valkey connectivity",
+      "status": "FAIL",
+      "evidence": "valkey://localhost:6379/? \u2014 ConnectionRefusedError (source: .env:VALKEY_URL)"
+    },
+    {
+      "check": "Test collection",
+      "status": "SKIPPED",
+      "evidence": "fast mode"
+    },
+    {
+      "check": "Frontend type check",
+      "status": "SKIPPED",
+      "evidence": "fast mode"
+    },
+    {
+      "check": "Backend lint",
+      "status": "SKIPPED",
+      "evidence": "fast mode"
+    },
+    {
+      "check": "Alembic heads",
+      "status": "SKIPPED",
+      "evidence": "fast mode"
+    },
+    {
+      "check": "Lockfile sync",
+      "status": "PASS",
+      "evidence": "requirements=55 uv-lock-entries=107 web-deps=29 pnpm-lock=yes"
+    },
+    {
+      "check": "Architecture tests",
+      "status": "SKIPPED",
+      "evidence": "fast mode"
+    }
+  ]
+}

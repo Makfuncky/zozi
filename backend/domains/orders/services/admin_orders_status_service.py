@@ -1,52 +1,49 @@
-"""Admin orders router — country-scoped."""
-from fastapi import Depends, HTTPException, Path, Query
-from sqlalchemy.orm import Session
-from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
-from domains.orders.models.orders import Order
-from infrastructure.database.schemas import OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
-from infrastructure.utils.dependencies import require_admin, require_super_admin
-from domains.governance.ports import archive_entity, hard_delete_entity, restore_entity
-from domains.catalog.ports import bulk_archive_entities
-from domains.catalog.ports import bulk_restore_entities
-# TODO: Module not yet created
-# from domains.governance.services.orders.orders_service import update_order_status
-from domains.audit.ports import audit_log
-from infrastructure.utils.country_rls import enforce_country_access, get_country_or_404
-from infrastructure.database.rls_interceptor import set_rls_context
+"""Admin orders status service — country-scoped."""
+from __future__ import annotations
+
 import math
 
-def list_all_orders(country_code: str=Path(..., description="ISO country code, or '*' for all"), page: int=Query(1, ge=1), size: int=Query(50), status: str=None, include_deleted: bool=False, _: User=Depends(require_admin), db: Session=Depends(get_db)):
-    if country_code == '*':
-        set_rls_context(None, is_restricted=False)
-    else:
-        get_country_or_404(country_code.upper(), db)
-        set_rls_context({country_code.upper()}, is_restricted=True)
-    try:
-        q = db.query(Order)
-        if status:
-            q = q.filter(Order.status == status)
-        if not include_deleted:
-            q = q.filter(Order.is_deleted == False)
-        total = q.count()
-        items = q.order_by(Order.created_at.desc()).offset((page - 1) * size).limit(size).all()
-        return {'items': items, 'total': total, 'page': page, 'pages': math.ceil(total / size) if total else 1}
-    finally:
-        from infrastructure.database.rls_interceptor import clear_rls_context
-        clear_rls_context()
 
-def bulk_update_order_status(country_code: str=Path(..., description='ISO country code'), payload: BulkStatusUpdateRequest=..., _: User=Depends(require_admin), db: Session=Depends(get_db)):
-    get_country_or_404(country_code.upper(), db)
-    set_rls_context({country_code.upper()}, is_restricted=True)
-    try:
-        updated = 0
-        for oid in payload.ids:
-            o = db.query(Order).filter(Order.id == oid).first()
-            if o:
-                o.status = payload.status
-                updated += 1
-        db.commit()
-        return {'message': f'Status updated for {updated} orders', 'updated': updated}
-    finally:
-        from infrastructure.database.rls_interceptor import clear_rls_context
-        clear_rls_context()
+def list_all_orders(
+    orders,
+    *,
+    status: str | None = None,
+    include_deleted: bool = False,
+    page: int = 1,
+    size: int = 50,
+) -> dict:
+    """Filter, paginate, and return admin order listings from an orders iterable."""
+    items = list(orders)
+    if status is not None:
+        items = [
+            o
+            for o in items
+            if getattr(o, "status", None) == status
+            or getattr(o, "status_code", None) == status
+        ]
+    if not include_deleted:
+        items = [o for o in items if not getattr(o, "is_deleted", False)]
+    total = len(items)
+    start = (page - 1) * size
+    end = start + size
+    return {
+        "items": items[start:end],
+        "total": total,
+        "page": page,
+        "pages": math.ceil(total / size) if total else 1,
+    }
+
+
+def bulk_update_order_status(
+    orders,
+    *,
+    ids,
+    status: str,
+) -> dict:
+    """Set ``status`` on every order in ``orders`` whose id is in ``ids``."""
+    updated = 0
+    for o in orders:
+        if getattr(o, "id", None) in ids:
+            o.status_code = status
+            updated += 1
+    return {"message": f"Status updated for {updated} orders", "updated": updated}

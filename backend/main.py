@@ -31,8 +31,12 @@ from infrastructure.observability.logging_config import setup_structlog, get_req
 from infrastructure.observability.error_handler import ErrorHandler, create_error_handler, global_exception_handler
 from infrastructure.utils.versioning import VERSION_PREFIX, get_version_path, versioned_prefix, get_active_versions
 
-# Initialize structured logging
-setup_structlog(log_level=logging.INFO if settings.debug else logging.WARNING)
+# Initialize structured logging (file handler activated via LOG_FILE path)
+_log_file_path = os.environ.get("LOG_FILE") or os.path.join(_BACKEND_DIR, "logs", "zozi.log")
+setup_structlog(
+    log_level=logging.INFO if settings.debug else logging.WARNING,
+    log_file=_log_file_path,
+)
 
 import structlog
 logger = structlog.get_logger(__name__)
@@ -52,16 +56,14 @@ if not (settings.app_env or "").lower() == "test":
     except Exception as _rls_exc:  # pragma: no cover - defensive
         logger.warning("RLS policy install skipped: %s", _rls_exc)
 
-# Global error handler instance (lazy init with Sentry DSN from settings)
-_error_handler: Optional[ErrorHandler] = None
+# Global error handler instance (eager init with Sentry DSN from settings)
+_error_handler: ErrorHandler = create_error_handler(
+    sentry_dsn=settings.sentry_dsn,
+    environment=str(settings.app_env or "development"),
+)
+
 
 def get_error_handler() -> ErrorHandler:
-    global _error_handler
-    if _error_handler is None:
-        _error_handler = create_error_handler(
-            sentry_dsn=settings.sentry_dsn,
-            environment=str(settings.app_env or "development"),
-        )
     return _error_handler
 
 
@@ -97,8 +99,8 @@ try:
     from infrastructure.utils.tracing import setup_tracing
     from infrastructure.database.database import engine
     setup_tracing(app, db_engine=engine)
-except Exception:
-    logger.info("OpenTelemetry tracing skipped (packages not installed or no endpoint configured)")
+except Exception as _tracing_exc:
+    logger.warning("OpenTelemetry tracing disabled: %s", _tracing_exc)
 
 
 @app.get("/health")
@@ -114,8 +116,11 @@ async def health_check():
         "valkey": {"status": "ok" if valkey_status.get("available") else "unavailable"},
     }
 
+    readiness_require_valkey = getattr(settings, "readiness_require_valkey", False)
+    valkey_required = readiness_require_valkey and valkey_status.get("configured", False)
+
     app_env = (settings.app_env or "").lower()
-    if not db_ok or not valkey_status.get("available"):
+    if not db_ok or (valkey_required and not valkey_status.get("available")):
         if app_env == "test":
             return {
                 "status": "degraded",
@@ -144,21 +149,53 @@ async def health_check():
     }
 
 
+def _get_storage_health_status() -> dict:
+    """Check storage/R2 health and return a status dict."""
+    from infrastructure.storage.storage import get_storage, S3Storage
+
+    store = get_storage()
+    if isinstance(store, S3Storage):
+        try:
+            if store.client is None:
+                return {"status": "unavailable", "backend": "r2", "detail": "client not initialized"}
+            store.client.list_objects_v2(Bucket=store.bucket, MaxKeys=1)
+            return {"status": "ok", "backend": "r2"}
+        except Exception as exc:
+            return {"status": "unavailable", "backend": "r2", "detail": str(exc)}
+    else:
+        try:
+            test_file = os.path.join(store.base_dir, ".health_check")
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+            return {"status": "ok", "backend": "local"}
+        except Exception as exc:
+            return {"status": "unavailable", "backend": "local", "detail": str(exc)}
+
+
 @app.get("/health/deps")
 async def health_deps():
     from infrastructure.utils.config import settings
-    from infrastructure.database.database import check_connection_health, get_db
+    from infrastructure.valkey.client import get_valkey_health_status
+    from infrastructure.database.database import check_connection_health, get_db_context
     from domains.finance.services.payments.payment_engine import _payment_provider_runtime_status
     from infrastructure.observability.circuit_breaker import get_all_breaker_stats
 
     db_ok = check_connection_health()
-    valkey_status = "ok" if _get_redis() else "unavailable"
+
+    valkey_health = get_valkey_health_status()
+    valkey_status = "ok" if valkey_health.get("available") else "unavailable"
     email_status = get_email_delivery_status()
 
     try:
-        with get_db() as db:
+        with get_db_context() as db:
             payments_runtime = _payment_provider_runtime_status(db)
-        payments_status = "ok" if payments_runtime.get("online_provider") else "unavailable"
+        online_provider = (
+            payments_runtime.get("online_provider")
+            if isinstance(payments_runtime, dict)
+            else getattr(payments_runtime, "online_provider", None)
+        )
+        payments_status = "ok" if online_provider else "unavailable"
     except Exception:
         payments_status = "unavailable"
 
@@ -166,23 +203,46 @@ async def health_deps():
 
     breaker_stats = get_all_breaker_stats()
 
-    return {
+    storage_status = _get_storage_health_status()
+
+    critical_deps = {
+        "database": db_ok,
+        "valkey": valkey_status == "ok",
+        "email": email_status.get("available", False),
+        "payments": payments_status == "ok",
+        "storage": storage_status.get("status") == "ok",
+    }
+
+    failed_deps = [name for name, ok in critical_deps.items() if not ok]
+
+    response_body = {
         "runtime_profile": settings.runtime_profile,
         "dependencies": {
             "database": {"status": "ok" if db_ok else "failed"},
             "valkey": {"status": valkey_status},
             "email": {"status": email_status.get("available", False) and "ok" or "unavailable"},
             "payments": {"status": payments_status},
+            "storage": storage_status,
             "error_tracking": {"status": error_tracking_status},
             "circuit_breakers": breaker_stats,
-        }
+        },
     }
+
+    if failed_deps:
+        response_body["failed_dependencies"] = failed_deps
+        app_env = (settings.app_env or "").lower()
+        if app_env == "test" and "database" not in failed_deps:
+            response_body["status"] = "degraded"
+            return response_body
+        return JSONResponse(status_code=503, content=response_body)
+
+    return response_body
 
 
 @app.get("/health/ready")
 async def health_ready():
     from infrastructure.utils.config import settings
-    from infrastructure.utils.auth import _get_redis
+    from infrastructure.valkey.client import get_valkey
     from infrastructure.database.database import check_connection_health, get_db
     from domains.finance.services.payments.payment_engine import _payment_provider_runtime_status
 
@@ -191,7 +251,7 @@ async def health_ready():
     deps = {"valkey": "ok", "email": "ok", "payments": "ok"}
     blocking = []
 
-    valkey_client = _get_redis()
+    valkey_client = get_valkey()
     if not valkey_client:
         deps["valkey"] = "unavailable"
         blocking.append("valkey")

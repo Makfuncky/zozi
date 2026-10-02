@@ -35,7 +35,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect
 
-from alembic.migration_helpers import safe_add_column
+from migration_helpers import safe_add_column
 
 
 revision: str = "2026_09_04_0001"
@@ -107,7 +107,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Best-effort: drop the columns we added. Safe to leave on existing
     # databases that pre-date the mixin contract.
-    from alembic.migration_helpers import safe_drop_column
+    from migration_helpers import safe_drop_column
     conn = op.get_bind()
     if conn.dialect.name == "sqlite":
         return

@@ -1,0 +1,52 @@
+{
+  "batch": 27,
+  "files": [
+    {
+      "path": "backend/domains/security/services/fraud/fraud_detection_service.py",
+      "findings": [
+        {
+          "id": "FEAT-017",
+          "status": "VALID",
+          "evidence": "At line 161-171, `_get_geo_info` returns hardcoded `{\"country\": \"AE\", \"latitude\": 24.0, \"longitude\": 54.0, \"city\": \"Dubai\"}` when the IP is not in `self._geo_cache`. No GeoIP provider is consulted; every cache miss resolves to UAE regardless of actual IP location.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Law 75 (Graceful degradation) requires external failures to degrade gracefully AND log WARNING. The hardcoded AE fallback is a silent fallback that masks real fraud signals (e.g., a non-UAE IP appearing as UAE skews geographic_mismatch scoring at line 545-554).",
+          "notes": "Also affects `_get_asn_info` (line 181-195) which returns hardcoded `{\"asn\": \"AS1234\", \"name\": \"EXAMPLE-AS\", \"country\": \"AE\"}` on cache miss. Both methods need real GeoIP/ASN provider integration or an `unknown` fallback."
+        },
+        {
+          "id": "FEAT-032",
+          "status": "RESOLVED",
+          "evidence": "At line 173-179, `_check_bloom_filter` already wraps the `BF.EXISTS` call in `try/except ResponseError: return False`, providing the graceful fallback the finding requested.",
+          "counter_evidence": "`fraud_detection_service.py:175-179` — try/except ResponseError returns False on Bloom Filter command failure. The same pattern is used in `_update_tor_list` (line 979-983), `_update_proxy_list` (line 994-998), and `_update_hosting_asns` (line 1010-1014).",
+          "benchmark_mismatch": "Law 75 also requires logging at WARNING level on external failure. The current try/except silently returns False without logging, which is a partial Law 75 violation (degrades gracefully but does not log WARNING).",
+          "notes": "Finding was created when the try/except was absent. Code now has the fix. Minor remaining gap: no WARNING-level log on ResponseError as Law 75 requires."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/suppliers/services/supplier_kyc_service.py",
+      "findings": [
+        {
+          "id": "FEAT-035",
+          "status": "VALID",
+          "evidence": "File contains only `list_my_documents` (line 11-50) and `list_supplier_documents` (line 53-87). Both are read-only listing functions with keyset pagination. No KYC tier enforcement, no country-based validation, no `CountryConfig.supplier_kyc_tier` check exists in this file.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Finding cites Law 5 (Country is orthogonal scope axis / RLS), but Law 5 governs data scoping via RLS `SET LOCAL app.country_code`, not KYC tier enforcement. The benchmark mismatch is that KYC tier-per-country is not established as a law in the benchmark docs — the finding imposes a business rule not grounded in ARCHITECTURE_STACK.md.",
+          "notes": "The file is correctly scoped as a document-listing service. If KYC tier enforcement is required, it should be enforced in the supplier onboarding workflow or a dedicated `enforce_kyc_tier` function, not in a read-model listing file."
+        }
+      ]
+    },
+    {
+      "path": "backend/jobs/payout_sweep.py",
+      "findings": [
+        {
+          "id": "FEAT-018",
+          "status": "INVALID",
+          "evidence": "File is a 67-line thin Celery task wrapper. It delegates all business logic to `run_auto_payout_sweep` and `run_auto_logistics_payout_sweep` imported from `domains.finance.services.payouts.auto_payout_scheduler` (line 35-38). There is no settlement eligibility or hold-period logic in this file.",
+          "counter_evidence": "`payout_sweep.py:35-38` — imports `run_auto_payout_sweep` and `run_auto_logistics_payout_sweep` from `domains.finance.services.payouts.auto_payout_scheduler`. All eligibility/hold-period validation lives in that scheduler module, not in this job entrypoint.",
+          "benchmark_mismatch": "",
+          "notes": "Finding is directed at the wrong file. The correct target for settlement eligibility and hold-period validation is `domains/finance/services/payouts/auto_payout_scheduler.py`, which is outside this batch's scope."
+        }
+      ]
+    }
+  ]
+}

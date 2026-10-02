@@ -81,7 +81,7 @@ def _job_key(job_id: str) -> str:
     return f"background-jobs:{job_id}"
 
 
-def _get_redis_client():
+def _get_valkey_client():
     if _should_run_inline():
         return None
     try:
@@ -103,10 +103,10 @@ def _prune_memory_jobs_locked(now: float | None = None) -> None:
 
 
 def _store_job(payload: dict[str, Any]) -> None:
-    redis_client = _get_redis_client()
-    if redis_client is not None:
+    valkey_client = _get_valkey_client()
+    if valkey_client is not None:
         try:
-            redis_client.setex(
+            valkey_client.setex(
                 _job_key(payload["id"]),
                 settings.background_job_ttl_seconds,
                 json.dumps(payload, default=str),
@@ -123,10 +123,10 @@ def _store_job(payload: dict[str, Any]) -> None:
 
 
 def get_job(job_id: str) -> dict[str, Any] | None:
-    redis_client = _get_redis_client()
-    if redis_client is not None:
+    valkey_client = _get_valkey_client()
+    if valkey_client is not None:
         try:
-            raw = redis_client.get(_job_key(job_id))
+            raw = valkey_client.get(_job_key(job_id))
             if raw:
                 if isinstance(raw, (bytes, bytearray)):
                     raw = raw.decode("utf-8")
@@ -165,12 +165,12 @@ def _compute_idempotency_key(kind: str, metadata: dict[str, Any] | None) -> str 
 
 def _check_idempotency(dedup_key: str, ttl: int) -> dict[str, Any] | None:
     """Check if a job with this dedup key is running or recently completed."""
-    redis_client = _get_redis_client()
+    valkey_client = _get_valkey_client()
     dedup_storage_key = f"bg-dedup:{dedup_key}"
 
-    if redis_client is not None:
+    if valkey_client is not None:
         try:
-            existing = redis_client.get(dedup_storage_key)
+            existing = valkey_client.get(dedup_storage_key)
             if existing:
                 raw = existing.decode("utf-8") if isinstance(existing, bytes) else existing
                 return json.loads(raw)
@@ -188,21 +188,21 @@ def _check_idempotency(dedup_key: str, ttl: int) -> dict[str, Any] | None:
 
 
 def _set_dedup_key(dedup_key: str, payload: dict[str, Any], ttl: int) -> None:
-    redis_client = _get_redis_client()
+    valkey_client = _get_valkey_client()
     storage_key = f"bg-dedup:{dedup_key}"
-    if redis_client is not None:
+    if valkey_client is not None:
         try:
-            redis_client.setex(storage_key, ttl, json.dumps(payload, default=str))
+            valkey_client.setex(storage_key, ttl, json.dumps(payload, default=str))
             return
         except Exception as exc:
             logger.debug("Valkey _set_dedup_key failed: %s", exc)
 
 
 def _clear_dedup_key(dedup_key: str) -> None:
-    redis_client = _get_redis_client()
-    if redis_client is not None:
+    valkey_client = _get_valkey_client()
+    if valkey_client is not None:
         try:
-            redis_client.delete(f"bg-dedup:{dedup_key}")
+            valkey_client.delete(f"bg-dedup:{dedup_key}")
         except Exception as exc:
             logger.debug("Valkey _clear_dedup_key failed: %s", exc)
 

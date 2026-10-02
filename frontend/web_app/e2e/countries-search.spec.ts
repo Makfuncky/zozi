@@ -1,4 +1,4 @@
-// Playwright test: verify "search a country" auto-populate works on /admin/countries.
+﻿// Playwright test: verify "search a country" auto-populate works on /admin/countries.
 //
 // Regression coverage for the country-search contract:
 //   - POST /admin/countries/auto-populate accepts { search_term } in the JSON body
@@ -48,12 +48,12 @@ async function loginAsAdmin(page: Page, destination = "/admin/countries") {
     .or(form.locator("input[required]:not([type='password']):visible"))
     .first();
   await identifier.fill("admin@zozi.com");
-  await form.locator("input[type='password']:visible").first().fill("admin123");
+  await form.locator("input[type='password']:visible").first().fill("E2eAdmin#2026");
   await submit.click();
   await waitForAdminNavigation(page, /\/admin\/countries(?:\?|$)/, 120_000);
 }
 
-test.describe("Admin Countries — country search / auto-populate", () => {
+test.describe("Admin Countries â€” country search / auto-populate", () => {
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
   });
@@ -86,4 +86,5 @@ test.describe("Admin Countries — country search / auto-populate", () => {
     await expect(page.getByTestId("new-country-modal")).not.toBeVisible({ timeout: 5_000 });
   });
 });
+
 

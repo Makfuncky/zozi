@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
+from celery import shared_task
 from infrastructure.database.database import SessionLocal
 from domains.governance.models.admin import ProcessedWebhookEvent
 from domains.orders.models.order_entities import Order
@@ -11,7 +12,17 @@ from domains.orders.models.order_entities import Order
 logger = logging.getLogger(__name__)
 
 
-def detect_ghost_orders(lookback_hours: int = 24) -> list[dict]:
+@shared_task(
+    bind=True,
+    name="jobs.ghost_order_detector.detect_ghost_orders",
+    max_retries=3,
+    retry_backoff=True,
+    retry_backoff_max=300,
+    retry_jitter=True,
+    time_limit=600,
+    soft_time_limit=540,
+)
+def detect_ghost_orders(self, lookback_hours: int = 24) -> list[dict]:
     """Find orders marked as 'paid' without a corresponding webhook event.
 
     This detects:

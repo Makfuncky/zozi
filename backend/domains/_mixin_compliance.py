@@ -26,7 +26,7 @@ security, country, promotions.
 """
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -35,7 +35,6 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
-    Table,
     func,
 )
 
@@ -93,29 +92,12 @@ def _column_for(name: str) -> Column:
     raise ValueError(f"Unknown mixin column: {name}")
 
 
-def _iter_target_tables(metadata: MetaData) -> Iterable[Table]:
+def _patch_missing_columns(metadata: MetaData, schema_filter) -> dict[str, list[str]]:
+    patched: dict[str, list[str]] = {}
     for name, table in metadata.tables.items():
         schema = (table.schema or "public").lower()
-        if schema in NON_DOMAIN_SCHEMAS:
+        if not schema_filter(schema, name):
             continue
-        if name in SYSTEM_TABLE_ALLOWLIST:
-            continue
-        yield name, table
-
-
-def apply_mixin_compliance(metadata: MetaData | None = None) -> dict[str, list[str]]:
-    """Back-fill the 5 mixin columns onto every domain table.
-
-    Returns a dict keyed by ``schema.table`` whose value is the list of
-    column names that were added. Idempotent: tables already containing
-    every required column are skipped.
-    """
-    if metadata is None:
-        from infrastructure.database.base import Base
-        metadata = Base.metadata
-
-    patched: dict[str, list[str]] = {}
-    for name, table in _iter_target_tables(metadata):
         existing = {c.name for c in table.columns}
         missing = REQUIRED_COLUMNS - existing
         if not missing:
@@ -129,13 +111,28 @@ def apply_mixin_compliance(metadata: MetaData | None = None) -> dict[str, list[s
                 )
                 table.append_column(col_obj)
                 added.append(col)
-            except Exception as exc:  # pragma: no cover - defensive
-                # If a single column can't be added (e.g. reserved name
-                # collision), skip it and continue.
+            except Exception:  # pragma: no cover - defensive
                 pass
         if added:
             patched[name] = added
     return patched
+
+
+def apply_mixin_compliance(metadata: MetaData | None = None) -> dict[str, list[str]]:
+    """Back-fill the 5 mixin columns onto every domain table.
+
+    Returns a dict keyed by ``schema.table`` whose value is the list of
+    column names that were added. Idempotent: tables already containing
+    every required column are skipped.
+    """
+    if metadata is None:
+        from infrastructure.database.base import Base
+        metadata = Base.metadata
+
+    return _patch_missing_columns(
+        metadata,
+        lambda schema, name: schema not in NON_DOMAIN_SCHEMAS and name not in SYSTEM_TABLE_ALLOWLIST,
+    )
 
 
 def apply_to_five_domains() -> dict[str, list[str]]:
@@ -145,28 +142,11 @@ def apply_to_five_domains() -> dict[str, list[str]]:
     domains: comms, hr, security, country, promotions.
     """
     from infrastructure.database.base import Base
-    metadata = Base.metadata
-    patched: dict[str, list[str]] = {}
-    for name, table in metadata.tables.items():
-        schema = (table.schema or "public").lower()
-        if schema not in DOMAIN_SCHEMAS:
-            continue
-        if name in SYSTEM_TABLE_ALLOWLIST:
-            continue
-        existing = {c.name for c in table.columns}
-        missing = REQUIRED_COLUMNS - existing
-        if not missing:
-            continue
-        added: list[str] = []
-        for col in sorted(missing):
-            try:
-                table.append_column(_column_for(col))
-                added.append(col)
-            except Exception:
-                pass
-        if added:
-            patched[name] = added
-    return patched
+    five_domain_schemas = {"comms", "hr", "security", "country", "promotions"}
+    return _patch_missing_columns(
+        Base.metadata,
+        lambda schema, name: schema in five_domain_schemas and name not in SYSTEM_TABLE_ALLOWLIST,
+    )
 
 
 if __name__ == "__main__":  # pragma: no cover - manual debug

@@ -2,7 +2,7 @@
 
 Verifies:
   1. Database connection (get_db) works with the test engine.
-  2. Redis client is available (real or NoOp fallback).
+  2. Valkey client is available (real or NoOp fallback).
   3. Security utilities (JWT, hashing) function correctly.
   4. Pagination utilities clamp and paginate as expected.
 """
@@ -62,32 +62,32 @@ class TestDatabaseConnection:
         assert "size" in result
 
 
-class TestRedisConnection:
-    """Redis client availability and fallback behavior."""
+class TestValkeyConnection:
+    """Valkey client availability and fallback behavior."""
 
-    def test_redis_client_returns_object(self):
-        from infrastructure.database.redis_client import redis_client
-        client = redis_client()
+    def test_valkey_client_returns_object(self):
+        from infrastructure.valkey.client import valkey_client
+        client = valkey_client()
         assert client is not None
 
-    def test_redis_noop_fallback(self):
-        from infrastructure.database.redis_client import _NoOpRedis
-        noop = _NoOpRedis()
+    def test_valkey_noop_fallback(self):
+        from infrastructure.valkey.client import _NoOpValkey
+        noop = _NoOpValkey()
         assert noop.get("any_key") is None
         assert noop.set("key", "val") is None
         assert noop.exists("key") is None
         assert noop.delete("key") is None
         assert noop.keys() == []
 
-    def test_redis_health_status(self):
-        from infrastructure.database.redis_client import get_redis_health_status
-        status = get_redis_health_status()
+    def test_valkey_health_status(self):
+        from infrastructure.valkey.client import get_valkey_health_status
+        status = get_valkey_health_status()
         assert isinstance(status, dict)
         assert "available" in status
 
-    def test_redis_noop_pipeline(self):
-        from infrastructure.database.redis_client import _NoOpPipeline
-        pipe = _NoOpPipeline()
+    def test_valkey_noop_pipeline(self):
+        from infrastructure.valkey.client import _NoOpValkeyPipeline
+        pipe = _NoOpValkeyPipeline()
         result = pipe.set("k", "v").execute()
         assert result == []
 

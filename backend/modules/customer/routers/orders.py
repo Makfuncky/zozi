@@ -38,7 +38,7 @@ from domains.orders.services.returns.service import get_return_request
 from domains.orders.services.returns.service import update_return_request
 from domains.customers.services.coupons_service import build_coupon_quote
 from domains.promotions.services.engine.promotion_service import calculate_order_tier_discount
-from domains.finance.services.ledger.general_ledger_service import calculate_tax
+from domains.finance.services.ledger.general_ledger import calculate_tax
 from rbac.dependencies import require_feature
 
 

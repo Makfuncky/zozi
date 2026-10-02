@@ -8,7 +8,7 @@ Coins are earned through:
 Coin value is stored as Decimal (via kernel/money) for precision.
 
 Race-condition safeguards:
-- ``redeem_coins`` uses a Redis distributed lock per user + idempotency keys
+- ``redeem_coins`` uses a Valkey distributed lock per user + idempotency keys
   to prevent double-spend under concurrent requests.
 - Balance check uses ``SELECT ... FOR UPDATE`` on the user's event rows.
 """
@@ -24,7 +24,7 @@ from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from domains.customers.models.customer_schema_models import ReferralPointEvent
-from infrastructure.utils.cache import get_redis_client
+from infrastructure.utils.cache import get_valkey_client
 
 logger = logging.getLogger(__name__)
 
@@ -111,33 +111,33 @@ def award_purchase_coins(
 
 def _acquire_redemption_lock(user_id: int) -> bool:
     """Try to acquire a per-user distributed lock for coin redemption."""
-    redis_client = get_redis_client()
-    if redis_client is None:
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
         return True
     try:
         lock_key = f"coin:redemption:lock:{user_id}"
-        return bool(redis_client.set(lock_key, "1", nx=True, ex=_LOCK_TTL))
+        return bool(valkey_client.set(lock_key, "1", nx=True, ex=_LOCK_TTL))
     except Exception:
         return True
 
 
 def _release_redemption_lock(user_id: int) -> None:
-    redis_client = get_redis_client()
-    if redis_client is None:
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
         return
     try:
-        redis_client.delete(f"coin:redemption:lock:{user_id}")
+        valkey_client.delete(f"coin:redemption:lock:{user_id}")
     except Exception:
         pass
 
 
 def _check_idempotency_key(idempotency_key: str) -> Optional[Dict[str, Any]]:
     """Check if this idempotency key was already processed. Returns cached result or None."""
-    redis_client = get_redis_client()
-    if redis_client is None:
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
         return None
     try:
-        raw = redis_client.get(f"coin:idempotency:{idempotency_key}")
+        raw = valkey_client.get(f"coin:idempotency:{idempotency_key}")
         if raw is None:
             return None
         if isinstance(raw, (bytes, bytearray)):
@@ -148,11 +148,11 @@ def _check_idempotency_key(idempotency_key: str) -> Optional[Dict[str, Any]]:
 
 
 def _store_idempotency_result(idempotency_key: str, result: Dict[str, Any]) -> None:
-    redis_client = get_redis_client()
-    if redis_client is None:
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
         return
     try:
-        redis_client.setex(
+        valkey_client.setex(
             f"coin:idempotency:{idempotency_key}",
             _IDEMPOTENCY_TTL,
             json.dumps(result, default=str),

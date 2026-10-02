@@ -1,0 +1,23 @@
+raw-http.txt — NOT APPLICABLE
+=============================
+FILE 3 is a backend domain service (SQL construction / validation). It exposes no
+HTTP route and no FastAPI endpoint. Nothing in this contract performs or observes
+an HTTP request/response, so there is no HTTP transcript to record. Recorded as
+n/a rather than fabricated.
+
+db-dump.sql — NOT APPLICABLE
+============================
+This fix is a pure code change in the SQL-construction path. It performs:
+  - zero database writes
+  - zero migrations
+  - zero schema changes
+  - zero queries against a real database
+
+The pre-fix and post-fix proofs both use a fake Session object that records the
+statement string and parameter dict instead of opening a connection. Therefore
+there is no database state to dump before or after. Recorded as n/a rather than
+fabricated.
+
+Note also: no live DB was touched at any point. The only side effects observed
+during verification were WARNING log lines from the intentional rejection paths,
+which are the expected Law 43 security events.

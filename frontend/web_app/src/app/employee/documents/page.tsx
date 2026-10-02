@@ -12,6 +12,7 @@ import {
   Shield,
 } from "@/lib/icons";
 import { useToastStore } from "@/stores/toastStore";
+import { apiFetch } from "@/lib/api";
 import { ErrorState } from "@/components/employee/ErrorBoundary";
 import { Button } from "@/components/ui/Button";
 import { PanelContent, PanelLoadingState } from "@/components/PanelPage";

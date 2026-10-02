@@ -29,8 +29,10 @@ def _run_python_code(code: str) -> subprocess.CompletedProcess:
             "import sys\n"
             f"sys.path.insert(0, r'{_REPO_ROOT}')\n"
             "import os\n"
-            "os.environ.setdefault('APP_ENV', 'test')\n"
-            "os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-health-tests-only')\n"
+            "os.environ['APP_ENV'] = 'test'\n"
+            "os.environ['SECRET_KEY'] = 'healthtest-secret-key-0123456789-0123456789-0123456789-0123456789'\n"
+            "os.environ['FIELD_ENCRYPTION_KEY'] = 'healthtest-field-encryption-key-0123456789-0123456789-0123456789-0123456789'\n"
+            "os.environ['AUDIT_CHAIN_KEY'] = 'healthtest-audit-chain-key-0123456789-0123456789-0123456789-0123456789'\n"
         )
         f.write(code)
         script_path = f.name
@@ -117,7 +119,7 @@ class TestHealthReadyBlocksOnFailingDep:
             "from fastapi.testclient import TestClient\n"
             "from backend.main import app\n"
             "client = TestClient(app)\n"
-            "with patch('infrastructure.utils.auth._get_redis', return_value=None):\n"
+            "with patch('infrastructure.valkey.client.get_valkey', return_value=None):\n"
             "    resp = client.get('/health/ready')\n"
             "    assert resp.status_code == 503, resp.text\n"
             "    data = resp.json()\n"

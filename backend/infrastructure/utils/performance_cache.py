@@ -56,6 +56,119 @@ def _make_key(prefix: str, *parts: str) -> str:
     return f"{prefix}:{raw}"
 
 
+# PERF-005: Valkey-backed implementations replacing no-op shim in cache.py.
+# These allow the 24 service/test imports that currently use cache.py to
+# migrate to real Valkey-backed caching without changing function signatures.
+
+
+def cache_get_json(key: str, default: Any = None) -> Any:
+    """Retrieve and deserialize a JSON value from Valkey."""
+    try:
+        client = _get_valkey()
+        if client is None:
+            return default
+        raw = client.get(key)
+        if raw is None:
+            return default
+        if isinstance(raw, (bytes, bytearray)):
+            raw = raw.decode("utf-8")
+        return json.loads(raw)
+    except Exception as e:
+        logger.debug("cache_get_json failed for %s: %s", key, e)
+        return default
+
+
+def cache_set_json(key: str, value: Any, ttl: int = 300) -> None:
+    """Serialize and store a JSON value in Valkey with the given TTL."""
+    try:
+        client = _get_valkey()
+        if client is None:
+            return
+        client.setex(key, ttl, json.dumps(value, default=str))
+    except Exception as e:
+        logger.debug("cache_set_json failed for %s: %s", key, e)
+
+
+def cache_delete(key: str) -> None:
+    """Delete a key from Valkey."""
+    try:
+        client = _get_valkey()
+        if client is None:
+            return
+        client.delete(key)
+    except Exception as e:
+        logger.debug("cache_delete failed for %s: %s", key, e)
+
+
+def cache_or_compute(key: str, compute_fn: Callable[[], T], ttl: int = 300,
+                     namespace: str = "default") -> Any:
+    """Return cached value or compute, cache, and return it."""
+    try:
+        cached = cache_get_json(key)
+        if cached is not None:
+            return cached
+    except Exception:
+        pass
+    try:
+        value = compute_fn()
+        cache_set_json(key, value, ttl=ttl)
+        return value
+    except Exception as e:
+        logger.debug("cache_or_compute compute_fn failed for %s: %s", key, e)
+        return None
+
+
+def build_versioned_cache_key(prefix: str, *parts: Any) -> str:
+    """Build a versioned cache key (delegates to _make_key for consistency)."""
+    return _make_key(prefix, *parts)
+
+
+def bump_cache_version(namespace: str) -> None:
+    """Increment the cache version for a namespace, invalidating stale entries."""
+    try:
+        client = _get_valkey()
+        if client is None:
+            return
+        version_key = f"perf:version:{namespace}"
+        raw = client.get(version_key)
+        version = int(raw) + 1 if raw is not None and str(raw).isdigit() else 2
+        client.setex(version_key, 86400, str(version))
+    except Exception as e:
+        logger.debug("bump_cache_version failed for %s: %s", namespace, e)
+
+
+def get_cache_version(namespace: str) -> str:
+    """Return the current cache version for a namespace, defaulting to 'v1'."""
+    try:
+        client = _get_valkey()
+        if client is None:
+            return "v1"
+        raw = client.get(f"perf:version:{namespace}")
+        if raw is not None and str(raw).isdigit():
+            return f"v{raw}"
+    except Exception as e:
+        logger.debug("get_cache_version failed for %s: %s", namespace, e)
+    return "v1"
+
+
+def bump_product_cache_version() -> None:
+    """Invalidate all cached product listings by bumping the product version."""
+    try:
+        invalidate_product_listings()
+        bump_cache_version("product")
+    except Exception as e:
+        logger.debug("bump_product_cache_version failed: %s", e)
+
+
+def get_valkey_client() -> Optional[Any]:
+    """Return the Valkey client instance, or None if unavailable.
+    
+    Compatibility shim mirroring cache.py's get_valkey_client so services
+    can migrate from the no-op shim to real Valkey-backed caching.
+    """
+    return _get_valkey()
+
+
 def cache_product_listing(category: str, page: int, limit: int, filters_hash: str = "") -> Optional[list[dict]]:
     """Retrieve cached product listing if available."""
     key = _make_key(PREFIX_PRODUCT, category, f"p{page}", f"l{limit}", filters_hash)

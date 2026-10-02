@@ -1,0 +1,11 @@
+# NOTE: this run sets AUDIT_CHAIN_KEY in the test process only.
+# Reason: the repo-root .env line 93 contains AUDIT_CHAIN_KEY=dummy_audit_chain_key,
+# which is <32 chars and fails pydantic Settings validation for EVERY test that
+# imports domains.analytics.services.*. This is PRE-EXISTING and unrelated to
+# FILE 3 - proven by tests/analytics/test_analytics_service.py (untouched,
+# pre-existing) failing with the identical error. The .env file was NOT edited
+# (outside contract 1). See log section 15.
+#
+# COMMAND: python -m pytest backend/tests/domains/analytics/test_command_center_query_service.py -q -p no:cacheprovider
+.................                                                        [100%]
+17 passed in 24.42s

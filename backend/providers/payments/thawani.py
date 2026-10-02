@@ -11,7 +11,12 @@ import logging
 from decimal import Decimal
 from typing import Any, Optional
 
-import requests
+import httpx
+
+from infrastructure.observability.circuit_breaker import (
+    CircuitBreakerError,
+    get_circuit_breaker,
+)
 
 from providers.payments.config import (
     is_thawani_configured,
@@ -25,6 +30,13 @@ logger = logging.getLogger(__name__)
 
 HAS_THAWANI = True
 _THAWANI_DEFAULT_TIMEOUT = 30
+_THAWANI_BREAKER_FAILURE_THRESHOLD = 5
+
+_thawani_breaker = get_circuit_breaker(
+    "thawani",
+    failure_threshold=_THAWANI_BREAKER_FAILURE_THRESHOLD,
+    recovery_timeout=30,
+)
 
 
 class ThawaniError(Exception):
@@ -124,14 +136,19 @@ def create_session(
     }
     if metadata:
         payload["metadata"].update(metadata)
+    if _thawani_breaker.state.value == "open":
+        raise ThawaniError("Thawani circuit breaker is open")
     try:
-        response = requests.post(
-            f"{api_base}/checkout/session",
-            json=payload,
-            headers=_get_headers(),
-            timeout=_THAWANI_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_THAWANI_DEFAULT_TIMEOUT) as client:
+            response = client.post(
+                f"{api_base}/checkout/session",
+                json=payload,
+                headers=_get_headers(),
+            )
+    except CircuitBreakerError as exc:
+        logger.warning("Thawani circuit breaker open for create_session: %s", exc)
+        raise ThawaniError(f"Thawani circuit breaker open: {exc}") from exc
+    except httpx.HTTPError as exc:
         logger.exception("Thawani create_session request failed")
         raise ThawaniError(
             f"Thawani API request failed: {exc}"
@@ -167,13 +184,18 @@ def get_session(session_id: str) -> dict[str, Any]:
         ThawaniError: If the retrieval fails.
     """
     api_base = resolve_thawani_api_base_url()
+    if _thawani_breaker.state.value == "open":
+        raise ThawaniError("Thawani circuit breaker is open")
     try:
-        response = requests.get(
-            f"{api_base}/checkout/session/{session_id}",
-            headers=_get_headers(),
-            timeout=_THAWANI_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_THAWANI_DEFAULT_TIMEOUT) as client:
+            response = client.get(
+                f"{api_base}/checkout/session/{session_id}",
+                headers=_get_headers(),
+            )
+    except CircuitBreakerError as exc:
+        logger.warning("Thawani circuit breaker open for get_session %s: %s", session_id, exc)
+        raise ThawaniError(f"Thawani circuit breaker open: {exc}") from exc
+    except httpx.HTTPError as exc:
         logger.exception(
             "Thawani get_session request failed for %s", session_id
         )
@@ -231,13 +253,13 @@ def refund_session(
     if metadata:
         payload["metadata"] = metadata
     try:
-        response = requests.post(
-            f"{api_base}/checkout/session/{session_id}/refund",
-            json=payload,
-            headers=_get_headers(),
-            timeout=_THAWANI_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_THAWANI_DEFAULT_TIMEOUT) as client:
+            response = client.post(
+                f"{api_base}/checkout/session/{session_id}/refund",
+                json=payload,
+                headers=_get_headers(),
+            )
+    except httpx.HTTPError as exc:
         logger.exception(
             "Thawani refund_session request failed for %s", session_id
         )

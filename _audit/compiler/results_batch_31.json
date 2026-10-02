@@ -1,0 +1,44 @@
+{
+  "batch": 31,
+  "files": [
+    {
+      "path": "backend/domains/payments/events.py",
+      "findings": [
+        {
+          "id": "ARCH-002",
+          "status": "VALID",
+          "evidence": "domains/payments/ directory exists with 12 .py files: events.py, features.py, ports.py, subscribers.py, __init__.py, models/payment_models.py, models/__init__.py, policies/__init__.py, read_models/__init__.py, schemas/__init__.py, services/payment_service.py, services/__init__.py",
+          "counter_evidence": "None — directory and its contents are present in current source",
+          "benchmark_mismatch": "None — finding aligns with L-12 (15 fixed domains) and ARCHITECTURE_STACK.md §3/§10.1 which state providers/payments/ is the canonical location and routing logic lives in domains/finance/services/payment_orchestrator.py",
+          "notes": "Payments is not in the 15-domain fixed set. The directory contains a full domain structure (models, services, ports, events, subscribers, features, policies, read_models, schemas). Per benchmark, payment adapters belong in providers/payments/ and orchestration in domains/finance/services/payment_orchestrator.py."
+        }
+      ]
+    },
+    {
+      "path": "backend/health_test_al7665zt.py",
+      "findings": [
+        {
+          "id": "ARCH-003",
+          "status": "VALID",
+          "evidence": "75 health_test_*.py files and 15 _tmp_*.py files confirmed at backend root via glob. This file (health_test_al7665zt.py) is one of the 75.",
+          "counter_evidence": "None — counts verified against current filesystem",
+          "benchmark_mismatch": "None — finding aligns with L-18 (root forbidden folders) and L-27 (delete temp scripts after use). Also violates L-32 (No hardcoded secrets): lines 5-7 contain hardcoded SECRET_KEY, FIELD_ENCRYPTION_KEY, and AUDIT_CHAIN_KEY values.",
+          "notes": "Additional violation: lines 5-7 hardcode production secret values (SECRET_KEY, FIELD_ENCRYPTION_KEY, AUDIT_CHAIN_KEY) which violates Law 32. File is a one-off health readiness test that should be removed and its logic migrated to tests/domains/test_health.py."
+        }
+      ]
+    },
+    {
+      "path": "backend/middleware/dependencies/auth.py",
+      "findings": [
+        {
+          "id": "ARCH-009",
+          "status": "VALID",
+          "evidence": "Line 19 contains: from domains.accounts.services.auth.security_dependencies import bearer_scheme, get_current_user, get_current_user_optional, require_admin, require_coupon_admin, require_customer, require_employee, require_logistics, require_permissions, require_roles, require_staff, require_super_admin, require_supplier, require_treasury_access, start_otp, verify_otp",
+          "counter_evidence": "None — import is present at line 19",
+          "benchmark_mismatch": "None — finding aligns with L-1 and L-97: middleware → {rbac, infrastructure} only. The import reaches directly into domains.accounts.services.auth, violating the dependency direction law.",
+          "notes": "Despite the comment claiming this is a 'backward-compat shim', the import itself violates Law 1. The file header even acknowledges the violation: 'infrastructure modules no longer reach up to domains to obtain auth helpers'. The fix (moving canonical auth deps to infrastructure/security/dependencies.py) is correct and benchmark-aligned."
+        }
+      ]
+    }
+  ]
+}

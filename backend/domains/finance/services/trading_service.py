@@ -10,12 +10,16 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from domains.logistics.models.erp import (
+    GoodsReceiptLine,
     GoodsReceiptNote,
     PurchaseOrder,
+    PurchaseOrderLine,
     SalesOrder,
+    SalesOrderLine,
     StockMovement,
     Warehouse,
 )
+from infrastructure.utils.pagination import keyset_offset_window
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +28,72 @@ GoodsReceiptNoteModel = GoodsReceiptNote
 SalesOrderModel = SalesOrder
 StockMovementModel = StockMovement
 WarehouseModel = Warehouse
+
+_PO_COLS = (
+    PurchaseOrder.id,
+    PurchaseOrder.po_number,
+    PurchaseOrder.supplier_id,
+    PurchaseOrder.order_date,
+    PurchaseOrder.status,
+    PurchaseOrder.country_code,
+    PurchaseOrder.currency,
+    PurchaseOrder.created_at,
+    PurchaseOrder.subtotal,
+    PurchaseOrder.grand_total,
+    PurchaseOrder.total_amount,
+)
+
+_GRN_COLS = (
+    GoodsReceiptNote.id,
+    GoodsReceiptNote.grn_number,
+    GoodsReceiptNote.po_id,
+    GoodsReceiptNote.supplier_id,
+    GoodsReceiptNote.receipt_date,
+    GoodsReceiptNote.warehouse_id,
+    GoodsReceiptNote.status,
+    GoodsReceiptNote.country_code,
+    GoodsReceiptNote.created_at,
+)
+
+_SO_COLS = (
+    SalesOrder.id,
+    SalesOrder.so_number,
+    SalesOrder.customer_id,
+    SalesOrder.order_date,
+    SalesOrder.status,
+    SalesOrder.country_code,
+    SalesOrder.currency,
+    SalesOrder.created_at,
+    SalesOrder.subtotal,
+    SalesOrder.grand_total,
+)
+
+_SM_COLS = (
+    StockMovement.id,
+    StockMovement.product_id,
+    StockMovement.warehouse_id,
+    StockMovement.movement_type,
+    StockMovement.reference_type,
+    StockMovement.reference_id,
+    StockMovement.quantity_change,
+    StockMovement.quantity_after,
+    StockMovement.unit_cost,
+    StockMovement.total_cost,
+    StockMovement.country_code,
+    StockMovement.created_at,
+)
+
+_WH_COLS = (
+    Warehouse.id,
+    Warehouse.uuid,
+    Warehouse.name,
+    Warehouse.code,
+    Warehouse.address,
+    Warehouse.city,
+    Warehouse.country_code,
+    Warehouse.is_active,
+    Warehouse.created_at,
+)
 
 
 def create_purchase_order(
@@ -84,7 +154,7 @@ def create_purchase_order(
     po.total_amount = total
     db.commit()
     db.refresh(po)
-    return {"id": po.id, "po_number": po.po_number, "status": po.status, "grand_total": float(po.grand_total)}
+    return {"id": po.id, "po_number": po.po_number, "status": po.status, "grand_total": str(po.grand_total)}
 
 
 def list_purchase_orders(
@@ -95,14 +165,16 @@ def list_purchase_orders(
     limit: int = 50,
     offset: int = 0,
 ) -> list:
-    q = db.query(PurchaseOrder)
+    q = db.query(*_PO_COLS)
     if status:
         q = q.filter(PurchaseOrder.status == status)
     if supplier_id:
         q = q.filter(PurchaseOrder.supplier_id == supplier_id)
     if country_code:
         q = q.filter(PurchaseOrder.country_code == country_code)
-    return q.order_by(PurchaseOrder.id.desc()).offset(offset).limit(limit).all()
+    return keyset_offset_window(
+        q, [PurchaseOrder.id], offset=offset, limit=limit
+    )
 
 
 def get_purchase_order(db: Session, po_id: int) -> Optional[PurchaseOrder]:
@@ -137,17 +209,18 @@ def receive_purchase_order(db: Session, po_id: int, payload: dict) -> dict:
     db.add(grn)
     db.flush()
 
-    for line in payload.get("lines", []):
-        grl = GoodsReceiptLine(
-            grn_id=grn.id,
-            po_line_id=line.get("po_line_id"),
-            quantity_received=line.get("quantity_received", 0),
-            quantity_accepted=line.get("quantity_accepted") or line.get("quantity_received", 0),
-            rejection_reason=line.get("rejection_reason"),
-            lot_number=line.get("lot_number"),
-            expiry_date=line.get("expiry_date"),
-        )
-        db.add(grl)
+    with db.begin_nested():
+        for line in payload.get("lines", []):
+            grl = GoodsReceiptLine(
+                grn_id=grn.id,
+                po_line_id=line.get("po_line_id"),
+                quantity_received=line.get("quantity_received", 0),
+                quantity_accepted=line.get("quantity_accepted") or line.get("quantity_received", 0),
+                rejection_reason=line.get("rejection_reason"),
+                lot_number=line.get("lot_number"),
+                expiry_date=line.get("expiry_date"),
+            )
+            db.add(grl)
 
     po.status = "received"
     db.commit()
@@ -162,14 +235,16 @@ def list_goods_receipts(
     limit: int = 50,
     offset: int = 0,
 ) -> list:
-    q = db.query(GoodsReceiptNote)
+    q = db.query(*_GRN_COLS)
     if po_id:
         q = q.filter(GoodsReceiptNote.po_id == po_id)
     if status:
         q = q.filter(GoodsReceiptNote.status == status)
     if country_code:
         q = q.filter(GoodsReceiptNote.country_code == country_code)
-    return q.order_by(GoodsReceiptNote.id.desc()).offset(offset).limit(limit).all()
+    return keyset_offset_window(
+        q, [GoodsReceiptNote.id], offset=offset, limit=limit
+    )
 
 
 def get_goods_receipt(db: Session, grn_id: int) -> Optional[GoodsReceiptNote]:
@@ -254,7 +329,7 @@ def create_sales_order(
     so.grand_total = total
     db.commit()
     db.refresh(so)
-    return {"id": so.id, "so_number": so.so_number, "status": so.status, "grand_total": float(so.grand_total)}
+    return {"id": so.id, "so_number": so.so_number, "status": so.status, "grand_total": str(so.grand_total)}
 
 
 def list_sales_orders(
@@ -265,14 +340,16 @@ def list_sales_orders(
     limit: int = 50,
     offset: int = 0,
 ) -> list:
-    q = db.query(SalesOrder)
+    q = db.query(*_SO_COLS)
     if status:
         q = q.filter(SalesOrder.status == status)
     if customer_id:
         q = q.filter(SalesOrder.customer_id == customer_id)
     if country_code:
         q = q.filter(SalesOrder.country_code == country_code)
-    return q.order_by(SalesOrder.id.desc()).offset(offset).limit(limit).all()
+    return keyset_offset_window(
+        q, [SalesOrder.id], offset=offset, limit=limit
+    )
 
 
 def get_sales_order(db: Session, so_id: int) -> Optional[SalesOrder]:
@@ -322,7 +399,7 @@ def create_warehouse(
 
 
 def list_warehouses(db: Session, country_code: Optional[str] = None) -> list:
-    q = db.query(Warehouse)
+    q = db.query(*_WH_COLS)
     if country_code:
         q = q.filter(Warehouse.country_code == country_code)
     return q.order_by(Warehouse.id).all()
@@ -343,11 +420,13 @@ def list_stock_movements(
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
-    q = db.query(StockMovement)
+    q = db.query(*_SM_COLS)
     if product_id:
         q = q.filter(StockMovement.product_id == product_id)
     total = q.count()
-    rows = q.order_by(StockMovement.id.desc()).offset(offset).limit(limit).all()
+    rows = keyset_offset_window(
+        q, [StockMovement.id], offset=offset, limit=limit
+    )
     return {"total": total, "items": rows}
 
 

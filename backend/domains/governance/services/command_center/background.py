@@ -36,7 +36,7 @@ from domains.orders.models.orders import ReturnRequest
 
 from infrastructure.utils.config import settings
 
-from infrastructure.utils.redis_client import redis_client
+from infrastructure.valkey.client import valkey_client
 
 
 
@@ -58,7 +58,7 @@ class CommandCenterCacheJob:
 
     def __init__(self):
 
-        self.redis = redis_client()
+        self.valkey = valkey_client()
 
     
 
@@ -164,7 +164,7 @@ class CommandCenterCacheJob:
 
                 
 
-                self.redis.setex(
+                self.valkey.setex(
 
                     "command_center:demographics", 
 
@@ -274,7 +274,7 @@ class CommandCenterCacheJob:
 
                 
 
-                self.redis.setex(
+                self.valkey.setex(
 
                     "command_center:country_sales_trends", 
 
@@ -396,7 +396,7 @@ class CommandCenterCacheJob:
 
                 
 
-                self.redis.setex(
+                self.valkey.setex(
 
                     "command_center:search_trends", 
 
@@ -518,7 +518,7 @@ class CommandCenterCacheJob:
 
                 
 
-                self.redis.setex(
+                self.valkey.setex(
 
                     "command_center:employee_metrics", 
 
@@ -584,7 +584,7 @@ class CommandCenterCacheJob:
 
                 
 
-                self.redis.setex(
+                self.valkey.setex(
 
                     "command_center:fraud_metrics", 
 
@@ -666,7 +666,7 @@ class CommandCenterCacheJob:
 
                 
 
-                self.redis.setex(
+                self.valkey.setex(
 
                     "command_center:system_health", 
 

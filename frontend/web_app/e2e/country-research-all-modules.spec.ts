@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+﻿import { test, expect, type Page } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 120_000 });
@@ -24,12 +24,12 @@ async function bootstrapSessionViaApi(page: Page, candidates: string[], password
 }
 
 async function loginAsAdmin(page: Page) {
-  const hasApiSession = await bootstrapSessionViaApi(page, ["admin@zozi.com", "admin"], "admin123");
+  const hasApiSession = await bootstrapSessionViaApi(page, ["admin@zozi.com", "admin"], "E2eAdmin#2026");
   if (hasApiSession) {
     await waitForNavigation(page, /\/admin\/countries/, 120_000);
     return;
   }
-  test.skip(true, "Cannot authenticate — no valid login method");
+  test.skip(true, "Cannot authenticate â€” no valid login method");
 }
 
 const MODULE_LABELS = [
@@ -42,13 +42,13 @@ const MODULE_LABELS = [
   "Strategic Recommendations",
 ];
 
-test.describe("Country Research — All 20 Modules (E2E)", () => {
+test.describe("Country Research â€” All 20 Modules (E2E)", () => {
 
   test.beforeEach(async ({ page }) => {
     await bootstrapAdminSessionViaApi(page);
   });
 
-  test("01 — Backend API returns all 20 modules with correct structure", async ({ page }) => {
+  test("01 â€” Backend API returns all 20 modules with correct structure", async ({ page }) => {
     const res = await page.request.get("http://127.0.0.1:8000/country-research/SA/research", {
       failOnStatusCode: false,
     });
@@ -93,7 +93,7 @@ test.describe("Country Research — All 20 Modules (E2E)", () => {
     expect(m3.tax_type).toBeTruthy();
   });
 
-  test("02 — Cross-module data consistency", async ({ page }) => {
+  test("02 â€” Cross-module data consistency", async ({ page }) => {
     const res = await page.request.get("http://127.0.0.1:8000/country-research/SA/research");
     const data = (await res.json()).data;
 
@@ -105,7 +105,7 @@ test.describe("Country Research — All 20 Modules (E2E)", () => {
     expect(data.module_02_demographics.internet_penetration_pct).toBe(data.module_03_economy_wealth.internet_penetration_pct);
   });
 
-  test("03 — DB values align with research response (tax fields)", async ({ page }) => {
+  test("03 â€” DB values align with research response (tax fields)", async ({ page }) => {
     const res = await page.request.get("http://127.0.0.1:8000/country-research/SA/research");
     const data = (await res.json()).data;
 
@@ -121,7 +121,7 @@ test.describe("Country Research — All 20 Modules (E2E)", () => {
     }
   });
 
-  test("04 — Frontend renders Research tab with all 20 modules", async ({ page }) => {
+  test("04 â€” Frontend renders Research tab with all 20 modules", async ({ page }) => {
     await page.goto("/admin/countries", { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForTimeout(3000);
 
@@ -162,7 +162,7 @@ test.describe("Country Research — All 20 Modules (E2E)", () => {
     await expect(page.getByPlaceholder("Search modules and data points...")).toBeVisible();
   });
 
-  test("05 — Modules 1-3 open by default with visible field labels", async ({ page }) => {
+  test("05 â€” Modules 1-3 open by default with visible field labels", async ({ page }) => {
     await page.goto("/admin/countries", { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForTimeout(3000);
 
@@ -184,7 +184,7 @@ test.describe("Country Research — All 20 Modules (E2E)", () => {
     await expect(page.getByText("CURRENCY CODE").first()).toBeVisible({ timeout: 5_000 });
   });
 
-  test("06 — Search filters modules correctly", async ({ page }) => {
+  test("06 â€” Search filters modules correctly", async ({ page }) => {
     await page.goto("/admin/countries", { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForTimeout(3000);
 
@@ -220,10 +220,11 @@ test.describe("Country Research — All 20 Modules (E2E)", () => {
     await expect(page.getByText("Strategic Recommendations").first()).toBeVisible();
   });
 
-  test("07 — Non-existent country returns 404", async ({ page }) => {
+  test("07 â€” Non-existent country returns 404", async ({ page }) => {
     const res = await page.request.get("http://127.0.0.1:8000/country-research/XX/research", {
       failOnStatusCode: false,
     });
     expect(res.status()).toBe(404);
   });
 });
+

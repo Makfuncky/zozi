@@ -1,0 +1,34 @@
+# Audit Commands Log
+
+> **Compiled:** 2026-10-01
+> **Note:** Detailed command execution records are stored in per-dimension JSONL logs under `_audit/logs/`.
+
+## Phase 0 — Boot Smoke Test & Pre-flight
+
+| # | Command | Purpose |
+|---|---------|---------|
+| 1 | `python -c "from backend.main import app"` | Route count > 0 |
+| 2 | `pytest test/architecture/ --collect-only` | Architecture test collection |
+| 3 | `pnpm install --frozen-lockfile` | Frontend install |
+| 4 | `pnpm build` | Frontend build |
+| 5 | `docker compose config` | Docker compose config |
+| 6 | `python -c "import settings; print(settings.DATABASE_URL)"` | DATABASE_URL set |
+| 7 | `redis-cli ping` | Valkey connectivity |
+| 8 | `pytest --collect-only` | Full test collection |
+| 9 | `pnpm typecheck` | Frontend type check |
+| 10 | `ruff check .` | Backend lint |
+| 11 | `alembic current` | Alembic current |
+| 12 | `alembic heads` | Alembic heads |
+| 13 | `uv lock` | Lockfile sync — Python |
+| 14 | `pnpm install` | Lockfile sync — Frontend |
+
+## Phase 1 — Emergency + Boot + Tech
+
+Commands executed during Phase 1 dimension audits are recorded in:
+- `_audit/logs/01_architectural.jsonl`
+- `_audit/logs/02_technological.jsonl`
+- `_audit/logs/04_operational.jsonl`
+
+## Phase 2 — Pass 1 & Pass 2
+
+All subsequent dimension audits logged commands to their respective JSONL files.

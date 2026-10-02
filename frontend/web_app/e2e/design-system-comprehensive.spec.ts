@@ -157,7 +157,8 @@ test.describe("Phase 3 — component system", () => {
         try {
           for (const rule of sheet.cssRules) {
             if (rule instanceof CSSStyleRule && rule.selectorText?.includes(".glass-panel")) {
-              return rule.style.backdropFilter !== "" || rule.style.webkitBackdropFilter !== "";
+              const style = rule.style as CSSStyleDeclaration & { webkitBackdropFilter?: string };
+              return style.backdropFilter !== "" || style.webkitBackdropFilter !== "";
             }
           }
         } catch {}

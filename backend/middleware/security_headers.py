@@ -38,21 +38,35 @@ CSP_POLICY = (
     "object-src 'none'; "
     "base-uri 'self'; "
     "form-action 'self'; "
-    "report-uri /csp-report; "
+    "report-uri /csp-report"
 )
 
+# Build connect-src directives explicitly to avoid accidental double spaces
+connect_src_parts = [
+    "'self'",
+    str(os.getenv('BACKEND_URL', 'http://localhost:8000')).strip(),
+    str(os.getenv('FRONTEND_URL', 'http://localhost:3000')).strip().replace('http', 'ws', 1),
+    str(os.getenv('FRONTEND_URL', 'http://localhost:3000')).strip().replace('https', 'wss', 1),
+]
+frontend_ws_url = str(os.getenv('FRONTEND_WS_URL', '') or '').strip()
+if frontend_ws_url:
+    frontend_ws_url = frontend_ws_url.replace('http://', 'ws://', 1).replace('https://', 'wss://', 1)
+    connect_src_parts.append(frontend_ws_url)
+connect_src_parts.extend(['https://api.stripe.com', 'https://api.tap.company'])
+connect_src = "connect-src " + " ".join(connect_src_parts) + "; "
+
 CSP_POLICY_DEV = (
-    "default-src 'self'; "
-    "script-src 'self' https://js.stripe.com; "
-    "style-src 'self' https://fonts.googleapis.com; "
-    "font-src 'self' https://fonts.gstatic.com; "
-    "img-src 'self' data: blob: https:; "
-    f"connect-src 'self' {os.getenv('BACKEND_URL', 'http://localhost:8000')} {os.getenv('FRONTEND_URL', 'http://localhost:3000').replace('http', 'ws', 1)} {os.getenv('FRONTEND_URL', 'http://localhost:3000').replace('https', 'wss', 1)} {os.getenv('FRONTEND_WS_URL', '')} https://api.stripe.com https://api.tap.company; "
+        "default-src 'self'; "
+        "script-src 'self' https://js.stripe.com; "
+        "style-src 'self' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: blob: https:; "
+        f"{connect_src}"
     "frame-src https://js.stripe.com; "
     "object-src 'none'; "
     "base-uri 'self'; "
     "form-action 'self'; "
-    "report-uri /csp-report; "
+    "report-uri /csp-report"
 )
 
 

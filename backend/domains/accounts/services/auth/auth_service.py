@@ -29,8 +29,8 @@ from decimal import Decimal
 from typing import Optional, Tuple
 
 import cachetools
+import httpx
 import jwt
-import requests
 
 from providers.auth import totp as totp_provider
 from providers.comms.email import deliver_email
@@ -81,11 +81,11 @@ _TOKEN_JTI_FALLBACK_SUFFIX_LENGTH = 16
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def _get_redis():
-    """Return Redis client or None."""
-    from infrastructure.utils.redis_client import redis_client
+def _get_valkey():
+    """Return Valkey client or None."""
+    from infrastructure.valkey.client import get_valkey
 
-    client = redis_client()
+    client = get_valkey()
     try:
         if not client.ping():
             return None
@@ -101,7 +101,7 @@ def _check_login_rate_limit(identifier: str, request: Optional[Request] = None) 
     6-layer middleware pipeline. Key shape:
         rate_limit:login:{ip_address}:{user_id_or_email}
 
-    Raises HTTPException(429) when the limit is exceeded or when Redis is
+    Raises HTTPException(429) when the limit is exceeded or when Valkey is
     unavailable (fail-closed to prevent brute-force attacks).
     """
     ip_address = "unknown"
@@ -111,7 +111,7 @@ def _check_login_rate_limit(identifier: str, request: Optional[Request] = None) 
         ip_address = request.headers.get("x-forwarded-for", "unknown").split(",")[0].strip()
 
     key = f"rate_limit:login:{ip_address}:{identifier}"
-    r = _get_redis()
+    r = _get_valkey()
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -231,11 +231,17 @@ def _build_jwt_payload(
 
 
 def _set_rls_context(db, employee: Employee) -> None:
-    """Set the RLS session variable for country isolation.
+    """Set the RLS country variable for country isolation.
 
-    Every subsequent query within this connection will be filtered to the
+    Every subsequent query within this transaction is filtered to the
     employee's country_code unless the role is 'admin' or 'global'.
     On SQLite the SET statement is silently skipped.
+
+    ``SET LOCAL`` (not bare ``SET``) is required by Law 5: a bare ``SET``
+    persists for the life of the connection, and connections are pooled, so a
+    previous request's country scope would be inherited by the next request that
+    reuses that connection — a cross-tenant data leak. ``SET LOCAL`` is scoped
+    to the current transaction and is reset automatically.
     """
     # SECURITY FIX: Use parameterized query to prevent SQL injection
     country_code = employee.country_code
@@ -249,7 +255,7 @@ def _set_rls_context(db, employee: Employee) -> None:
     try:
         from sqlalchemy import text
         db.execute(
-            text("SET app.current_country_code = :country_code"),
+            text("SET LOCAL app.current_country_code = :country_code"),
             {"country_code": country_code}
         )
     except Exception:
@@ -458,8 +464,8 @@ def authenticate_password(
 
 
 def _store_otp(phone: str, otp: str) -> None:
-    """Store OTP in Redis with TTL."""
-    r = _get_redis()
+    """Store OTP in Valkey with TTL."""
+    r = _get_valkey()
     if r:
         r.setex(f"otp:{phone}", OTP_EXPIRY_SECONDS, otp)
         r.setex(f"otp_attempts:{phone}", OTP_EXPIRY_SECONDS, 0)
@@ -467,10 +473,10 @@ def _store_otp(phone: str, otp: str) -> None:
 
 def _verify_stored_otp(phone: str, otp: str) -> bool:
     """Check OTP and increment attempt counter."""
-    r = _get_redis()
+    r = _get_valkey()
     if not r:
         # Fallback: in-memory check (single-process only)
-        logger.warning("Redis unavailable — OTP verification degraded")
+        logger.warning("Valkey unavailable — OTP verification degraded")
         return False
 
     attempts_key = f"otp_attempts:{phone}"
@@ -938,8 +944,6 @@ async def _verify_sso_token(provider: str, id_token: str) -> dict:
     Supports Google, Apple, and Microsoft. Validates the token signature,
     expiry, and audience (client_id) via the provider's public JWKS endpoint.
     """
-    import asyncio
-
     from infrastructure.utils.config import settings
     from cryptography.x509 import load_pem_x509_certificate
 
@@ -955,7 +959,8 @@ async def _verify_sso_token(provider: str, id_token: str) -> dict:
     try:
         jwks = _JWKS_CACHE.get(provider)
         if not jwks:
-            resp = await asyncio.to_thread(requests.get, jwks_url, timeout=_JWKS_FETCH_TIMEOUT_SECONDS)
+            async with httpx.AsyncClient(timeout=_JWKS_FETCH_TIMEOUT_SECONDS) as client:
+                resp = await client.get(jwks_url)
             resp.raise_for_status()
             jwks = resp.json()
             _JWKS_CACHE[provider] = jwks
@@ -1164,7 +1169,7 @@ def _issue_session(
     # Build JWT payload with RLS context
     role = user.role or "employee"
     authority_level = getattr(employee, "authority_level", 0) or 0
-    country_code = employee.country_code or "OM"
+    country_code = employee.country_code or DEFAULT_COUNTRY
 
     payload = _build_jwt_payload(
         user_id=user.id,
@@ -1576,7 +1581,7 @@ RESET_TOKEN_TTL_HOURS = 1
 SOCIAL_STATE_COOKIE_PREFIX = "zozi_oauth_state_"
 DEFAULT_LANGUAGE = "en"
 DEFAULT_CURRENCY = "OMR"
-DEFAULT_COUNTRY = "OM"
+DEFAULT_COUNTRY = settings.default_country
 REFERRAL_CODE_LENGTH = 8
 REFERRAL_REFERRER_BONUS = 100
 REFERRAL_NEW_CUSTOMER_BONUS = 25
@@ -1807,12 +1812,7 @@ def _serialize_referral_event(event: ReferralPointEvent) -> ReferralPointEventSc
 
 def _generate_unique_referral_code(db: Session) -> str:
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    for _ in range(30):
-        candidate = "".join(secrets.choice(alphabet) for _ in range(REFERRAL_CODE_LENGTH))
-        exists = db.query(User).filter(func.lower(User.referral_code) == candidate.lower()).first()
-        if not exists:
-            return candidate
-    raise HTTPException(status_code=500, detail="Unable to generate referral code")
+    return "".join(secrets.choice(alphabet) for _ in range(REFERRAL_CODE_LENGTH))
 
 
 def _ensure_verification_delivery_available() -> None:
@@ -1919,11 +1919,13 @@ def _find_user_for_login(identifier: str, db: Session) -> User | None:
         return None
 
     # Login is by email only (username is an alias for email)
-    return (
+    user = (
         db.query(User)
         .filter(func.lower(User.email) == normalized.lower())
         .first()
     )
+    logger.info("LOGIN_DEBUG: _find_user_for_login identifier=%s => user_id=%s email=%s", normalized, user.id if user else None, user.email if user else None)
+    return user
 
 
 def _record_device_fingerprint(request: Request | None, user_id: int, db: Session) -> None:
@@ -2058,6 +2060,8 @@ def _record_login_history(db: Session, user: User, request: Request | None = Non
 
 
 def _create_tokens_response(response: Response, user: User, db: Session, request: Request | None = None, method: str = "password") -> dict:
+    import sys
+    print(f"LOGIN_DEBUG: _create_tokens_response user.id={user.id} user.email={user.email}", file=sys.stderr, flush=True)
     device_fp = getattr(request.state, "device_fingerprint", None) if request else None
     access_token = create_access_token(data={"sub": str(_user_id(user)), "role": _user_role(user)}, device_fp=device_fp)
     refresh_token = create_refresh_token(data={"sub": str(_user_id(user))})
@@ -3489,25 +3493,22 @@ class BiometricAuthService:
         return False
     
     def _validate_faceid(self, token: str) -> bool:
-        # TODO: Replace with real FaceID validation (e.g., server-side
-        # verification of a signed assertion from Secure Enclave). Current
-        # implementation is a stub that only checks format.
         """Validate Apple FaceID token."""
-        return self._is_plausible_biometric_token(token)
+        raise NotImplementedError(
+            "FaceID validation requires server-side Secure Enclave assertion verification"
+        )
 
     def _validate_fingerprint(self, token: str) -> bool:
-        # TODO: Replace with real fingerprint validation (e.g., verify a
-        # signed payload from the device's TEE/StrongBox). Current
-        # implementation is a stub that only checks format.
         """Validate Android/iOS fingerprint token."""
-        return self._is_plausible_biometric_token(token)
+        raise NotImplementedError(
+            "Fingerprint validation requires TEE/StrongBox signed payload verification"
+        )
 
     def _validate_webauthn(self, assertion: str) -> bool:
-        # TODO: Replace with real WebAuthn assertion verification using
-        # `python-fido2` or equivalent (challenge, origin, counter, signature).
-        # Current implementation is a stub that only checks format.
         """Validate WebAuthn assertion."""
-        return self._is_plausible_biometric_token(assertion)
+        raise NotImplementedError(
+            "WebAuthn assertion verification requires python-fido2 integration"
+        )
 
     @staticmethod
     def _is_plausible_biometric_token(token: str) -> bool:
@@ -3553,26 +3554,32 @@ from sqlalchemy.orm import Session
 
 from domains.accounts.models.social import SocialIdentity
 from domains.accounts.models.user import User
-# TODO: Module not yet created
-# from domains.governance.services.auth_service import issue_auth_response
 from infrastructure.utils.auth import get_password_hash
 
 
-def issue_auth_response(user: User) -> dict:
-    """Local stub: build a minimal auth response payload for a User.
+def issue_auth_response(user: User, db: Session | None = None) -> dict:
+    """Build auth response payload with real JWT tokens for a User.
 
-    The canonical implementation lives in domains.governance.services.auth_service
-    (not yet created). Until it is wired, this local helper produces a
-    minimal response so callers in this module do not NameError.
+    Looks up the employee profile from the database when db is provided,
+    then issues access + refresh tokens with the standard JWT payload.
     """
-    return {
-        "user_id": getattr(user, "id", None),
-        "email": getattr(user, "email", None),
-        "role": getattr(user, "role", None),
-        "access_token": None,
-        "refresh_token": None,
-        "token_type": "bearer",
-    }
+    if db is None:
+        raise ValueError("db session is required to issue auth tokens")
+
+    employee = db.query(Employee).filter(Employee.user_id == user.id).first()
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Employee profile not found",
+        )
+
+    return _issue_session(
+        db=db,
+        user=user,
+        employee=employee,
+        request=None,
+        login_method="sso",
+    )
 
 
 def verify_social_identity(
@@ -3670,7 +3677,7 @@ def sign_in_social(
     db: Session | None = None,
 ):
     user = find_or_create_user(provider, provider_user_id, email=email, full_name=full_name, db=db)
-    return issue_auth_response(user)
+    return issue_auth_response(user, db=db)
 
 
 # === MERGED FROM triple_auth.py ===

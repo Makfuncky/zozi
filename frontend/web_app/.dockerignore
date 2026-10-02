@@ -1,0 +1,15 @@
+# NOTE: the active .dockerignore for this image is the one at the build-context
+# root (frontend/.dockerignore), because the canonical build command is
+#   docker build -f frontend/web_app/Dockerfile frontend/
+# This file is defense in depth: it applies if the build context is ever
+# narrowed to web_app/.
+**/node_modules
+**/.next
+**/dist
+**/coverage
+.git
+.env*
+*.log
+*.tsbuildinfo
+test-results*
+playwright-report

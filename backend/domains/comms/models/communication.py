@@ -35,7 +35,7 @@ class Notification(Base, TenantMixin):
     variables = Column(JSON, nullable=True)
     scheduled_at = Column(DateTime, nullable=True)
     status_code = Column(String(50), default='delivered')
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class TicketMessage(Base, TenantMixin):
     __tablename__ = 'ticket_messages'
@@ -53,7 +53,7 @@ class TicketMessage(Base, TenantMixin):
     sender_id = Column(Integer, nullable=False)
     message = Column(Text, nullable=False)
     is_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     ticket = relationship('SupportTicket', back_populates='messages')
     sender = relationship('User', primaryjoin='foreign(TicketMessage.sender_id) == User.id')
 
@@ -73,8 +73,10 @@ class Announcement(Base):
     is_active = Column(Boolean, default=True)
     starts_at = Column(DateTime, nullable=True)
     ends_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(Announcement.country_code) == CountryConfig.code')
 
 class FAQ(Base, TenantMixin):
     __tablename__ = 'faqs'
@@ -107,7 +109,9 @@ class HelpCategory(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(HelpCategory.country_code) == CountryConfig.code')
 
 class ProxyChannel(Base):
     __tablename__ = 'proxy_channels'
@@ -126,6 +130,8 @@ class ProxyChannel(Base):
     proxy_email = Column(String(255), unique=True, nullable=False, index=True)
     participants = Column(JSON, nullable=True)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(ProxyChannel.country_code) == CountryConfig.code')
     __table_args__ = (Index('idx_proxy_entity', 'entity_type', 'entity_id'), Index('ix_proxy_channels_participants', 'participants'), {'schema': 'comms'})
     sessions = relationship('ProxySession', back_populates='channel', cascade='all, delete-orphan')
     call_logs = relationship('ProxyCallLog', back_populates='channel', cascade='all, delete-orphan')
@@ -150,6 +156,8 @@ class ProxySession(Base):
     ended_at = Column(DateTime, nullable=True)
     is_encrypted = Column(Boolean, default=True)
     session_metadata = Column(JSON, nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(ProxySession.country_code) == CountryConfig.code')
     channel = relationship('ProxyChannel', back_populates='sessions')
     participant_one = relationship('User', primaryjoin='foreign(ProxySession.participant_one_id) == User.id')
     participant_two = relationship('User', primaryjoin='foreign(ProxySession.participant_two_id) == User.id')
@@ -174,7 +182,9 @@ class ProxyMessage(Base):
     content = Column(Text, nullable=False)
     is_masked = Column(Boolean, default=True)
     read_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(ProxyMessage.country_code) == CountryConfig.code')
     session = relationship('ProxySession', back_populates='messages')
     sender = relationship('User', primaryjoin='foreign(ProxyMessage.sender_id) == User.id')
     recipient = relationship('User', primaryjoin='foreign(ProxyMessage.recipient_id) == User.id')
@@ -201,6 +211,8 @@ class ProxyCallLog(Base):
     is_recorded = Column(Boolean, default=False)
     started_at = Column(DateTime, default=utcnow)
     ended_at = Column(DateTime, nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(ProxyCallLog.country_code) == CountryConfig.code')
     channel = relationship('ProxyChannel', back_populates='call_logs')
     caller = relationship('User', primaryjoin='foreign(ProxyCallLog.caller_id) == User.id')
     callee = relationship('User', primaryjoin='foreign(ProxyCallLog.callee_id) == User.id')
@@ -220,7 +232,7 @@ class EmployeeCommunicationThread(Base, TenantMixin):
     entity_id = Column(Integer, nullable=False)
     entity_type = Column(String(50), nullable=False)
     participants = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     country_code = Column(String(2), nullable=True)
     country = relationship('CountryConfig', primaryjoin='foreign(EmployeeCommunicationThread.country_code) == CountryConfig.code')
 
@@ -242,6 +254,8 @@ class ExternalContactMasking(Base):
     external_contact_id = Column(Integer, nullable=False)
     masked_phone = Column(String(20), nullable=True)
     masked_email = Column(String(255), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(ExternalContactMasking.country_code) == CountryConfig.code')
     user = relationship('User', primaryjoin='foreign(ExternalContactMasking.user_id) == User.id')
 
 class CommunicationAuditTrail(Base):
@@ -263,7 +277,9 @@ class CommunicationAuditTrail(Base):
     channel = Column(String(50), nullable=False)
     content_preview = Column(Text, nullable=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(CommunicationAuditTrail.country_code) == CountryConfig.code')
     user = relationship('User', primaryjoin='foreign(CommunicationAuditTrail.user_id) == User.id')
 
 class InternalChannel(Base, TenantMixin):
@@ -313,6 +329,8 @@ class InternalChannelMember(Base):
     user_id = Column(Integer, nullable=False)
     role = Column(String(20), default='member')
     joined_at = Column(DateTime, default=utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(InternalChannelMember.country_code) == CountryConfig.code')
     channel = relationship('InternalChannel', back_populates='members')
     user = relationship('User', primaryjoin='foreign(InternalChannelMember.user_id) == User.id')
 
@@ -334,7 +352,9 @@ class InternalMessage(Base):
     message_type = Column(String(20), default='text')
     is_masked = Column(Boolean, default=True)
     read_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(InternalMessage.country_code) == CountryConfig.code')
     channel = relationship('InternalChannel', back_populates='messages')
     user = relationship('User', primaryjoin='foreign(InternalMessage.user_id) == User.id')
 
@@ -355,6 +375,8 @@ class ChatReadReceipt(Base):
     message_type = Column(String(20), nullable=False, default='direct')
     employee_id = Column(Integer, nullable=False)
     read_at = Column(DateTime, default=utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(ChatReadReceipt.country_code) == CountryConfig.code')
 
 class ChatAttachment(Base):
     __tablename__ = 'chat_attachments'
@@ -380,6 +402,8 @@ class ChatAttachment(Base):
     duration_seconds = Column(Integer, nullable=True)
     waveform_json = Column(Text, nullable=True)
     is_processed = Column(Boolean, default=False)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(ChatAttachment.country_code) == CountryConfig.code')
 
 class InternalEmail(Base, TenantMixin):
     __tablename__ = 'internal_emails'
@@ -402,7 +426,7 @@ class InternalEmail(Base, TenantMixin):
     external_message_id = Column(String(200), nullable=True)
     in_reply_to_id = Column(Integer, ForeignKey('comms.internal_emails.id', ondelete='RESTRICT'), nullable=True, index=True)
     folder_id = Column(Integer, ForeignKey('comms.email_folders.id', ondelete='RESTRICT'), nullable=True, index=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     replies = relationship('InternalEmail', remote_side=[id], backref='parent')
     folder = relationship('EmailFolder', backref='emails')
@@ -424,7 +448,9 @@ class EmailFolder(Base):
     folder_type = Column(String(20), default='inbox')
     sort_order = Column(Integer, default=0)
     is_system = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
+    country = relationship('CountryConfig', primaryjoin='foreign(EmailFolder.country_code) == CountryConfig.code')
 
 class MaskedMessage(Base, TenantMixin):
     __tablename__ = 'masked_messages'
@@ -442,5 +468,5 @@ class MaskedMessage(Base, TenantMixin):
     recipient_ref = Column(String(200), nullable=False)
     message_hash = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     sender = relationship('User', primaryjoin='foreign(MaskedMessage.sender_id) == User.id')

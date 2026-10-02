@@ -157,7 +157,7 @@ def get_unified_inbox(db: Session, current_user: dict, lens: str = "all", cursor
     where_clause = " AND ".join(conditions)
 
     sql = """
-        SELECT * FROM (
+        SELECT id, local_id, transport, title, preview, unread, updated_at, channel_type, participants, peer_avatar, folder FROM (
             SELECT
                 'dm_' || dcr.id AS id,
                 dcr.id AS local_id,

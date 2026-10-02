@@ -75,11 +75,22 @@ class ErrorHandler:
             logger.info("sentry_initialized", dsn_configured=True, environment=self.environment)
         except ImportError:
             logger.warning("sentry_package_not_installed")
+            raise
         except Exception as e:
             logger.error("sentry_init_failed", error=str(e))
+            raise
 
     def _before_send(self, event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Filter and enrich Sentry events before sending."""
+        request_info = event.get("request") or {}
+        url = request_info.get("url") or ""
+        if url:
+            path = url.split("?")[0].split("#")[0]
+            if "://" in path:
+                path = "/" + path.split("/", 3)[-1] if "/" in path else "/"
+            if path in ("/health", "/health/deps", "/health/ready"):
+                return None
+
         exc_info = hint.get("exc_info")
         if exc_info:
             exc_type, exc_value, tb = exc_info
@@ -100,7 +111,12 @@ class ErrorHandler:
         return event
 
     def is_healthy(self) -> bool:
-        return self.sentry_initialized
+        try:
+            import sentry_sdk
+            client = sentry_sdk.Hub.current.client
+            return client is not None and client.transport is not None
+        except Exception:
+            return False
 
     def capture_exception(self, exc: Exception, request: Optional[Request] = None, category: str = ErrorCategory.INTERNAL, **kwargs):
         """Capture and log an exception with full context."""

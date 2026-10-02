@@ -246,9 +246,12 @@ export function getAdminPermissions(role: string | null | undefined): readonly s
 export function hasAdminPermission(role: string | null | undefined, permission: string): boolean {
   const backendPermissions = getAvailablePermissions();
   if (backendPermissions.length > 0) {
-    return backendPermissions.includes(permission);
+    if (backendPermissions.includes("*")) return true;
+    if (backendPermissions.includes(permission)) return true;
   }
-  return getAdminPermissions(role).includes(permission);
+  const rolePermissions = getAdminPermissions(role);
+  if (rolePermissions.includes("*")) return true;
+  return rolePermissions.includes(permission);
 }
 
 function hasRole(role: string | null | undefined, allowedRoles: readonly string[]): boolean {

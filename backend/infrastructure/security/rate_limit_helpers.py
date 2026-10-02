@@ -7,8 +7,8 @@ The middleware (rate_limit_middleware.py) handles HTTP-level rate limiting.
 This module provides finer-grained control for domain operations:
 - Per-user rate limiting for expensive operations
 - Per-API-key rate limiting for external integrations
-- Sliding window counters with Redis backend
-- In-memory fallback when Redis is unavailable
+- Sliding window counters with Valkey backend
+- In-memory fallback when Valkey is unavailable
 
 Usage:
     @rate_limit_domain("product_view", max_requests=100, window=60)
@@ -39,11 +39,11 @@ _memory_counters: dict[str, list[float]] = defaultdict(list)
 _memory_locks: dict[str, threading.Lock] = defaultdict(threading.Lock)
 
 
-def _get_redis():
-    """Get Redis client or None if unavailable."""
+def _get_valkey():
+    """Get Valkey client or None if unavailable."""
     try:
-        from infrastructure.utils.redis_client import redis_client
-        return redis_client()
+        from infrastructure.valkey.client import valkey_client
+        return valkey_client()
     except Exception:
         return None
 
@@ -56,14 +56,14 @@ def _sliding_window_check(
     """Sliding window rate limit check.
 
     Returns (allowed, retry_after_seconds).
-    Uses Redis sorted sets when available, falls back to in-memory counters.
+    Uses Valkey sorted sets when available, falls back to in-memory counters.
     """
     now = time.time()
-    redis_client = _get_redis()
+    valkey_client = _get_valkey()
 
-    if redis_client is not None:
+    if valkey_client is not None:
         try:
-            pipe = redis_client.pipeline()
+            pipe = valkey_client.pipeline()
             pipe.zremrangebyscore(key, 0, now - window)
             pipe.zcard(key)
             pipe.zadd(key, {f"{now}:{id(pipe)}": now})
@@ -72,12 +72,12 @@ def _sliding_window_check(
 
             count = results[1]
             if count >= max_requests:
-                oldest = redis_client.zrange(key, 0, 0, withscores=True)
+                oldest = valkey_client.zrange(key, 0, 0, withscores=True)
                 retry_after = int((oldest[0][1] + window - now)) if oldest else window
                 return False, max(retry_after, 1)
             return True, 0
         except Exception as e:
-            logger.debug("Redis rate limit check failed, falling back to memory: %s", e)
+            logger.debug("Valkey rate limit check failed, falling back to memory: %s", e)
 
     # In-memory fallback
     lock = _memory_locks[key]

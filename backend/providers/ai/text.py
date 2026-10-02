@@ -13,11 +13,55 @@ import re
 import urllib.error
 from typing import Any, Dict, List, Optional
 
+from infrastructure.observability.circuit_breaker import (
+    CircuitBreakerError,
+    get_circuit_breaker,
+)
+
 from ..config import settings
 
 logger = logging.getLogger(__name__)
 
 HAS_AI_TEXT = True
+
+_AI_BREAKER = get_circuit_breaker("ai_text", failure_threshold=3, recovery_timeout=30.0)
+_DEFAULT_AI_TIMEOUT = settings.ollama_ai_timeout
+_MAX_RETRIES = 2
+
+
+def _retry_on_transient(fn):
+    def wrapper(*args, **kwargs):
+        last_exc = None
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                return fn(*args, **kwargs)
+            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+                last_exc = exc
+                if attempt < _MAX_RETRIES:
+                    logger.warning("Transient AI error (attempt %d/%d): %s", attempt + 1, _MAX_RETRIES, exc)
+        raise last_exc
+    return wrapper
+
+
+@_AI_BREAKER
+def _ollama_generate(prompt: str, model_name: str, images: Optional[list] = None) -> str:
+    import urllib.request
+    url = f"{settings.ollama_base_url}/api/generate"
+    payload = json.dumps({
+        "model": model_name,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.3,
+            "top_p": 0.9,
+            "max_tokens": 2048,
+        },
+        **({"images": images} if images else {}),
+    }).encode("utf-8")
+    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=_DEFAULT_AI_TIMEOUT) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        return data.get("response", "")
 
 __all__ = [
     "_ollama_chat",
@@ -65,29 +109,13 @@ def _ollama_chat(prompt: str, model: Optional[str] = None) -> str:
     Returns:
         The model's response text, or an empty string on failure.
     """
-    import urllib.request
-
     model_name = model or _OLLAMA_TEXT_MODEL
-    url = f"{settings.ollama_base_url}/api/generate"
-
-    payload = json.dumps({
-        "model": model_name,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature": 0.3,
-            "top_p": 0.9,
-            "max_tokens": 2048,
-        },
-    }).encode("utf-8")
-
-    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
-
     try:
-        with urllib.request.urlopen(req, timeout=settings.finance_ai_timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("response", "")
-    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
+        return _ollama_generate(prompt, model_name)
+    except CircuitBreakerError as exc:
+        logger.warning("AI text circuit breaker open for _ollama_chat: %s", exc)
+        return ""
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, Exception) as exc:
         logger.error("Ollama chat failed: %s", exc)
         return ""
 
@@ -103,30 +131,13 @@ def _ollama_vision_chat(prompt: str, image_bytes: bytes, model: Optional[str] = 
     Returns:
         The model's response text, or an empty string on failure.
     """
-    import urllib.request
-
     model_name = model or _OLLAMA_VISION_MODEL
-    url = f"{settings.ollama_base_url}/api/generate"
-
-    payload = json.dumps({
-        "model": model_name,
-        "prompt": prompt,
-        "images": [base64.b64encode(image_bytes).decode("utf-8")],
-        "stream": False,
-        "options": {
-            "temperature": 0.3,
-            "top_p": 0.9,
-            "max_tokens": 2048,
-        },
-    }).encode("utf-8")
-
-    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
-
     try:
-        with urllib.request.urlopen(req, timeout=settings.finance_ai_timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("response", "")
-    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
+        return _ollama_generate(prompt, model_name, images=[base64.b64encode(image_bytes).decode("utf-8")])
+    except CircuitBreakerError as exc:
+        logger.warning("AI text circuit breaker open for _ollama_vision_chat: %s", exc)
+        return ""
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, Exception) as exc:
         logger.error("Ollama vision chat failed: %s", exc)
         return ""
 
@@ -148,22 +159,15 @@ def transcribe_audio(audio_bytes: bytes, model: Optional[str] = None) -> str:
     import urllib.request
 
     model_name = model or "whisper:small"
-    url = f"{settings.ollama_base_url}/api/generate"
-
-    audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
-    payload = json.dumps({
-        "model": model_name,
-        "prompt": "Transcribe the following audio to text:",
-        "images": [audio_b64],
-        "stream": False,
-    }).encode("utf-8")
-
-    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("response", "")
-    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
+        return _ollama_generate(
+            "Transcribe the following audio to text:",
+            model_name,
+            images=[base64.b64encode(audio_bytes).decode("utf-8")],
+        )
+    except CircuitBreakerError as exc:
+        logger.warning("AI text circuit breaker open for transcribe_audio: %s", exc)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, Exception) as exc:
         logger.warning("Ollama whisper failed (%s), trying local fallback", exc)
 
     # Fallback: SpeechRecognition library
@@ -183,6 +187,20 @@ def transcribe_audio(audio_bytes: bytes, model: Optional[str] = None) -> str:
     return ""
 
 
+@_AI_BREAKER
+def _ollama_generate_embeddings(model_name: str, prompt: str) -> list:
+    import urllib.request
+    url = f"{settings.ollama_base_url}/api/embeddings"
+    payload = json.dumps({
+        "model": model_name,
+        "prompt": prompt,
+    }).encode("utf-8")
+    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=_DEFAULT_AI_TIMEOUT) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        return data.get("embedding", [])
+
+
 def embed_text(text: str, model: Optional[str] = None) -> List[float]:
     """Generate an embedding vector for a text string using Ollama.
 
@@ -193,22 +211,13 @@ def embed_text(text: str, model: Optional[str] = None) -> List[float]:
     Returns:
         List of floats representing the embedding vector, or empty list on failure.
     """
-    import urllib.request
-
     model_name = model or "nomic-embed-text"
-    url = f"{settings.ollama_base_url}/api/embeddings"
-
-    payload = json.dumps({
-        "model": model_name,
-        "prompt": text,
-    }).encode("utf-8")
-
-    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("embedding", [])
-    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
+        return _ollama_generate_embeddings(model_name, text)
+    except CircuitBreakerError as exc:
+        logger.warning("AI text circuit breaker open for embed_text: %s", exc)
+        return []
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, Exception) as exc:
         logger.error("Embedding generation failed: %s", exc)
         return []
 

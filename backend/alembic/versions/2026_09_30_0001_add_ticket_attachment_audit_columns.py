@@ -17,7 +17,7 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-from alembic.migration_helpers import safe_add_column
+from migration_helpers import safe_add_column
 
 revision: str = "20260930_0001"
 down_revision: Union[str, None] = "20260929_0745"

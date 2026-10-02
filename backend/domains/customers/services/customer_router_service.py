@@ -16,6 +16,11 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
+def _delete_response(entity: str, entity_id: int) -> dict:
+    """Standard delete envelope shared by router-layer delete endpoints."""
+    return {"entity": entity, "id": entity_id, "status": "deleted"}
+
+
 def _normalize_address_payload(payload: dict, *, partial: bool = False) -> dict:
     street = payload.get("street", payload.get("address_line1"))
     state = payload.get("state", payload.get("region"))

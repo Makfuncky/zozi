@@ -11,6 +11,7 @@ import { EnterpriseDataTable, type EnterpriseColumn } from "@shared/components/E
 import { apiFetch } from "@/lib/api";
 import { useCurrencyStore } from "@/lib/currencyStore";
 import { dc, useDensity } from "@/lib/densityContext";
+import { resolveImage } from "@/lib/utils";
 
 interface SupplierProduct {
   id: number;
@@ -62,7 +63,7 @@ export default function SupplierProductsPage() {
     { key: "id", label: "#", width: "64px", sortable: true, render: (p) => <span className={`${bodyText} font-mono tabular-nums text-text-faint`}>#{p.id}</span> },
     { key: "name", label: "Name", sortable: true, render: (p) => (
       <div className="flex items-center gap-2">
-        {p.image_url && <img src={p.image_url} alt="" className="h-8 w-8 rounded-lg object-cover bg-surface-2" />}
+        {p.image_url && <img src={resolveImage(p.image_url)} alt="" className="h-8 w-8 rounded-lg object-cover bg-surface-2" />}
         <span className={`${bodyText} font-medium text-text`}>{p.name}</span>
       </div>
     )},

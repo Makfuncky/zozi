@@ -1,8 +1,8 @@
-import { test, expect, type Page } from "@playwright/test";
+﻿import { test, expect, type Page } from "@playwright/test";
 import { ensurePanelSession } from "./helpers/auth";
 
 const cases = [
-  { name: "admin", url: "/admin/dashboard", user: "admin@zozi.com", pass: "admin123", loginPath: "/admin/login", regex: /\/admin\/dashboard(?:\?|$)/ },
+  { name: "admin", url: "/admin/dashboard", user: "admin@zozi.com", pass: "E2eAdmin#2026", loginPath: "/admin/login", regex: /\/admin\/dashboard(?:\?|$)/ },
   { name: "supplier", url: "/supplier/dashboard", user: "supplier@zozi.com", pass: "supplier123", loginPath: "/supplier/login", regex: /\/supplier\/dashboard(?:\?|$)/ },
   { name: "logistics", url: "/logistics-partner/dashboard", user: "logistics@zozi.com", pass: "logistics123", loginPath: "/logistics-partner/login", regex: /\/logistics-partner\/dashboard(?:\?|$)/ },
 ];
@@ -44,7 +44,7 @@ for (const c of cases) {
     // than ".first()" (which can grab a different button on dashboards that
     // render extra controls). Click, then verify; if the first click didn't
     // register (e.g. a transient auth re-validation briefly intercepted the
-    // pointer), click once more — the toggle is idempotent to "end state".
+    // pointer), click once more â€” the toggle is idempotent to "end state".
     const collapseBtn = page.getByRole("button", { name: /collapse sidebar|expand sidebar/i });
     async function isCollapsed(): Promise<boolean> {
       const w = await getSidebarWidth(page);
@@ -62,7 +62,7 @@ for (const c of cases) {
         }
       }
       if (!ok) {
-        // One more attempt — tolerate a click that landed during a remount.
+        // One more attempt â€” tolerate a click that landed during a remount.
         await collapseBtn.click();
         const deadline2 = Date.now() + 4_000;
         while (Date.now() < deadline2) {
@@ -82,3 +82,4 @@ for (const c of cases) {
     expect(globalHeader, `[${c.name}] global header should be hidden`).toBe(0);
   });
 }
+

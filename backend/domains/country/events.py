@@ -2,8 +2,8 @@
 
 Country is a *publishing* domain: when its config changes it emits events that
 other domains may subscribe to (Law 3 — cross-domain writes only via events).
-Events are plain dataclass-like objects; the bus is ``events.event_publisher.EventPublisher``
-(which keys listeners by event *type*).
+Events are plain dataclass-like objects; the canonical bus is ``event_bus``
+(which keys listeners by event *name*).
 """
 
 

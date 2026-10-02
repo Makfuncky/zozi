@@ -10,10 +10,12 @@ Kernel/ is reserved for pure business primitives only and does not host these.
 """
 from __future__ import annotations
 
+from infrastructure.utils.config import settings
+
 # ── Country codes ─────────────────────────────────────────────────────────────
 
-DEFAULT_COUNTRY: str = "AE"
-FALLBACK_COUNTRY: str = "AE"
+DEFAULT_COUNTRY: str = settings.default_country
+FALLBACK_COUNTRY: str = settings.default_country
 
 SUPPORTED_COUNTRY_CODES: frozenset[str] = frozenset({"AE", "SA", "QA", "KW", "BH", "OM", "IN", "PK", "GB", "US"})
 

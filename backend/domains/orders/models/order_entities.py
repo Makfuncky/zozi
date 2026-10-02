@@ -16,7 +16,7 @@ class Order(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_orders_user_id', 'user_id'), Index('ix_orders_customer_id', 'customer_id'), Index('ix_orders_status', 'status_code'), Index('ix_orders_country_created', 'country_code', 'created_at'), CheckConstraint("status_code IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned')", name='chk_orders_status_valid'), {'schema': 'orders'})
+    __table_args__ = (Index('ix_orders_user_id', 'user_id'), Index('ix_orders_customer_id', 'customer_id'), Index('ix_orders_status', 'status_code'), Index('ix_orders_country_created', 'country_code', 'created_at'), CheckConstraint("status_code IN ('pending', 'confirmed', 'processing', 'prepared', 'picking_up', 'shipped', 'in_transit', 'delivered', 'cancelled', 'failed', 'refunded')", name='chk_orders_status_valid'), {'schema': 'orders'})
     id = Column(Integer, primary_key=True, index=True)
     order_number = Column(String, unique=True, index=True)
     customer_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=True, index=True)
@@ -62,11 +62,11 @@ class Order(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
-    user = relationship('User', foreign_keys=[user_id])
-    customer = relationship('User', foreign_keys=[customer_id])
-    items = relationship('OrderItem', back_populates='order')
-    shipments = relationship('Shipment', back_populates='order')
-    country = relationship('CountryConfig', foreign_keys=[country_code])
+    user = relationship('User', foreign_keys=[user_id], lazy='selectin')
+    customer = relationship('User', foreign_keys=[customer_id], lazy='selectin')
+    items = relationship('OrderItem', back_populates='order', lazy='selectin')
+    shipments = relationship('Shipment', back_populates='order', lazy='selectin')
+    country = relationship('CountryConfig', foreign_keys=[country_code], lazy='selectin')
 
 class OrderItem(Base):
     __tablename__ = 'order_items'
@@ -94,9 +94,9 @@ class OrderItem(Base):
     selected_color = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=True, index=True)
-    country = relationship('CountryConfig', foreign_keys=[country_code])
+    country = relationship('CountryConfig', foreign_keys=[country_code], lazy='selectin')
     order = relationship('Order', back_populates='items')
-    product = relationship('Product', foreign_keys=[product_id])
+    product = relationship('Product', foreign_keys=[product_id], lazy='selectin')
 
 class OrderLogisticsAllocation(Base):
     __tablename__ = 'order_logistics_allocations'
@@ -137,7 +137,7 @@ class OrderLogisticsAllocation(Base):
     country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country = relationship('CountryConfig', foreign_keys=[country_code])
+    country = relationship('CountryConfig', foreign_keys=[country_code], lazy='selectin')
 
 class ReturnRequest(Base):
     __tablename__ = 'return_requests'
@@ -170,8 +170,8 @@ class ReturnRequest(Base):
     country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country = relationship('CountryConfig', foreign_keys=[country_code])
-    order = relationship('Order')
+    country = relationship('CountryConfig', foreign_keys=[country_code], lazy='selectin')
+    order = relationship('Order', lazy='selectin')
 
 class OrderNotification(Base):
     """Order-related user notification (e.g. status changes, shipment updates)."""
@@ -184,7 +184,7 @@ class OrderNotification(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_order_notifications_user_id', 'user_id'), {'schema': 'orders'})
+    __table_args__ = (Index('ix_order_notifications_user_id', 'user_id'), Index('ix_order_notifications_country_created', 'country_code', 'created_at'), {'schema': 'orders'})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=False, index=True)
     order_id = Column(Integer, ForeignKey('orders.orders.id', ondelete='RESTRICT'), nullable=False, index=True)
@@ -193,3 +193,5 @@ class OrderNotification(Base):
     channel = Column(String(32), nullable=True)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=True, index=True)
+    country = relationship('CountryConfig', foreign_keys=[country_code], lazy='selectin')

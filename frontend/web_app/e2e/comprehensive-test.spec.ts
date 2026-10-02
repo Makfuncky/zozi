@@ -1,12 +1,12 @@
-import { test, expect } from "@playwright/test";
+﻿import { test, expect } from "@playwright/test";
 
-const BASE = "http://localhost:3000";
+const BASE = "http://127.0.0.1:3100";
 const API_BASE = "http://localhost:8000";
 
-// ── Helper: authenticate browser session via API cookies ──────────────────
+// â”€â”€ Helper: authenticate browser session via API cookies â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function authenticateAs(page: any, email: string, password: string) {
-  // Call login API — this sets httpOnly refresh cookie on the browser
-  const response = await page.request.post(`${API_BASE}/auth/login`, {
+  // Call login API â€” this sets httpOnly refresh cookie on the browser
+  const response = await page.request.post(`${API_BASE}/api/v1/auth/login`, {
     data: { email, password },
   });
   expect(response.ok()).toBeTruthy();
@@ -18,11 +18,11 @@ async function authenticateAs(page: any, email: string, password: string) {
   });
 }
 
-// ── 1. PUBLIC PRODUCTS PAGE ───────────────────────────────────────────────
+// â”€â”€ 1. PUBLIC PRODUCTS PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 test.describe("Products Page (Public)", () => {
   test("products page loads and shows search bar", async ({ page }) => {
     await page.goto(`${BASE}/products`, { waitUntil: "domcontentloaded", timeout: 20000 });
-    // Wait for the page to settle — products are client-fetched via API
+    // Wait for the page to settle â€” products are client-fetched via API
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
     // Verify we are on the products page
     await expect(page).toHaveURL(/\/products/, { timeout: 5000 });
@@ -48,13 +48,13 @@ test.describe("Products Page (Public)", () => {
   });
 });
 
-// ── 2. API ENDPOINT TESTS (no browser needed) ────────────────────────────
+// â”€â”€ 2. API ENDPOINT TESTS (no browser needed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 test.describe("API Endpoints", () => {
   let adminToken: string;
 
   test.beforeAll(async ({ request }) => {
-    const r = await request.post(`${API_BASE}/auth/login`, {
-      data: { email: "admin@zozi.com", password: "admin123" },
+    const r = await request.post(`${API_BASE}/api/v1/auth/login`, {
+      data: { email: "admin@zozi.com", password: "E2eAdmin#2026" },
     });
     adminToken = (await r.json()).access_token;
   });
@@ -64,7 +64,7 @@ test.describe("API Endpoints", () => {
     expect((await request.get(`${API_BASE}/health`)).ok()).toBeTruthy();
   });
   test("GET /products", async ({ request }) => {
-    const r = await request.get(`${API_BASE}/products?limit=5`);
+    const r = await request.get(`${API_BASE}/api/v1/customer/catalog/products?limit=5`);
     expect(r.ok()).toBeTruthy();
     const data = await r.json();
     // Products endpoint returns array directly
@@ -72,10 +72,10 @@ test.describe("API Endpoints", () => {
     expect(items.length).toBeGreaterThan(0);
   });
   test("GET /categories", async ({ request }) => {
-    expect((await request.get(`${API_BASE}/categories`)).ok()).toBeTruthy();
+    expect((await request.get(`${API_BASE}/api/v1/customer/catalog/categories`)).ok()).toBeTruthy();
   });
   test("GET /suppliers (public)", async ({ request }) => {
-    expect((await request.get(`${API_BASE}/suppliers?limit=5`)).ok()).toBeTruthy();
+    expect((await request.get(`${API_BASE}/api/v1/customer/suppliers?limit=5`)).ok()).toBeTruthy();
   });
   test("GET /banners", async ({ request }) => {
     expect((await request.get(`${API_BASE}/banners`)).ok()).toBeTruthy();
@@ -86,21 +86,21 @@ test.describe("API Endpoints", () => {
 
   // Auth
   test("POST /auth/login (admin)", async ({ request }) => {
-    const r = await request.post(`${API_BASE}/auth/login`, {
-      data: { email: "admin@zozi.com", password: "admin123" },
+    const r = await request.post(`${API_BASE}/api/v1/auth/login`, {
+      data: { email: "admin@zozi.com", password: "E2eAdmin#2026" },
     });
     expect(r.ok()).toBeTruthy();
     expect((await r.json()).user.role).toBe("admin");
   });
   test("POST /auth/login (supplier)", async ({ request }) => {
-    const r = await request.post(`${API_BASE}/auth/login`, {
+    const r = await request.post(`${API_BASE}/api/v1/auth/login`, {
       data: { email: "supplier@zozi.com", password: "supplier123" },
     });
     expect(r.ok()).toBeTruthy();
     expect((await r.json()).user.role).toBe("supplier");
   });
   test("POST /auth/login (customer)", async ({ request }) => {
-    const r = await request.post(`${API_BASE}/auth/login`, {
+    const r = await request.post(`${API_BASE}/api/v1/auth/login`, {
       data: { email: "customer@zozi.com", password: "customer123" },
     });
     expect(r.ok()).toBeTruthy();
@@ -108,7 +108,7 @@ test.describe("API Endpoints", () => {
   });
   test("POST /auth/login invalid credentials", async ({ request }) => {
     expect(
-      (await request.post(`${API_BASE}/auth/login`, {
+      (await request.post(`${API_BASE}/api/v1/auth/login`, {
         data: { email: "nonexistent@test.com", password: "wrong" },
       })).status()
     ).toBe(401);
@@ -199,12 +199,12 @@ test.describe("API Endpoints", () => {
   });
 });
 
-// ── 3. REGISTRATION ───────────────────────────────────────────────────────
+// â”€â”€ 3. REGISTRATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 test.describe("Registration", () => {
   const testEmail = `e2e_reg_${Date.now()}@test.com`;
 
   test("register a new customer", async ({ request }) => {
-    const r = await request.post(`${API_BASE}/auth/register`, {
+    const r = await request.post(`${API_BASE}/api/v1/auth/register`, {
       data: {
         email: testEmail,
         username: `e2euser_${Date.now()}`,
@@ -219,17 +219,17 @@ test.describe("Registration", () => {
   });
 
   test("reject duplicate email", async ({ request }) => {
-    const r = await request.post(`${API_BASE}/auth/register`, {
+    const r = await request.post(`${API_BASE}/api/v1/auth/register`, {
       data: { email: testEmail, username: `dup_${Date.now()}`, password: "TestPass123!", role: "customer" },
     });
     expect(r.status()).toBe(400);
   });
 });
 
-// ── 4. ADMIN PANEL (browser) ──────────────────────────────────────────────
+// â”€â”€ 4. ADMIN PANEL (browser) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 test.describe("Admin Panel (Browser)", () => {
   test.beforeEach(async ({ page }) => {
-    await authenticateAs(page, "admin@zozi.com", "admin123");
+    await authenticateAs(page, "admin@zozi.com", "E2eAdmin#2026");
   });
 
   test("command center loads", async ({ page }) => {
@@ -251,13 +251,13 @@ test.describe("Admin Panel (Browser)", () => {
   });
 });
 
-// ── 5. DATA INTEGRITY ────────────────────────────────────────────────────
+// â”€â”€ 5. DATA INTEGRITY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 test.describe("Data Integrity", () => {
   let adminToken: string;
 
   test.beforeAll(async ({ request }) => {
-    const r = await request.post(`${API_BASE}/auth/login`, {
-      data: { email: "admin@zozi.com", password: "admin123" },
+    const r = await request.post(`${API_BASE}/api/v1/auth/login`, {
+      data: { email: "admin@zozi.com", password: "E2eAdmin#2026" },
     });
     adminToken = (await r.json()).access_token;
   });
@@ -296,3 +296,4 @@ test.describe("Data Integrity", () => {
     expect(r.ok()).toBeTruthy();
   });
 });
+

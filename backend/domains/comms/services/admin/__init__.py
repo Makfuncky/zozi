@@ -3,6 +3,5 @@ from sqlalchemy.orm import Session
 
 
 def get_communication_audit_service(db: Session):
-    """Return communication audit service. Not yet implemented - returns None."""
-    return None
+    raise NotImplementedError("Communication audit service is not yet implemented.")
 

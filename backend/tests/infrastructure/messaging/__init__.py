@@ -31,10 +31,36 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only")
 # ---------------------------------------------------------------------------
 
 def _reset_bus():
-    """Return event_bus module to a clean state between tests."""
+    """Return event_bus module to a clean state between tests.
+
+    Clears both the in-memory subscriber registry and the Valkey DLQ + stream
+    so that test assertions against ``DLQ_KEY`` / ``STREAM_KEY`` are never
+    polluted by prior runs or previous pytest invocations sharing db=0.
+    """
     import infrastructure.messaging.events.event_bus as bus
     bus.clear()
     bus._subscribers = {}
+    try:
+        client = bus._get_valkey_client()
+        if client is not None:
+            before_stream = client.xlen(bus.STREAM_KEY)
+            before_dlq = client.llen(bus.DLQ_KEY)
+            print(f"[_reset_bus test_event_bus] BEFORE: stream={before_stream}, dlq={before_dlq}")
+            # delete removes the list/stream entirely; UNLINK is non-blocking but
+            # may not exist on Valkey, so try delete first.
+            if hasattr(client, "delete"):
+                r1 = client.delete(bus.DLQ_KEY)
+                r2 = client.delete(bus.STREAM_KEY)
+                print(f"[_reset_bus test_event_bus] delete: DLQ={r1}, STREAM={r2}")
+            elif hasattr(client, "unlink"):
+                r1 = client.unlink(bus.DLQ_KEY)
+                r2 = client.unlink(bus.STREAM_KEY)
+                print(f"[_reset_bus test_event_bus] unlink: DLQ={r1}, STREAM={r2}")
+            after_stream = client.xlen(bus.STREAM_KEY)
+            after_dlq = client.llen(bus.DLQ_KEY)
+            print(f"[_reset_bus test_event_bus] AFTER: stream={after_stream}, dlq={after_dlq}")
+    except Exception as exc:  # noqa: BLE001 - cleanup must not fail tests
+        print(f"[_reset_bus test_event_bus] exception: {exc!r}")
     return bus
 
 

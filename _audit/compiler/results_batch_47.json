@@ -1,0 +1,44 @@
+{
+  "batch": 47,
+  "files": [
+    {
+      "path": "backend/tests/domains/test_circuit_breaker.py",
+      "findings": [
+        {
+          "id": "COLLECT-001",
+          "status": "INVALID",
+          "evidence": "tests/domains/test_circuit_breaker.py:7 imports `from infrastructure.utils.circuit_breaker import (CircuitBreaker, CircuitBreakerRegistry, CircuitBreakerError, circuit_break, circuit_break_with_config, get_breaker, CircuitState,)`. The module `infrastructure/utils/circuit_breaker.py` exists and imports successfully from `infrastructure.observability.circuit_breaker`, but `CircuitBreakerRegistry` is NOT exported by that module.",
+          "counter_evidence": "pytest --collect-only fails with `ImportError: cannot import name 'CircuitBreakerRegistry' from 'infrastructure.utils.circuit_breaker'`, NOT `ModuleNotFoundError: No module named 'infrastructure.utils.circuit_breaker'` as claimed.",
+          "benchmark_mismatch": null,
+          "notes": "The cited ModuleNotFoundError is a false positive. The real collection failure is a missing symbol (CircuitBreakerRegistry) in the module's public API. The module path itself resolves correctly."
+        }
+      ]
+    },
+    {
+      "path": "backend/tests/finance/test_circuit_breaker.py",
+      "findings": [
+        {
+          "id": "COLLECT-002",
+          "status": "RESOLVED",
+          "evidence": "backend/tests/finance/test_circuit_breaker.py:1 imports `from domains.finance.services.payments.payment_engine import (_paypal_breaker, _paytabs_breaker, _stripe_breaker, _tap_breaker, _thawani_breaker,)`. pytest --collect-only successfully collects 1 test: `test_provider_specific_thresholds`.",
+          "counter_evidence": "python -c \"from domains.finance.services.payments.payment_engine import _stripe_breaker; print('OK')\" exits 0. pytest --collect-only on tests/finance/test_circuit_breaker.py collects 1 item with no errors.",
+          "benchmark_mismatch": null,
+          "notes": "The claimed ModuleNotFoundError no longer exists. The module path resolves and tests collect successfully."
+        }
+      ]
+    },
+    {
+      "path": "backend/tests/finance/test_payment_idempotency.py",
+      "findings": [
+        {
+          "id": "COLLECT-003",
+          "status": "RESOLVED",
+          "evidence": "backend/tests/finance/test_payment_idempotency.py:5 imports `from domains.finance.services.payments.payment_engine import (check_payment_idempotency, store_payment_idempotency,)`. pytest --collect-only successfully collects 3 tests.",
+          "counter_evidence": "python -c \"from domains.finance.services.payments.payment_engine import _stripe_breaker; print('OK')\" exits 0. pytest --collect-only on tests/finance/test_payment_idempotency.py collects 3 items with no errors.",
+          "benchmark_mismatch": null,
+          "notes": "The claimed ModuleNotFoundError no longer exists. The module path resolves and tests collect successfully."
+        }
+      ]
+    }
+  ]
+}

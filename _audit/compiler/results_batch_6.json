@@ -1,0 +1,124 @@
+{
+  "batch": 6,
+  "files": [
+    {
+      "path": "frontend/mobile_app/pnpm-lock.yaml",
+      "findings": [
+        {
+          "id": "TECH-044",
+          "status": "VALID",
+          "evidence": "pnpm-lock.yaml line 32-34: expo@55.0.27 (specifier ^55.0.8) installed; target is 57.0.20+ per TECHNOLOGY_STACK.md \u00a716",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Expo SDK is 2 major versions below canonical floor; violates pinned version requirement"
+        },
+        {
+          "id": "TECH-046",
+          "status": "VALID",
+          "evidence": "pnpm-lock.yaml lines 16,19,22,25,34: react-native@0.83.2 used throughout dependency tree; target is 0.86.3 per TECHNOLOGY_STACK.md \u00a716",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "React Native 0.83.2 is below canonical 0.86.3 floor"
+        }
+      ]
+    },
+    {
+      "path": "frontend/web_app/Dockerfile",
+      "findings": [
+        {
+          "id": "TECH-050",
+          "status": "VALID",
+          "evidence": "Dockerfile lines 12,15,16,32: npm ci --legacy-peer-deps and npm run build and npm start; TECHNOLOGY_STACK.md \u00a712 requires pnpm 10.x+",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md \u00a712: pnpm 10.x+ is canonical; Dockerfile uses npm throughout",
+          "notes": "Multi-stage build exists but wrong package manager; npm breaks workspace resolution per benchmark"
+        },
+        {
+          "id": "D2P-DOCKER-008",
+          "status": "VALID",
+          "evidence": "Dockerfile lines 12,15,16,32 use npm; TECHNOLOGY_STACK.md line 182 requires pnpm 10.x+",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md \u00a712: Do NOT use npm or yarn \u2014 they break workspace resolution",
+          "notes": "Duplicate of TECH-050 from dev-to-prod verify doc; same root cause"
+        }
+      ]
+    },
+    {
+      "path": "frontend/web_app/package.json",
+      "findings": [
+        {
+          "id": "TECH-031",
+          "status": "VALID",
+          "evidence": "package.json line 34: next is pinned to 16.3.4; TECHNOLOGY_STACK.md \u00a712 requires 16.3.5",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "One minor version below canonical floor"
+        },
+        {
+          "id": "TECH-032",
+          "status": "VALID",
+          "evidence": "package.json line 16: @stripe/react-stripe-js is ^5.6.0; TECHNOLOGY_STACK.md \u00a715 requires 6.9.0",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Major version behind; Stripe Elements may not work correctly"
+        },
+        {
+          "id": "TECH-033",
+          "status": "VALID",
+          "evidence": "package.json line 29: framer-motion is ^12.0.0; TECHNOLOGY_STACK.md \u00a713 requires 13.2.0+",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Major version behind; import path changed to motion/react in v13"
+        },
+        {
+          "id": "TECH-034",
+          "status": "VALID",
+          "evidence": "package.json line 40: react-hook-form is ^7.89.0; TECHNOLOGY_STACK.md \u00a714 requires 7.84.0. The ^7.89.0 range resolves to >=7.89.0 <8.0.0, which does NOT include 7.84.0",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Specifier is above target floor; must be pinned to 7.84.0"
+        },
+        {
+          "id": "TECH-035",
+          "status": "VALID",
+          "evidence": "package.json line 43: zod is ^3.25.76; TECHNOLOGY_STACK.md \u00a714 requires 4.3.6 (major version bump)",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Zod v3 vs v4 is a major breaking change; entire validation layer affected"
+        },
+        {
+          "id": "TECH-039",
+          "status": "VALID",
+          "evidence": "package.json: next-intl is absent from both dependencies and devDependencies; TECHNOLOGY_STACK.md \u00a714 requires 4.14.2",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Required i18n package completely missing"
+        },
+        {
+          "id": "TECH-040",
+          "status": "VALID",
+          "evidence": "package.json: @sentry/nextjs is absent from both dependencies and devDependencies; TECHNOLOGY_STACK.md \u00a715 requires 9.x+",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Required error-tracking package completely missing"
+        },
+        {
+          "id": "TECH-041",
+          "status": "VALID",
+          "evidence": "package.json: sharp is absent from both dependencies and devDependencies; TECHNOLOGY_STACK.md \u00a712 requires 0.35.4",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Required image optimization package missing; next/image optimization disabled without it"
+        },
+        {
+          "id": "TECH-042",
+          "status": "VALID",
+          "evidence": "package.json: motion (framer-motion) is absent from dependencies; TECHNOLOGY_STACK.md \u00a713 requires 13.2.0+ via motion/react import",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "framer-motion v12 listed in package.json as framer-motion but TECHNOLOGY_STACK.md \u00a713 requires motion (v13+) package name"
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { StatCard } from "@/components/ui/StatCard";
-import { useCurrencyStore } from "@/stores/currencyStore";
+import { useCurrencyStore } from "@/lib/currencyStore";
 import { useRouter } from "next/navigation";
 import {
   OVERVIEW_STATS,

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
@@ -96,12 +96,12 @@ async function loginAsAdmin(page: Page, destination = "/admin/countries") {
     await submitButton.click();
   };
 
-  await fillAndSubmit("admin@zozi.com", "admin123");
+  await fillAndSubmit("admin@zozi.com", "E2eAdmin#2026");
   try {
     await waitForSessionFlag(page, 30_000);
   } catch {
     await page.goto("/admin/login", { waitUntil: "domcontentloaded" });
-    await fillAndSubmit("admin", "admin123");
+    await fillAndSubmit("admin", "E2eAdmin#2026");
   }
 
   await waitForSessionFlag(page, 60_000);
@@ -126,7 +126,7 @@ async function loginAsAdmin(page: Page, destination = "/admin/countries") {
   await openProtectedRoute(page, destination, /\/admin\/countries(?:\?|$)/, 120_000);
 }
 
-/* ── Helper: select a country from the ledger table by code ───────────────── */
+/* â”€â”€ Helper: select a country from the ledger table by code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function selectCountryFromLedger(page: Page, code: string) {
   const row = page.getByTestId(`country-ledger-row-${code}`);
   await expect(row).toBeVisible({ timeout: 30_000 });
@@ -135,7 +135,7 @@ async function selectCountryFromLedger(page: Page, code: string) {
   await expect(page.getByText(/Sections/)).toBeVisible({ timeout: 30_000 });
 }
 
-/* ── Helper: create a draft and expect success ────────────────────────────── */
+/* â”€â”€ Helper: create a draft and expect success â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function saveDraft(page: Page, buttonLabel: string | RegExp, expectedActivity: RegExp) {
   const btn = page.getByRole("button", { name: buttonLabel });
   await expect(btn).toBeVisible({ timeout: 10_000 });
@@ -145,9 +145,9 @@ async function saveDraft(page: Page, buttonLabel: string | RegExp, expectedActiv
   await page.getByRole("button", { name: "Overview" }).click();
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Tests
-   ──────────────────────────────────────────────────────────────────────────── */
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 test.describe("Country Ledger & Configuration Workspace", () => {
 
@@ -183,7 +183,7 @@ test.describe("Country Ledger & Configuration Workspace", () => {
     await expect(page.getByTestId(`country-ledger-row-${testCode}`)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/Created country/)).toBeVisible({ timeout: 10_000 });
 
-    // Cleanup — deactivate test country (we leave it in the DB)
+    // Cleanup â€” deactivate test country (we leave it in the DB)
     await selectCountryFromLedger(page, testCode);
     // Go to overview tab
     await page.getByRole("button", { name: "Overview" }).click();
@@ -247,7 +247,7 @@ test.describe("Country Ledger & Configuration Workspace", () => {
     await saveDraft(page, /Save Logistics Draft/, /Logistics draft created/i);
   });
 
-  test("6. delivery partners — add provider and create draft", async ({ page }) => {
+  test("6. delivery partners â€” add provider and create draft", async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
 
     const firstRow = page.getByTestId(/^country-ledger-row-/).first();
@@ -268,7 +268,7 @@ test.describe("Country Ledger & Configuration Workspace", () => {
     await saveDraft(page, /Save Delivery Partners Draft/, /partners draft created/i);
   });
 
-  test("7. payment gateways — add gateway and create draft", async ({ page }) => {
+  test("7. payment gateways â€” add gateway and create draft", async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
 
     const firstRow = page.getByTestId(/^country-ledger-row-/).first();
@@ -301,7 +301,7 @@ test.describe("Country Ledger & Configuration Workspace", () => {
     await saveDraft(page, /Save Legal Rules Draft/, /legal rules draft created/i);
   });
 
-  test("9. regions — add region and create draft", async ({ page }) => {
+  test("9. regions â€” add region and create draft", async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
 
     const firstRow = page.getByTestId(/^country-ledger-row-/).first();
@@ -352,7 +352,7 @@ test.describe("Country Ledger & Configuration Workspace", () => {
     await saveDraft(page, /Save Payout Settings Draft/, /payout settings draft created/i);
   });
 
-  test("12. value commissions — add tier and create draft", async ({ page }) => {
+  test("12. value commissions â€” add tier and create draft", async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
 
     const firstRow = page.getByTestId(/^country-ledger-row-/).first();
@@ -373,7 +373,7 @@ test.describe("Country Ledger & Configuration Workspace", () => {
     await saveDraft(page, /Save Commission Tiers Draft/, /commission tiers draft created/i);
   });
 
-  test("13. category commissions — add rate and create draft", async ({ page }) => {
+  test("13. category commissions â€” add rate and create draft", async ({ page }) => {
     await loginAsAdmin(page, "/admin/countries");
 
     const firstRow = page.getByTestId(/^country-ledger-row-/).first();
@@ -419,4 +419,5 @@ test.describe("Country Ledger & Configuration Workspace", () => {
   });
 
 });
+
 

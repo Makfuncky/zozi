@@ -1,6 +1,36 @@
 """Supplier sub-module — imports shared helpers from supplier_shared."""
 
-from domains.suppliers.services.supplier_shared import *
+from typing import Any, Optional
+
+from fastapi import UploadFile
+
+from sqlalchemy import String, func, or_
+from sqlalchemy.orm import Session
+
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.orders.models.orders import Order, OrderItem
+from domains.suppliers.services.supplier_shared import (
+    build_list_page_payload,
+    load_shipments_for_orders,
+    load_users_by_ids,
+    map_bulk_upload_error,
+    normalize_optional_product_text,
+    parse_optional_datetime,
+    parse_product_variants_payload,
+    parse_supplier_return_window_days,
+    sanitize_profile_string,
+    serialize_product_visibility_regions,
+)
+
+__all__ = [
+    "get_supplier_orders",
+    "update_supplier_order_status",
+    "get_supplier_order_detail",
+    "get_supplier_label_payload",
+    "upload_supplier_parcel_proof",
+]
+
 
 def get_supplier_orders(
     current_user: dict,
@@ -38,7 +68,7 @@ def get_supplier_orders(
     paged_order_ids = [cast(int, row.order_id) for row in query.all()]
     if not paged_order_ids:
         resolved_page_size = limit if limit is not None else 0
-        return _build_list_page_payload([], total, offset=offset, page_size=resolved_page_size)
+        return build_list_page_payload([], total, offset=offset, page_size=resolved_page_size)
 
     supplier_orders = (
         db.query(Order)
@@ -48,7 +78,7 @@ def get_supplier_orders(
     )
     order_positions = {order_id: index for index, order_id in enumerate(paged_order_ids)}
     supplier_orders.sort(key=lambda order: order_positions.get(cast(int, order.id), len(order_positions)))
-    shipments_by_order = _load_shipments_for_orders([cast(int, order.id) for order in supplier_orders], db)
+    shipments_by_order = load_shipments_for_orders([cast(int, order.id) for order in supplier_orders], db)
     shipment_ids = [cast(int, shipment.id) for shipments in shipments_by_order.values() for shipment in shipments]
     shipment_events_by_shipment: dict[int, list[ShipmentEvent]] = {}
     if shipment_ids:
@@ -60,7 +90,7 @@ def get_supplier_orders(
         )
         for event in shipment_events:
             shipment_events_by_shipment.setdefault(cast(int, event.shipment_id), []).append(event)
-    customers_by_id = _load_users_by_ids([cast(int, order.user_id) for order in supplier_orders], db)
+    customers_by_id = load_users_by_ids([cast(int, order.user_id) for order in supplier_orders], db)
 
     # Batch-load supplier settlements for payment/settlement status enrichment
     all_order_ids = [cast(int, order.id) for order in supplier_orders]
@@ -149,7 +179,7 @@ def get_supplier_orders(
     if orders_updated:
         db.commit()
     resolved_page_size = limit if limit is not None else len(result)
-    return _build_list_page_payload(result, total, offset=offset, page_size=resolved_page_size)
+    return build_list_page_payload(result, total, offset=offset, page_size=resolved_page_size)
 
 
 def update_supplier_order_status(order_id: int, status_update: dict, current_user: dict, db: Session) -> dict:
@@ -227,14 +257,14 @@ def get_supplier_order_detail(order_id: int, current_user: dict, db: Session) ->
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    shipments = _load_shipments_for_orders([cast(int, order.id)], db).get(cast(int, order.id), [])
+    shipments = load_shipments_for_orders([cast(int, order.id)], db).get(cast(int, order.id), [])
     reconciled_status = reconcile_order_status(order, shipments)
     if order.status != reconciled_status:
         order.status = reconciled_status
         db.commit()
         db.refresh(order)
 
-    customer = _load_users_by_ids([cast(int, order.user_id)], db).get(cast(int, order.user_id))
+    customer = load_users_by_ids([cast(int, order.user_id)], db).get(cast(int, order.user_id))
     order_financials = derive_order_financials(order)
     supplier_items = [
         {

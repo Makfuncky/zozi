@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
     name="tasks.fx_revaluation.run_fx_revaluation_task",
     max_retries=1,
     default_retry_delay=300,
+    time_limit=1800,
+    soft_time_limit=1500,
 )
 def run_fx_revaluation_task(
     self,

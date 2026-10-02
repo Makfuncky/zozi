@@ -1,17 +1,23 @@
-"""PayPal SDK access point for the provider layer.
+"""PayPal REST access point for the provider layer.
 
-The paypalrestsdk / checkout-sdk Python packages are external integrations.
-Service-layer code must not import them directly; it should reach them through
-this provider module so that all third-party payment SDK usage is centralized
-behind the provider boundary.
+PayPal is reached through direct REST calls over httpx (TECHNOLOGY_STACK.md
+section 6: no official maintained Python SDK; REST is stable and auditable).
+Service-layer code must not perform PayPal HTTP requests directly; it should
+reach them through this provider module so that all third-party payment access
+is centralized behind the provider boundary.
 """
 
 from __future__ import annotations
 
 import logging
-import os
+import time
 from decimal import Decimal
 from typing import Any, Optional
+
+from infrastructure.observability.circuit_breaker import (
+    CircuitBreakerError,
+    get_circuit_breaker,
+)
 
 from providers.payments.config import (
     is_paypal_configured,
@@ -20,20 +26,30 @@ from providers.payments.config import (
 
 logger = logging.getLogger(__name__)
 
-HAS_PAYPAL = False
-_paypal_sdk = None
-_paypal_http = None
-
 try:
-    import paypalrestsdk as _paypal_sdk  # type: ignore[import-untyped]
+    import httpx
+
     HAS_PAYPAL = True
 except ImportError:
-    try:
-        from paypalcheckoutsdk.core import PayPalHttpClient, SandboxEnvironment, LiveEnvironment  # type: ignore[import-untyped]
-        _paypal_http = PayPalHttpClient
-        HAS_PAYPAL = True
-    except ImportError:
-        pass
+    httpx = None  # type: ignore[assignment]
+    HAS_PAYPAL = False
+
+# Legacy SDK handle retained for backward-compatible introspection; the
+# provider no longer imports any PayPal SDK (direct REST via httpx).
+_paypal_sdk = None
+
+_PAYPAL_TIMEOUT = 30.0
+
+_PAYPAL_BREAKER_FAILURE_THRESHOLD = 5
+
+_paypal_breaker = get_circuit_breaker(
+    "paypal",
+    failure_threshold=_PAYPAL_BREAKER_FAILURE_THRESHOLD,
+    recovery_timeout=30,
+)
+
+_access_token: str = ""
+_access_token_expires_at: float = 0.0
 
 
 class PayPalError(Exception):
@@ -64,7 +80,7 @@ def _get_sdk() -> Any:
     """Return the underlying PayPal SDK module, or raise if unavailable."""
     if not HAS_PAYPAL:
         raise PayPalConfigurationError(
-            "PayPal SDK is not installed. Install 'paypalrestsdk' or 'paypal-checkout-sdk'."
+            "PayPal SDK is not installed. This provider uses direct REST via httpx."
         )
     if _paypal_sdk is not None:
         return _paypal_sdk
@@ -72,25 +88,88 @@ def _get_sdk() -> Any:
 
 
 def _get_client() -> Any:
-    """Build and return a PayPal HTTP client from environment credentials."""
-    if _paypal_http is None:
+    """Build and return an httpx client bound to the PayPal REST base URL."""
+    if httpx is None or not HAS_PAYPAL:
         raise PayPalConfigurationError(
-            "PayPal checkout SDK is not installed. Install 'paypal-checkout-sdk'."
+            "PayPal HTTP client is not available. Install 'httpx'."
         )
     client_id, secret, base_url = resolve_paypal_credentials()
     if not client_id or not secret:
         raise PayPalConfigurationError(
             "PAYPAL_CLIENT_ID and PAYPAL_SECRET must be set."
         )
-    if "sandbox" in base_url:
-        environment = SandboxEnvironment(client_id=client_id, client_secret=secret)
+    return httpx.Client(base_url=base_url, timeout=_PAYPAL_TIMEOUT)
+
+
+def _get_access_token(client: Any) -> str:
+    """Return a cached OAuth bearer token, requesting a new one when needed.
+
+    Uses the client-credentials grant at ``/v1/oauth2/token`` with HTTP Basic
+    authentication from the configured credentials.
+    """
+    global _access_token, _access_token_expires_at
+    now = time.monotonic()
+    if _access_token and now < _access_token_expires_at:
+        return _access_token
+    client_id, secret, _ = resolve_paypal_credentials()
+    if not client_id or not secret:
+        raise PayPalConfigurationError(
+            "PAYPAL_CLIENT_ID and PAYPAL_SECRET must be set."
+        )
+    response = client.post(
+        "/v1/oauth2/token",
+        content="grant_type=client_credentials",
+        headers={"Accept": "application/json"},
+        auth=(client_id, secret),
+    )
+    if response.status_code not in (200, 201):
+        raise PayPalError(
+            f"PayPal token request returned status {response.status_code}"
+        )
+    payload = response.json()
+    token = str(payload.get("access_token") or "")
+    if not token:
+        raise PayPalError("PayPal token response is missing access_token")
+    try:
+        expires_in = float(payload.get("expires_in") or 3600.0)
+    except (TypeError, ValueError):
+        expires_in = 3600.0
+    _access_token = token
+    _access_token_expires_at = now + max(expires_in - 60.0, 0.0)
+    return token
+
+
+def _request(
+    client: Any,
+    method: str,
+    path: str,
+    *,
+    json_body: Optional[dict[str, Any]] = None,
+    prefer: bool = False,
+) -> tuple[int, dict[str, Any]]:
+    """Execute one PayPal REST call and return ``(status_code, body)``."""
+    token = _get_access_token(client)
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+    }
+    if prefer:
+        headers["Prefer"] = "return=representation"
+    if json_body is None:
+        response = client.request(method, path, headers=headers)
     else:
-        environment = LiveEnvironment(client_id=client_id, client_secret=secret)
-    return PayPalHttpClient(environment)
+        response = client.request(method, path, headers=headers, json=json_body)
+    try:
+        data = response.json()
+    except Exception:
+        data = None
+    if not isinstance(data, dict):
+        data = {}
+    return response.status_code, data
 
 
 def is_available() -> bool:
-    """Return True when the PayPal SDK is importable and credentials are set."""
+    """Return True when the PayPal HTTP client is importable and credentials are set."""
     return HAS_PAYPAL and is_paypal_configured()
 
 
@@ -119,7 +198,7 @@ def create_order(
         dict with 'id', 'status', and 'approval_url' keys.
 
     Raises:
-        PayPalConfigurationError: If PayPal SDK or credentials are missing.
+        PayPalConfigurationError: If PayPal client or credentials are missing.
         PayPalError: If order creation fails.
     """
     client = _get_client()
@@ -142,32 +221,39 @@ def create_order(
     }
     if metadata:
         payload["purchase_units"][0]["custom_id"] = str(metadata)
+    if _paypal_breaker.state.value == "open":
+        client.close()
+        raise PayPalError("PayPal circuit breaker is open")
     try:
-        from paypalcheckoutsdk.orders import OrdersCreateRequest  # type: ignore[import-untyped]
-        request = OrdersCreateRequest()
-        request.prefer("return=representation")
-        request.request_body(payload)
-        response = client.execute(request)
-    except ImportError as exc:
-        raise PayPalConfigurationError(f"PayPal checkout SDK unavailable: {exc}") from exc
+        status_code, data = _request(
+            client,
+            "POST",
+            "/v2/checkout/orders",
+            json_body=payload,
+            prefer=True,
+        )
+    except CircuitBreakerError as exc:
+        logger.warning("PayPal circuit breaker open for create_order: %s", exc)
+        raise PayPalError(f"PayPal circuit breaker open: {exc}") from exc
     except Exception as exc:
         logger.exception("PayPal create_order failed")
         raise PayPalError(f"Failed to create PayPal order: {exc}") from exc
-    if response.status_code not in (200, 201):
+    finally:
+        client.close()
+    if status_code not in (200, 201):
         raise PayPalError(
-            f"PayPal create_order returned status {response.status_code}"
+            f"PayPal create_order returned status {status_code}"
         )
-    result = response.result
     approval_url = ""
-    for link in result.links or []:
-        if link.rel == "approve":
-            approval_url = link.href
+    for link in data.get("links") or []:
+        if isinstance(link, dict) and link.get("rel") == "approve":
+            approval_url = str(link.get("href") or "")
             break
     return {
-        "id": result.id,
-        "status": str(result.status),
+        "id": data.get("id"),
+        "status": str(data.get("status")),
         "approval_url": approval_url,
-        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+        "raw": data,
     }
 
 
@@ -192,18 +278,28 @@ def capture_payment(
         PayPalCaptureError: If the capture operation fails.
     """
     client = _get_client()
+    if _paypal_breaker.state.value == "open":
+        client.close()
+        raise PayPalCaptureError("PayPal circuit breaker is open")
+    body: Optional[dict[str, Any]] = None
+    if amount is not None and currency:
+        body = {
+            "amount": {
+                "currency_code": currency.upper(),
+                "value": str(amount),
+            }
+        }
     try:
-        from paypalcheckoutsdk.orders import OrdersCaptureRequest  # type: ignore[import-untyped]
-        request = OrdersCaptureRequest(order_id)
-        request.prefer("return=representation")
-        if amount is not None and currency:
-            request.request_body({
-                "amount": {
-                    "currency_code": currency.upper(),
-                    "value": str(amount),
-                }
-            })
-        response = client.execute(request)
+        status_code, data = _request(
+            client,
+            "POST",
+            f"/v2/checkout/orders/{order_id}/capture",
+            json_body=body,
+            prefer=True,
+        )
+    except CircuitBreakerError as exc:
+        logger.warning("PayPal circuit breaker open for capture_payment %s: %s", order_id, exc)
+        raise PayPalCaptureError(f"PayPal circuit breaker open: {exc}") from exc
     except Exception as exc:
         if "NOT_FOUND" in str(exc) or "404" in str(exc):
             raise PayPalOrderNotFoundError(
@@ -213,25 +309,34 @@ def capture_payment(
         raise PayPalCaptureError(
             f"Failed to capture PayPal order {order_id}: {exc}"
         ) from exc
-    if response.status_code not in (200, 201):
-        raise PayPalCaptureError(
-            f"PayPal capture returned status {response.status_code}"
+    finally:
+        client.close()
+    if status_code == 404 or "NOT_FOUND" in str(data):
+        raise PayPalOrderNotFoundError(
+            f"PayPal order {order_id} not found"
         )
-    result = response.result
+    if status_code not in (200, 201):
+        raise PayPalCaptureError(
+            f"PayPal capture returned status {status_code}"
+        )
     capture_amount = str(amount) if amount else ""
-    status = str(result.status)
-    for pu in result.purchase_units or []:
-        if hasattr(pu, "payments") and pu.payments:
-            for cap in (pu.payments.captures or []):
-                status = str(cap.status)
-                if hasattr(cap, "amount"):
-                    capture_amount = str(cap.amount.value)
+    status = str(data.get("status"))
+    for pu in data.get("purchase_units") or []:
+        if not isinstance(pu, dict):
+            continue
+        payments = pu.get("payments")
+        if payments:
+            for cap in payments.get("captures") or []:
+                status = str(cap.get("status"))
+                cap_amount = cap.get("amount")
+                if cap_amount:
+                    capture_amount = str(cap_amount.get("value"))
                 break
     return {
-        "id": result.id,
+        "id": data.get("id"),
         "status": status,
         "capture_amount": capture_amount,
-        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+        "raw": data,
     }
 
 
@@ -257,39 +362,48 @@ def refund_payment(
         PayPalRefundError: If the refund operation fails.
     """
     client = _get_client()
+    if _paypal_breaker.state.value == "open":
+        client.close()
+        raise PayPalRefundError("PayPal circuit breaker is open")
+    body: dict[str, Any] = {}
+    if reason:
+        body["note_to_payer"] = reason
+    if amount is not None and currency:
+        body["amount"] = {
+            "currency_code": currency.upper(),
+            "value": str(amount),
+        }
     try:
-        from paypalcheckoutsdk.payments import CapturesRefundRequest  # type: ignore[import-untyped]
-        request = CapturesRefundRequest(capture_id)
-        request.prefer("return=representation")
-        body: dict[str, Any] = {}
-        if reason:
-            body["note_to_payer"] = reason
-        if amount is not None and currency:
-            body["amount"] = {
-                "currency_code": currency.upper(),
-                "value": str(amount),
-            }
-        if body:
-            request.request_body(body)
-        response = client.execute(request)
+        status_code, data = _request(
+            client,
+            "POST",
+            f"/v2/payments/captures/{capture_id}/refund",
+            json_body=body or None,
+            prefer=True,
+        )
+    except CircuitBreakerError as exc:
+        logger.warning("PayPal circuit breaker open for refund_payment %s: %s", capture_id, exc)
+        raise PayPalRefundError(f"PayPal circuit breaker open: {exc}") from exc
     except Exception as exc:
         logger.exception("PayPal refund_payment failed for capture %s", capture_id)
         raise PayPalRefundError(
             f"Failed to refund PayPal capture {capture_id}: {exc}"
         ) from exc
-    if response.status_code not in (200, 201):
+    finally:
+        client.close()
+    if status_code not in (200, 201):
         raise PayPalRefundError(
-            f"PayPal refund returned status {response.status_code}"
+            f"PayPal refund returned status {status_code}"
         )
-    result = response.result
     refund_amount = str(amount) if amount else ""
-    if hasattr(result, "amount") and result.amount:
-        refund_amount = str(result.amount.value)
+    refund_value = data.get("amount")
+    if refund_value:
+        refund_amount = str(refund_value.get("value"))
     return {
-        "id": result.id,
-        "status": str(result.status),
+        "id": data.get("id"),
+        "status": str(data.get("status")),
         "refund_amount": refund_amount,
-        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+        "raw": data,
     }
 
 
@@ -308,9 +422,9 @@ def get_order(order_id: str) -> dict[str, Any]:
     """
     client = _get_client()
     try:
-        from paypalcheckoutsdk.orders import OrdersGetRequest  # type: ignore[import-untyped]
-        request = OrdersGetRequest(order_id)
-        response = client.execute(request)
+        status_code, data = _request(
+            client, "GET", f"/v2/checkout/orders/{order_id}"
+        )
     except Exception as exc:
         if "NOT_FOUND" in str(exc) or "404" in str(exc):
             raise PayPalOrderNotFoundError(
@@ -320,24 +434,31 @@ def get_order(order_id: str) -> dict[str, Any]:
         raise PayPalError(
             f"Failed to retrieve PayPal order {order_id}: {exc}"
         ) from exc
-    if response.status_code != 200:
-        raise PayPalError(
-            f"PayPal get_order returned status {response.status_code}"
+    finally:
+        client.close()
+    if status_code == 404 or "NOT_FOUND" in str(data):
+        raise PayPalOrderNotFoundError(
+            f"PayPal order {order_id} not found"
         )
-    result = response.result
+    if status_code != 200:
+        raise PayPalError(
+            f"PayPal get_order returned status {status_code}"
+        )
     amount_value = ""
     amount_currency = ""
-    for pu in result.purchase_units or []:
-        if hasattr(pu, "amount") and pu.amount:
-            amount_value = str(pu.amount.value)
-            amount_currency = str(pu.amount.currency_code)
+    for pu in data.get("purchase_units") or []:
+        if isinstance(pu, dict):
+            pu_amount = pu.get("amount")
+            if pu_amount:
+                amount_value = str(pu_amount.get("value"))
+                amount_currency = str(pu_amount.get("currency_code"))
         break
     return {
-        "id": result.id,
-        "status": str(result.status),
+        "id": data.get("id"),
+        "status": str(data.get("status")),
         "amount": amount_value,
         "currency": amount_currency,
-        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+        "raw": data,
     }
 
 
@@ -356,9 +477,9 @@ def void_payment(order_id: str) -> dict[str, Any]:
     """
     client = _get_client()
     try:
-        from paypalcheckoutsdk.orders import OrdersVoidRequest  # type: ignore[import-untyped]
-        request = OrdersVoidRequest(order_id)
-        response = client.execute(request)
+        status_code, data = _request(
+            client, "POST", f"/v2/checkout/orders/{order_id}/void"
+        )
     except Exception as exc:
         if "NOT_FOUND" in str(exc) or "404" in str(exc):
             raise PayPalOrderNotFoundError(
@@ -368,9 +489,15 @@ def void_payment(order_id: str) -> dict[str, Any]:
         raise PayPalVoidError(
             f"Failed to void PayPal order {order_id}: {exc}"
         ) from exc
-    if response.status_code not in (200, 204):
+    finally:
+        client.close()
+    if status_code == 404 or "NOT_FOUND" in str(data):
+        raise PayPalOrderNotFoundError(
+            f"PayPal order {order_id} not found"
+        )
+    if status_code not in (200, 204):
         raise PayPalVoidError(
-            f"PayPal void returned status {response.status_code}"
+            f"PayPal void returned status {status_code}"
         )
     return {
         "id": order_id,

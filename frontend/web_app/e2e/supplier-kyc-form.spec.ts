@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
@@ -39,7 +39,7 @@ async function loginAsAdmin(page: Page) {
   }
 
   const passwordInput = form.locator("input[type='password']:visible").first();
-  await passwordInput.fill("admin123");
+  await passwordInput.fill("E2eAdmin#2026");
   await submitButton.click();
 }
 
@@ -124,3 +124,4 @@ test("can change KYC level", async ({ page }) => {
   });
 
 });
+

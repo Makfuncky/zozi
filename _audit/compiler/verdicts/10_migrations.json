@@ -1,0 +1,1677 @@
+{
+ "agent_id": "COMP-V04-10_migrations",
+ "dimension": "10_migrations",
+ "records_considered": 70,
+ "verdicts": [
+  {
+   "key": "10_migrations-1",
+   "id": "10_migrations-1",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": false,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "revision  = 'b81bfc888610'\ndown_revision = None\nchain_check.py: roots (down_revision None): ['b81bfc888610']  -> exactly ONE root, no second baseline\ndistinct revision ids: 75 ; DUPLICATE revision ids: 0 ; orphan revisions: []",
+   "verify_command": "read backend/alembic/versions/2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean.py (revision/down_revision)",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean.py:1 (single root; down_revision=None, verified)",
+    "Verify": "cd backend; $env:PYTHONPATH=\"<repo>\\backend\\alembic\"; alembic -c alembic/alembic.ini heads",
+    "Test": "backend/tests/architecture/test_alembic_autogenerate_check.py (2 tests collected: test_alembic_covers_orm_tables, test_create_all_banned_in_production)"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49"
+   ],
+   "notes": "Delta \"Baseline; down_revision=None is correct\" is CONFIRMED - b81bfc888610 is the single root of the graph and no duplicate revision id exists (contradicting PRODUCTION_READINESS_CHECKLIST.md:338 D-18 \"2 duplicate revision IDs\"). One live finding remains inside this row: the shipped naming linter reports `2026_07_26_16_09-b81bfc888610_...: file revision 'b81bfc888610' does not match filename timestamp (expected prefix '20260726_1609')`, i.e. \"Naming OK: No\" is what the linter prints, but the filename DOES contain the exact revision. Verdict on the naming cell: the linter is wrong here (see coverage_gaps CG-1)."
+  },
+  {
+   "key": "10_migrations-10",
+   "id": "10_migrations-10",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_29_10_17-e281faa0c087_add_orm_models_for_orphaned_employee_.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_29_10_17-e281faa0c087_add_orm_models_for_orphaned_employee_.py EXISTS on disk. Its declared revision is 'e281faa0c087'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 3 indexes, downgrade() drops 3. Symmetric. Row Delta \"Idempotent SQLite-aware\" is accurate - the file guards on dialect. Naming: ts_mismatch (fn_rev=\"e281faa0c087\" == file_rev) - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-11",
+   "id": "10_migrations-11",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": false,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "def downgrade() -> None:\n    bind = op.get_bind()\n    # Re-add dropped index\n    if not _index_exists(bind, 'commission_ledger_entries', 'ix_commission_ledger_supplier_created'):\n        op.create_index('ix_commission_ledger_supplier_created', ...)\n    # Drop newly added indexes\n    for table, name in [('logistics_partner_documents', 'ix_logistics_partner_documents_reviewed_by'),\n                          ('journal_entries', 'ix_journal_entries_deleted_by')]:\n        if _index_exists(bind, table, name):\n            op.drop_index(name, table_name=table)\n  <-- loop ends; function returns here",
+   "verify_command": "read backend/alembic/versions/2026_07_29_10_28-9ff24a0683dd_schema_drift_check.py:110-131",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "not_run",
+   "filled_fields": {},
+   "laws_cited": [
+    "Law 49",
+    "Law 57",
+    "Law 107",
+    "Law 217"
+   ],
+   "notes": "Delta \"Downgrade incomplete (SQLite)\" is CONFIRMED, and the migration self-documents it at lines 15-18 and 111-114. EXACT unreversed operations: all SEVEN `_convert_unique_index_to_constraint()` calls in upgrade() (lines 74-94) are NOT reversed - campaign_recipients.uq_campaign_recipient, commission_agreements.uq_commission_agreement, email_campaign_logs.uq_email_campaign_log, flash_sale_items.uq_flash_sale_item, product_commission_overrides.uq_product_commission_override, shipping_rules.uq_shipping_rule, tax_rules.uq_tax_rule. Net effect: after downgrade the 7 UNIQUE INDEX objects are still gone and 7 UNIQUE CONSTRAINTs remain, so schema state is NOT restored. The 8 other operations (1 index drop + 2 index creates) ARE reversed. Also note the whole migration is SQLite-only in practice: _index_exists() queries sqlite_master (line 38), so on PostgreSQL (Law 107 prod) upgrade() is a silent no-op - a separate, larger defect than the downgrade gap. Naming: shipped linter flags this file (script-parsed fn_rev=\"9ff24a0683dd\" == file_rev, linter applied the wrong timestamp branch - linter artifact)."
+  },
+  {
+   "key": "10_migrations-12",
+   "id": "10_migrations-12",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "partial",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_29_19_14-20260729_1914_add_products_search_vector_trigger.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_29_19_14-20260729_1914_add_products_search_vector_trigger.py EXISTS on disk. Its declared revision is '20260729_1914'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: PASSES this file (one of only 4). The row's \"Naming OK: No\" is CONTRADICTED. Downgrade completeness VERIFIED: upgrade() adds the tsvector column + GIN index + trigger, downgrade() drops all three. Symmetric. Naming: linter PASSES this file; under the rule's intent the filename embeds the exact revision, so it IS compliant - the audit's \"Naming OK: No\" is wrong here (CG-1)."
+  },
+  {
+   "key": "10_migrations-13",
+   "id": "10_migrations-13",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "partial",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif.py EXISTS on disk. Its declared revision is '20260729_2030'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: PASSES this file (one of only 4). The row's \"Naming OK: No\" is CONTRADICTED. Downgrade completeness VERIFIED COMPLETE and unusually thorough for this repo: upgrade() renames the table to `<t>_old`, creates a RANGE-partitioned parent, creates monthly partitions, INSERT..SELECTs the data across, then drops the shadow. downgrade() reads pg_inherits to discover the real partition names, DETACHes each, rebuilds a flat `_pre_downgrade` table with `LIKE ... INCLUDING ALL`, re-UNIONs the data back, renames and drops the partitioned parent. The row Delta \"INSERT...SELECT on large tables; row-locks only\" is accurate. Long-running = Yes is justified (per-row copy, no CONCURRENTLY). Law 253 partitioning is honoured. Naming: linter flags this file but that is a LINTER ARTIFACT - the filename `2026_07_29_20_30-20260729_2030_...` embeds the exact revision `20260729_2030` (see coverage_gaps CG-1)."
+  },
+  {
+   "key": "10_migrations-14",
+   "id": "10_migrations-14",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_30_0001-20260730_0001_create_user_points_table.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_30_0001-20260730_0001_create_user_points_table.py EXISTS on disk. Its declared revision is '20260730_0001'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: 1 create_table + 2 create_index, downgrade drops the table. Symmetric. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-15",
+   "id": "10_migrations-15",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_30_0002-20260730_0002_create_points_transactions_table.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_30_0002-20260730_0002_create_points_transactions_table.py EXISTS on disk. Its declared revision is '20260730_0002'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: 1 create_table + 3 create_index, downgrade drops the table. Symmetric. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-16",
+   "id": "10_migrations-16",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_30_0003-20260730_0003_create_upload_jobs_table.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_30_0003-20260730_0003_create_upload_jobs_table.py EXISTS on disk. Its declared revision is '20260730_0003'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 1 table + 3 indexes, downgrade() drops the table (CASCADE removes the indexes). Symmetric. Cross-ref 10_migrations-26: this and that row both create ai.upload_jobs. Naming: rev_mismatch (fn_rev=\"20260730\" vs file_rev=\"20260730_0003\") - LINTER ARTIFACT, filename embeds the exact revision (CG-1)."
+  },
+  {
+   "key": "10_migrations-17",
+   "id": "10_migrations-17",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_30_0004-20260730_0004_create_event_tables.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_30_0004-20260730_0004_create_event_tables.py EXISTS on disk. Its declared revision is '20260730_0004'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 8 tables (row Delta says \"4 event-bus tables\" - the file has 8 op.create_table calls, so the Delta undercounts by 2x) plus 24 indexes; downgrade() drops all 8 tables. Symmetric; the indexes go with CASCADE. Delta count wrong, downgrade fine. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-18",
+   "id": "10_migrations-18",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_30_0005-20260730_0005_bounded_context_schema_migration.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_30_0005-20260730_0005_bounded_context_schema_migration.py EXISTS on disk. Its declared revision is '20260730_0005'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() creates 17 schemas and moves ~300 tables out of public via `ALTER TABLE public.\"t\" SET SCHEMA :s`; downgrade() moves every one of the same (table, schema) pairs back with `ALTER TABLE \"s\".\"t\" SET SCHEMA public` and then drops all 17 schemas CASCADE. The pairing list is the identical literal in both functions. \"Long-running: Yes\" is correct (300+ ACCESS EXCLUSIVE table moves in one transaction). Naming: linter flags this file; the filename `2026_07_30_0005-20260730_0005_...` DOES contain the exact revision - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-19",
+   "id": "10_migrations-19",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_01_0018-20260801_0018_move_lms_tables_to_hr_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_01_0018-20260801_0018_move_lms_tables_to_hr_schema.py EXISTS on disk. Its declared revision is '20260801_0018'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness not read line-by-line for this row; see coverage_gaps CG-4. Chain position, revision, down_revision, destructive/backward-compatible/long-running cells and file existence were all verified."
+  },
+  {
+   "key": "10_migrations-2",
+   "id": "10_migrations-2",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables.py EXISTS on disk. Its declared revision is 'c9e8f7d6a5b4'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() creates 16 tables (row Delta says 12 - the file actually has 16 op.create_table calls, so the Delta undercounts); downgrade() drops 16. Set difference empty. The Delta count is wrong, the downgrade is fine. Naming: ts_mismatch (fn_rev=\"20260726_2130\" derived from the timestamp, but the file uses a hex revision `c9e8f7d6a5b4` with no `-rev` token in the filename) - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-20",
+   "id": "10_migrations-20",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_05_0001-rename_return_deadline_to_return_deadline_at.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_05_0001-rename_return_deadline_to_return_deadline_at.py EXISTS on disk. Its declared revision is '20260805_0001'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE and exactly symmetric: upgrade() runs `ALTER TABLE IF EXISTS commerce.return_requests RENAME COLUMN return_deadline TO return_deadline_at`; downgrade() runs the exact inverse `... return_deadline_at TO return_deadline`. Both are dialect-guarded (no-op on SQLite). CAVEAT for Law 57: this is a bare in-place RENAME, not an expand-contract add-new-then-backfill-then-drop, so it takes an ACCESS EXCLUSIVE lock and is not zero-downtime - the row marks Destructive=No / Expand-Contract=N/A, which understates it. Naming: linter flags it, filename does NOT embed revision 20260805_0001 (it embeds \"rename\") - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-21",
+   "id": "10_migrations-21",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0001_add_analytics_audit_columns.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0001_add_analytics_audit_columns.py EXISTS on disk. Its declared revision is '20260806_0001'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() safe_add_column()s audit/analytics columns, downgrade() safe_drop_column()s the same set. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-22",
+   "id": "10_migrations-22",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0001_media_add_audit_softdelete_mixins_and_rename_ai_result.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0001_media_add_audit_softdelete_mixins_and_rename_ai_result.py EXISTS on disk. Its declared revision is '20260806_0002'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE and symmetric: upgrade() adds mixin columns to media.media_assets, media.media_upload_sessions and ai.upload_jobs, renames ai.upload_jobs.ai_result -> ai_result_json, drops the old GIN index and creates ix_upload_jobs_ai_result_json_gin. downgrade() drops the new index, recreates the old one, renames the column back, and drops every added column in reversed() order. No unreversed operation. Naming: no_pattern (GENUINE violation - revision 20260806_0002 is absent from the filename)."
+  },
+  {
+   "key": "10_migrations-23",
+   "id": "10_migrations-23",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0003-20260806_0003_baseline_sync_orm_tables.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0003-20260806_0003_baseline_sync_orm_tables.py EXISTS on disk. Its declared revision is '20260806_0003'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE at scale: upgrade() contains 347 op.create_table() calls; downgrade() contains 347 matching `DROP TABLE IF EXISTS \"<schema>\".\"<table>\"` statements. Set difference computed: created-not-dropped = [] and dropped-not-created = []. This is the single largest migration in the repo and its downgrade is genuinely complete. Naming: linter flags it as rev_mismatch (fn_rev=\"20260806\" vs file_rev=\"20260806_0003\") - LINTER ARTIFACT, filename embeds the exact revision (CG-1)."
+  },
+  {
+   "key": "10_migrations-24",
+   "id": "10_migrations-24",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0004-catalog_categories_dba03_audit_softdelete.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0004-catalog_categories_dba03_audit_softdelete.py EXISTS on disk. Its declared revision is '20260806_0004'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: the *_columns() helper is iterated forward in upgrade() and reversed() in downgrade(). Symmetric. Naming: rev_mismatch (fn_rev=\"catalog\" vs file_rev=\"20260806_0004\") - GENUINE violation, the revision is absent from the filename."
+  },
+  {
+   "key": "10_migrations-25",
+   "id": "10_migrations-25",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0005-dba03_version_column_backfill.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0005-dba03_version_column_backfill.py EXISTS on disk. Its declared revision is '20260806_0005'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() backfills `version` onto ~90 deployed tables via _iter_deployed_tables(); downgrade() calls safe_drop_column(op, name, \"version\", schema=schema) over the same iterator. Symmetric at the schema level - BUT: the backfill writes DATA (a version value) that downgrade does not restore, only removes the column. Acceptable (the column is the artifact). Naming: rev_mismatch (fn_rev=\"dba03\") - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-26",
+   "id": "10_migrations-26",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0006-upload_jobs_table.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0006-upload_jobs_table.py EXISTS on disk. Its declared revision is '20260806_0006'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 1 table, downgrade() drops 1. Symmetric. NOTE: this duplicates 10_migrations-16, which also creates ai.upload_jobs (2026_07_30_0003_create_upload_jobs_table.py). Two revisions in the same linear chain both create the same table - the second is guarded so it is a no-op, but it is a Law 51 / Law 6 duplicate-table smell. Cross-ref duplicates_merged. Naming: rev_mismatch (fn_rev=\"upload\") - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-27",
+   "id": "10_migrations-27",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0007_supplier_badge_and_risk_tables.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0007_supplier_badge_and_risk_tables.py EXISTS on disk. Its declared revision is '20260806_0007'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 4 tables (row Delta says 3 - undercount), downgrade drops 4. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-28",
+   "id": "10_migrations-28",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0008_role_permission_setting_maker_checker.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0008_role_permission_setting_maker_checker.py EXISTS on disk. Its declared revision is '20260806_0008'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() adds 2 columns in batch mode, downgrade drops 2. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-29",
+   "id": "10_migrations-29",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0009_promotion_ledger_order_id.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_06_0009_promotion_ledger_order_id.py EXISTS on disk. Its declared revision is '20260806_0009'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() adds 1 column + 1 index, downgrade drops both. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-3",
+   "id": "10_migrations-3",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_26_20_27-837e1e29bd49_add_banner_layout_json.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_26_20_27-837e1e29bd49_add_banner_layout_json.py EXISTS on disk. Its declared revision is '837e1e29bd49'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() adds banners.layout_json, downgrade() drops it. Symmetric. Naming: ts_mismatch (fn_rev=\"837e1e29bd49\" == file_rev) - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-30",
+   "id": "10_migrations-30",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_08_0001_supplier_document_profile_columns.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_08_0001_supplier_document_profile_columns.py EXISTS on disk. Its declared revision is '20260808_0001'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). CHAIN DATA ERROR: the row's \"Down Revision\" cell says '20260806_0009' but the file declares ['20260806_0007']. This is a defect in the audit table, not in the migration. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() safe_add_column()s supplier document/profile columns, downgrade safe_drop_column()s the same set. Symmetric. IMPORTANT: the row's \"Down Revision\" cell says 20260806_0009, but the file declares down_revision = \"20260806_0007\" (verified by direct read). The row's chain data is WRONG - this is a genuine second branch point (20260806_0007 has two children: 2026_08_06_0008 and 2026_08_08_0001) that the audit table failed to represent. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-31",
+   "id": "10_migrations-31",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_09_0000-ccw_unify_20260809_unify_country_code_width.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_09_0000-ccw_unify_20260809_unify_country_code_width.py EXISTS on disk. Its declared revision is 'ccw_unify_20260809'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). CHAIN DATA ERROR: the row's \"Down Revision\" cell says '20260808_0001' but the file declares ['02ebc285f66f']. This is a defect in the audit table, not in the migration. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() calls _apply(3, 10) and downgrade() calls _apply(10, 3) - an exact width reversal. CAVEAT: Law 20 requires country_code = String(2) ISO 3166-1 alpha-2, but this migration deliberately unifies to String(3). That is a Law 20 divergence, not a downgrade gap; flag for 07_tables_fields. Naming: rev_mismatch - filename embeds \"ccw\" not the revision \"ccw_unify_20260809\" - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-32",
+   "id": "10_migrations-32",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_10_1930-20260810_emp_act_log_create_employee_activity_logs.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_10_1930-20260810_emp_act_log_create_employee_activity_logs.py EXISTS on disk. Its declared revision is '20260810_emp_act_log'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 1 table + 3 indexes, downgrade drops the table. Symmetric. Naming: rev_mismatch (fn_rev=\"20260810\" vs file_rev=\"20260810_emp_act_log\") - LINTER ARTIFACT, filename embeds the exact revision."
+  },
+  {
+   "key": "10_migrations-33",
+   "id": "10_migrations-33",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_11_0000-20260811_otp_codes.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_11_0000-20260811_otp_codes.py EXISTS on disk. Its declared revision is '20260811_otp_codes'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 1 table + 1 index, downgrade drops the table. Symmetric. NOTE: this migration targets the \"core\" schema, which Law 24/56 FORBIDDS; it was later renamed to accounts by 10_migrations-35, so the end state is lawful. Naming: rev_mismatch (fn_rev=\"20260811\") - LINTER ARTIFACT."
+  },
+  {
+   "key": "10_migrations-34",
+   "id": "10_migrations-34",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_21_0001-20260821_split_commerce_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_21_0001-20260821_split_commerce_schema.py EXISTS on disk. Its declared revision is '20260821_split_commerce'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() moves 29 commerce tables into 5 bounded contexts; downgrade() moves the same 29 back. Symmetric. This migration is cited by ARCHITECTURE_STACK.md:354 as the canonical commerce split. \"Long-running: Yes\" correct. Naming: rev_mismatch (fn_rev=\"20260821\") - LINTER ARTIFACT."
+  },
+  {
+   "key": "10_migrations-35",
+   "id": "10_migrations-35",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_21_0002-20260821_core_to_accounts_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_21_0002-20260821_core_to_accounts_schema.py EXISTS on disk. Its declared revision is '20260821_core_to_accounts'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() runs a DO $$ block that renames schema core -> accounts guarded by `IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'core')`; downgrade() is the exact mirror renaming accounts -> core with the mirrored guard. Idempotent in both directions. This matches ARCHITECTURE_STACK.md:354, which cites this exact migration for the core -> accounts rename. Naming: rev_mismatch (fn_rev=\"20260801\" vs file_rev=\"20260821_core_to_accounts\") - LINTER ARTIFACT, filename embeds the exact revision (CG-1)."
+  },
+  {
+   "key": "10_migrations-36",
+   "id": "10_migrations-36",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_21_0003-20260821_hr_shift_handover_task.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_21_0003-20260821_hr_shift_handover_task.py EXISTS on disk. Its declared revision is '20260821_hr_shift_handover_task'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CORRECTLY ATTESTED NO-OP. upgrade() is `pass` with the comment \"No DDL: the hr.shift_handover_tasks table is unchanged.\" and downgrade() is `pass`. Row Delta \"Code move only; no DDL\" is accurate. This is the repo's pattern of using migration nodes as chain anchors for pure Python re-homes. Law 6 nit: an Alembic revision that does no DDL is arguably a Law 6 violation (Alembic is the schema source, so a schema-less revision has no schema work), but it is the correct way to keep the history linear. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-37",
+   "id": "10_migrations-37",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_21_0004-20260821_hr_onboarding.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_21_0004-20260821_hr_onboarding.py EXISTS on disk. Its declared revision is '20260821_hr_onboarding'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CORRECTLY ATTESTED NO-OP. upgrade() is `pass` (\"No DDL: the hr.onboarding_pipelines / hr.onboarding_steps tables are unchanged.\"), downgrade() is `pass`. Delta accurate. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-38",
+   "id": "10_migrations-38",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_21_0005-20260821_crosscutting_domains.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_21_0005-20260821_crosscutting_domains.py EXISTS on disk. Its declared revision is '20260821_crosscutting_domains'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CORRECTLY ATTESTED NO-OP. upgrade() is `pass` (\"No schema change: tables only re-homed into owning domains.\"), downgrade() is `pass`. Delta accurate. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-39",
+   "id": "10_migrations-39",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_21_0006-20260821_customer_comm_logistics_media.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_21_0006-20260821_customer_comm_logistics_media.py EXISTS on disk. Its declared revision is '20260821_customer_comm_logistics_media'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CORRECTLY ATTESTED NO-OP. upgrade() is `pass`, downgrade() is `pass`. Delta \"Code move only; no DDL\" accurate. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-4",
+   "id": "10_migrations-4",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_26_22_00-e70b2cb9a90f_fix_internal_channels_fk.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_26_22_00-e70b2cb9a90f_fix_internal_channels_fk.py EXISTS on disk. Its declared revision is 'e70b2cb9a90f'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade is a single op.drop_constraint() with NO matching create in upgrade() - i.e. upgrade() adds an FK via raw SQL (op.execute) while downgrade() uses the op.drop_constraint() API. Same net effect, so the pairing is real, just written in two different styles. Not counted as a gap. Naming: ts_mismatch (fn_rev=\"e70b2cb9a90f\" == file_rev) - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-40",
+   "id": "10_migrations-40",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_21_0007-20260821_user_referral_to_customer.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_21_0007-20260821_user_referral_to_customer.py EXISTS on disk. Its declared revision is '20260821_user_referral_to_customer'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CORRECTLY ATTESTED NO-OP. upgrade() is `pass` (\"No schema change: tables only re-homed into the customer domain.\"), downgrade() is `pass`. Delta accurate. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-41",
+   "id": "10_migrations-41",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_22_0001-20260822_country_to_country_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_22_0001-20260822_country_to_country_schema.py EXISTS on disk. Its declared revision is '20260822_country_to_country_schema'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() moves 16 tables into the country schema, downgrade() moves the same 16 back. Symmetric. \"Long-running: Yes\" correct. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-42",
+   "id": "10_migrations-42",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_22_0002-20260822_communication_to_comms_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_22_0002-20260822_communication_to_comms_schema.py EXISTS on disk. Its declared revision is '20260822_communication_to_comms_schema'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() renames schema communication -> comms, downgrade renames comms -> communication. Symmetric and idempotent-guarded. Cited by ARCHITECTURE_STACK.md:354. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-43",
+   "id": "10_migrations-43",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_22_0003-20260822_governance_schema_consolidation.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_22_0003-20260822_governance_schema_consolidation.py EXISTS on disk. Its declared revision is '20260822_governance_schema_consolidation'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() moves 30 tables into governance, downgrade() moves the same 30 back. Symmetric. \"Long-running: Yes\" correct. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-44",
+   "id": "10_migrations-44",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_22_0004-20260822_supplier_to_suppliers_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_22_0004-20260822_supplier_to_suppliers_schema.py EXISTS on disk. Its declared revision is '20260822_supplier_to_suppliers_schema'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() renames schema supplier -> suppliers, downgrade renames back. Symmetric. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-45",
+   "id": "10_migrations-45",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_22_0005-20260822_pluralize_supplier_table_names.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_22_0005-20260822_pluralize_supplier_table_names.py EXISTS on disk. Its declared revision is '20260822_pluralize_supplier_table_names'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE and exactly symmetric: all three op.rename_table() calls (supplier_badge_catalog->..._catalogs, supplier_badge_billing_history->..._histories, supplier_onboarding_sync->..._syncs) are reversed in downgrade(). CAVEAT: same Law 57 concern as 10_migrations-20 - three bare renames, not expand-contract. Naming: linter flags; filename `2026_08_22_0005-20260822_pluralize_supplier_table_names.py` embeds the exact revision - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-46",
+   "id": "10_migrations-46",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_23_0001-20260823_governance_out_of_audit_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_23_0001-20260823_governance_out_of_audit_schema.py EXISTS on disk. Its declared revision is '20260823_governance_out_of_audit_schema'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). CHAIN DATA ERROR: the row's \"Down Revision\" cell says '20260822_pluralize_supplier_table_names' but the file declares ['20260822_communication_to_comms_schema']. This is a defect in the audit table, not in the migration. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() moves 5 tables from audit to governance, downgrade() moves the same 5 back to audit. Symmetric. IMPORTANT: the row's \"Down Revision\" cell says 20260822_pluralize_supplier_table_names, but the file declares down_revision = \"20260822_communication_to_comms_schema\". The row's chain data is WRONG - this is the second real branch point (20260822_communication_to_comms_schema has two children: 2026_08_22_0003 and 2026_08_23_0001). Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-47",
+   "id": "10_migrations-47",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_27_0001-20260827_audit_logs_worm_hash.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_27_0001-20260827_audit_logs_worm_hash.py EXISTS on disk. Its declared revision is '20260827_audit_logs_worm_hash'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). CHAIN DATA ERROR: the row's \"Down Revision\" cell says '20260822_governance_out_of_audit_schema' but the file declares ['20260823_governance_out_of_audit_schema']. This is a defect in the audit table, not in the migration. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() adds 2 WORM hash columns + 1 index, downgrade drops the index and both columns. Symmetric. Law 230/278-aligned. IMPORTANT: the row's \"Down Revision\" cell says 20260822_governance_out_of_audit_schema, which IS what the file declares - but the row ORDER in the table places it after 46 whose declared parent is the OTHER branch, so the table's linearisation is misleading. Naming: LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-48",
+   "id": "10_migrations-48",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_31_0001_add_governance_schema.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_31_0001_add_governance_schema.py EXISTS on disk. Its declared revision is '20260831_0001'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() creates schema \"governance\" and moves admin_activity_logs / admin_analytics_snapshots / admin_change_audit_logs from audit to governance; downgrade() moves the same three back to audit then drops the governance schema CASCADE. Symmetric. Naming: no_pattern - GENUINE violation (`2026_08_31_0001_add_governance_schema.py` carries no revision token)."
+  },
+  {
+   "key": "10_migrations-49",
+   "id": "10_migrations-49",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_31_0002_add_uuid_columns.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_31_0002_add_uuid_columns.py EXISTS on disk. Its declared revision is '20260831_0002'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CONTRADICTS the audit: this row claims \"Naming OK: Yes\", but running the shipped linter on this exact file returns exit 1 with \"filename does not match YYYY_MM_DD_HH_MM[-<rev>]_description.py pattern\". The row cell is WRONG. Downgrade completeness VERIFIED COMPLETE: upgrade() adds `uuid` to every CORE_TABLES entry (SQLite branch uses ADD COLUMN + randomblob backfill, Postgres branch uses ADD COLUMN IF NOT EXISTS); downgrade() drops the uuid column for each table in reversed() order. Symmetric. Note the SQLite backfill writes `lower(hex(randomblob(16)))` = 32 hex chars into a CHAR(36) - that is not a valid UUID and does not match the Postgres UUID type. Separate data-integrity defect, out of this dimension."
+  },
+  {
+   "key": "10_migrations-5",
+   "id": "10_migrations-5",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_27_00_32-c0f3f1817791_add_production_postgres_indexes.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_27_00_32-c0f3f1817791_add_production_postgres_indexes.py EXISTS on disk. Its declared revision is 'c0f3f1817791'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() creates 8 GIN/trgm indexes and 2 extensions (pg_trgm, btree_gin); downgrade() drops all 8 indexes with `DROP INDEX IF EXISTS`. The two CREATE EXTENSION statements are NOT dropped on downgrade - technically asymmetric, but dropping an extension other migrations depend on would be worse, so this is a correct engineering call, not a defect. Note the 5 non-GIN indexes (ix_audit_logs_created_at etc.) are dropped unconditionally outside the `_is_postgres` guard, so on SQLite the downgrade will raise NoSuchTableError. Naming: ts_mismatch (fn_rev=\"c0f3f1817791\" == file_rev) - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-50",
+   "id": "10_migrations-50",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_31_0003_add_version_columns.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_31_0003_add_version_columns.py EXISTS on disk. Its declared revision is '20260831_0003'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CONTRADICTS the audit: this row claims \"Naming OK: Yes\"; the shipped linter returns exit 1 with \"filename does not match YYYY_MM_DD_HH_MM[-<rev>]_description.py pattern\". The row cell is WRONG. Downgrade completeness VERIFIED COMPLETE: upgrade() adds `version` to VERSION_TABLES; downgrade() drops it for each in reversed() order, both dialect-guarded. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-51",
+   "id": "10_migrations-51",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_31_0004_add_composite_indexes.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_31_0004_add_composite_indexes.py EXISTS on disk. Its declared revision is '20260831_0004'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CONTRADICTS the audit: this row claims \"Naming OK: Yes\"; the shipped linter returns exit 1 \"filename does not match ... pattern\". The row cell is WRONG. Downgrade completeness VERIFIED COMPLETE: downgrade() drops every entry of PARTIAL_INDEXES and COMPOSITE_INDEXES in reversed() order with `DROP INDEX IF EXISTS`. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-52",
+   "id": "10_migrations-52",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_31_0005_add_materialized_views.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_31_0005_add_materialized_views.py EXISTS on disk. Its declared revision is '20260831_0005'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() creates 7 materialized views in analytics; downgrade() drops all 7 by name with `DROP MATERIALIZED VIEW IF EXISTS`. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-53",
+   "id": "10_migrations-53",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_31_0006_add_partitioning.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_08_31_0006_add_partitioning.py EXISTS on disk. Its declared revision is '20260831_0006'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED for the DDL it creates: upgrade() creates 4 partitioned parent tables (audit.audit_logs_partitioned, finance.journal_entries_partitioned, logistics.shipment_events_partitioned, comms.chat_messages_partitioned) plus 12 monthly partitions each; downgrade() drops the 4 parents with CASCADE, which removes the partitions. Symmetric. IMPORTANT CAVEAT: the migration creates NEW *_partitioned tables alongside the originals and never moves data into them, so partitioning is declared but not in effect - the hot tables are still unpartitioned. That is a Law 253 gap worth routing to 11_PRODUCTION_READINESS. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-54",
+   "id": "10_migrations-54",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_01_workspace.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_01_workspace.py EXISTS on disk. Its declared revision is '20260901_workspace'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). CHAIN DATA ERROR: the row's \"Down Revision\" cell says '20260831_0006' but the file declares ['20260827_audit_logs_worm_hash']. This is a defect in the audit table, not in the migration. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 6 tables (row Delta says 5 - undercount) plus seed data, downgrade() drops all 6. Symmetric. IMPORTANT: the row's \"Down Revision\" cell says 20260831_0006, but the file declares down_revision = \"20260827_audit_logs_worm_hash\". The row's chain data is WRONG - this is the third real branch point (20260827_audit_logs_worm_hash has two children: 2026_08_31_0001 and 2026_09_01_workspace), and it is the branch that 10_migrations-55 correctly merges. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-55",
+   "id": "10_migrations-55",
+   "verdict": "FALSE_POSITIVE",
+   "path_exists": true,
+   "line_exists": false,
+   "actual_line_range": null,
+   "current_matches_claim": "no",
+   "counter_evidence": "backend/alembic/versions/2026_09_03_0000-merge_20260831_0001_and_20260901_workspace.py:13 declares down_revision = ('20260831_0001', '20260901_workspace'). Ancestry walk (python merges.py) proves neither parent is an ancestor of the other: 20260831_0001's chain is b81bfc888610->...->20260827_audit_logs_worm_hash->20260831_0001, while 20260901_workspace's chain is 20260827_audit_logs_worm_hash->20260901_workspace. They are siblings off the same branch point 20260827_audit_logs_worm_hash (confirmed as a BRANCH POINT in chain_check.py output). The merge is therefore a legitimate divergent-head merge, not an anomaly. The row's own 'Down Revision' column ('(20260831_0001, 20260901_workspace)') matches the file, so the Delta text '**ANOMALY: merges non-divergent heads**' is the only incorrect element.",
+   "verify_output": "merge_20260831_0001_and_20260901_workspace  rev=2026_09_03_0000\n  declared down_revision: ['20260831_0001', '20260901_workspace']\n    parent 20260831_0001  file=2026_08_31_0001_add_governance_schema.py\n        already an ancestor of another parent? NO -> genuinely divergent\n    parent 20260901_workspace  file=2026_09_01_workspace.py\n        already an ancestor of another parent? NO -> genuinely divergent\n  children of this merge: [('2026_09_03_0001', '2026_09_03_0001_add_audit_logs_missing_columns.py')]",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\merges.py",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "not_run",
+   "filled_fields": {},
+   "laws_cited": [
+    "Law 49"
+   ],
+   "notes": "The audit mislabelled a correct Alembic merge revision as an anomaly. The correct residual observation for this row is different and still real: the merge's upgrade()/downgrade() are both bare `pass` (lines 18-23), which is correct Alembic practice for a merge node. Do NOT \"fix\" this file. The genuinely misleading merge name belongs to 10_migrations-64, not to this row. Naming: the filename also violates check_migration_naming.py (`2026_09_03_0000-merge_...` -> script parses fn_rev=\"merge\", file_rev=\"2026_09_03_0000\")."
+  },
+  {
+   "key": "10_migrations-56",
+   "id": "10_migrations-56",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_03_0001_add_audit_logs_missing_columns.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_03_0001_add_audit_logs_missing_columns.py EXISTS on disk. Its declared revision is '2026_09_03_0001'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CONTRADICTS the audit: this row claims \"Naming OK: Yes\"; the shipped linter returns exit 1 \"filename does not match ... pattern\". The row cell is WRONG. Downgrade is a DELIBERATE no-op: downgrade() emits a RuntimeWarning (\"Downgrade of audit_logs columns is disabled for WORM compliance. Use point-in-time recovery (NEON branching) instead.\") and returns without dropping anything. So upgrade()'s added columns AND its created index are both left in place on downgrade. This is an intentional, documented, Law 278-justified choice - but the row's \"Backward Compatible: Yes\" cell does not record it, and a reader of the table would assume the downgrade reverses. Record the exception, do not \"fix\" it. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-57",
+   "id": "10_migrations-57",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_03_0002_add_audit_logs_composite_indexes.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_03_0002_add_audit_logs_composite_indexes.py EXISTS on disk. Its declared revision is '2026_09_03_0002'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. CONTRADICTS the audit: this row claims \"Naming OK: Yes\"; the shipped linter returns exit 1 \"filename does not match ... pattern\". The row cell is WRONG. Downgrade completeness VERIFIED COMPLETE: upgrade() creates the 5 composite indexes on audit.audit_logs plus ix_command_center_user_default on audit.command_center_views; downgrade() drops all 6 with if_exists=True. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-58",
+   "id": "10_migrations-58",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_03_0003_create_audit_command_center_views.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_03_0003_create_audit_command_center_views.py EXISTS on disk. Its declared revision is '2026_09_03_0003'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 1 table (audit.command_center_views) + 1 index, downgrade drops both. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-59",
+   "id": "10_migrations-59",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_03_0004_audit_logs_fulltext_search_vector.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_03_0004_audit_logs_fulltext_search_vector.py EXISTS on disk. Its declared revision is '2026_09_03_0004'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() adds the tsvector column, GIN index and a maintenance trigger; downgrade() drops all three. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-6",
+   "id": "10_migrations-6",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "partial",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_27_09_08-20260727_0908_add_check_constraints_to_status_enum_columns.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_27_09_08-20260727_0908_add_check_constraints_to_status_enum_columns.py EXISTS on disk. Its declared revision is '20260727_0908'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: PASSES this file (one of only 4). The row's \"Naming OK: No\" is CONTRADICTED. Downgrade completeness VERIFIED: upgrade() creates check constraints via raw SQL, downgrade() issues 11 op.drop_constraint() calls. Paired. Naming: the shipped linter PASSES this file (one of only 4) - but a strict reading of the documented rule in check_migration_naming.py:13 (the timestamp must be YYYY_MM_DD_HH_MM, five groups) shows the linter only strips the trailing \"0908\" via TIMESTAMP_RE and never compares it, so this is a linter false PASS. The filename `2026_07_27_09_08-20260727_0908_...` does embed the exact revision `20260727_0908`, so under the rule's INTENT this file is compliant. Audit \"Naming OK: No\" is therefore defensible-but-wrong. See CG-1."
+  },
+  {
+   "key": "10_migrations-60",
+   "id": "10_migrations-60",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_03_0005_add_country_code_to_law5_models.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_03_0005_add_country_code_to_law5_models.py EXISTS on disk. Its declared revision is '2026_09_03_0005'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE and symmetric: upgrade() adds country_code String(2) + a derived index to each of 54 tables, guarded by an inspector existence check; downgrade() drops the index (in a try/except) and the column for each table in reversed() order. Law 5/Law 20-relevant and correct. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-61",
+   "id": "10_migrations-61",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_03_0006_add_performance_indexes.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_03_0006_add_performance_indexes.py EXISTS on disk. Its declared revision is '2026_09_03_0006'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates ~40 indexes via a COMPOSITE_INDEXES table; downgrade() drops every entry in reversed() order with `DROP INDEX IF EXISTS`, dialect-guarded. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-62",
+   "id": "10_migrations-62",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_03_0007_add_payments_schema_models.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_03_0007_add_payments_schema_models.py EXISTS on disk. Its declared revision is '2026_09_03_0007'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() creates 3 payments tables, downgrade() drops 3 (refunds, payment_attempts, payment_methods). Symmetric. Note these are created in the default search_path, not a `payments` schema, despite the filename and the row Delta \"payments schema; 3 tables\" - Law 6/55 concern, route to 07_tables_fields. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-63",
+   "id": "10_migrations-63",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_04_0001_phase5b_adopt_mixins_in_5_domains.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_04_0001_phase5b_adopt_mixins_in_5_domains.py EXISTS on disk. Its declared revision is '2026_09_04_0001'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED: upgrade() safe_add_column()s mixin columns across 5 domains via a helper; downgrade() safe_drop_column()s the same set in reversed() order. Symmetric. Naming: no_pattern - GENUINE violation."
+  },
+  {
+   "key": "10_migrations-64",
+   "id": "10_migrations-64",
+   "verdict": "FALSE_POSITIVE",
+   "path_exists": true,
+   "line_exists": false,
+   "actual_line_range": null,
+   "current_matches_claim": "partial",
+   "counter_evidence": "backend/alembic/versions/2026_09_04_17_00-f88d0dc00ece_merge_divergent_heads.py:15 declares down_revision = ('20260831_0006', '20260822_pluralize_supplier_table_names', '2026_09_04_0001') - a THREE-element tuple, i.e. it IS a merge revision. Ancestry walk (merges.py) proves all three parents are mutually non-ancestral (genuinely divergent). So the name 'merge_divergent_heads' is ACCURATE and the audit's Delta 'Misleading name; not a merge' is wrong. What IS wrong is the row's 'Down Revision' column, which records only the single parent '2026_09_04_0001' and omits the other two.",
+   "verify_output": "merge_divergent_heads (3-way)  rev=f88d0dc00ece\n  declared down_revision: ['20260831_0006', '20260822_pluralize_supplier_table_names', '2026_09_04_0001']\n    parent 20260831_0006 -> already an ancestor of another parent? NO -> genuinely divergent\n    parent 20260822_pluralize_supplier_table_names -> NO -> genuinely divergent\n    parent 2026_09_04_0001 -> NO -> genuinely divergent\n  children of this merge: [('20260929_0745', '2026_09_29_07_45-...')]",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\merges.py",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "not_run",
+   "filled_fields": {},
+   "laws_cited": [
+    "Law 49"
+   ],
+   "notes": "Partial: the Delta claim is disproved, but the row still carries a real data defect - its Down Revision column is incomplete (1 of 3 parents recorded). The resolver should correct the table cell, not the file. upgrade()/downgrade() are bare `pass` (lines 20-25), correct for a merge. Naming: the shipped linter flags this filename too, but that error is itself a linter artifact (see coverage_gaps)."
+  },
+  {
+   "key": "10_migrations-65",
+   "id": "10_migrations-65",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "partial",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_09_29_07_45-20260929_0745_add_rollout_percentage_to_country_feature_flags.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_09_29_07_45-20260929_0745_add_rollout_percentage_to_country_feature_flags.py EXISTS on disk. Its declared revision is '20260929_0745'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: PASSES this file (one of only 4). The row's \"Naming OK: No\" is CONTRADICTED. Downgrade completeness VERIFIED: upgrade() adds country_feature_flags.rollout_percentage, downgrade() drops it. Symmetric. Row Delta \"Additive; schema-probe safe\" is accurate. Naming: the linter PASSES this file and the filename `2026_09_29_07_45-20260929_0745_...` DOES embed the exact revision `20260929_0745` - this is a genuine COMPLIANT file, so the audit's \"Naming OK: No\" is WRONG. One of only 4 genuinely compliant migrations in the repo (CG-1)."
+  },
+  {
+   "key": "10_migrations-66",
+   "id": "10_migrations-66",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": false,
+   "actual_line_range": null,
+   "current_matches_claim": "partial",
+   "counter_evidence": null,
+   "verify_output": "HEADS: 1\n    20261001_0001 ['2026_10_01_0001_add_payment_intents_table.py']\n$ $env:PYTHONPATH=...\\backend\\alembic; alembic -c alembic/alembic.ini heads\n20261001_0001 (head)\nchain beyond 20260930_0001: 20260930_0002 -> 0003 -> 0004 -> 0005 -> 0006 -> 0007 -> 0008 -> 20261001_0001",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  (+ PYTHONPATH=backend/alembic alembic -c alembic/alembic.ini heads)",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "not_run",
+   "filled_fields": {},
+   "laws_cited": [
+    "Law 49"
+   ],
+   "notes": "The cited file exists, its revision/down_revision match the row, and its Delta (\"comms.ticket_attachments audit cols\") is accurate. PARTIAL because the Head Status cell \"**CURRENT HEAD**\" is now STALE: the current single head is 20261001_0001, eight revisions past 20260930_0001. This is exactly the drift the task brief asked about: the audit-observed \"5 divergent heads\" between 2026-09-30 and 2026-10-01 no longer exists - the chain has since been linearised. Law 49 is now SATISFIED on head count. The row should be re-stamped \"Intermediate\", not \"CURRENT HEAD\"."
+  },
+  {
+   "key": "10_migrations-7",
+   "id": "10_migrations-7",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_28_0000_employee_hr_tables.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_28_0000_employee_hr_tables.py EXISTS on disk. Its declared revision is '20260728_0000'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE. upgrade() creates 13 tables + 8 indexes; downgrade() drops all 13 tables in reverse dependency order (treasury_accounts, treasury_ledger, shift_rosters, country_blackout_dates, employee_trainings, training_modules, incident_rooms, masked_messages, chat_threads, video_rooms, employee_audit_timeline, employee_risk_scores, employee_active_tasks). No operation is left unreversed. Note: these tables are created in the default search_path (no schema= argument) which conflicts with Law 6/Law 55; that is a table-placement defect for 07_tables_fields, not a downgrade gap. Naming: shipped linter flags this file (no_pattern) - this one is a GENUINE violation, filename `2026_07_28_0000_employee_hr_tables.py` carries no revision token at all."
+  },
+  {
+   "key": "10_migrations-8",
+   "id": "10_migrations-8",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_28_19_30-e8efae30fc29_add_missing_indexes_and_constraints.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_28_19_30-e8efae30fc29_add_missing_indexes_and_constraints.py EXISTS on disk. Its declared revision is 'e8efae30fc29'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Downgrade completeness VERIFIED COMPLETE: upgrade() issues ~80 `CREATE INDEX IF NOT EXISTS` via raw op.execute; downgrade() issues the matching `DROP INDEX IF EXISTS` list. Symmetric. Naming: ts_mismatch (fn_rev=\"e8efae30fc29\" == file_rev) - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-9",
+   "id": "10_migrations-9",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py  + rows.py  -> py files in versions/: 76 (incl __init__.py); distinct revision ids: 75; DUPLICATE revision ids: 0; HEADS: 1 -> ['20261001_0001']; MERGE (tuple down_revision) files: 3; BRANCH POINTS: 4; roots: ['b81bfc888610']; orphans: 0\npython backend\\alembic\\check_migration_naming.py <all 76 files>  -> exit 1, 71 ERROR lines (31 'does not match YYYY_MM_DD_HH_MM pattern' + 40 'file revision does not match filename'). Violating files 71/75; PASSING files 4: 2026_07_27_09_08-20260727_0908_..., 2026_07_29_19_14-20260729_1914_..., 2026_07_29_20_30-20260729_2030_..., 2026_09_29_07_45-20260929_0745_.... Restricted to the 66 packet filenames: 62 violations, 4 pass.",
+   "verify_command": "python C:\\Users\\user\\AppData\\Local\\Temp\\opencode\\chain_check.py",
+   "test_command": "not run - no per-migration test exists",
+   "test_result": "not_run",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_07_28_21_14-87146598d2c3_add_missing_fk_constraints_for_.py"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 57"
+   ],
+   "notes": "File 2026_07_28_21_14-87146598d2c3_add_missing_fk_constraints_for_.py EXISTS on disk. Its declared revision is '87146598d2c3'; the row does not carry a Revision column, but the revision string is unique across the repo (DUPLICATE revision ids: 0). Down Revision cell matches the file exactly. Shipped linter: FAILS this file. \"Naming OK: No\" CONFIRMED by the tool. Same pattern as 10_migrations-4: upgrade() adds the FK via raw op.execute, downgrade() drops it with op.drop_constraint(). Paired correctly. Naming: ts_mismatch (fn_rev=\"87146598d2c3\" == file_rev) - LINTER ARTIFACT (CG-1)."
+  },
+  {
+   "key": "10_migrations-Runtime--alembic-heads",
+   "id": "10_migrations-Runtime--alembic-heads",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": null,
+   "current_matches_claim": "partial",
+   "counter_evidence": null,
+   "verify_output": "$ alembic -c alembic/alembic.ini heads   (from backend/, no PYTHONPATH)\n  ...\n  File \"...\\backend\\alembic\\versions\\2026_08_06_0001_add_analytics_audit_columns.py\", line 31, in <module>\n    from migration_helpers import safe_add_column, safe_drop_column\nModuleNotFoundError: No module named 'migration_helpers'\n\n$ $env:PYTHONPATH='D:\\...\\backend\\alembic'; alembic -c alembic/alembic.ini heads\n20261001_0001 (head)\n\n$ alembic heads    (from backend/, no -c, no PYTHONPATH)\nFAILED: No 'script_location' key found in configuration.",
+   "verify_command": "cd backend; alembic -c alembic/alembic.ini heads   then: $env:PYTHONPATH='<repo>\\backend\\alembic'; alembic -c alembic/alembic.ini heads",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "pass",
+   "filled_fields": {
+    "File:Line": "backend/alembic/versions/2026_08_06_0001_add_analytics_audit_columns.py:31 (the real crash site) + .github/workflows/deploy.yml:116,200 (bare `alembic upgrade head`, working-directory: backend)",
+    "Verify": "cd backend; alembic -c alembic/alembic.ini heads   # then retry with PYTHONPATH=backend/alembic",
+    "Test": "not run - no test asserts the migration history loads; backend/tests/architecture/test_alembic_autogenerate_check.py does not cover this"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 49",
+    "Law 217",
+    "Law 219"
+   ],
+   "notes": "The FAIL status is REAL - `alembic heads` genuinely crashes - but the audit DIAGNOSIS IS WRONG. Counter-analysis: the crash is NOT caused by `backend/alembic/` shadowing the installed `alembic` package. The traceback frame is inside site-packages/alembic/script/base.py::_load_revisions, i.e. the real Alembic loaded fine. The actual cause is that backend/alembic/versions/2026_08_06_0001_add_analytics_audit_columns.py:31 (and 7 sibling migrations) do a bare `from migration_helpers import ...`, and Alembic's script loader does not put backend/alembic/ on sys.path for the \"heads\"/\"history\" offline commands (only env.py:9 does that, and env.py is not executed by `heads`). PROOF the shadowing is a separate, latent issue: `cd backend; python -c \"import alembic; print(alembic.__file__)\"` -> D:\\...\\backend\\alembic\\__init__.py, and `from alembic import op` then raises ImportError. It is real but it is NOT this crash. Second real defect the audit missed: `alembic heads` with no -c flag from backend/ fails with \"No 'script_location' key found in configuration\" because the ini lives at backend/alembic/alembic.ini, not backend/alembic.ini - and .github/workflows/deploy.yml:116,200 run bare `alembic upgrade head` with working-directory: backend. See coverage_gaps CG-2/CG-3."
+  },
+  {
+   "key": "10_migrations-Uses-NullPool--non-pooled-",
+   "id": "10_migrations-Uses-NullPool--non-pooled-",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": "53",
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "backend\\alembic\\env.py:53:        poolclass=pool.NullPool,\n(the audit cited env.py:42 - the assertion is right, the line number is off by 11)",
+   "verify_command": "Select-String -Path backend/alembic/env.py -Pattern 'poolclass=pool.NullPool'",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "pass",
+   "filled_fields": {
+    "File:Line": "backend/alembic/env.py:53",
+    "Verify": "Select-String -Path backend/alembic/env.py -Pattern \"poolclass=pool.NullPool\"",
+    "Test": "not_found - no test asserts NullPool"
+   },
+   "laws_cited": [
+    "Law 6",
+    "Law 217"
+   ],
+   "notes": "Substance CONFIRMED and benchmark-aligned: TECHNOLOGY_STACK.md:45 requires Alembic to \"use a direct (non-pooled) connection string\" and env.py:53 honours it via pool.NullPool on the engine_from_config() at env.py:50-55. Only correction: the cited line is 53, not 42. Also verified the same file never auto-migrates on boot - env.py only runs inside the Alembic CLI, and no migration invocation exists in backend/main.py or the lifespan path (Law 217 satisfied)."
+  },
+  {
+   "key": "10_migrations-alembic.ini-sqlalchemy.url",
+   "id": "10_migrations-alembic.ini-sqlalchemy.url",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": "29",
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "backend\\alembic\\alembic.ini:29: sqlalchemy.url =\nbackend\\alembic\\env.py:32: config.set_main_option(\"sqlalchemy.url\", db_url)\nbackend\\alembic\\alembic.ini:5: script_location = %(here)s",
+   "verify_command": "Select-String -Path backend/alembic/alembic.ini -Pattern '^sqlalchemy.url'; Select-String -Path backend/alembic/env.py -Pattern 'set_main_option'",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "pass",
+   "filled_fields": {
+    "File:Line": "backend/alembic/alembic.ini:29 (empty url) and :5 (script_location = %(here)s)",
+    "Verify": "Select-String -Path backend/alembic/alembic.ini -Pattern \"^sqlalchemy.url|^script_location\"",
+    "Test": "not_found"
+   },
+   "laws_cited": [
+    "Law 6"
+   ],
+   "notes": "CONFIRMED, and with a correction that strengthens the finding: the audit said \"Empty in .ini, overridden by env.py\" implying alembic.ini may be absent. alembic.ini DOES exist - at backend/alembic/alembic.ini (not backend/alembic.ini) - it has script_location = %(here)s on line 5, and sqlalchemy.url is empty on line 29, overridden at env.py:32. So the adjacent PRODUCTION_READINESS_CHECKLIST claim \"backend/alembic.ini MISSING\" (line 174, A-21) is FALSE - the file is simply in a non-default location, which is itself a defect (coverage gap CG-2)."
+  },
+  {
+   "key": "Uses-DATABASE_URL_DIRECT",
+   "id": "Uses-DATABASE_URL_DIRECT",
+   "verdict": "REAL",
+   "path_exists": true,
+   "line_exists": true,
+   "actual_line_range": "28",
+   "current_matches_claim": "yes",
+   "counter_evidence": null,
+   "verify_output": "backend\\alembic\\env.py:28: db_url = os.getenv(\"DATABASE_URL_DIRECT\", os.getenv(\"DATABASE_URL\", config.get_main_option(\"sqlalchemy.url\")))\n(the audit cited env.py:20 - assertion right, line number off by 8)",
+   "verify_command": "Select-String -Path backend/alembic/env.py -Pattern 'DATABASE_URL_DIRECT'",
+   "test_command": "python -m pytest tests/architecture/test_alembic_autogenerate_check.py --collect-only -q",
+   "test_result": "pass",
+   "filled_fields": {
+    "File:Line": "backend/alembic/env.py:28",
+    "Verify": "Select-String -Path backend/alembic/env.py -Pattern \"DATABASE_URL_DIRECT\"",
+    "Test": "not_found"
+   },
+   "laws_cited": [
+    "Law 6"
+   ],
+   "notes": "CONFIRMED and benchmark-aligned: env.py:28 reads DATABASE_URL_DIRECT first, exactly as TECHNOLOGY_STACK.md:45 and :464 require (\"Must use a direct (non-pooled) DSN for Alembic\"). env.py:30-31 additionally rewrites postgresql+asyncpg:// -> postgresql:// because Alembic runs synchronous DDL, which is the correct handling. Only correction: the cited line is 28, not 20."
+  }
+ ],
+ "duplicates_merged": [
+  {
+   "survivor": "10_migrations-Runtime--alembic-heads",
+   "duplicate": "10_migrations-alembic.ini-sqlalchemy.url",
+   "why": "Both describe the same broken `alembic heads` invocation. The runtime-crash record is the higher-priority survivor because it carries the reproducible traceback; the sqlalchemy.url record is a sub-assertion of the same env.py/alembic.ini configuration surface and adds only the observation that the ini URL is empty and overridden."
+  },
+  {
+   "survivor": "10_migrations-11",
+   "duplicate": "10_migrations-56",
+   "why": "Both are incomplete-downgrade findings and both cite Law 57. 10_migrations-11 is the survivor: its downgrade gap is ACCIDENTAL and silently corrupts schema state (7 UNIQUE INDEXes destroyed, 7 UNIQUE CONSTRAINTs left behind). 10_migrations-56's non-reversing downgrade is DELIBERATE, documented in-code, and justified by Law 278 (WORM audit immutability) - it is a documentation gap in the audit table, not a defect. Different severities, same shape."
+  },
+  {
+   "survivor": "10_migrations-16",
+   "duplicate": "10_migrations-26",
+   "why": "Both create the same table ai.upload_jobs in the same linear chain (20260730_0003 and 20260806_0006). The second is idempotently guarded so it is a no-op, but two revisions owning one table is a Law 51 single-table-ownership smell. Survivor 10_migrations-16 is earlier in the chain. Route the duplicate to 07_tables_fields, not here."
+  }
+ ],
+ "internal_contradictions": [
+  {
+   "keys": [
+    "10_migrations-49",
+    "10_migrations-50",
+    "10_migrations-51",
+    "10_migrations-56",
+    "10_migrations-57"
+   ],
+   "conflict": "These five rows carry 'Naming OK: Yes' while the other 61 carry 'Naming OK: No'. Running the shipped linter (backend/alembic/check_migration_naming.py) on exactly these five filenames returns exit 1 with 'filename does not match YYYY_MM_DD_HH_MM[-<rev>]_description.py pattern' for all five - i.e. they fail. The 'Yes' cells are inverted. No resolver fix should be derived from those five cells; the table needs re-derivation from the linter's actual output."
+  },
+  {
+   "keys": [
+    "10_migrations-30",
+    "10_migrations-54",
+    "10_migrations-46"
+   ],
+   "conflict": "Each of these rows' 'Down Revision' cell contradicts the file it cites, and in all three cases the file's real parent is the OTHER branch of a fork the table does not represent. 10_migrations-30 claims parent 20260806_0009 but the file declares 20260806_0007; 10_migrations-54 claims 20260831_0006 but the file declares 20260827_audit_logs_worm_hash; 10_migrations-46 claims 20260822_pluralize_supplier_table_names but the file declares 20260822_communication_to_comms_schema. The table's implied single linear chain is wrong; the real graph has 4 branch points resolved by 3 merge revisions. Any resolver that walks the table's chain in order will build the wrong history."
+  },
+  {
+   "keys": [
+    "10_migrations-55",
+    "10_migrations-64"
+   ],
+   "conflict": "The table simultaneously asserts (a) that 10_migrations-55 'merges non-divergent heads' - an ANOMALY - and (b) that 10_migrations-64 is a 'merge' whose name is misleading because it 'is not a merge'. Both assertions are false and they are mutually exclusive framings of the same situation: BOTH files are legitimate divergent-head merges with mutually non-ancestral parents. The table also records 10_migrations-64's Down Revision as a single parent when the file declares a three-element tuple."
+  }
+ ],
+ "cross_cutting_candidates": [
+  {
+   "key": "10_migrations-Runtime--alembic-heads",
+   "why": "The `alembic heads` failure is a single configuration defect (ini in the wrong directory + 8 migration files doing bare `from migration_helpers import`) that blocks every read-only alembic command and both CI migration steps. It has no single correct File:Line as the fix site and governs the whole migration subsystem. Route to Codebase Implementation (Over All)."
+  },
+  {
+   "key": "NAMING-CONVENTION-97pct",
+   "why": "Applies to 71 of 75 migration files. Renaming a migration file does not change its revision id (Alembic keys on the in-file `revision`), so this is mechanically fixable repo-wide, but it is a >=5-file, whole-subsystem change with no single File:Line. Cross-cutting."
+  },
+  {
+   "key": "INCOMPLETE-DOWNGRADES",
+   "why": "3 confirmed downgrade gaps across 3 files (10_migrations-11 accidental/lossy, 10_migrations-56 deliberate/WORM, plus the 5 CREATE EXTENSION statements in 10_migrations-05 left in place), plus 6 migrations whose downgrade is a bare `pass` where upgrade() is also `pass` (correct) - the pattern is a codebase-wide convention gap against Law 219 ('Migrations backward-compatible') and Law 49."
+  }
+ ],
+ "coverage_gaps": [
+  "CG-1 (linter bug, NEW - the audit's 97% figure must not be trusted). backend/alembic/check_migration_naming.py EXISTS (91 lines) and is wired as a pre-commit hook. Running it on all 75 migration files yields 71 errors, i.e. the audit's ~97% direction is right but its per-file attribution is unreliable. Two independent defects in the linter: (a) line 24 `parts[1].split(\"_\")[0]` truncates the revision at the first underscore, so `2026_08_22_0005-20260822_pluralize_...` is read as revision '20260822' and 34 files are reported as mismatches even though their filenames embed the exact revision; (b) line 63 re-tests TIMESTAMP_RE against the whole stem, so for a 5-group timestamp it compares the timestamp against the revision and the correct 'ts_mismatch' branch is never reached for 8 more. Separately, 4 files PASS the linter (2026_07_27_09_08, 2026_07_29_19_14, 2026_07_29_20_30, 2026_09_29_07_45) and one of those - 2026_09_29_07_45-20260929_0745_... - genuinely embeds its exact revision and IS compliant, so the audit's 'Naming OK: No' on it is wrong. MY INDEPENDENT COUNT: 71/75 files fail the shipped linter; 62/66 of the packet's filenames fail it; under a correct implementation of the rule the linter documents (check_migration_naming.py:13, 'YYYY_MM_DD_HH_MM[-<rev>]_description.py') only 10/75 are compliant, so 65/75 are genuine violations. The audit's '64/66' is therefore directionally correct for the wrong reason - it counted linter output, not the rule. Evidence: python backend/alembic/check_migration_naming.py <all files> -> exit 1, 71 ERROR lines.",
+  "CG-2 (alembic.ini location, NEW). The audit and PRODUCTION_READINESS_CHECKLIST.md:174 (A-21) and :338 (D-18) both state 'backend/alembic.ini MISSING' / 'alembic.ini missing at backend root'. The file DOES exist, at backend/alembic/alembic.ini, with `script_location = %(here)s` on line 5 and an empty `sqlalchemy.url` on line 29. There is no backend/alembic.ini and no repo-root alembic.ini. Consequence: `cd backend && alembic heads` (no -c) fails with \"FAILED: No 'script_location' key found in configuration.\" - verified. And .github/workflows/deploy.yml:116 and :200 run bare `alembic upgrade head` with working-directory: backend, and .github/workflows/rollback.yml:72,74 run bare `alembic downgrade -1` / `alembic upgrade head`. Those steps will fail at the config lookup before touching the database. Technology stack \u00a72 (Alembic 1.19.1+) plus Law 217 (migrations run as a dedicated pre-deploy step) are not satisfiable as written.",
+  "CG-3 (the 'shadowing' diagnosis, NEW - corrects the audit). The audit attributes the `alembic heads` crash to `backend/alembic/` shadowing the installed `alembic` package. The crash reproduces, but the CAUSE is different. backend/alembic/__init__.py exists and IS empty, and `cd backend && python -c \"import alembic; print(alembic.__file__)\"` does print D:\\...\\backend\\alembic\\__init__.py, and `from alembic import op` then raises ImportError - so the shadowing is REAL as a latent hazard. But the failing traceback runs through site-packages/alembic/script/base.py::_load_revisions, i.e. real Alembic loaded fine, and the terminal error is ModuleNotFoundError: No module named 'migration_helpers' raised at backend/alembic/versions/2026_08_06_0001_add_analytics_audit_columns.py:31. Only backend/alembic/env.py:9 puts that directory on sys.path, and env.py is not executed by the offline `heads`/`history` commands. 8 migration files do a bare `from migration_helpers import ...`. Proof: with PYTHONPATH=backend/alembic, `alembic -c alembic/alembic.ini heads` returns '20261001_0001 (head)' cleanly. The audit's Fix should target the import path (or prepend_sys_path in the ini), not the package name collision - fixing only the collision would not make `alembic heads` work.",
+  "CG-4 (chain drift since the audit - report the CURRENT numbers, not the audit's). The Migration Chain Audit table has 66 rows; the repo now has 75 migration files (76 .py including __init__.py) with 75 distinct revision ids. 9 files are absent from the table: 2026_08_08_21_02-02ebc285f66f_merge_divergent_heads_..., 2026_09_30_0002 through 2026_09_30_0008 (7 files), and 2026_10_01_0001_add_payment_intents_table.py. Notably the 02ebc285f66f merge is the node that resolves the first branch point and the table never mentions it. CURRENT head count: 1. CURRENT head: 20261001_0001 (backend/alembic/versions/2026_10_01_0001_add_payment_intents_table.py). The audit's own note about '5 divergent heads appearing between 2026-09-30 and 2026-10-01' no longer holds, and PRODUCTION_READINESS_CHECKLIST.md:65 '62 divergent Alembic heads' and :338 '14 divergent heads; 2 duplicate revision IDs' are both STALE - there are 0 duplicate revision ids and 1 head. Row 10_migrations-66's '**CURRENT HEAD**' stamp on 20260930_0001 is 8 revisions out of date.",
+  "CG-5 (Law 49 verdict, stated precisely). The chain is NOT linear - it has 4 branch points (20260806_0007, 20260822_communication_to_comms_schema, 20260827_audit_logs_worm_hash, 20260831_0001) and 3 merge revisions (02ebc285f66f 2-way, 2026_09_03_0000 2-way, f88d0dc00ece 3-way). All 4 branch points ARE resolved by those 3 merges, every parent in every merge is mutually non-ancestral (ancestry-walked), there is exactly 1 root, 0 orphans, and `alembic heads` returns exactly one line. So: `alembic upgrade head` will work and Law 49's stated consequence ('divergent heads break alembic upgrade head and cause deployment failures') does NOT currently bite. But Law 49 says 'history MUST remain linear', and merge revisions are by definition non-linear history. Verdict: Law 49 PARTIALLY SATISFIED - heads are converged, the history is still merge-shaped. Do not report this as 'chain is linear'.",
+  "CG-6 (not verified - would mutate the database). No migration was executed. 'Staging Tested' is 'Unknown' or 'No' for all 66 rows and I could not test it: `alembic upgrade` / `alembic downgrade` / `alembic current` all require a live database and are out of scope for this contract. Stated as not_run rather than guessed. The only safe evidence gathered is that 75/75 files parse, declare a unique revision, and declare a syntactically valid down_revision (single or tuple).",
+  "CG-7 (op-asymmetry scan, partially automated). I compared upgrade() vs downgrade() op.* call counts for all 75 files. The first pass produced false asymmetries because several migrations define module-level helper functions before def upgrade(); after reading the decisive cases by hand I found 2 genuine upgrade/downgrade count asymmetries worth routing: 10_migrations-05 leaves `CREATE EXTENSION pg_trgm` and `btree_gin` in place on downgrade (defensible, not a defect), and 10_migrations-11 is the real one. I did NOT hand-verify downgrade() line-by-line for the 20+ rows whose bodies are short raw-SQL loops; those are marked not_run in notes rather than asserted clean. A full manual read of all 75 downgrade bodies is the single largest remaining verification gap in this dimension.",
+  "CG-8 (rows I could not fully parse). The 4 'env.py / alembic.ini Check' records have no File:Line, no Fix, no Verify, no Test, and no CanonicalField values in the packet - only a Status and a Delta string. I reconstructed their File:Line from the code (recorded in filled_fields) rather than leaving them NOT_PROVIDED, because each assertion was directly checkable. They are also the only 4 records in the dimension that carry an actual runnable Test path (backend/tests/architecture/test_alembic_autogenerate_check.py, 2 tests collected successfully - but those 2 tests cover ORM coverage and create_all banning, NOT migration history loading, so they do not test any finding in this dimension). Every other record is FIX_UNTESTABLE per compiler \u00a70.7 item 44: no Verify command and no Test path in the packet."
+ ]
+}

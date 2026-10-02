@@ -315,14 +315,31 @@ def update_category(
     return category
 
 
-def deactivate_category(db: Session, category: Category) -> Category:
-    """Soft-delete a category by clearing ``is_active``.
+_CATEGORY_DELETED_MESSAGE: dict = {"message": "Category deleted"}
+
+
+def _delete_category(category_id: int, db: Session) -> dict:
+    """Single soft-delete path for a category row.
 
     ``commerce.categories`` has no ``is_deleted`` column, so deactivation is
     the soft-delete contract for this table.
     """
+    from fastapi import HTTPException
+
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+
     category.is_active = False
     db.commit()
+    db.refresh(category)
+    logger.info("category.deactivated id=%s", category_id)
+    return _CATEGORY_DELETED_MESSAGE
+
+
+def deactivate_category(db: Session, category: Category) -> Category:
+    """Soft-delete a category by clearing ``is_active`` via ``_delete_category``."""
+    _delete_category(int(category.id), db)
     db.refresh(category)
     logger.info("category.deactivated id=%s", category.id)
     return category
@@ -356,8 +373,8 @@ def delete_category_by_id(db: Session, country_code: str, category_id: int) -> d
     category = get_category_by_id(db, category_id, country_code=country_code)
     if category is None:
         raise HTTPException(status_code=404, detail="Category not found")
-    delete_category(db, category)
-    return {"message": "Category deleted"}
+    _delete_category(int(category.id), db)
+    return _CATEGORY_DELETED_MESSAGE
 
 
 def reorder_categories(db: Session, order: Mapping[int, int]) -> int:

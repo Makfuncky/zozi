@@ -48,7 +48,7 @@ class CommissionGroup(Base):
 
     # Audit columns (Law 23/229)
     country_code = Column(String(2), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
 
     # Timestamps
     created_at = Column(DateTime, server_default=func.now())
@@ -88,7 +88,7 @@ class CommissionProfile(Base):
 
     # Audit columns (Law 23/229)
     country_code = Column(String(2), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
 
     # Timestamps
     created_at = Column(DateTime, server_default=func.now())
@@ -142,7 +142,7 @@ class CommissionRule(Base):
 
     # Audit columns (Law 23/229)
     country_code = Column(String(2), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
 
     # Timestamps
     created_at = Column(DateTime, server_default=func.now())
@@ -188,7 +188,7 @@ class CommissionTransaction(Base):
 
     # Audit columns (Law 23/229)
     country_code = Column(String(2), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
 
     # Timestamps
     created_at = Column(DateTime, server_default=func.now())

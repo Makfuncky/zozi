@@ -22,15 +22,15 @@ from domains.hr.services.hr_permissions import check_permission
 
 logger = logging.getLogger(__name__)
 
-# Redis key prefix for pending payroll approvals
+# Valkey key prefix for pending payroll approvals
 _PAYROLL_APPROVALS_PREFIX = "payroll:pending:"
 
 
-def _get_redis():
-    """Return Redis client or None."""
+def _get_valkey():
+    """Return Valkey client or None."""
     try:
-        from infrastructure.utils.redis_client import redis_client
-        client = redis_client()
+        from infrastructure.valkey.client import get_valkey
+        client = get_valkey()
         if not client:
             return None
         try:
@@ -44,17 +44,17 @@ def _get_redis():
 
 
 def _get_pending_approvals() -> dict:
-    """Get all pending payroll approvals from Redis."""
-    redis = _get_redis()
-    if not redis:
+    """Get all pending payroll approvals from Valkey."""
+    valkey = _get_valkey()
+    if not valkey:
         return {}
     try:
-        keys = redis.keys(f"{_PAYROLL_APPROVALS_PREFIX}*")
+        keys = valkey.keys(f"{_PAYROLL_APPROVALS_PREFIX}*")
         result = {}
         for key in keys:
             key_str = key.decode() if isinstance(key, bytes) else key
             batch_key = key_str.replace(_PAYROLL_APPROVALS_PREFIX, "")
-            data = redis.hgetall(key_str)
+            data = valkey.hgetall(key_str)
             if data:
                 decoded = {}
                 for k, v in data.items():
@@ -68,12 +68,12 @@ def _get_pending_approvals() -> dict:
 
 
 def _get_pending_approval(batch_key: str) -> dict | None:
-    """Get a specific pending payroll approval from Redis."""
-    redis = _get_redis()
-    if not redis:
+    """Get a specific pending payroll approval from Valkey."""
+    valkey = _get_valkey()
+    if not valkey:
         return None
     try:
-        data = redis.hgetall(f"{_PAYROLL_APPROVALS_PREFIX}{batch_key}")
+        data = valkey.hgetall(f"{_PAYROLL_APPROVALS_PREFIX}{batch_key}")
         if not data:
             return None
         result = {}
@@ -87,25 +87,25 @@ def _get_pending_approval(batch_key: str) -> dict | None:
 
 
 def _set_pending_approval(batch_key: str, data: dict) -> None:
-    """Store a pending payroll approval in Redis."""
-    redis = _get_redis()
-    if not redis:
+    """Store a pending payroll approval in Valkey."""
+    valkey = _get_valkey()
+    if not valkey:
         return
     try:
         key = f"{_PAYROLL_APPROVALS_PREFIX}{batch_key}"
-        redis.hset(key, mapping=data)
+        valkey.hset(key, mapping=data)
     except Exception:
         pass
 
 
 def _update_pending_approval(batch_key: str, field: str, value: str) -> None:
     """Update a field in a pending payroll approval."""
-    redis = _get_redis()
-    if not redis:
+    valkey = _get_valkey()
+    if not valkey:
         return
     try:
         key = f"{_PAYROLL_APPROVALS_PREFIX}{batch_key}"
-        redis.hset(key, field, value)
+        valkey.hset(key, field, value)
     except Exception:
         pass
 

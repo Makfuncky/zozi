@@ -50,13 +50,14 @@ except ImportError:
     rembg_remove_bytes = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
+from config import settings
 from providers.image import HAS_CV2 as _HAS_CV2, HAS_GUIDED_FILTER as _HAS_GUIDED_FILTER, cv2, ximgproc as _ximgproc
-MAX_CONCURRENT = int(os.environ.get('BG_MAX_CONCURRENT', '2'))
-MAX_SESSION_CACHE = int(os.environ.get('BG_MAX_SESSION_CACHE', '2'))
-MAX_IMAGE_DIM = int(os.environ.get('BG_MAX_IMAGE_DIM', '1024'))
-LITE_MAX_DIM = int(os.environ.get('BG_LITE_MAX_DIM', '768'))
-MEMORY_WARN_MB = int(os.environ.get('BG_MEMORY_WARN_MB', '512'))
-SKIP_HEAVY_MODELS = os.environ.get('BG_SKIP_HEAVY_MODELS', 'false').lower() == 'true'
+MAX_CONCURRENT = settings.bg_max_concurrent
+MAX_SESSION_CACHE = settings.bg_max_session_cache
+MAX_IMAGE_DIM = settings.bg_max_image_dim
+LITE_MAX_DIM = settings.bg_lite_max_dim
+MEMORY_WARN_MB = settings.bg_memory_warn_mb
+SKIP_HEAVY_MODELS = settings.bg_skip_heavy_models
 ALLOW_HEAVY_MODELS = os.environ.get('BG_ALLOW_HEAVY_MODELS', 'true').lower() == 'true'
 DEFAULT_STRATEGY = os.environ.get('BG_DEFAULT_STRATEGY', 'auto')
 HEAVY_THREADS = int(os.environ.get('BG_HEAVY_THREADS', '2'))

@@ -26,7 +26,7 @@ def build_unified_inbox_sql(where_clause: str) -> str:
         The complete SQL query string.
     """
     return """
-        SELECT * FROM (
+        SELECT id, local_id, transport, title, preview, unread, updated_at, channel_type, participants, peer_avatar, folder FROM (
             SELECT
                 'dm_' || dcr.id AS id,
                 dcr.id AS local_id,

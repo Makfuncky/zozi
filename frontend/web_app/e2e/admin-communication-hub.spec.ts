@@ -1,5 +1,5 @@
-/**
- * Admin Communication Hub — Playwright E2E Tests
+﻿/**
+ * Admin Communication Hub â€” Playwright E2E Tests
  *
  * Covers Video, Email, and Chat panels inside the unified
  * /admin/communication page. All backend calls are mocked.
@@ -7,7 +7,7 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
-const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):8000/;
+const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):3100/;
 
 type Room = {
   id: number;
@@ -78,7 +78,7 @@ async function mockAdminSession(page: Page) {
   const idInput = form.locator("input:not([type='password']):visible").first();
   await idInput.fill("admin@zozi.com");
   const pwInput = form.locator("input[type='password']:visible").first();
-  await pwInput.fill("admin123");
+  await pwInput.fill("E2eAdmin#2026");
   await submitBtn.click();
   await page.waitForTimeout(5000);
   await page.goto("/admin/communication", { waitUntil: "domcontentloaded", timeout: 120_000 });
@@ -209,7 +209,7 @@ test.describe("Admin Communication Hub", () => {
     await mockAdminSession(page);
   });
 
-  // ═══════════════ Video Panel ═══════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Video Panel â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   test("Video panel: displays rooms and supports create flow", async ({ page }) => {
     await page.getByRole("tab", { name: /video/i }).click();
@@ -228,7 +228,7 @@ test.describe("Admin Communication Hub", () => {
     await expect(page.getByText("E2E Test Room")).toBeVisible();
   });
 
-  // ═══════════════ Email Panel ═══════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Email Panel â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   test("Email panel: overview stats and campaign creation", async ({ page }) => {
     await page.getByRole("tab", { name: /email/i }).click();
@@ -250,7 +250,7 @@ test.describe("Admin Communication Hub", () => {
     await expect(page.getByText("E2E Campaign")).toBeVisible();
   });
 
-  // ═══════════════ Chat Panel ═══════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Chat Panel â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   test("Chat panel: displays threads and supports create flow", async ({ page }) => {
     await page.getByRole("tab", { name: /chat/i }).click();
@@ -270,4 +270,5 @@ test.describe("Admin Communication Hub", () => {
     await expect(page.getByText("E2E Thread")).toBeVisible();
   });
 });
+
 

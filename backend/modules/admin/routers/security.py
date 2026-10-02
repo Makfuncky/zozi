@@ -39,9 +39,9 @@ logger = logging.getLogger(__name__)
 
 
 def _otp_rate_limit(request: Request, user_id: int, suffix: str, max_attempts: int, window: int = 60) -> None:
-    """Enforce per-user OTP rate limit using Redis INCR+EXPIRE.
+    """Enforce per-user OTP rate limit using Valkey INCR+EXPIRE.
 
-    Raises HTTPException(429) when the limit is exceeded or when Redis is
+    Raises HTTPException(429) when the limit is exceeded or when Valkey is
     unavailable (fail-closed to prevent brute-force / OTP bombing).
     """
     from fastapi import HTTPException, status
@@ -53,9 +53,9 @@ def _otp_rate_limit(request: Request, user_id: int, suffix: str, max_attempts: i
         ip_address = request.headers.get("x-forwarded-for", "unknown").split(",")[0].strip()
 
     try:
-        from domains.accounts.services.auth.auth_service import _get_redis
+        from domains.accounts.services.auth.auth_service import _get_valkey
 
-        r = _get_redis()
+        r = _get_valkey()
         if r is None:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,

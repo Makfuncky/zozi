@@ -8,10 +8,17 @@ authentication, JSON payloads) behind a provider boundary.
 from __future__ import annotations
 
 import logging
+import time
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
-import requests
+import httpx
+
+from infrastructure.observability.circuit_breaker import (
+    CircuitBreakerError,
+    CircuitState,
+    get_circuit_breaker,
+)
 
 from providers.payments.config import (
     is_tap_configured,
@@ -25,6 +32,25 @@ logger = logging.getLogger(__name__)
 
 HAS_TAP = True
 _TAP_DEFAULT_TIMEOUT = 30
+_TAP_BREAKER_FAILURE_THRESHOLD = 5
+
+_tap_breaker = get_circuit_breaker(
+    "tap",
+    failure_threshold=_TAP_BREAKER_FAILURE_THRESHOLD,
+    recovery_timeout=30,
+)
+
+
+def _call_with_breaker(
+    breaker: Any,
+    func: Callable[[], Any],
+) -> Any:
+    if breaker.state == CircuitState.OPEN:
+        raise TapError(f"Circuit breaker 'tap' is open")
+    try:
+        return func()
+    except CircuitBreakerError as exc:
+        raise TapError(f"Circuit breaker rejected call: {exc}") from exc
 
 
 class TapError(Exception):
@@ -131,14 +157,22 @@ def create_charge(
     if metadata:
         payload["metadata"].update(metadata)
     try:
-        response = requests.post(
-            f"{api_base}/charges",
-            json=payload,
-            headers=_get_headers(),
-            timeout=_TAP_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_TAP_DEFAULT_TIMEOUT) as client:
+            response = _call_with_breaker(
+                _tap_breaker,
+                lambda: client.post(
+                    f"{api_base}/charges",
+                    json=payload,
+                    headers=_get_headers(),
+                ),
+            )
+    except httpx.HTTPError as exc:
         logger.exception("Tap create_charge request failed")
+        raise TapError(f"Tap API request failed: {exc}") from exc
+    except TapError:
+        raise
+    except Exception as exc:
+        logger.exception("Tap create_charge unexpected error")
         raise TapError(f"Tap API request failed: {exc}") from exc
     if response.status_code not in (200, 201):
         raise TapError(
@@ -171,13 +205,21 @@ def get_charge(charge_id: str) -> dict[str, Any]:
     """
     api_base = resolve_tap_api_base_url()
     try:
-        response = requests.get(
-            f"{api_base}/charges/{charge_id}",
-            headers=_get_headers(),
-            timeout=_TAP_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
+        with httpx.Client(timeout=_TAP_DEFAULT_TIMEOUT) as client:
+            response = _call_with_breaker(
+                _tap_breaker,
+                lambda: client.get(
+                    f"{api_base}/charges/{charge_id}",
+                    headers=_get_headers(),
+                ),
+            )
+    except httpx.HTTPError as exc:
         logger.exception("Tap get_charge request failed for %s", charge_id)
+        raise TapError(f"Tap API request failed: {exc}") from exc
+    except TapError:
+        raise
+    except Exception as exc:
+        logger.exception("Tap get_charge unexpected error for %s", charge_id)
         raise TapError(f"Tap API request failed: {exc}") from exc
     if response.status_code == 404:
         raise TapChargeNotFoundError(
@@ -229,20 +271,34 @@ def refund_charge(
         payload["amount"] = str(amount)
     if metadata:
         payload["metadata"] = metadata
-    try:
-        response = requests.post(
-            f"{api_base}/charges/{charge_id}/refunds",
-            json=payload,
-            headers=_get_headers(),
-            timeout=_TAP_DEFAULT_TIMEOUT,
-        )
-    except requests.RequestException as exc:
-        logger.exception(
-            "Tap refund_charge request failed for %s", charge_id
-        )
+    response = None
+    last_exc: Optional[Exception] = None
+    for attempt in range(1, 4):
+        try:
+            with httpx.Client(timeout=_TAP_DEFAULT_TIMEOUT) as client:
+                response = _call_with_breaker(
+                    _tap_breaker,
+                    lambda: client.post(
+                        f"{api_base}/charges/{charge_id}/refunds",
+                        json=payload,
+                        headers=_get_headers(),
+                    ),
+                )
+            break
+        except httpx.HTTPError as exc:
+            last_exc = exc
+            logger.warning(
+                "Tap refund_charge attempt %d failed for %s: %s",
+                attempt, charge_id, exc,
+            )
+            if attempt < 3:
+                time.sleep(2 ** (attempt - 1))
+        except TapError:
+            raise
+    if response is None:
         raise TapRefundError(
-            f"Tap API request failed: {exc}"
-        ) from exc
+            f"Tap API request failed after 3 attempts: {last_exc}"
+        ) from last_exc
     if response.status_code == 404:
         raise TapChargeNotFoundError(
             f"Tap charge {charge_id} not found"

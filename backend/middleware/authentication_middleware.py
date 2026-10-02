@@ -15,7 +15,6 @@ import logging
 from typing import Optional
 
 from fastapi import HTTPException, Request
-from jose import JWTError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from infrastructure.utils.auth import decode_token
@@ -58,7 +57,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                             "email": payload.get("email"),
                             "staff_country_codes": request.state.staff_country_codes,
                         }
-            except (HTTPException, JWTError, ValueError, TypeError) as e:
+            except (HTTPException, ValueError, TypeError) as e:
                 logger.warning(
                     "Auth middleware token decode error: %s",
                     e,

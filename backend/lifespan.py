@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
@@ -115,24 +116,7 @@ def _startup_register_services() -> None:
 
     Non-critical: failure is logged but does not prevent startup.
     """
-    try:
-        import importlib
-        # Try multiple possible locations for the service registry
-        registry_paths = [
-            "services.unknown._registry",
-            "services._registry",
-            "services.registry",
-        ]
-        for path in registry_paths:
-            try:
-                importlib.import_module(path)
-                logger.info("Service side-effect registry imported from %s", path)
-                return
-            except ModuleNotFoundError:
-                continue
-        logger.debug("No service side-effect registry found (non-critical)")
-    except Exception:
-        logger.exception("Failed to import service registry at startup (non-critical)")
+    logger.debug("Service side-effect registry import skipped — no registry module present")
 
 
 def _startup_register_event_listeners() -> None:
@@ -141,10 +125,9 @@ def _startup_register_event_listeners() -> None:
     Non-critical: failure is logged but does not prevent startup.
     """
     try:
-        # _event_publisher lives in payment_engine, not payments
-        from domains.finance.services.payments.payment_engine import _event_publisher
+        from infrastructure.messaging.events.event_bus import subscribe
         from infrastructure.messaging.events import PaymentConfirmedEvent
-        from domains.logistics.services.fulfillment.service import FulfillmentService
+        from domains.orders.services.core.logistics import FulfillmentService
 
         fulfillment = FulfillmentService()
 
@@ -159,7 +142,7 @@ def _startup_register_event_listeners() -> None:
             finally:
                 db.close()
 
-        _event_publisher.register_listener(PaymentConfirmedEvent, _handle_fulfillment)
+        subscribe(PaymentConfirmedEvent, _handle_fulfillment)
         logger.info("FulfillmentService registered as PaymentConfirmedEvent listener")
     except Exception:
         logger.exception("Failed to register event listeners at startup (non-critical)")
@@ -247,17 +230,38 @@ def _ensure_default_accounts() -> None:
 
 
 def _startup_background_jobs() -> list:
-    """Background jobs are handled by APScheduler.
+    """Start background event workers and return stoppers for shutdown."""
+    stoppers: list = []
+    try:
+        from jobs.event_workers import run_all_workers, stop_all_workers
+        workers = run_all_workers()
+        stoppers.append(("event_workers", lambda: stop_all_workers(workers)))
+        logger.info("Event workers started")
+    except Exception:
+        logger.exception("Failed to start event workers (non-critical)")
+    try:
+        from infrastructure.utils.config import settings
+        if getattr(settings, "backup_enabled", False):
+            from infrastructure.utils.backup import get_backup_manager
+            manager = get_backup_manager()
+            interval = max(1, int(getattr(settings, "backup_interval_minutes", 30)))
+            stop_event = threading.Event()
 
-    APScheduler is configured in the jobs module and runs periodic tasks
-    such as payout sweeps, email campaigns, and cache warming.
-    The scheduler is started automatically when the application boots.
-    """
-    from infrastructure.utils.config import settings
+            def _run_backup():
+                while not stop_event.is_set():
+                    try:
+                        manager.create_backup()
+                    except Exception:
+                        logger.exception("Backup job failed")
+                    stop_event.wait(interval * 60)
 
-    logger.info("Background jobs delegated to APScheduler")
-
-    return []
+            thread = threading.Thread(target=_run_backup, daemon=True)
+            thread.start()
+            stoppers.append(("backup_manager", stop_event.set))
+            logger.info("Backup manager started (interval=%dm)", interval)
+    except Exception:
+        logger.exception("Failed to start backup manager (non-critical)")
+    return stoppers
 
 
 # ---------------------------------------------------------------------------
@@ -349,8 +353,8 @@ def build_lifespan():
             logger.exception("Failed to dispose database engine")
 
         try:
-            from infrastructure.database.redis_client import redis_client
-            client = redis_client()
+            from infrastructure.valkey.client import valkey_client
+            client = valkey_client()
             if hasattr(client, "close") and callable(client.close):
                 client.close()
         except Exception:

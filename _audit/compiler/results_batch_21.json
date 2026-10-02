@@ -1,0 +1,68 @@
+{
+  "batch": 21,
+  "files": [
+    {
+      "path": "backend/domains/logistics/models/shipping_rules.py",
+      "findings": [
+        {
+          "id": "TF-226",
+          "status": "VALID",
+          "evidence": "Line 41: created_at = Column(DateTime, default=utcnow) — uses Python-side default (utcnow from infrastructure.utils.datetime_utils) instead of server_default=func.now()",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Violates Law 21 (ARCHITECTURE_STACK.md:548): created_at/updated_at must use server_default=func.now() on the DB side. The updated_at column at line 29 correctly uses server_default=func.now(), but created_at at line 41 uses default=utcnow which is Python-side."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/media/models/media_asset.py",
+      "findings": [
+        {
+          "id": "TF-018",
+          "status": "INVALID",
+          "evidence": "Line 9: class MediaAsset(Base) with __tablename__=\"media_assets\" and schema=\"media\" — model definition is correct",
+          "counter_evidence": "Migration 2026_08_06_0003_baseline_sync_orm_tables.py creates media_assets table in media schema; bounded_context migration 2026_07_30_0005 also lists media_assets in media schema",
+          "benchmark_mismatch": "",
+          "notes": "The migration exists and should create the table if applied. The finding is a live DB state issue, not a code issue. The model is correctly defined per Law 6 (schema discipline) and Law 23 (audit columns)."
+        },
+        {
+          "id": "TF-019",
+          "status": "VALID",
+          "evidence": "Line 26: __tablename__ = \"upload_sessions\" with schema=\"media\", but baseline_sync migration 2026_08_06_0003 creates table named media_upload_sessions in media schema. No migration creates a table named upload_sessions.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Model tablename does not match actual DB table name. The finding's proposed fix (\"Apply pending Alembic migration\") is incorrect — the migration IS applied but creates a different table name (media_upload_sessions). Correct fix is to change __tablename__ to \"media_upload_sessions\" or add a rename migration."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/orders/models/order_entities.py",
+      "findings": [
+        {
+          "id": "TF-227",
+          "status": "VALID",
+          "evidence": "OrderNotification class (lines 178-197) has no country_code column. The add_country_code migration 2026_09_03_0005 expects orders.order_notifications, but baseline_sync 2026_08_06_0003 creates order_notifications in commerce schema without country_code.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Model is missing country_code required by Law 5 and Law 20. Additionally, there is a schema mismatch: model declares {\"schema\": \"orders\"} but baseline_sync creates the table in commerce schema. The add_country_code migration also expects orders schema, so it may not have applied to the actual table in commerce schema."
+        },
+        {
+          "id": "TF-228",
+          "status": "VALID",
+          "evidence": "ReturnRequest class (line 142) defines requested_by_id at line 156, but baseline_sync migration 2026_08_06_0003 creates return_requests in commerce schema without requested_by_id. No migration adds this column.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Model has columns not present in any migration. Additionally, schema mismatch: model declares {\"schema\": \"orders\"} but baseline_sync creates return_requests in commerce schema. The bounded_context migration also lists return_requests in commerce schema. A migration is needed to either add the columns or align the model with the DB."
+        },
+        {
+          "id": "TF-229",
+          "status": "VALID",
+          "evidence": "ReturnRequest class (line 142) defines approved_by_id at line 157, but baseline_sync migration 2026_08_06_0003 creates return_requests in commerce schema without approved_by_id. No migration adds this column.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Same schema and column drift as TF-228. approved_by_id exists in model but is not created by any migration. The finding is valid but the proposed fix (\"Apply migration to add missing column\") is correct — a migration IS needed to add these columns."
+        }
+      ]
+    }
+  ]
+}

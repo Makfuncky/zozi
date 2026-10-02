@@ -13,7 +13,7 @@ from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from infrastructure.utils.redis_client import redis_client
+from infrastructure.valkey.client import valkey_client
 from infrastructure.utils.security_audit import log_security_event
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class QueryLogger:
     """Logs database queries for security audit."""
 
     def __init__(self):
-        self.redis = redis_client()
+        self.valkey = valkey_client()
         self.sensitive_tables = {
             "users", "orders", "payments", "financial_transactions",
             "employee_records", "payouts", "audit_logs"
@@ -76,7 +76,7 @@ class EncryptionHelper:
     """Helper for field-level encryption."""
 
     def __init__(self):
-        self.redis = redis_client()
+        self.valkey = valkey_client()
 
     def encrypt_field(self, value: str, key: str) -> str:
         """Encrypt a field value."""
@@ -114,9 +114,9 @@ class EncryptionHelper:
         return f.decrypt(encrypted_value.encode()).decode()
 
     def _get_encryption_key(self, key_name: str) -> Optional[str]:
-        """Get encryption key from Redis or config."""
-        if self.redis:
-            stored_key = self.redis.get(f"encryption_key:{key_name}")
+        """Get encryption key from Valkey or config."""
+        if self.valkey:
+            stored_key = self.valkey.get(f"encryption_key:{key_name}")
             if stored_key:
                 return stored_key
 
@@ -152,7 +152,7 @@ class DatabaseSecurityManager:
     """Manages database security configurations."""
 
     def __init__(self):
-        self.redis = redis_client()
+        self.valkey = valkey_client()
         self.encryption_helper = EncryptionHelper()
 
     def create_encrypted_column(

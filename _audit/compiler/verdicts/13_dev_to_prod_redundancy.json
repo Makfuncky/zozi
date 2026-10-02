@@ -1,0 +1,530 @@
+{
+  "agent_id": "COMP-V16b-17_dev_to_prod",
+  "dimension": "13_dev_to_prod",
+  "role": "REDUNDANCY CHECK - independent corroboration of highest-stakes contested numbers. Does NOT duplicate COMP-V17-13_dev_to_prod. Output deliberately written to a separate file to avoid collision.",
+  "records_considered": 19,
+  "verdicts": [
+    {
+      "key": "13_dev_to_prod-P0",
+      "id": "13_dev_to_prod-P0",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "no",
+      "verify_output": "$w = '.github/workflows/ci.yml'; Get-ChildItem .github/workflows -File\nci.yml  1738 bytes\ndeploy.yml  12038 bytes\nrollback.yml  5874 bytes\nrouter-generation.yml  803 bytes\nschema-audit.yml  824 bytes\n\nRequired-6 check:\nci.yml = True\nschema-drift.yml = False\ndocs-drift.yml = False\ne2e.yml = False\nimport-lint.yml = False\nintegration.yml = False",
+      "verify_command": "Get-ChildItem .github/workflows -File | Select-Object Name; Test-Path on each of the 6 named workflows",
+      "test_command": "not_run (record has Test: NOT_PROVIDED; the named workflow set does not exist as specified)",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": ".github/workflows/ (directory exists, 5 files)",
+        "Current": ".github/workflows/ EXISTS with 5 workflow files. The record's Target text 'Create .github/workflows/' is stale.",
+        "Fix": "FIX_VAGUE + FIX_MISALIGNED: still names 6 exact filenames; 3 of the 6 functional intents are absent and no scanner exists (Law 44, TECHNOLOGY_STACK.md:168-175).",
+        "Verify": "SELECTED_STRING .github/workflows/*.yml -Pattern 'pip-audit|gitleaks|trivy|npm audit|dependabot|cosign|syft' -> 0 hits",
+        "Priority": "P0 remains correct on substance but for a DIFFERENT reason than the record states"
+      },
+      "laws_cited": [
+        "Law 44",
+        "Law 241",
+        "Law 242"
+      ],
+      "notes": "PARTIAL FIX ONLY. The directory exists and ci.yml is a real gate, so 'CI/CD pipeline does not exist' (D2P-001) is FALSE. But 4 of the 6 named workflows never existed under those names, and -- decisively -- the Correction's own list contains no security scanner, so creating exactly the 6 listed files would satisfy this record while leaving Law 44 100% violated. HIGHEST-STAKES INDEPENDENT FINDING: Law 44 ('All deps scanned for CVEs in CI. High/critical block deployment.') is violated and no record in the packet names it. Recorded as a coverage_gap. FIX_UNTESTABLE (Test: NOT_PROVIDED)."
+    },
+    {
+      "key": "CLUSTER-missing-ci",
+      "id": "CLUSTER-missing-ci",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "no",
+      "counter_evidence": ".github/workflows/ci.yml:1-58 exists and defines a 3-trigger (pull_request/push/workflow_dispatch) backend test job running architecture law gates at ci.yml:48-51 and domain tests at ci.yml:56-58; .github/workflows/schema-audit.yml:28-32 runs a schema drift check; .github/workflows/router-generation.yml:28-32 runs router generation; .github/workflows/deploy.yml:70-92 and rollback.yml:37+ provide deploy/rollback. 'CI/CD pipelines never created' is contradicted by the existence of 5 workflow files.",
+      "verify_output": "Get-ChildItem .github/workflows -File -> ci.yml, deploy.yml, rollback.yml, router-generation.yml, schema-audit.yml (5 files)\nGet-ChildItem .github -Recurse -File -> only those 5 under .github\\workflows\\",
+      "verify_command": "Get-ChildItem .github -Recurse -File | ForEach-Object { $_.FullName }",
+      "test_command": "Test-Path tests/ci/test_workflows_present.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Root cause": "REFUTED. The cluster's stated root cause is false. What is genuinely missing is security scanning (Law 44), not CI itself."
+      },
+      "laws_cited": [
+        "Law 242"
+      ],
+      "notes": "The cluster is real in spirit (CI has no scanner, no e2e, no import-lint job, no integration job) but its literal claim is false and its Completion blocker: yes would gate the whole programme on a premise that does not hold. The genuinely-correct residual defect is Law 44, which this record does not state."
+    },
+    {
+      "key": "D2P-001",
+      "id": "D2P-001",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "1-58",
+      "current_matches_claim": "no",
+      "counter_evidence": ".github/workflows/ci.yml:1-58 — the record's Current is 'No CI workflows in .github/workflows/' and Sibling is '.github/workflows/ (empty)'. The directory is not empty: 5 workflow files exist. Its own Verify ('`ls .github/workflows/*.yml` returns 6 files') would in fact return 5, so the record contradicts itself. Further, the Delta claims 'no automated tests, schema checks, or deployment gates run on push' — ci.yml:6-7 triggers on push and ci.yml:48-58 runs pytest gates; schema-audit.yml:28-32 is a schema check; deploy.yml is a deployment gate.",
+      "verify_output": "$ ls .github/workflows/*.yml -> 5 files\n  ci.yml deploy.yml rollback.yml router-generation.yml schema-audit.yml\n$ SELECT ci.yml on push\n 4:   pull_request:\n 6:   push:\n 7:     branches: [main, develop]",
+      "verify_command": "Get-ChildItem .github/workflows -File | ForEach-Object { $_.Name }",
+      "test_command": "Test-Path tests/ci/test_workflows_present.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": ".github/workflows/ exists with 5 files (ci, deploy, rollback, router-generation, schema-audit). NOT empty.",
+        "Target": "Of the 6 named files only ci.yml exists. schema-drift.yml is functionally covered by schema-audit.yml; docs-drift/import-lint are covered only as pre-commit hooks; e2e.yml and integration.yml have no equivalent at all."
+      },
+      "laws_cited": [
+        "Law 242",
+        "Law 44"
+      ],
+      "notes": "P0 + Confidence 5 + Claim state VERIFIED is the strongest-looking record in the packet and it is wrong. Recommend the orchestrator downgrade and re-scope. The residual real defects are: no security scanner anywhere in CI (Law 44), no e2e workflow, no integration workflow, and no docs-drift/import-lint as CI gates despite TECHNOLOGY_STACK.md:165/171 marking both 'Always in CI'. FIX_VAGUE (names files, not what each must assert) and FIX_UNTESTABLE (tests/ci/ does not exist)."
+    },
+    {
+      "key": "13_dev_to_prod-P1",
+      "id": "13_dev_to_prod-P1",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "verify_output": "$ Test-Path CHANGELOG.md\nFalse",
+      "verify_command": "Test-Path CHANGELOG.md",
+      "test_command": "Test-Path tests/docs/test_changelog_present.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "(repository root, absent)",
+        "Current": "CHANGELOG.md absent at repository root.",
+        "Target": "CHANGELOG.md present, Keep a Changelog format with ## [Unreleased]"
+      },
+      "laws_cited": [
+        "Law 250"
+      ],
+      "notes": "Corroborated independently: CHANGELOG.md does not exist, violating Law 250 ('CHANGELOG.md. Per-release: features, breaking changes, fixes.'). Aggravating factor the record does not state: Law 241 (Conventional Commits, required for 'Automated changelog generation') has no generator to feed, and the 5 workflows contain no changelog gate. FIX_UNTESTABLE (Test: NOT_PROVIDED)."
+    },
+    {
+      "key": "D2P-002",
+      "id": "D2P-002",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "verify_output": "$ Test-Path CHANGELOG.md\nFalse\n$ git ls-files | Select-String CHANGELOG -> (no match)",
+      "verify_command": "Test-Path CHANGELOG.md",
+      "test_command": "Test-Path tests/docs/test_changelog_present.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "(repository root, absent)"
+      },
+      "laws_cited": [
+        "Law 250"
+      ],
+      "notes": "Duplicate of 13_dev_to_prod-P1 at higher specificity. Survivor candidate = D2P-002 (has Fix/Verify/Rollback/Blast radius; the P1 row is all NOT_PROVIDED). FIX_UNTESTABLE."
+    },
+    {
+      "key": "CLUSTER-missing-changelog",
+      "id": "CLUSTER-missing-changelog",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "verify_output": "$ Test-Path CHANGELOG.md -> False",
+      "verify_command": "Test-Path CHANGELOG.md",
+      "test_command": "Test-Path tests/docs/test_changelog_present.py",
+      "test_result": "not_found",
+      "filled_fields": {},
+      "laws_cited": [
+        "Law 250"
+      ],
+      "notes": "Single-member cluster around a real absence. FIX_UNTESTABLE."
+    },
+    {
+      "key": "13_dev_to_prod-P2",
+      "id": "13_dev_to_prod-P2",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": false,
+      "actual_line_range": "1-54",
+      "current_matches_claim": "no",
+      "counter_evidence": "monitoring/alerts.yml:12, :22, :34, :44, :54 — every one of the 5 alert rules already carries a runbook_url annotation under its `annotations:` block (e.g. alerts.yml:12 `runbook_url:`). The record's own Verify command ('grep runbook_url monitoring/alerts.yml returns 5 matches') returns exactly 5. The correction is already implemented.",
+      "verify_output": "$ SELECT runbook_url monitoring/alerts.yml | Measure-Object -> 5\n$ SELECT alert: monitoring/alerts.yml\n  4: DatabaseConnectionPoolExhausted\n 14: BackendErrorRateHigh\n 26: APIHighLatency\n 36: SentryNewErrors\n 46: SlowDatabaseQueries",
+      "verify_command": "Select-String -Path monitoring/alerts.yml -Pattern 'runbook_url' | Measure-Object | Select-Object -ExpandProperty Count",
+      "test_command": "Test-Path tests/monitoring/test_alert_runbook_links.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "5 alert rules, each already annotated with summary, description and runbook_url."
+      },
+      "laws_cited": [
+        "Law 248"
+      ],
+      "notes": "The audit's own Verify command falsifies its own correction. Separate and genuinely-real residual defect the record misses: all 5 runbook_url values point at https://zozi.com/docs/runbooks/<name>.md but docs/runbooks/ does not exist in the repository (Test-Path -> False), so all 5 links are dead. That is a Law 248 ('docs/runbooks/. Deployment, rollback, incident response.') violation, and it is the finding D2P-003 actually describes."
+    },
+    {
+      "key": "D2P-009",
+      "id": "D2P-009",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "1-54",
+      "current_matches_claim": "partial",
+      "counter_evidence": "monitoring/alerts.yml:12, :22, :34, :44, :54 already declare runbook_url on all 5 rules, so the stated Current ('operators have no linked runbook for response') is false for the annotation itself. However the links are unresolvable: docs/runbooks/ does not exist.",
+      "verify_output": "$ runbook_url count = 5\n$ Test-Path docs/runbooks -> False\n$ runbook_url targets: zozi.com/docs/runbooks/{database_connection_pool_exhausted,backend_error_rate_high,api_high_latency,sentry_new_errors,slow_database_queries}.md\n$ all 5 point to https://zozi.com/docs/runbooks/... ; that path does not exist in the repo",
+      "verify_command": "Select-String -Path monitoring/alerts.yml -Pattern 'runbook_url'; Test-Path docs/runbooks",
+      "test_command": "Test-Path tests/monitoring/test_alert_runbook_links.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Delta": "PARTIAL: annotations exist and are complete (5/5); the referenced runbook documents do not exist."
+      },
+      "laws_cited": [
+        "Law 248"
+      ],
+      "notes": "Split verdict. The proposed fix (add runbook_url annotations) is already done and applying it is a no-op. The real defect is dead links + missing docs/runbooks/, which is D2P-003 / CLUSTER-missing-runbooks territory. Recommend merging D2P-009 into D2P-003 rather than compiling it as written."
+    },
+    {
+      "key": "13_dev_to_prod-P3",
+      "id": "13_dev_to_prod-P3",
+      "verdict": "ALREADY_FIXED",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "21-28",
+      "current_matches_claim": "no",
+      "verify_output": "$ SELECT load_dotenv backend/config.py\n 22: from dotenv import load_dotenv\n 26: load_dotenv(ROOT / '.env', override=False)\n\nFull guard, config.py:21-28\n 21: try:\n 22:     from dotenv import load_dotenv\n 23:     _app_env = os.environ.get('APP_ENV', 'development')\n 24:     if _app_env in ('development', 'test'):\n 25:         ROOT = Path(__file__).resolve().parent.parent\n 26:         load_dotenv(ROOT / '.env', override=False)\n 27: except ImportError:\n 28:     pass\n\nkey facts: gated on _app_env in ('development','test'); override=False",
+      "verify_command": "SELECT_STRING -Path backend/config.py -Pattern 'load_dotenv|dotenv'",
+      "test_command": "Test-Path tests/security/test_no_dotenv_in_prod.py",
+      "test_result": "not_found",
+      "verify_output_note": "override=False means real environment variables (Coolify-injected) always win over any .env file. Two independent guarantees: the APP_ENV gate skips the load entirely in production, and override=False means even in dev/test a real env var is never clobbered by the file.",
+      "filled_fields": {
+        "Current": "load_dotenv is gated on _app_env in ('development','test') AND uses override=False. The record cites config.py:44-53, which is the _INT_KEYS block and contains no dotenv code at all."
+      },
+      "laws_cited": [
+        "Law 204",
+        "Law 32"
+      ],
+      "notes": "The record's cited line range is wrong (44-53 is _INT_KEYS), and the risk it describes cannot materialise: override=False means Coolify env vars take precedence by construction. Note the record only loads ROOT/.env, never backend/.env as its Current text claims."
+    },
+    {
+      "key": "D2P-007",
+      "id": "D2P-007",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "21-28",
+      "current_matches_claim": "no",
+      "counter_evidence": "backend/config.py:24 `if _app_env in (\"development\", \"test\"):` gates the only load_dotenv call (config.py:26), and config.py:26 passes `override=False`. In production neither branch can execute, and in dev/test a real environment variable is never overwritten by file content. The record's Current additionally misstates the code: there is no `backend/.env` load — config.py:25 sets ROOT to the repo parent and loads only `ROOT/.env`. Corroborated by T4: .env and backend/.env are untracked.",
+      "verify_output": "config.py:26  load_dotenv(ROOT / '.env', override=False)\nconfig.py:24  if _app_env in ('development', 'test'):\nconfig.py:25  ROOT = Path(__file__).resolve().parent.parent   # repo root, NOT backend/\n$ git ls-files | Select-String '\\.env$' -> only .env.example / .env.wrangler / backend/.env.example",
+      "verify_command": "SELECT_STRING -Path backend/config.py -Pattern 'load_dotenv|dotenv'; git ls-files | Select-String -Pattern '\\.env$'",
+      "test_command": "not run - the record's own Test field is malformed",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "config.py:21-28: load_dotenv(ROOT/'.env', override=False) only when APP_ENV in (development, test). ROOT is the repo root. No backend/.env load."
+      },
+      "laws_cited": [
+        "Law 204"
+      ],
+      "notes": "The record's Rollback and Test fields are transposed (Rollback contains a test path, Test contains a grep) - a data-integrity defect worth surfacing to the orchestrator. Verdict FALSE_POSITIVE on the security claim; the remaining valid ask ('add CI check for .env in container') is already effectively enforced by untracking .env, but note CI has no such check and no scanner, so the check the record asks for does not exist."
+    },
+    {
+      "key": "D2P-005",
+      "id": "D2P-005",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "1-26",
+      "current_matches_claim": "partial",
+      "verify_output": "$ SELECT 'HEALTHCHECK|PYTHONUNBUFFERED|workers|^FROM|gunicorn' backend/Dockerfile.prod\n  1: FROM python:3.13-slim\n 26: CMD [\"gunicorn\", \"main:app\", \"--worker-class\", \"uvicorn.workers.UvicornWorker\", \"--bind\", \"0.0.0.0:8000\"]\n -> HEALTHCHECK: 0 matches\n -> PYTHONUNBUFFERED: 0 matches\n -> gunicorn present but NO --workers flag\n\n$ SELECT same in backend/Dockerfile (dev, already multi-stage)\n  6: FROM python:3.13-slim AS builder\n 26: COPY requirements.txt ./\n 30: VIRTUAL_ENV=/app/.venv uv pip install --no-cache-dir -r requirements.txt\n 35: FROM python:3.13-slim AS runner\n -> no HEALTHCHECK, no PYTHONUNBUFFERED either\n\n$ compose healthcheck is at the compose layer, not the image\n  docker-compose.prod.yml:68-72  healthcheck: test: curl -f http://localhost:8000/health/ready",
+      "verify_command": "SELECT_STRING -Path backend/Dockerfile.prod -Pattern 'HEALTHCHECK|PYTHONUNBUFFERED|workers|gunicorn|^FROM'; SELECT_STRING -Path docker-compose.prod.yml -Pattern 'healthcheck'",
+      "test_command": "not_run - Test is tests/infrastructure/test_prod_image.py and requires docker build/inspect, which this contract forbids",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Current": "Single-stage (FROM at :1, no second FROM). No HEALTHCHECK. No PYTHONUNBUFFERED. gunicorn present at :26 but with no --workers flag, so it defaults to 1 worker.",
+        "Delta": "PARTIAL: HEALTHCHECK and PYTHONUNBUFFERED absent (confirmed); 'no gunicorn --workers' confirmed as a missing flag rather than a missing process manager."
+      },
+      "laws_cited": [
+        "Law 218",
+        "Law 215"
+      ],
+      "notes": "Confirmed but weaker than stated. Two corrections to the record: (1) the health probe DOES exist, at docker-compose.prod.yml:68-72, which is where Compose/K8s expects it and what Law 218 actually requires - the record's Verify command (`docker inspect --format='{{.Config.Healthcheck}}'`) would return empty and therefore cannot pass even after a correct fix, making the Verify itself FIX_UNTESTABLE; (2) gunicorn IS used, so the fix is '--workers 4', not 'add a process manager'. The multi-stage and PYTHONUNBUFFERED parts of the fix are sound and align with TECHNOLOGY_STACK.md:279 ('Multi-stage Dockerfiles ... Always for production builds')."
+    },
+    {
+      "key": "D2P-004",
+      "id": "D2P-004",
+      "verdict": "FALSE_POSITIVE",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "54-79",
+      "current_matches_claim": "no",
+      "counter_evidence": "docker-compose.prod.yml:59-60 already declares `rollback_config:` / `parallelism: 1`, and docker-compose.prod.yml:79 already declares `stop_grace_period: 30s`. The record's Current ('update_config present but no rollback_config or stop_grace_period') names two keys that are both present. Its cited range 64-69 is the healthcheck/resources block, not the deploy block.",
+      "verify_output": "$ SELECT 'rollback_config|update_config|stop_grace_period|replicas' docker-compose.prod.yml\n 55:   replicas: 3\n 56:     update_config:\n 57:       parallelism: 1\n 58:       delay: 10s\n 59:     rollback_config:\n 60:       parallelism: 1\n 79:   stop_grace_period: 30s",
+      "verify_command": "SELECT_STRING -Path docker-compose.prod.yml -Pattern 'rollback_config|update_config|stop_grace_period|replicas'",
+      "test_command": "not_run - `docker compose config` is a read-only parse but the named test tests/infrastructure/test_rolling_deploy.py does not exist",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "deploy block at :54-79 already has replicas:3, update_config{parallelism:1,delay:10s}, rollback_config{parallelism:1}, stop_grace_period:30s, and healthcheck at :68-72."
+      },
+      "laws_cited": [
+        "Law 219"
+      ],
+      "notes": "Every element of the proposed fix is already in the file. Applying it is a no-op. The only residual gap adjacent to this record is that there is no `order: start-first` and no documented Coolify pre-deploy hook - but the record does not claim either."
+    },
+    {
+      "key": "D2P-012",
+      "id": "D2P-012",
+      "verdict": "PARTIAL_MERGE_INTO_D2P_004",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "54-79",
+      "current_matches_claim": "partial",
+      "counter_evidence": "docker-compose.prod.yml:68-72 declares a full healthcheck (curl -f /health/ready, interval 30s, timeout 10s, retries 3), so the record's Verify ('grep healthcheck returns 1 match') is satisfied in substance. The residual real gap is that docker-compose.prod.yml:75 uses `condition: service_started` for every depends_on, never `condition: service_healthy` - so no pre-traffic readiness gate exists.",
+      "verify_output": "docker-compose.prod.yml:68-72\n 68:     healthcheck:\n 69:       test: [\"CMD-SHELL\", \"curl -f http://localhost:8000/health/ready || exit 1\"]\n 70:       interval: 30s\n 71:       timeout: 10s\n 72:       retries: 3\ndocker-compose.prod.yml:73-75\n 73:     depends_on:\n 75:         condition: service_started\n\n$ all 13 depends_on conditions in the file:\n  75,158,160,193,195,228,230,263,265,298,300 -> all 'service_started', zero 'service_healthy'",
+      "verify_command": "SELECT_STRING -Path docker-compose.prod.yml -Pattern 'depends_on|condition:'",
+      "test_command": "Test-Path tests/infrastructure/test_pre_traffic_health.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Delta": "PARTIAL: the health probe exists and is correct; what is missing is a pre-traffic GATE (service_healthy / pre-deploy hook), not a healthcheck."
+      },
+      "laws_cited": [
+        "Law 218",
+        "Law 319"
+      ],
+      "notes": "Both D2P-004 and D2P-012 cite the identical path:line range docker-compose.prod.yml:64-69 and both are blocked on the same file: the proposed fixes were both already implemented. Merge candidate. This is the §0.6 duplicate case (same problem, same path:line). D2P-004 should be the survivor per the 'merge if already satisfied' rule - see duplicates_merged. FIX_UNTESTABLE."
+    },
+    {
+      "key": "D2P-008",
+      "id": "D2P-008",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "34-53",
+      "current_matches_claim": "yes",
+      "verify_output": "$ SELECT '[A-Z0-9]{20,}' docker-compose.prod.yml -> 0 matches\n$ SELECT '\\$\\{[A-Z_]+:-' docker-compose.prod.yml -> 0 matches (no insecure defaults)\ndocker-compose.prod.yml:38  - SECRET_KEY=${SECRET_KEY}\ndocker-compose.prod.yml:39  - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}\ndocker-compose.prod.yml:45  - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}\ndocker-compose.prod.yml:46  - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}\nall 19 env entries in the backend service are ${VAR} placeholders",
+      "verify_command": "SELECT_STRING -Path docker-compose.prod.yml -Pattern '[A-Z0-9]{20,}'; SELECT_STRING -Path docker-compose.prod.yml -Pattern '\\$\\{[A-Z_]+:-'",
+      "test_command": "Test-Path tests/security/test_no_hardcoded_secrets.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "docker-compose.prod.yml:34-53 - every secret is a ${VAR} placeholder with no literal and no ${VAR:-default} fallback. Record's claim is accurate."
+      },
+      "laws_cited": [
+        "Law 32",
+        "Law 204"
+      ],
+      "notes": "The record's Current text ('Compose file references ${SECRET_KEY} etc. but source is Coolify; verify no hardcoded values') is CORRECT and its Verify returns nothing as predicted. Law 32 is satisfied for this file. Two important caveats for the orchestrator: (1) 'source is Coolify' is FALSE - the workflows deploy to Railway (deploy.yml:94, :107-114, :178, :191-198) and Railway/Vercel use GitHub secrets, not Coolify; (2) the promised 'CI check for .env/hardcoded secrets' does not exist - there is no secret scanner in any workflow, and the only gitleaks/pip-audit in the repo are local pre-commit hooks (.pre-commit-config.yaml:31-40) that never run in CI. So Law 32 is satisfied in this one file but unenforced repo-wide."
+    },
+    {
+      "key": "D2P-010",
+      "id": "D2P-010",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "1-1934",
+      "current_matches_claim": "yes",
+      "verify_output": "$ Test-Path backend/scripts/pg_backup.py -> True\n$ SELECT 'pg_backup|backup' monitoring/docker-compose.monitoring.yml + docker-compose*.yml -> 0 matches\n$ SELECT pg_backup across backend/**/*.py -> only self-references inside pg_backup.py itself (lines 24,27,30,33,36,144)\n=> no scheduler, no cron, no Celery Beat entry invokes it",
+      "verify_command": "SELECT_STRING -Path monitoring/docker-compose.monitoring.yml,docker-compose*.yml -Pattern 'pg_backup|backup'; SELECT_STRING -Path backend/**/*.py -Pattern 'pg_backup'",
+      "test_command": "Test-Path tests/infrastructure/test_backup_scheduled.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Claim state": "The record self-rates Claim state: ASSUMED / Confidence 3. My verification confirms the underlying fact (script exists, nothing schedules it), which upgrades the evidence but not the priority."
+      },
+      "laws_cited": [
+        "Law 219"
+      ],
+      "notes": "Confirmed. The script exists and has no scheduler. Note the record's Rollback ('`git revert <commit>`') and Test fields are again transposed relative to other rows, suggesting a column-shift defect in the source dimension file affecting at least D2P-007 and D2P-010. Fix ('schedule via Celery Beat or cron; log restore drill results to monitoring') is benchmark-aligned (Law 319) and actionable. FIX_UNTESTABLE."
+    },
+    {
+      "key": "D2P-011",
+      "id": "D2P-011",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": "91-119",
+      "current_matches_claim": "yes",
+      "verify_output": "monitoring/docker-compose.monitoring.yml:92-93\n 92:   sentry:\n 93:     image: getsentry/sentry:latest\n 94:     container_name: zozi-sentry\n...\n101:       - SENTRY_DB_NAME=sentry\n\n$ glitchtip occurrences repo-wide (excl node_modules / docs / audit): only in BROWSER_TEST_PIPELINE.md:348, PROMPT_BROWSER_TEST.md:879, tests/test_config_validation.py:35\n=> no GlitchTip service is deployed anywhere\n\n$ Law 216 (ARCHITECTURE_STACK.md:742) says: 'Backend + cache + Celery + Beat on VPS with Coolify. Frontend on Cloudflare Pages. Mobile: EAS Build. DB: Neon. Object storage: Cloudflare R2. Errors: GlitchT[ip]'",
+      "verify_command": "SELECT_STRING -Path monitoring/docker-compose.monitoring.yml -Pattern 'sentry|SENTRY'; repo-wide grep for 'glitchtip' excluding node_modules",
+      "test_command": "not_run - requires `docker compose ps sentry`, which this contract forbids",
+      "test_result": "not_run",
+      "filled_fields": {
+        "Current": "Self-hosted Sentry at monitoring/docker-compose.monitoring.yml:91-119 (image getsentry/sentry:latest). Confirmed."
+      },
+      "laws_cited": [
+        "Law 216"
+    ],
+      "notes": "Confirmed, and this is the strongest benchmark mismatch in the packet that nobody reported: Law 216 explicitly names GlitchTip as the error platform, and the repo deploys self-hosted Sentry instead. Because the audit text itself says 'if mandated', and the benchmark DOES mandate it, the Fix should be rewritten as a Law 216 benchmark mismatch rather than an open question. Second independent Law 32 problem confirmed here (corroborating T4): monitoring/docker-compose.monitoring.yml:72 GF_SECURITY_ADMIN_PASSWORD is a 5-char LITERAL, and :127 POSTGRES_PASSWORD is a 15-char LITERAL; the file IS tracked (git ls-files -> tracked) and NOT gitignored (git check-ignore exit 1). Values not reproduced here."
+    },
+    {
+      "key": "CLUSTER-missing-runbooks",
+      "id": "CLUSTER-missing-runbooks",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "verify_output": "$ Test-Path docs/runbooks -> False\n$ Test-Path incident_response.md -> False\n$ Test-Path ONCALL.md -> False\n$ Get-ChildItem docs -Directory -> (no runbooks directory)\n\nAll 5 alert rules point at https://zozi.com/docs/runbooks/*.md (monitoring/alerts.yml:12,22,34,44,54) and none of those documents exist in the repository.",
+      "verify_command": "Test-Path docs/runbooks; Test-Path incident_response.md; Test-Path ONCALL.md; Get-ChildItem docs -Directory",
+      "test_command": "Test-Path tests/docs/test_runbooks_present.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Root cause": "CONFIRMED. docs/runbooks/ absent. Aggravated: the 5 runbook_url annotations already in monitoring/alerts.yml are therefore all dead links, which reframes D2P-009 from 'annotations missing' to 'annotations present, targets missing'."
+      },
+      "laws_cited": [
+        "Law 248",
+        "Law 317"
+    ],
+      "notes": "Stronger than stated: this is not merely 'no documentation exists' but 'the alerting config already commits to 5 runbook URLs that resolve to nothing', so Law 248 is violated with a live dangling reference. FIX_UNTESTABLE."
+    },
+    {
+      "key": "D2P-003",
+      "id": "D2P-003",
+      "verdict": "REAL",
+      "path_exists": false,
+      "line_exists": false,
+      "actual_line_range": null,
+      "current_matches_claim": "yes",
+      "verify_output": "$ ls *_runbook.md incident_response.md ONCALL.md -> none exist\n$ Test-Path docs/runbooks -> False",
+      "verify_command": "Test-Path docs/runbooks; Test-Path incident_response.md; Test-Path ONCALL.md",
+      "test_command": "Test-Path tests/docs/test_runbooks_present.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "File:Line": "(repository root, docs/runbooks/ absent)"
+      },
+      "laws_cited": [
+        "Law 248"
+    ],
+      "notes": "Confirmed. Survivor for the D2P-009 merge. FIX_UNTESTABLE."
+    },
+    {
+      "key": "D2P-006",
+      "id": "D2P-006",
+      "verdict": "REAL",
+      "path_exists": true,
+      "line_exists": true,
+      "actual_line_range": null,
+      "current_matches_claim": "partial",
+      "verify_output": "$ ls coolify* .coolify* k8s/ terraform/ -> none exist (all Test-Path False)\n\nBUT the record's framing 'Deployment target is unclear' is WRONG. The deployment target is fully declared in code:\n  .github/workflows/deploy.yml:94   'Deploy Backend - Railway (Staging)'\n  .github/workflows/deploy.yml:107  Install Railway CLI\n  .github/workflows/deploy.yml:114  railway up --environment staging\n  .github/workflows/deploy.yml:121  railway run --environment staging -- alembic upgrade head\n  .github/workflows/deploy.yml:178  'Deploy Backend - Railway (Production)'\n  .github/workflows/deploy.yml:198  railway up --environment production\n  .github/workflows/deploy.yml:205  railway run --environment production -- alembic upgrade head\n  .github/workflows/deploy.yml:153/242  vercel build --preview / --prod\n  .github/workflows/deploy.yml:34-36  REGISTRY ghcr.io, BACKEND_IMAGE/FRONTEND_IMAGE ghcr.io/...\n  .github/workflows/rollback.yml:37-169  Railway + Vercel rollback paths\n\nLaw 216 (ARCHITECTURE_STACK.md:742) mandates: 'Backend + cache + Celery + Beat on VPS with Coolify.'\nTECHNOLOGY_STACK.md:272 mandates Coolify; :274 mandates Cloudflare Pages.",
+      "verify_command": "SELECT_STRING -Path .github/workflows/deploy.yml -Pattern 'railway|Railway|coolify|ghcr|vercel'; Test-Path on coolify/.coolify/k8s/terraform",
+      "test_command": "Test-Path tests/infra/test_deploy_target.py",
+      "test_result": "not_found",
+      "filled_fields": {
+        "Current": "No Coolify/K8s/Terraform config in the repo, but the deployment target is declared in CI: Railway for backend, Vercel for frontend, ghcr.io registry, Cloudflare Pages never referenced."
+      },
+      "laws_cited": [
+        "Law 216",
+        "Law 314"
+      ],
+      "notes": "REALLY BIG FINDING the other agents missed. The record rates this P0 but for the wrong reason ('deployment target is unclear' - it is emphatically clear, it is just the WRONG one). Law 216 mandates Coolify on a self-hosted VPS; the repo ships Railway + Vercel. TECHNOLOGY_STACK.md:271-274 names Hostinger VPS and Coolify as Prod; neither appears anywhere. This invalidates a large slice of the packet's assumptions: D2P-008's 'source is Coolify' is false, D2P-005's Dockerfile.prod and D2P-004/012's docker-compose.prod.yml describe an artifact that the declared CI pipeline never builds or runs (Railway builds from the repo default, Vercel from vercel.json). Recommend the orchestrator escalate this as the dimension's headline finding. Also note Law 314 permits Terraform as optional, so its absence is not itself a violation - the record's Fix offering 'Coolify env-var mapping or alternative IaC' is acceptable but should be re-scoped to a benchmark decision the user must make, not an engineering task."
+    }
+  ],
+
+  "duplicates_merged": [
+    {
+      "survivor": "D2P-004",
+      "duplicate": "D2P-012",
+      "why": "Identical citation docker-compose.prod.yml:64-69 for both, and both are already satisfied: rollback_config at :59-60 and stop_grace_period at :79 (D2P-004's ask), healthcheck at :68-72 with only service_started gating at :75 (D2P-012's residual). Neither adds anything the other does not. NOTE: I did not delete anything; D2P-012's only non-duplicate content is the service_started vs service_healthy observation, which I have preserved in its filled_fields so the resolver does not lose it."
+    },
+    {
+      "survivor": "D2P-002",
+      "duplicate": "13_dev_to_prod-P1",
+      "why": "Same absence (root CHANGELOG.md). D2P-002 is fully populated with Fix/Verify/Rollback/Blast radius; the P1 row is all NOT_PROVIDED except the Correction text."
+    },
+    {
+      "survivor": "D2P-003",
+      "duplicate": "D2P-009",
+      "why": "D2P-009's proposed fix (add runbook_url to all 5 rules) is already implemented at monitoring/alerts.yml:12,22,34,44,54. Its genuine residual - the 5 runbook_url targets do not exist - is exactly D2P-003 / CLUSTER-missing-runbooks."
+    },
+    {
+      "survivor": "D2P-001",
+      "duplicate": "CLUSTER-missing-ci",
+      "why": "Cluster is a single-member wrapper (Members: D2P-001) around the identical 'CI does not exist' premise, which is false in both rows."
+    },
+    {
+      "survivor": "D2P-007",
+      "duplicate": "13_dev_to_prod-P3",
+      "why": "Both assert the Coolify-env-vs-local-.env risk; backend/config.py:24 gate + :26 override=False refutes both. D2P-007 carries the fuller evidence."
+    }
+  ],
+
+  "internal_contradictions": [
+    {
+      "keys": [
+        "D2P-001",
+        "13_dev_to_prod-P0",
+        "CLUSTER-missing-ci"
+      ],
+      "conflict": "All three assert CI does not exist, yet all three name .github/workflows as the target and D2P-001's Verify command ('ls .github/workflows/*.yml returns 6 files') is an existence assertion against a directory that already holds 5 files. If the directory is already populated, 'Completion blocker: yes' for the whole cluster is unsound. Per §0.6 I do not resolve this - it needs the orchestrator to decide whether the audit was written against an earlier commit."
+    },
+    {
+      "keys": [
+        "D2P-005",
+        "D2P-004",
+        "D2P-012"
+      ],
+      "conflict": "Three records target docker-compose.prod.yml and Dockerfile.prod as the production deploy path, while .github/workflows/deploy.yml:94-214 deploys the backend to Railway. Under Railway, neither the compose file nor Dockerfile.prod is the artifact that runs. Fixing all three as written would harden a file the declared pipeline never reads."
+    },
+    {
+      "keys": [
+        "D2P-008",
+        "D2P-006"
+      ],
+      "conflict": "D2P-008 states secrets are 'passed as env vars from Coolify' as an established fact; D2P-006 asserts Coolify is entirely absent. Both cannot hold. My evidence resolves the factual question (no Coolify anywhere; deploy.yml uses GitHub secrets + Railway) but the benchmark still mandates Coolify under Law 216, so the user must decide - I am not resolving it."
+    }
+  ],
+
+  "cross_cutting_candidates": [
+    {
+      "key": "LAW-44-NO-CI-SECURITY-SCANNING",
+      "why": "Governs the whole codebase and has no single File:Line. Zero hits for pip-audit|gitleaks|trivy|npm audit|dependabot|cosign|syft across all 5 workflows, and no .github/dependabot.yml. TECHNOLOGY_STACK.md:168-175 mandates gitleaks ('Always in CI. Blocks on any finding.'), pip-audit ('Always in CI. Blocks on high/critical CVEs.'), Dependabot ('Always enabled on GitHub'), Trivy ('Always in CI'), and cosign/Syft conditionally. LAW 44 states 'All deps scanned for CVEs in CI. High/critical block deployment.' Zero of 4 unconditional tools are present in CI. The only gitleaks and pip-audit in the repo are local pre-commit hooks (.pre-commit-config.yaml:31-40) which by definition never run in CI and can be bypassed with --no-verify. NO PACKET RECORD COVERS THIS. It is the single largest gap in the 13_dev_to_prod dimension and it is marked P0 nowhere."
+    },
+    {
+      "key": "LAW-216-DEPLOY-TARGET-MISMATCH",
+      "why": "No single File:Line; spans benchmark vs all CI workflows vs all compose files. Law 216 and TECHNOLOGY_STACK.md:271-274 mandate Hostinger VPS + Coolify + Cloudflare Pages. The repo ships Railway (deploy.yml:114, :198), Vercel (deploy.yml:153, :242, :249, :258), and ghcr.io (:34-36), and references Cloudflare Pages nowhere. This is a benchmark-vs-code mismatch requiring a user decision, and it invalidates the assumed deploy path of D2P-004, D2P-005, D2P-008 and D2P-012."
+    },
+    {
+      "key": "LAW-32-COMMITTED-SECRET-IN-CI-WORKFLOW",
+      "why": "Governs every workflow. A literal SECRET_KEY is committed in TWO tracked workflow files: .github/workflows/ci.yml:20 and .github/workflows/deploy.yml:48, both 51-char and 25-char literals respectively (shapes confirmed programmatically: no '${{' expression, no secrets.* indirection). Value not reproduced in this verdict file per contract. Also literal: ci.yml:21-23 and deploy.yml:49-51 (TEST_ADMIN_PASSWORD / TEST_SUPPLIER_PASSWORD / TEST_CUSTOMER_PASSWORD). Corroborated with T4's monitoring/ findings (docker-compose.monitoring.yml:72 and :127) to give FOUR distinct Law 32 sites, none of which any packet record cites."
+    },
+    {
+      "key": "SUPPLY-CHAIN-UVLOCK-VS-REQUIREMENTS",
+      "why": "Governs every container build. Both Dockerfiles install from backend/requirements.txt, never from uv.lock: backend/Dockerfile.prod:16-17 (`COPY requirements.txt .` / `RUN pip install --no-cache-dir -r requirements.txt`) and backend/Dockerfile:26+30 (`COPY requirements.txt ./` / `uv pip install --no-cache-dir -r requirements.txt`). uv.lock -- the artifact all 4 CI install sites honour with --frozen - is therefore bypassed for every image build. requirements.txt:11 pins nothing for starlette (bare `starlette`), so the framework's transitive pin is resolved at build time by whatever the index serves that day."
+    }
+  ],
+
+  "coverage_gaps": [
+    "P0 DISCREPANCY vs COMP-V17 / CROSS_AGENT_FINDINGS T2: I AGREE on 75 files / 1 head / 0 duplicates / 4 branch points / 3 merges, derived twice by independent methods (python ast module-level assignment walk, and a pure-regex parse with no AST). BUT the count is only true of the WORKING TREE. Against the committed HEAD (git ls-tree HEAD backend/alembic/versions/ + git show per file) I get 4 HEADS: 20260822_governance_out_of_audit_schema, 20260930_0002, 20260930_0003, 20260930_0006 - i.e. Law 49 ('Alembic history MUST remain linear. Resolve divergent heads immediately.') is violated at HEAD by 4 heads, repaired only by 4 UNTRACKED files in the working tree. The other agents appear to have measured the working tree only. Head count is therefore NOT stable across the two states and '1 head' must be qualified.",
+    "DISCREPANCY vs T10 / COMP-V17 on uv.lock: I DISAGREE on the package count. My numbers are 107 [[package]] entries in the working-tree uv.lock and 96 at HEAD - not 211. 211 is not reproducible by any counting method I tried ([[package]] blocks 107, distinct name lines 107, all name tokens 348, dependency name refs 241, HEAD 96, union 110). I DO confirm 502 sha256 hashes - but ONLY in the working tree; HEAD has 1240. So the '211 packages, 502 hashes' pair is internally inconsistent: 502 belongs to the working tree while 211 belongs to neither state. Recommend the orchestrator re-derive both numbers and state which tree they describe.",
+    "WORKING TREE IS HEAVILY DIRTY - unstated by any prior agent. `git status --porcelain` shows 342 modified, 48 deleted and 225 untracked files, including 4 DELETED + 4 NEW untracked Alembic migrations, a rewritten backend/pyproject.toml, and rewritten backend/requirements.txt and backend/uv.lock. Every number in this dimension is therefore state-dependent. This is the single biggest caveat on all of T2/T10/T11 and should be recorded once, globally, by the orchestrator.",
+    "MATERIAL FINDING NOT IN ANY PACKET RECORD: backend/uv.lock and backend/requirements.txt have SWAPPED fastapi versions relative to HEAD. Working tree: requirements.txt:8 = fastapi==0.141.0 while uv.lock pins fastapi 0.115.2. At HEAD it is the reverse: requirements.txt = fastapi==0.115.2 while uv.lock pins 0.141.0. Either way the two manifests disagree, so T10's supply-chain finding is CORRECT in substance, but T10 states the direction using working-tree numbers and that direction INVERTS at HEAD. Since both Dockerfiles install from requirements.txt, the version that actually lands in the image is the requirements.txt one, and `uv sync --frozen` in CI resolves the other. Starlette compounds this: requirements.txt:11 is bare `starlette` (no pin) in BOTH trees, while uv.lock pins 0.40.0 (WT) / 1.6.0 (HEAD).",
+    "PRIORITY DEFECT the other agents missed: `uv sync --frozen` at ci.yml:42, deploy.yml:70, router-generation.yml:28 and schema-audit.yml:28 is correct in the working tree, but the COMMITTED backend/pyproject.toml has NO [project] table at all - it contains only [tool.pytest.ini_options] (11 lines). uv cannot resolve a project without [project], so against HEAD the CI install step is structurally incapable of working as written. The [project] table (name/version/requires-python >=3.13,<3.14) exists only as an uncommitted modification. Additionally the lock's requires-python differs between trees (WT '==3.13.*' vs HEAD '>=3.11'), which alone would make --frozen fail against a >=3.13 pyproject. This is a stronger and more actionable statement of the same finding than '211 packages'.",
+    "NOT VERIFIABLE within contract: D2P-005's Verify (`docker inspect --format='{{.Config.Healthcheck}}'`) and D2P-011's Verify (`docker compose ... ps sentry`) both require a running Docker daemon, which this contract forbids. Marked not_run. I substituted static manifest inspection, which is sufficient to settle both claims (Dockerfile.prod has no HEALTHCHECK; the sentry service exists at monitoring/docker-compose.monitoring.yml:92).",
+    "NOT VERIFIABLE within contract: whether any backup/restore drill has actually been executed, and whether Coolify is configured in the Coolify UI (the repo can only prove the absence of Coolify files, not the absence of the platform). D2P-010's 'no evidence of scheduled execution' is a claim about a non-repository system.",
+    "UNVERIFIABLE / NOT ATTEMPTED: any runtime check of the deployed environment. All 19 verdicts are static. I ran no pytest, no alembic, no docker, and touched no database, per contract.",
+    "SCOPE NOTE: this file deliberately covers only the redundancy-check brief (3 contested numbers, 5 prior-pass CI claims, SECRET_KEY, and the 19 packet records at a corroboration level). It is NOT a full independent second pass in the §0.3 sense for records D2P-005 through D2P-011 - those received targeted verification only, and each verdict names exactly what I checked so the orchestrator can see the depth actually achieved.",
+    "SECRET HANDLING: no secret value is reproduced anywhere in this file. The two workflow SECRET_KEY literals and the four monitoring/ passwords are described only by file, line, length and literal-vs-expression shape."
+  ],
+
+  "redundancy_check_summary": {
+    "purpose": "Independent corroboration of contested numbers, not a duplicate of COMP-V17-13_dev_to_prod.",
+    "alembic": {
+      "files_75": "AGREE (two independent methods)",
+      "heads_1": "AGREE for the working tree; DISAGREE for HEAD, which has 4 heads",
+      "duplicates_0": "AGREE",
+      "branch_points_4": "AGREE",
+      "merges_3": "AGREE"
+    },
+    "ci_scanners": {
+      "workflow_files_5": "AGREE",
+      "scanner_hits_0": "AGREE",
+      "dependabot_yml_absent": "AGREE"
+    },
+    "uv_lock": {
+      "tracked": "AGREE (tracked, not ignored)",
+      "packages_211": "DISAGREE - 107 working tree / 96 HEAD",
+      "hashes_502": "AGREE for working tree only; HEAD has 1240",
+      "frozen_at_4_sites": "AGREE",
+      "dockerfiles_use_requirements_txt": "AGREE, both files, exact lines cited"
+    },
+    "prior_pass_claims": {
+      "uv_sync_frozen_ci_yml": "TRUE",
+      "python_313": "TRUE",
+      "postgres_18_alpine": "FALSE",
+      "pytest_xdist": "FALSE",
+      "secret_key_replaced_by_secrets_expr": "FALSE"
+    },
+    "literal_secret_key_in_workflow": "YES - P0, ci.yml:20 and deploy.yml:48"
+  },
+
+  "confidence_statement": "High on all static counts (each reproduced by two methods or by direct file read). The single genuine P0 disagreement is the uv.lock package count (107/96, not 211) and the associated state-dependence of every number in this dimension."
+}

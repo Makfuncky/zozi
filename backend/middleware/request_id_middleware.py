@@ -2,26 +2,25 @@
 Request ID Middleware for Zozi Platform
 Generates and manages request IDs for tracing and correlation.
 """
-import contextvars
 import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 import structlog
 
-logger = structlog.get_logger(__name__)
+from infrastructure.observability.logging_config import request_id_ctx
 
-_request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
+logger = structlog.get_logger(__name__)
 
 
 def set_request_id(request_id: str) -> None:
     """Set the request ID in the current context."""
-    _request_id_ctx.set(request_id)
+    request_id_ctx.set(request_id)
 
 
 def get_request_id() -> str:
     """Get the request ID from the current context."""
-    return _request_id_ctx.get()
+    return request_id_ctx.get()
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):

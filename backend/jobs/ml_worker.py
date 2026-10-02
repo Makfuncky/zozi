@@ -19,7 +19,6 @@ ML_WORKER_IDLE_SHUTDOWN : int
 """
 from __future__ import annotations
 
-import logging
 import os
 import sys
 import time
@@ -27,11 +26,9 @@ import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-logger = logging.getLogger("ml_worker")
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 POLL_INTERVAL = int(os.getenv("ML_WORKER_POLL_INTERVAL", "2"))
 IDLE_SHUTDOWN = int(os.getenv("ML_WORKER_IDLE_SHUTDOWN", "0"))

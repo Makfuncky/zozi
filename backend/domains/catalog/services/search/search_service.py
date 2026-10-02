@@ -14,7 +14,7 @@ _SEARCH_INDEX: Dict[str, Dict[str, dict]] = {}
 
 from fastapi.responses import Response
 from sqlalchemy import desc, func, or_, and_, text, cast as sql_cast, String
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from domains.catalog.models.products import Product
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
@@ -506,7 +506,7 @@ def smart_search_from_parsed(
     }
     parsed = _resolve_brand_from_catalog(parsed, db)
 
-    query = db.query(Product).filter(
+    query = db.query(Product).options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items)).filter(
         Product.is_deleted == False,
         Product.is_active.isnot(False),
         Product.is_approved.isnot(False),
@@ -662,7 +662,7 @@ def get_recommendations(
     ]
 
     if user_id is None:
-        query = db.query(Product).filter(
+        query = db.query(Product).options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items)).filter(
             Product.is_deleted == False,   # noqa: E712
             Product.is_active.isnot(False),
             Product.is_approved.isnot(False),
@@ -675,6 +675,7 @@ def get_recommendations(
         if not recommended and normalized_recent_categories:
             recommended = (
                 db.query(Product)
+                .options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items))
                 .filter(
                     Product.is_deleted == False,   # noqa: E712
                     Product.is_active == True,     # noqa: E712
@@ -821,7 +822,7 @@ def get_recommendations(
             .all()
         }
 
-        query = db.query(Product).filter(
+        query = db.query(Product).options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items)).filter(
             Product.is_deleted == False,   # noqa: E712
             Product.is_active == True,     # noqa: E712
             Product.is_approved == True,   # noqa: E712
@@ -835,7 +836,7 @@ def get_recommendations(
         recommended = query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()
         if not recommended:
             # Fallback to global best products when category affinity is sparse.
-            fallback_query = db.query(Product).filter(
+            fallback_query = db.query(Product).options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items)).filter(
                 Product.is_deleted == False,   # noqa: E712
                 Product.is_active == True,     # noqa: E712
                 Product.is_approved == True,   # noqa: E712
@@ -924,20 +925,28 @@ class AdvancedFilterService:
         return {"total_products": base_query.count(), "has_video": base_query.filter(Product.video_count > 0).count(), "has_discount": base_query.filter(Product.compare_price.isnot(None), Product.compare_price > Product.price).count(), "in_stock": base_query.filter(Product.stock > 0).count()}
 
     def apply_filters(self, q, filters: Dict[str, Any]):
-        if filters.get("min_price") is not None:
-            try: q = q.filter(Product.price >= float(filters["min_price"]))
-            except (TypeError, ValueError): pass
-        if filters.get("max_price") is not None:
-            try: q = q.filter(Product.price <= float(filters["max_price"]))
-            except (TypeError, ValueError): pass
+        min_price = filters.get("min_price")
+        if min_price is not None:
+            try: min_price = float(min_price)
+            except (TypeError, ValueError): raise
+            q = q.filter(Product.price >= min_price)
+        max_price = filters.get("max_price")
+        if max_price is not None:
+            try: max_price = float(max_price)
+            except (TypeError, ValueError): raise
+            q = q.filter(Product.price <= max_price)
         brands = filters.get("brands")
         if brands and isinstance(brands, list): q = q.filter(Product.brand.in_(brands))
-        if filters.get("min_rating") is not None:
-            try: q = q.filter(Product.rating >= float(filters["min_rating"]))
-            except (TypeError, ValueError): pass
-        if filters.get("max_rating") is not None:
-            try: q = q.filter(Product.rating <= float(filters["max_rating"]))
-            except (TypeError, ValueError): pass
+        min_rating = filters.get("min_rating")
+        if min_rating is not None:
+            try: min_rating = float(min_rating)
+            except (TypeError, ValueError): raise
+            q = q.filter(Product.rating >= min_rating)
+        max_rating = filters.get("max_rating")
+        if max_rating is not None:
+            try: max_rating = float(max_rating)
+            except (TypeError, ValueError): raise
+            q = q.filter(Product.rating <= max_rating)
         attributes = filters.get("attributes")
         if isinstance(attributes, dict):
             for attr_key, attr_values in attributes.items():
@@ -960,7 +969,7 @@ class AdvancedFilterService:
         if cache_key in self._cache:
             cached = self._cache[cache_key]
             if isinstance(cached, dict) and "products" in cached: return cached
-        query = self.db.query(Product).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
+        query = self.db.query(Product).options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items)).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
         query = self.apply_filters(query, filters)
         total = query.count()
         if cursor:
@@ -1078,7 +1087,7 @@ class AdvancedSearchEngine:
     def search(self, query: str, filters: Optional[Dict[str, Any]] = None, limit: int = 20, offset: int = 0, sort_by: str = "relevance", cursor: Optional[int] = None) -> Dict[str, Any]:
         limit = min(limit, _MAX_PAGE_SIZE); offset = max(offset, 0)
         parsed = self.parse_query(query); all_filters = {**(filters or {}), **parsed}
-        db_query = self.db.query(Product).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
+        db_query = self.db.query(Product).options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items)).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
         if all_filters.get("min_price") is not None: db_query = db_query.filter(Product.price >= float(all_filters["min_price"]))
         if all_filters.get("max_price") is not None: db_query = db_query.filter(Product.price <= float(all_filters["max_price"]))
         if all_filters.get("min_rating") is not None: db_query = db_query.filter(Product.rating >= float(all_filters["min_rating"]))
@@ -1121,7 +1130,7 @@ class AdvancedSearchEngine:
     def fuzzy_search(self, query: str, limit: int = 20, cutoff: float = 0.6) -> Dict[str, Any]:
         limit = min(limit, _MAX_PAGE_SIZE)
         parsed = self.parse_query(query)
-        db_query = self.db.query(Product).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
+        db_query = self.db.query(Product).options(selectinload(Product.reviews, Product.wishlist_items, Product.wishlists, Product.cart_items)).filter(Product.is_deleted == False, Product.is_active == True, Product.is_approved == True, Product.stock > 0)
         if parsed.get("min_price") is not None: db_query = db_query.filter(Product.price >= float(parsed["min_price"]))
         if parsed.get("max_price") is not None: db_query = db_query.filter(Product.price <= float(parsed["max_price"]))
         if parsed.get("min_rating") is not None: db_query = db_query.filter(Product.rating >= float(parsed["min_rating"]))
@@ -1158,7 +1167,7 @@ def fetch_visually_similar_products(db: Any, limit: int = 10) -> list[dict]:
     except Exception as exc:
         logger.warning("Visual search DB query failed: %s", exc)
         return []
-def search_products(db: Session, query: str, *, country_code: str | None = None, limit: int = 50, offset: int = 0) -> list[dict]:
+def search_products(db: Session, query: str, *, country_code: str | None = None, limit: int = 50, offset: int = 0, cursor: Optional[int] = None) -> list[dict]:
     """Free-text product search across name/description/sku (case-insensitive).
 
     Returns a lightweight list of product dicts. Degrades to an empty list when
@@ -1176,7 +1185,9 @@ def search_products(db: Session, query: str, *, country_code: str | None = None,
     )
     if country_code:
         q = q.filter(Product.country_code == country_code)
-    rows = q.order_by(Product.created_at.desc()).limit(limit).offset(offset).all()
+    if cursor:
+        q = q.filter(Product.id < cursor)
+    rows = q.order_by(Product.id.desc()).limit(limit).all()
     return [
         {
             "id": p.id,

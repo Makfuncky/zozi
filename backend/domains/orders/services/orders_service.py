@@ -22,28 +22,13 @@ from providers.payments.stripe_sdk import refund_payment_intent
 from providers.payments.registry import PaymentGatewayRegistry
 from providers.shipping.shipping_calculator import calculate_shipping_rate, compare_shipping_options
 from domains.country.ports import get_country_config
+from domains.finance.services.payments.payment_engine import get_order_gateway
 import logging
 from sqlalchemy.exc import IntegrityError
 # _delete_order_records imported lazily to avoid cross-domain coupling at module level
 
 logger = logging.getLogger(__name__)
 
-# Country code → payment gateway provider code fallback map.
-# Used when no DB-driven gateway is configured for the order's country.
-# TODO: Migrate to providers/payments/registry.py when that module supports
-# country-level routing configuration (ticket: PAY-GATEWAY-CONFIG-001, expires: 2026-12-31).
-COUNTRY_GATEWAY_MAP = {
-    "SA": "stripe",
-    "AE": "stripe",
-    "KW": "stripe",
-    "QA": "stripe",
-    "BH": "stripe",
-    "OM": "stripe",
-    "JO": "tap",
-    "EG": "paytabs",
-    "PK": "paytabs",
-    "IN": "paytabs",
-}
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
     return {
         "data": items,
@@ -52,53 +37,6 @@ def _build_list_page_payload(items: list, total: int, offset: int, page_size: in
         "page_size": page_size,
         "pages": (total + page_size - 1) // page_size if total > 0 else 0,
     }
-
-
-def get_order_gateway(order: Order, db: Session | None = None) -> str:
-    """Resolve the payment gateway provider code for an order based on its country.
-
-    When ``db`` is provided, the function first attempts DB-driven resolution via
-    ``CountryConfig.payment_gateways_json`` (Law 118 — database-driven payment
-    orchestration).  If the DB has no gateway configured for the order's country,
-    or if ``db`` is ``None``, the function falls back to the module-level
-    ``COUNTRY_GATEWAY_MAP`` to preserve backward compatibility.
-    """
-    country_code = str(getattr(order, "country_code", "") or "").upper()
-
-    # --- DB-driven resolution (sanctioned cross-domain read via ports.py) ---
-    if db is not None:
-        try:
-            config = get_country_config(db, country_code)
-            if config and config.payment_gateways_json:
-                raw = config.payment_gateways_json
-                gateways = json.loads(raw) if isinstance(raw, str) else raw
-                if isinstance(gateways, list):
-                    enabled_gateways = [g for g in gateways if g.get("enabled", True)]
-                    if enabled_gateways:
-                        default_gateway = "stripe"
-                        for gw in enabled_gateways:
-                            gw_name = str(gw.get("gateway_id", "")).lower()
-                            if default_gateway.lower() in gw_name or gw_name in default_gateway.lower():
-                                provider_code = gw.get("gateway_id")
-                                break
-                        else:
-                            provider_code = enabled_gateways[0].get("gateway_id")
-
-                        if provider_code and PaymentGatewayRegistry.get(provider_code) is not None:
-                            return provider_code
-                        logger.warning(
-                            "No gateway adapter registered for '%s'; falling back to stripe",
-                            provider_code,
-                        )
-        except Exception:
-            logger.exception("Failed to resolve gateway from DB for country %s", country_code)
-
-    # --- Hardcoded fallback (preserves pre-existing behavior) ---
-    provider_code = COUNTRY_GATEWAY_MAP.get(country_code, "stripe")
-    if PaymentGatewayRegistry.get(provider_code) is None:
-        logger.warning("No gateway adapter registered for '%s'; falling back to stripe", provider_code)
-        return "stripe"
-    return provider_code
 
 
 def get_order_shipping_options(order: Order, destination: dict) -> list:

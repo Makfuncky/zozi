@@ -32,6 +32,7 @@ from domains.finance.services.payments.payment_engine import (
     gateway_code_for_payment_method,
     is_checkout_payment_method_allowed,
     issue_stripe_refund,
+    get_order_gateway,
 )
 from domains.finance.services.payments.gateway_stripe import (
     create_payment_intent,

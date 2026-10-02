@@ -1,0 +1,42 @@
+{"timestamp":"2026-10-01T19:26:00Z","event":"audit_start","dimension":"08_providers","scope":"backend/providers/**/*.py"}
+{"timestamp":"2026-10-01T19:26:05Z","event":"file_read","file":"backend/providers/_base.py","lines":142}
+{"timestamp":"2026-10-01T19:26:06Z","event":"file_read","file":"backend/providers/_helpers.py","lines":89}
+{"timestamp":"2026-10-01T19:26:07Z","event":"file_read","file":"backend/providers/config.py","lines":312}
+{"timestamp":"2026-10-01T19:26:08Z","event":"file_read","file":"backend/providers/payments/stripe_sdk.py","lines":450}
+{"timestamp":"2026-10-01T19:26:09Z","event":"file_read","file":"backend/providers/payments/paypal.py","lines":380}
+{"timestamp":"2026-10-01T19:26:10Z","event":"file_read","file":"backend/providers/payments/webhooks.py","lines":82}
+{"timestamp":"2026-10-01T19:26:11Z","event":"file_read","file":"backend/providers/comms/email.py","lines":120}
+{"timestamp":"2026-10-01T19:26:12Z","event":"file_read","file":"backend/providers/comms/twilio.py","lines":200}
+{"timestamp":"2026-10-01T19:26:13Z","event":"file_read","file":"backend/providers/ai/chatbot.py","lines":180}
+{"timestamp":"2026-10-01T19:26:14Z","event":"file_read","file":"backend/providers/ai/search.py","lines":220}
+{"timestamp":"2026-10-01T19:26:15Z","event":"file_read","file":"backend/providers/ai/text.py","lines":280}
+{"timestamp":"2026-10-01T19:26:16Z","event":"file_read","file":"backend/providers/ai/vision.py","lines":190}
+{"timestamp":"2026-10-01T19:26:17Z","event":"file_read","file":"backend/providers/storage/s3_client.py","lines":150}
+{"timestamp":"2026-10-01T19:26:18Z","event":"file_read","file":"backend/providers/geography/ip.py","lines":130}
+{"timestamp":"2026-10-01T19:26:19Z","event":"file_read","file":"backend/providers/finance/bank_api.py","lines":200}
+{"timestamp":"2026-10-01T19:26:20Z","event":"file_read","file":"backend/providers/security/threat_intel.py","lines":110}
+{"timestamp":"2026-10-01T19:26:21Z","event":"file_read","file":"backend/providers/security/watchlist.py","lines":140}
+{"timestamp":"2026-10-01T19:26:22Z","event":"file_read","file":"backend/providers/security/encryption.py","lines":18}
+{"timestamp":"2026-10-01T19:26:23Z","event":"file_read","file":"backend/providers/scanner/scanner.py","lines":152}
+{"timestamp":"2026-10-01T19:26:24Z","event":"file_read","file":"backend/providers/voice/voice_to_text.py","lines":201}
+{"timestamp":"2026-10-01T19:26:25Z","event":"file_read","file":"backend/providers/qr/parcel_verification_service.py","lines":51}
+{"timestamp":"2026-10-01T19:26:26Z","event":"file_read","file":"backend/tests/providers/test_provider_health.py","lines":511}
+{"timestamp":"2026-10-01T19:26:27Z","event":"file_read","file":"backend/tests/providers/test_providers.py","lines":194}
+{"timestamp":"2026-10-01T19:26:28Z","event":"dimension_check","provider":"all","dimension":"health_check","result":"missing_in_most","count_missing":50}
+{"timestamp":"2026-10-01T19:26:29Z","event":"dimension_check","provider":"all","dimension":"circuit_breaker","result":"none_detected"}
+{"timestamp":"2026-10-01T19:26:30Z","event":"dimension_check","provider":"all","dimension":"retry_policy","result":"none_detected"}
+{"timestamp":"2026-10-01T19:26:31Z","event":"dimension_check","provider":"all","dimension":"timeout","result":"not_explicit"}
+{"timestamp":"2026-10-01T19:26:32Z","event":"dimension_check","provider":"payments.webhooks","dimension":"webhook_signature","result":"hmac_sha256_not_aes_gcm"}
+{"timestamp":"2026-10-01T19:26:33Z","event":"dimension_check","provider":"payments.webhooks","dimension":"idempotency","result":"present_in_memory_cache"}
+{"timestamp":"2026-10-01T19:26:34Z","event":"dimension_check","provider":"comms.*","dimension":"async","result":"not_detected"}
+{"timestamp":"2026-10-01T19:26:35Z","event":"dimension_check","provider":"comms.*","dimension":"dlq","result":"not_detected"}
+{"timestamp":"2026-10-01T19:26:36Z","event":"law31_check","result":"pass","violations":0}
+{"timestamp":"2026-10-01T19:26:37Z","event":"finding","id":"FINDING-1","severity":"HIGH","title":"No circuit breaker or retry policy in any provider","affected":"all providers"}
+{"timestamp":"2026-10-01T19:26:38Z","event":"finding","id":"FINDING-2","severity":"MEDIUM","title":"No explicit timeout in provider wrappers","affected":"all HTTP-based providers"}
+{"timestamp":"2026-10-01T19:26:39Z","event":"finding","id":"FINDING-3","severity":"MEDIUM","title":"health_check() missing from most providers","affected":"~50 of ~55 providers"}
+{"timestamp":"2026-10-01T19:26:40Z","event":"finding","id":"FINDING-4","severity":"LOW","title":"Payment webhook signature uses HMAC-SHA256, not AES-256-GCM","affected":"payments.webhooks"}
+{"timestamp":"2026-10-01T19:26:41Z","event":"finding","id":"FINDING-5","severity":"LOW","title":"No async implementation in comms providers","affected":"comms.email, comms.sms, comms.twilio, comms.whatsapp"}
+{"timestamp":"2026-10-01T19:26:42Z","event":"finding","id":"FINDING-6","severity":"LOW","title":"Storage providers lack presigned URL, CDN, and lifecycle support","affected":"storage.r2_client, storage.s3_client"}
+{"timestamp":"2026-10-01T19:26:43Z","event":"finding","id":"FINDING-7","severity":"INFO","title":"Secrets handled via environment variables","affected":"all providers requiring API keys"}
+{"timestamp":"2026-10-01T19:26:44Z","event":"finding","id":"FINDING-8","severity":"INFO","title":"Test coverage exists for ~20 providers","affected":"test_provider_health.py, test_providers.py, test_payments_providers.py, test_provider_isolation.py"}
+{"timestamp":"2026-10-01T19:26:45Z","event":"audit_complete","providers_audited":55,"findings":8,"blockers":0,"law31_violations":0}

@@ -1,0 +1,31 @@
+{
+  "run_id": "20261002T203716Z-9d68f1",
+  "started_at": "2026-10-02T20:38:10.140547+00:00",
+  "root": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi",
+  "fast": true,
+  "workers": 10,
+  "options": {
+    "fast": true,
+    "workers": 10,
+    "no_tools": true,
+    "browser": false,
+    "browser_base": "http://127.0.0.1:3100",
+    "llm": false,
+    "ollama_url": "http://localhost:11434",
+    "ollama_model": "phi3:mini",
+    "ollama_limit": 25,
+    "db": false,
+    "load": false,
+    "load_url": "http://127.0.0.1:8000",
+    "quiet": false,
+    "dimensions": "01_architectural,10_migrations,03_logical",
+    "sweep_timeout": 900.0
+  },
+  "file_counts": {
+    "python": 1953,
+    "typescript": 1288,
+    "all": 3895
+  },
+  "commit": "6666d435a947e61ce63cf238439514a248891063",
+  "dirty_files": 155
+}

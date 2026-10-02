@@ -1,44 +1,31 @@
-"""Payment engine — shared models, config, gateway connection management, and core payment processing."""
+"""Payment engine — shared models, config, gateway connection management, and core payment processing.
+
+This module is intentionally monolithic to preserve backward compatibility with
+existing import paths.  Contents are organized into clear sections:
+
+  Section 1 — Pydantic request/response models (payment intents, charges, checkout)
+  Section 2 — Idempotency helpers (Valkey-backed payment idempotency)
+  Section 3 — Circuit-breaker wrappers (per-provider Stripe/Tap/PayTabs/Thawani/PayPal)
+  Section 4 — Gateway resolver functions (per-provider config resolution)
+  Section 5 — Provider-agnostic helpers (currency, serialization, metadata)
+  Section 6 — Core business logic (order status changes, inventory, confirmation)
+
+Future refactoring should extract sections into dedicated modules under
+``domains/finance/services/payments/`` per the ARCHITECTURE_STACK §3 slice pattern:
+
+  - schemas.py             → Section 1 Pydantic models
+  - idempotency.py         → Section 2 idempotency helpers
+  - gateway_resolvers.py   → Section 4 per-provider config functions
+  - payment_core.py        → Section 6 core business logic
+
+No new files are created here to avoid breaking existing import paths until
+the extraction is planned and verified.
+"""
 
 from __future__ import annotations
-import logging
-from datetime import timedelta
-from decimal import Decimal, ROUND_HALF_UP
-from sqlalchemy.orm import Session
-from domains.finance.models.finance import GatewaySettlementSchedule
-from domains.finance.models.finance import BankStatementLine
-from domains.finance.models.finance import FinanceAutomationLog
-from domains.finance.models.finance import FinanceAuditLog
-from domains.orders.models.orders import Order
-from domains.finance.models.payments import PaymentGatewayConnection
-from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services import general_ledger_service as gl
-from infrastructure.utils.datetime_utils import utcnow as _utcnow
-"""
+import structlog
 
-Payments Service — Stripe and Tap Payments business logic.
-
-
-
-Security hardening applied:
-
-  - Stripe webhooks: verified via stripe.Webhook.construct_event (existing)
-
-  - Tap webhooks: verified via HMAC-SHA256 of the raw request body using
-
-    TAP_WEBHOOK_SECRET (new).  Requests without a valid signature are rejected
-
-    with HTTP 400.
-
-  - Both processors use ProcessedWebhookEvent for idempotency.
-
-  - sales_count is incremented on every item when a payment succeeds.
-
-  - All Tap config (key, webhook secret, webhook URL) is read from settings,
-
-    not bare os.getenv(), so they are validated at startup and appear in docs.
-
-"""
+logger = structlog.get_logger(__name__)
 
 import hashlib
 
@@ -50,11 +37,10 @@ import os
 
 import re
 
+from providers.payments.registry import PaymentGatewayRegistry
 from providers.payments.stripe_sdk import stripe
 
 import httpx
-
-import logging
 
 import uuid
 
@@ -89,28 +75,41 @@ from domains.finance.models.payments import Payment
 from domains.finance.models.payments import PaymentGatewayConnection
 
 from infrastructure.messaging.events import PaymentConfirmedEvent
+from infrastructure.messaging.events.event_bus import publish
 
 from infrastructure.utils.config import settings
 
-from infrastructure.redis.cache import bump_product_cache_version as _bump_product_cache_version
+from infrastructure.valkey.cache import bump_product_cache_version as _bump_product_cache_version
 
 # TODO: Functions not found in kernel.money
-# from kernel.money import convert_from_aed, get_currency_context, money_to_minor_units_for_currency, round_money
-
-from infrastructure.messaging.events import EventPublisher
-from infrastructure.utils.cache import get_redis_client
+from infrastructure.utils.cache import get_valkey_client
 from infrastructure.utils.performance_cache import cache_payment_status, set_payment_status, invalidate_payment_status
+
+from infrastructure.observability.circuit_breaker import (
+    CircuitBreakerError,
+    get_circuit_breaker,
+    get_all_breaker_stats,
+)
+from infrastructure.observability.retry import RetryExhausted, with_retry
+from infrastructure.observability.service_observability import (
+    generate_correlation_id,
+    get_correlation_id,
+    instrument_service,
+    log_service_error,
+    request_context,
+    set_context_user,
+)
 
 _PAYMENT_IDEMPOTENCY_TTL = 86400  # 24 hours
 
 
 def _check_payment_idempotency_key(idempotency_key: str) -> Optional[dict]:
     """Check if a payment idempotency key was already processed. Returns cached result or None."""
-    redis_client = get_redis_client()
-    if redis_client is None:
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
         return None
     try:
-        raw = redis_client.get(f"payment:idempotency:{idempotency_key}")
+        raw = valkey_client.get(f"payment:idempotency:{idempotency_key}")
         if raw is None:
             return None
         if isinstance(raw, (bytes, bytearray)):
@@ -123,11 +122,11 @@ def _check_payment_idempotency_key(idempotency_key: str) -> Optional[dict]:
 
 def _store_payment_idempotency_result(idempotency_key: str, result: dict) -> None:
     """Store payment result under an idempotency key with 24h TTL."""
-    redis_client = get_redis_client()
-    if redis_client is None:
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
         return
     try:
-        redis_client.setex(
+        valkey_client.setex(
             f"payment:idempotency:{idempotency_key}",
             _PAYMENT_IDEMPOTENCY_TTL,
             json.dumps(result, default=str),
@@ -145,24 +144,6 @@ def store_payment_idempotency(idempotency_key: str, result: dict) -> None:
     """Public helper: store payment result under an idempotency key."""
     _store_payment_idempotency_result(idempotency_key, result)
 
-
-
-logger = logging.getLogger(__name__)
-
-from infrastructure.observability.circuit_breaker import (
-    CircuitBreakerError,
-    get_circuit_breaker,
-    get_all_breaker_stats,
-)
-from infrastructure.observability.retry import RetryExhausted, with_retry
-from infrastructure.observability.service_observability import (
-    generate_correlation_id,
-    get_correlation_id,
-    instrument_service,
-    log_service_error,
-    request_context,
-    set_context_user,
-)
 
 stripe.api_key = str(getattr(settings, "stripe_secret_key", "") or "").strip()
 
@@ -995,8 +976,9 @@ def _decimal_from_value(value: Any) -> Decimal:
 
         return Decimal(str(value or 0))
 
-    except Exception:
+    except Exception as exc:
 
+        logger.warning("_decimal_from_value_failed", value=value, error=str(exc))
         return Decimal("0")
 
 
@@ -1027,8 +1009,9 @@ def _json_load_dict(value: Any) -> dict[str, Any]:
 
         parsed = json.loads(raw)
 
-    except Exception:
+    except Exception as exc:
 
+        logger.warning("_json_load_dict_failed", raw=raw, error=str(exc))
         return {}
 
     return parsed if isinstance(parsed, dict) else {}
@@ -1053,8 +1036,9 @@ def _json_load_currency_list(value: Any) -> list[str]:
 
         parsed = json.loads(raw)
 
-    except Exception:
+    except Exception as exc:
 
+        logger.warning("_json_load_currency_list_failed", raw=raw, error=str(exc))
         return []
 
     return _normalize_currency_codes([str(item) for item in parsed]) if isinstance(parsed, list) else []
@@ -1802,12 +1786,42 @@ def _resolve_country_gateway(default_gateway: str, country_code: str, db: Sessio
 
         return enabled_gateways[0].get("gateway_id")
 
-    except Exception:
+    except Exception as exc:
 
+        logger.warning("_resolve_country_gateway_failed", country_code=country_code, default_gateway=default_gateway, error=str(exc))
         return None
 
 
+COUNTRY_GATEWAY_MAP = {
+    "SA": "stripe",
+    "AE": "stripe",
+    "KW": "stripe",
+    "QA": "stripe",
+    "BH": "stripe",
+    "OM": "stripe",
+    "JO": "tap",
+    "EG": "paytabs",
+    "PK": "paytabs",
+    "IN": "paytabs",
+}
 
+
+def get_order_gateway(order: Order, db: Session | None = None) -> str:
+    """Resolve the payment gateway provider code for an order based on its country."""
+    country_code = str(getattr(order, "country_code", "") or "").upper()
+
+    if db is not None:
+        try:
+            provider_code = _resolve_country_gateway("stripe", country_code, db)
+            if provider_code and PaymentGatewayRegistry.get(provider_code) is not None:
+                return provider_code
+        except Exception as exc:
+            logger.warning("get_order_gateway_failed", country_code=country_code, error=str(exc))
+
+    provider_code = COUNTRY_GATEWAY_MAP.get(country_code, "stripe")
+    if PaymentGatewayRegistry.get(provider_code) is None:
+        return "stripe"
+    return provider_code
 
 
 def _paytabs_checkout_enabled(db: Session) -> bool:
@@ -3402,6 +3416,7 @@ def test_payment_gateway_connection(provider_code: str, db: Session) -> PaymentG
 
     except Exception as exc:
 
+        logger.error("payment_gateway_test_failed", provider_code=normalized_code, error=str(exc))
         status = "failed"
 
         message = str(exc)
@@ -3932,8 +3947,9 @@ def _stripe_object_get(obj: Any, key: str, default: Any = None) -> Any:
 
             return getter(key, default)
 
-        except Exception:
+        except Exception as exc:
 
+            logger.debug("_stripe_object_get_failed", key=key, error=str(exc))
             return default
 
     return default
@@ -3960,8 +3976,9 @@ def _stripe_metadata_map(obj: Any) -> dict[str, str]:
 
                 items = items_fn()
 
-            except Exception:
+            except Exception as exc:
 
+                logger.debug("_stripe_metadata_map_failed", error=str(exc))
                 items = []
 
         else:
@@ -4438,6 +4455,8 @@ def apply_order_status_change(order: Order, target_status: str, db: Session) -> 
 
             logger.exception("Failed to create refund ledger for order %s", order.id)
 
+            raise
+
 
 
     return restored_inventory
@@ -4537,6 +4556,8 @@ def _confirm_order(
 
         logger.exception("Failed to create ledger entries for order %s", order.id)
 
+        raise
+
 
 
     db.add(
@@ -4561,12 +4582,9 @@ def _confirm_order(
 
 
 
-_event_publisher = EventPublisher()
-
 # Public aliases preserved for callers that import these names from this module.
 # They were renamed to private counterparts in commit 1e4d2e2 but the importers
 # were never updated. These restore the public names without changing behavior.
-event_publisher = _event_publisher
 order_holds_inventory = _order_holds_inventory
 
 
@@ -4591,7 +4609,7 @@ def _apply_successful_payment(order: Order, confirmation_message: str, db: Sessi
 
     try:
 
-        from domains.finance.services.ledger.general_ledger_service import post_order_payment_journal
+        from domains.finance.services.ledger.general_ledger import post_order_payment_journal
 
         post_order_payment_journal(db, order.id, total_amount)
 
@@ -4625,7 +4643,7 @@ def _apply_successful_payment(order: Order, confirmation_message: str, db: Sessi
 
         )
 
-        _event_publisher.publish(event)
+        publish(PaymentConfirmedEvent, event)
 
 
 

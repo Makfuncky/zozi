@@ -245,3 +245,50 @@ def publish_ticket_created(ticket_id: int, created_by: int, category: str, prior
         publish(EVENT_TICKET_CREATED, event.serialize())
     except Exception as exc:
         logger.warning("Failed to publish TicketCreated event: %s", exc)
+
+
+# ── cross-domain event types consumed by comms subscribers ─────────────────
+# These are event types emitted by OTHER domains that comms listens for.
+# Keeping them here makes the subscription contract explicit and discoverable.
+
+EVENT_PRODUCT_DELETED = "catalog.product.deleted"
+EVENT_ORDER_STATUS_CHANGED = "order.status_changed"
+EVENT_ACCOUNT_REGISTERED = "account.registered"
+
+__all__ = [
+    # Comms-domain event type constants
+    "EVENT_NOTIFICATION_CREATED",
+    "EVENT_TICKET_REPLIED",
+    "EVENT_TICKET_STATUS_CHANGED",
+    "EVENT_EMAIL_CAMPAIGN_CREATED",
+    "EVENT_EMAIL_CAMPAIGN_SENT",
+    "EVENT_ESCALATION_TRIGGERED",
+    "EVENT_TICKET_CREATED",
+    "EVENT_MESSAGE_SENT",
+    "EVENT_NOTIFICATION_SENT",
+    # Cross-domain event type constants
+    "EVENT_PRODUCT_DELETED",
+    "EVENT_ORDER_STATUS_CHANGED",
+    "EVENT_ACCOUNT_REGISTERED",
+    # Event classes
+    "CommsEvent",
+    "NotificationCreated",
+    "TicketReplied",
+    "TicketStatusChanged",
+    "EmailCampaignCreated",
+    "EmailCampaignSent",
+    "EscalationTriggered",
+    "TicketCreated",
+    "MessageSent",
+    "NotificationSent",
+    # Publish helpers
+    "publish_notification_created",
+    "publish_ticket_replied",
+    "publish_ticket_status_changed",
+    "publish_email_campaign_created",
+    "publish_email_campaign_sent",
+    "publish_escalation_triggered",
+    "publish_ticket_created",
+    "publish_message_sent",
+    "publish_notification_sent",
+]

@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, Package } from "@/lib/icons";
-import { useCurrencyStore } from "@/stores/currencyStore";
+import { useCurrencyStore } from "@/lib/currencyStore";
 import type { TopProductData } from "@/lib/supplierDashboardConfig";
 
 interface TopProductsPanelProps {

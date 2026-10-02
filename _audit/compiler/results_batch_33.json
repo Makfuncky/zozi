@@ -1,0 +1,52 @@
+{
+  "batch": 33,
+  "files": [
+    {
+      "path": "backend/modules/customer/routers/accounts.py",
+      "findings": [
+        {
+          "id": "DRIFT-008",
+          "status": "VALID",
+          "evidence": "Line 58: `router = APIRouter(tags=[\"customer\", \"accounts\"])` — no prefix argument. All route decorators use absolute paths, e.g. line 140 `@router.get(\"/api/v1/customer/accounts\")`, line 213 `@router.post(\"/api/v1/auth/login\")`, line 274 `@router.get(\"/api/v1/customer/accounts/coins\")`, etc.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Finding accurately describes the drift. Every other customer router (catalog.py line 23, orders.py line 45) declares `prefix=\"/api/v1/customer/...\"` and uses relative paths. This router breaks that convention. Fix is still actionable and benchmark-aligned."
+        }
+      ]
+    },
+    {
+      "path": "backend/modules/customer/routers/catalog.py",
+      "findings": [
+        {
+          "id": "ARCH-006",
+          "status": "VALID",
+          "evidence": "Lines 11–18: Router imports directly from `domains.catalog.services.categories.category_service` (`list_categories`), `domains.catalog.services.products.products_service` (`get_product`, `get_products`, `autocomplete_products`, `get_recommended_products`), and `domains.catalog.services.search` (`search_products`). The `catalog/ports.py` file exists but does NOT export any of these symbols — it only exports read helpers like `get_category_by_id`, `list_categorys`, `list_products`, etc.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Violates Law 3 (cross-domain reads via ports.py only) and Law 17 (cross-domain → events/ports only). The ports.py module has a `_LAZY_SERVICE_EXPORTS` dict but the functions imported by this router are not listed there. Fix is still actionable: add the missing symbols to ports.py or use the existing port equivalents."
+        },
+        {
+          "id": "ALIGN-003",
+          "status": "INVALID",
+          "evidence": "Catalog portion is valid: lines 62–67 return `{\"items\": products, \"total\": total, \"page\": page, \"size\": page_size}` with no `pages` key. Lines 96–111 (categories) and 141–147 (search) have the same shape. The recommended endpoint at line 167 returns `{\"items\": products, \"total\": len(products)}` with no pagination metadata at all.",
+          "counter_evidence": "Orders portion is a false positive. The cited line range `backend/modules/customer/routers/orders.py:153-161` in the current file contains discount calculation logic (`discount = Decimal(\"0\")`, tier discount math), NOT a return statement with `{items, total}`. The only `return {\"items\"...}` in orders.py is at line 62 (cart endpoint: `{\"items\": result.items, \"subtotal\": result.subtotal, \"item_count\": result.item_count}`), which is a cart object, not a paginated list. Additionally, the frontend `normalizeListPage` in `frontend/web_app/src/lib/listResponse.ts:23-34` already handles both `.data` and `.items` keys, so the frontend is already tolerant of the current backend shapes.",
+          "benchmark_mismatch": "",
+          "notes": "The catalog half of this finding is real (missing `pages` in paginated responses). The orders half references stale line numbers that no longer contain the described return shape. Because the finding's `Current` description asserts both catalog AND orders have the issue, and the orders claim is false, the overall finding is not fully applicable."
+        }
+      ]
+    },
+    {
+      "path": "backend/modules/employee/routers/hr.py",
+      "findings": [
+        {
+          "id": "CONTRAD-034",
+          "status": "INVALID",
+          "evidence": "The file `backend/modules/employee/routers/hr.py` exists as a standalone module file. Line 84 declares `router = APIRouter(prefix=\"/api/v1/employee/hr\", tags=[\"employee\", \"hr\"])`.",
+          "counter_evidence": "No `hr/` package directory exists alongside `hr.py` in `backend/modules/employee/routers/`. A glob of that directory shows only `hr.py` as a file — there is no `hr/` subdirectory. Therefore Python cannot resolve `hr` to a package that shadows the `.py` file. The finding's core premise (file/package name collision) does not exist in the current codebase.",
+          "benchmark_mismatch": "",
+          "notes": "False positive caused by stale assumption. The finding references a directory structure that was either already resolved or never existed. The `hr.py` file is unshadowed and imports correctly as a module file."
+        }
+      ]
+    }
+  ]
+}

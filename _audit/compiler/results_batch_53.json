@@ -1,0 +1,44 @@
+{
+  "batch": 53,
+  "files": [
+    {
+      "path": "monitoring/alerts.yml",
+      "findings": [
+        {
+          "id": "D2P-009",
+          "status": "RESOLVED",
+          "evidence": "All 5 alert rules already carry runbook_url annotations: DatabaseConnectionPoolExhausted (line 12), BackendErrorRateHigh (line 22), APIHighLatency (line 34), SentryNewErrors (line 44), SlowDatabaseQueries (line 54).",
+          "counter_evidence": "Each alert rule under annotations contains a runbook_url key pointing to https://zozi.com/docs/runbooks/. The original finding's fix has already been applied.",
+          "benchmark_mismatch": "",
+          "notes": "Finding was valid at time of audit. All 5 runbook_url annotations are present. No further action needed for this finding."
+        }
+      ]
+    },
+    {
+      "path": "monitoring/docker-compose.monitoring.yml",
+      "findings": [
+        {
+          "id": "D2P-011",
+          "status": "BENCHMARK_MISMATCH",
+          "evidence": "Lines 91-119 define a self-hosted Sentry container (getsentry/sentry:latest) with SENTRY_SECRET_KEY, SENTRY_POSTGRES_HOST, SENTRY_DB_NAME, SENTRY_DB_USER, SENTRY_DB_PASSWORD, REDIS_URL, SENTRY_EMAIL_HOST, SENTRY_EMAIL_PORT, SENTRY_EMAIL_FROM, SENTRY_URL_PREFIX, SENTRY_REGION, SENTRY_PROJECT_NAME environment variables.",
+          "counter_evidence": "TECHNOLOGY_STACK.md §9 (line 135) states: 'GlitchTip — Self-hosted error tracker (Sentry-API compatible). Zero SaaS cost; owns the error data. Use as the destination for backend and frontend error reports.' and line 134: 'sentry-sdk[fastapi] 2.68.1 — Exception reporting wire format; sends to self-hosted GlitchTip.' The TECHNOLOGY_STACK.md mandates GlitchTip as the destination, not a self-hosted Sentry instance. The docker-compose deploys raw Sentry instead of GlitchTip.",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §9 explicitly designates GlitchTip as the canonical self-hosted error tracker. Using getsentry/sentry:latest instead of GlitchTip violates the approved technology choice. The backend sentry-sdk is configured to send to a self-hosted GlitchTip DSN (SENTRY_DSN env var), but the docker-compose spins up a separate Sentry service — these may be disconnected implementations.",
+          "notes": "The original finding correctly flags that error tracking needs verification, but the real issue is a benchmark mismatch: the docker-compose uses Sentry (getsentry/sentry:latest) while TECHNOLOGY_STACK.md mandates GlitchTip as the canonical self-hosted destination. Additionally, the backend SENTRY_DSN may not point to this Sentry container (SENTRY_URL_PREFIX=http://localhost:9000 is the Sentry container's own URL, but backend likely expects a GlitchTip DSN)."
+        }
+      ]
+    },
+    {
+      "path": "monitoring/prometheus/prometheus.yml",
+      "findings": [
+        {
+          "id": "OBS-003",
+          "status": "INVALID",
+          "evidence": "monitoring/prometheus/prometheus.yml (subdirectory file) does contain rule_files: [] (line 10) and alertmanagers.targets: [] (lines 7-8). However, the root-level monitoring/prometheus.yml is the active config (mounted at /etc/prometheus/prometheus.yml in docker-compose.monitoring.yml line 38) and already has rule_files: ['alerts.yml'] (line 8) and alertmanagers.targets: ['alertmanager:9093'] (line 13).",
+          "counter_evidence": "docker-compose.monitoring.yml line 38 mounts ./prometheus.yml (root) to /etc/prometheus/prometheus.yml. The root monitoring/prometheus.yml correctly loads alerts.yml and routes to Alertmanager at alertmanager:9093. The subdirectory monitoring/prometheus/prometheus.yml is a stale duplicate config, not the active config. The original finding's claim that 'active Prometheus config has empty rule_files and alertmanagers.targets' is false — the active config is properly configured.",
+          "benchmark_mismatch": "",
+          "notes": "The finding conflates the stale subdirectory config (monitoring/prometheus/prometheus.yml) with the active root config (monitoring/prometheus.yml). The active root config is correct. However, the stale duplicate monitoring/prometheus/prometheus.yml should still be cleaned up or removed to avoid confusion. This is a housekeeping issue, not a functional gap in the active configuration."
+        }
+      ]
+    }
+  ]
+}

@@ -1,15 +1,18 @@
 """Country domain event subscribers.
 
 Per Law 3, cross-domain *writes* happen only by consuming events here. This module
-registers listeners against the shared ``EventPublisher``. Wire it at boot by calling
-``register_country_subscribers(publisher)`` from ``lifespan.py`` (kept optional so the
-domain stays importable without side effects).
-"""
+registers listeners on the canonical ``event_bus`` so the country domain can
+react to events without importing sibling domains directly.
 
+Wire it at app startup by importing this module, or call
+``register_country_subscribers()`` explicitly from ``lifespan.py``.
+"""
 from __future__ import annotations
 
 import logging
 from typing import Any
+
+from infrastructure.messaging.events.event_bus import subscribe
 
 from .events import (
     CountryConfigPublished,
@@ -20,7 +23,7 @@ from .events import (
 logger = logging.getLogger(__name__)
 
 
-def _on_config_published(event: CountryConfigPublished) -> None:
+def _on_config_published(event: Any) -> None:
     logger.info(
         "country config published: code=%s version=%s by=%s",
         event.country_code,
@@ -30,7 +33,7 @@ def _on_config_published(event: CountryConfigPublished) -> None:
     # Future: invalidate country-scoped caches, notify dependent domains.
 
 
-def _on_staff_assigned(event: CountryStaffAssigned) -> None:
+def _on_staff_assigned(event: Any) -> None:
     logger.info(
         "country staff assigned: code=%s user=%s role=%s",
         event.country_code,
@@ -39,7 +42,7 @@ def _on_staff_assigned(event: CountryStaffAssigned) -> None:
     )
 
 
-def _on_tax_changed(event: CountryTaxRateChanged) -> None:
+def _on_tax_changed(event: Any) -> None:
     logger.info(
         "country tax rate changed: code=%s category=%s rate=%s",
         event.country_code,
@@ -48,8 +51,8 @@ def _on_tax_changed(event: CountryTaxRateChanged) -> None:
     )
 
 
-def register_country_subscribers(publisher: Any) -> None:
-    """Attach country-domain listeners to the shared event publisher."""
-    publisher.register_listener(CountryConfigPublished, _on_config_published)
-    publisher.register_listener(CountryStaffAssigned, _on_staff_assigned)
-    publisher.register_listener(CountryTaxRateChanged, _on_tax_changed)
+def register_country_subscribers() -> None:
+    """Attach country-domain listeners to the canonical event bus."""
+    subscribe(CountryConfigPublished, _on_config_published)
+    subscribe(CountryStaffAssigned, _on_staff_assigned)
+    subscribe(CountryTaxRateChanged, _on_tax_changed)

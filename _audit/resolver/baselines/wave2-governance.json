@@ -1,0 +1,14 @@
+{
+ "label": "wave2-governance",
+ "taken_at": "2026-10-02T20:49:51+00:00",
+ "note": "Pre-dispatch baseline. git is not committed, so this file is the ONLY reliable attribution source for this wave.",
+ "files": [
+  {
+   "path": "backend/domains/governance/services/command_center/command_center_service.py",
+   "exists": true,
+   "sha256": "fabd1303231818e668bb82928dcd7b4ff57ca76990b01a2838e158276d607c79",
+   "size": 37601,
+   "lines": 894
+  }
+ ]
+}

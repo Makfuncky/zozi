@@ -1,0 +1,92 @@
+{
+  "batch": 25,
+  "files": [
+    {
+      "path": "backend/domains/orders/services/orders_service.py",
+      "findings": [
+        {
+          "id": "LOGIC-003",
+          "status": "VALID",
+          "evidence": "Lines 329-331 contain `if isinstance(val, Decimal): val = float(val)` which converts Decimal to float in `_order_to_dict`. Lines 340-341 repeat the same pattern for order items.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Finding cites Law 89 for Decimal serialization, but Law 89 in ARCHITECTURE_STACK.md is 'Response serialization' — routers must return serialized responses instead of raw ORM models. Law 89 does not govern Decimal-to-float conversion. The actual violated law is Law 19 (no float for money).",
+          "notes": "The Decimal-to-float conversion still exists and violates Law 19."
+        },
+        {
+          "id": "FEAT-001",
+          "status": "INVALID",
+          "evidence": "Line 142 is `from domains.finance.ports import _apply_stripe_runtime_key, apply_order_status_change, log_refund_bank_transaction` — no cart totals or float arithmetic present at the cited line.",
+          "counter_evidence": "Current code at line 309 uses `Decimal(str(unit_price_raw or 0))` for monetary math. No `item.price * item.quantity` float pattern exists in the current file.",
+          "benchmark_mismatch": "",
+          "notes": "Line number drift; the described float-for-money issue is not present at the cited location."
+        },
+        {
+          "id": "FEAT-002",
+          "status": "INVALID",
+          "evidence": "Line 309 is `safe_unit_price = Decimal(str(unit_price_raw or 0))` — uses Decimal, not float. The subsequent `round(safe_unit_price * max(quantity_value, 0), 2)` operates on Decimal values.",
+          "counter_evidence": "No float-based rounding for money exists at line 309. The current code correctly uses Decimal for monetary math.",
+          "benchmark_mismatch": "",
+          "notes": "Finding mischaracterizes the code at the cited line; Decimal is used correctly."
+        },
+        {
+          "id": "FEAT-024",
+          "status": "INVALID",
+          "evidence": "Lines 414-415 show `except Exception:` followed by `logger.exception(\"Failed to enqueue order-status email for order %s\", order.id)` — the exception IS logged at exception level, not silently swallowed.",
+          "counter_evidence": "Law 59 requires logging at minimum DEBUG level; `logger.exception()` logs at ERROR level, which satisfies the requirement.",
+          "benchmark_mismatch": "",
+          "notes": "Finding incorrectly labels a logged except block as 'silent'."
+        },
+        {
+          "id": "FEAT-025",
+          "status": "INVALID",
+          "evidence": "Line 259 is `order_ids = [cast(int, o.id) for o in orders]` — no `INVENTORY_HELD_STATUSES` constant exists anywhere in the current file.",
+          "counter_evidence": "Grep for `INVENTORY_HELD_STATUSES` in `orders_service.py` returns no matches.",
+          "benchmark_mismatch": "",
+          "notes": "Constant referenced by the finding does not exist in the current source."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/orders/services/returns/service.py",
+      "findings": [
+        {
+          "id": "FEAT-011",
+          "status": "VALID",
+          "evidence": "Lines 388-396 show `if payload.status == \"completed\" and intent == \"return\":` followed by `refund = refund_payment_intent(payment_id)` — refund is auto-issued when return status changes to completed, without requiring an explicit separate refund action.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "Finding cites Law 50 to require explicit refund intent, but Law 50 in ARCHITECTURE_STACK.md is 'Explicit transactions' — all writes must use explicit transaction management. Law 50 does not govern refund authorization semantics.",
+          "notes": "Auto-refund behavior is present and still applicable, but the cited benchmark law is misattributed."
+        },
+        {
+          "id": "FEAT-037",
+          "status": "INVALID",
+          "evidence": "Line 64 is `def _normalized_return_window_days(raw_value: Any) -> int:` which returns `max(10, parsed)`. However, `_order_return_window_days` (line 79) correctly queries per-product `return_window_days` and passes it through `_normalized_return_window_days`.",
+          "counter_evidence": "Per-product return windows ARE respected via `_order_return_window_days` at lines 79-97, which queries `Product.return_window_days` for each item.",
+          "benchmark_mismatch": "",
+          "notes": "Finding claims per-product window is ignored, but the current code explicitly implements it."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/promotions/services/promotions_write_service.py",
+      "findings": [
+        {
+          "id": "FEAT-016",
+          "status": "VALID",
+          "evidence": "Line 1 reads `# ARCHIVED MODULE - DO NOT IMPORT FROM domains/_parked.` — the file is explicitly marked as archived and not part of the running application.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "File remains archived; finding is still applicable."
+        },
+        {
+          "id": "FEAT-030",
+          "status": "VALID",
+          "evidence": "Line 52 is `stacking_allowed: bool = False,` in `create_promotion_order_tier` — the field exists on PromotionOrderTier.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Field exists; finding is still applicable."
+        }
+      ]
+    }
+  ]
+}

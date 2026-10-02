@@ -77,15 +77,15 @@ api_breaker = CircuitBreakerWithRetry(
 
 
 
-def _get_redis():
-    from infrastructure.utils.redis_client import redis_client
+def _get_valkey():
+    from infrastructure.valkey.client import get_valkey
 
-    client = redis_client()
+    client = get_valkey()
     try:
         if not client.ping():
             return None
     except Exception as e:
-        logger.debug("Redis unavailable: %s", e)
+        logger.debug("Valkey unavailable: %s", e)
         return None
     return client
 
@@ -880,17 +880,17 @@ async def auto_populate_country(country_code: str) -> dict:
 
     
 
-    redis = _get_redis()
+    valkey = _get_valkey()
 
     cache_key = _cache_key(code)
 
     
 
-    if redis:
+    if valkey:
 
         try:
 
-            cached = redis.get(cache_key)
+            cached = valkey.get(cache_key)
 
             if cached:
 
@@ -902,7 +902,7 @@ async def auto_populate_country(country_code: str) -> dict:
 
         except Exception as e:
 
-            logger.debug("Redis get failed: %s", e)
+            logger.debug("Valkey get failed: %s", e)
 
     
 
@@ -1382,15 +1382,15 @@ async def auto_populate_country(country_code: str) -> dict:
 
     
 
-    if redis:
+    if valkey:
 
         try:
 
-            redis.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(result, default=str))
+            valkey.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(result, default=str))
 
         except Exception as e:
 
-            logger.debug("Redis set failed: %s", e)
+            logger.debug("Valkey set failed: %s", e)
 
     
 

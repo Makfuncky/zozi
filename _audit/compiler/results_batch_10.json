@@ -1,0 +1,60 @@
+{
+  "batch": 10,
+  "files": [
+    {
+      "path": "backend/domains/country/models/countries.py",
+      "findings": [
+        {
+          "id": "FEAT-015",
+          "status": "VALID",
+          "evidence": "Line 56: `tax_rate = Column(Numeric(5, 4), default=Decimal('0.0000'))` exists on CountryConfig as described.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Field is correctly placed on CountryConfig (per-country reference data). Fix is 'None' — this is an observational finding, not a defect. Tax rate being per-country aligns with Law 5 (country as orthogonal scope axis)."
+        },
+        {
+          "id": "FEAT-038",
+          "status": "INVALID",
+          "evidence": "Line 110: `country_code = Column(String(2), nullable=True, unique=True, index=True)` exists on CountryConfig.",
+          "counter_evidence": "CountryConfig is reference/shared configuration data, not a transactional tenant-isolated table. Nullable country_code is by design — CountryConfig serves as the master registry where rows without a specific country_code act as global defaults. RLS is not applicable to reference data in the same way as transactional tables. The RLS interceptor (rls_interceptor.py) only auto-derives tables with country_code for transactional RLS filtering; reference tables are intentionally excluded from per-country RLS isolation.",
+          "benchmark_mismatch": "",
+          "notes": "False positive. CountryConfig is the canonical country reference table. Its nullable country_code is a design feature for global defaults, not a security gap. Confidence was already low (3) and claim state was INFERRED."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/finance/models/payments.py",
+      "findings": [
+        {
+          "id": "FEAT-005",
+          "status": "VALID",
+          "evidence": "Line 34 confirms payments table uses `{\"schema\": \"finance\"}`. PaymentGatewayConnection at line 87 stores `credentials = Column(JSON, nullable=True)`, line 98 stores `secret_key = Column(String(1000), nullable=True)`, and line 99 stores `webhook_secret = Column(String(1000), nullable=True)` — all plaintext.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §10.1 (lines 477-478) explicitly requires: 'Admin-entered API keys and webhook secrets are NEVER stored in plain text. They are encrypted via infrastructure/security/field_encryption.py'. The sibling file referenced in the finding is actually `backend/infrastructure/security/encryption.py` (which provides `EncryptedString` TypeDecorator), but the model uses raw `Column(JSON)` and `Column(String)` instead of the encrypted types.",
+          "notes": "Line reference in the finding (34) points to the Payment table schema, not the PaymentGatewayConnection credentials. The actual security issue is at lines 87, 98, 99. Finding is substantively correct despite the imprecise line anchor."
+        },
+        {
+          "id": "FEAT-022",
+          "status": "VALID",
+          "evidence": "Line 87: `credentials = Column(JSON, nullable=True)` stores gateway API keys unencrypted. Line 98: `secret_key = Column(String(1000), nullable=True)` and line 99: `webhook_secret = Column(String(1000), nullable=True)` are also plaintext.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "TECHNOLOGY_STACK.md §10.1 (line 477) mandates encryption via `infrastructure/security/field_encryption.py` (actual file: `encryption.py` providing `EncryptedString`). Plaintext storage violates Law 32 (no hardcoded secrets) and Law 120a (R2 mandatory for production media — analogous principle for credential storage).",
+          "notes": "Finding cites line 88, which is actually `fee_config = Column(JSON, nullable=True)`. The `credentials` column is at line 87 — off-by-one error in the audit finding. Substantive issue is confirmed: payment credentials, secret_key, and webhook_secret are stored as plaintext."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/media/models/media_asset.py",
+      "findings": [
+        {
+          "id": "FEAT-020",
+          "status": "INVALID",
+          "evidence": "Line 11: `__table_args__ = {\"schema\": \"media\"}` confirmed. Both MediaAsset (line 18: `country_code = Column(String(2), nullable=True, index=True)`) and UploadSession (line 31: `country_code = Column(String(2), nullable=True, index=True)`) declare country_code columns.",
+          "counter_evidence": "The RLS interceptor in `backend/infrastructure/database/rls_interceptor.py` auto-derives country-aware tables at runtime by inspecting the live database for tables containing a `country_code` column (see `derive_country_aware_tables_from_db` at line 16 and `instrument_rls` at line 49-78). Both `media_assets` and `upload_sessions` have `country_code` columns, so they ARE automatically enrolled in RLS enforcement. The `COUNTRY_AWARE_TABLES` registry is populated dynamically and the `rls_before_execute` interceptor enforces country scoping on all registered tables.",
+          "benchmark_mismatch": "",
+          "notes": "False positive. The 'RLS coverage unknown' claim is incorrect — coverage is dynamic and automatic for any table with a country_code column. Both media tables have the column, so RLS IS applied. The approved non-canonical `media` schema is correctly registered for RLS via the auto-derivation mechanism described in ARCHITECTURE_STACK.md §9 and Law 5."
+        }
+      ]
+    }
+  ]
+}

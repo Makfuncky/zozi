@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LogIn, AlertCircle, Store } from "lucide-react";
+import { LogIn, AlertCircle, Store, User, Lock, Eye, EyeOff } from "lucide-react";
 import { apiFetch, getErrorMessage, parseJsonResponse, setAccessToken, clearAccessToken } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 
@@ -13,6 +13,7 @@ export default function SupplierLoginPage() {
   const { refresh, user, isLoading } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -105,27 +106,41 @@ export default function SupplierLoginPage() {
             <label className="mb-1.5 block text-xs font-semibold text-text-muted">
               Username
             </label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              placeholder="Username"
-              className="theme-input w-full rounded-xl border px-4 py-3 text-sm placeholder:text-text-faint focus:border-primary focus:outline-none transition-colors"
-            />
+            <div className="relative">
+              <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-faint" />
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="Username"
+                className="theme-input w-full rounded-xl border py-3 pl-10 pr-4 text-sm placeholder:text-text-faint focus:border-primary focus:outline-none transition-colors"
+              />
+            </div>
           </div>
 
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-text-muted">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              className="theme-input w-full rounded-xl border px-4 py-3 text-sm placeholder:text-text-faint focus:border-primary focus:outline-none transition-colors"
-            />
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-faint" />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="theme-input w-full rounded-xl border py-3 pl-10 pr-10 text-sm placeholder:text-text-faint focus:border-primary focus:outline-none transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           <button

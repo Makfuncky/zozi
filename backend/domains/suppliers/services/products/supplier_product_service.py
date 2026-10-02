@@ -20,13 +20,13 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.suppliers.services.supplier_shared import (
-    _normalize_variant_axes,
-    _normalize_optional_product_text,
-    _normalize_product_visibility_regions,
-    _parse_product_variants_payload,
-    _parse_supplier_return_window_days,
-    _resolve_category_id,
-    _serialize_product_visibility_regions,
+    normalize_variant_axes,
+    normalize_optional_product_text,
+    normalize_product_visibility_regions,
+    parse_product_variants_payload,
+    parse_supplier_return_window_days,
+    resolve_category_id,
+    serialize_product_visibility_regions,
 )
 from infrastructure.storage.storage import storage as _storage
 
@@ -92,13 +92,13 @@ def persist_supplier_product(
                 detail=f"Products in category '{category}' are restricted in your country ({supplier_country}).",
             )
 
-    normalized_return_window_days = _parse_supplier_return_window_days(
+    normalized_return_window_days = parse_supplier_return_window_days(
         return_window_days, supplier_id=current_user["id"], db=db,
     )
-    parsed_variants = _parse_product_variants_payload(variants_payload)
-    normalized_subcategory = _normalize_optional_product_text(subcategory)
-    normalized_visibility_regions = _normalize_product_visibility_regions(visibility_regions)
-    category_id = _resolve_category_id(category, db)
+    parsed_variants = parse_product_variants_payload(variants_payload)
+    normalized_subcategory = normalize_optional_product_text(subcategory)
+    normalized_visibility_regions = normalize_product_visibility_regions(visibility_regions)
+    category_id = resolve_category_id(category, db)
 
     # Generate unique product slug from name
     slug_base = re.sub(r"[^a-z0-9]+", "-", (name or "product").strip().lower()).strip("-") or "product"
@@ -134,7 +134,7 @@ def persist_supplier_product(
         supplier_id=current_user["id"],
         country_code=country_code,
         category_id=category_id,
-        variant_axes=_normalize_variant_axes(variant_axes),
+        variant_axes=normalize_variant_axes(variant_axes),
         bg_preset=bg_preset,
         attributes=json.dumps(extra_attributes) if extra_attributes else None,
     )
@@ -189,7 +189,7 @@ def replace_product_variants(product: object, variants_payload: list[dict[str, o
             continue
 
         if not payload.get("product_code"):
-            payload["product_code"] = _generate_variant_product_code(product, payload, index)
+            payload["product_code"] = generate_variant_product_code(product, payload, index)
         payload.pop("name", None)
         payload["country_code"] = product.country_code
 
@@ -214,7 +214,7 @@ def replace_product_variants(product: object, variants_payload: list[dict[str, o
     db.flush()
 
 
-def _generate_variant_product_code(product: object, variant_payload: dict[str, object], index: int) -> str:
+def generate_variant_product_code(product: object, variant_payload: dict[str, object], index: int) -> str:
     """Generate a unique product code for a variant."""
     def _segment(value: object, fallback: str, max_length: int) -> str:
         return re.sub(r"[^A-Z0-9]+", "", str(value or "").upper())[:max_length] or fallback
@@ -297,7 +297,7 @@ def build_supplier_product_payload(product: object, sales_count: int = 0, revenu
         "ai_description": product.ai_description,
         "sizes": product.sizes,
         "materials": product.materials,
-        "visibility_regions": _serialize_product_visibility_regions(product.visibility_regions),
+        "visibility_regions": serialize_product_visibility_regions(product.visibility_regions),
         "additional_images": product.images,
         "weight": product.weight,
         "dimensions": product.dimensions,

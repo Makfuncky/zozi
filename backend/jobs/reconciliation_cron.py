@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
     name="tasks.reconciliation_cron.run_reconciliation_cron",
     max_retries=1,
     default_retry_delay=300,
+    time_limit=1800,
+    soft_time_limit=1500,
 )
 def run_reconciliation_cron(self) -> dict[str, Any]:
     """Run the daily finance reconciliation pass (bank transaction auto-match)."""

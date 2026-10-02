@@ -11,7 +11,7 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     # services
     "FinanceService": ("domains.finance.services.finance_service", "FinanceService"),
     "DataImportService": ("domains.finance.services.data_import_service", "DataImportService"),
-    "GeneralLedgerService": ("domains.finance.services.ledger.general_ledger_service", "GeneralLedgerService"),
+    "GeneralLedgerService": ("domains.finance.services.ledger.general_ledger", "GeneralLedgerService"),
     "PaymentEngine": ("domains.finance.services.payments.payment_engine", "PaymentEngine"),
     "PaymentOrchestrator": ("domains.finance.services.payments.payment_orchestrator", "PaymentOrchestrator"),
     "PayoutBatchService": ("domains.finance.services.payouts.payout_batch_service", "PayoutBatchService"),

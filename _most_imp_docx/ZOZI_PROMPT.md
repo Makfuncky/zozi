@@ -5624,23 +5624,25 @@ _most_imp_docx\TECHNOLOGY_STACK.md
 
 
 -----------------------------------------------------------------------------------------------------
-
-- Read in detail `_most_imp_docx\PROMPT_FORENSIC_AUDIT.md` top to bottom and start audit.
 - List down all the files of the codebase in a file, you can use `scripts\system_trackers\generate_scaffolding.py` which needs little bit changes to accumulate all relevant files of the codebase into one place to trackdown what is happening into to the codebase.
-- Use maximum number of sub-agents (more then 100 in the batch of *10 running at a time* not more than that *10*)  for **accuracy** of investigation and give them **clear and detailed instructions** for better, complete, accurate and detailed result which can be reliable/trusted for taking decisions.
+
+- Read `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` must be read top to bottom because it is $Benchmark$.
+- Read in detail `_most_imp_docx\PROMPT_FORENSIC_AUDIT.md` top to bottom and start audit.
+- Use maximum sub-agent (50+ but max 20 agent at a time, not more then that) for *accuracy* and and give them *clear and detailed instructions* for better, complete, accurate and detail result of audit which can be reliable/trusted for taking decisions.
 - Use loging system to track all the agent performance and working to ensure the audit is happen proper skeptical.
 - Use the `_audit\**` for keep all the files.
 - Make sure the audit is completed 100% and accurate.
 
 -----------------------------------------------------------------------------------------------------
 
+- Read `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` must be read top to bottom because it is $Benchmark$.
 - Read in detail `_most_imp_docx\PROMPT_AUDIT_COMPILER.md` top to bottom and start re-investigation, compiling the audit files, and suggest correct solution.
 - Use maximum sub-agent (50+ but max 10 agent at a time, not more then that) for *accuracy* and and give them *clear and detailed instructions* for better, complete, accurate and detail compiling result which can be reliable/trusted for taking decisions.
 - Use loging system to track all the agent performance and working to ensure compiling happen proper skeptical.
 
 -----------------------------------------------------------------------------------------------------
 
-- Read `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` must be read top to bottom because it is $Benchmark$.
+- Read must `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` from top to bottom because it is $Benchmark$.
 - Read in detail `_most_imp_docx\PROMPT_RESOLUTION_ORCHESTRATOR.md` top to bottom and start re-investigation compiler work and fine-tune the solution with correct solution and start solution by dispatch complete details to sub-agent.
 - Use maximum sub-agent (50+ but max 10 agent at a time, not more then that) for *accuracy* and and give them *clear and detailed instructions* for better, complete, accurate and detail solution and test result which can be reliable/trusted for taking decisions.
 - Use loging system to track all the agent performance and working to ensure solution happen proper skeptical.
@@ -5675,9 +5677,27 @@ Read the `.\backend\modules\**` in detail and compare `_most_imp_docx\ARCHITECTU
 can you list down which router functions will be go at which file make a document of it.
 
 
-
 | Feature | Description	| Key Actions | Used By | Web_App & Mobile_App |
 
+
+
+---------------------------------------------------------------------------
+
+- Read must `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` from top to bottom because these are $Benchmark$ files.
+- Read in detail `_most_imp_docx\PROMPT_FORENSIC_AUDIT.md` top to bottom.
+- For reference you can read the `_most_imp_docx\FEATURE_STACK_LIST.md` and `_most_imp_docx\PRODUCTION_READINESS_CHECKLIST.md` but it is not complete and accurate file.
+- Read `_audit\**` all the files.
+- Read complete **codebase** in detail.
+
+- Create a main script `zozi_audit.py` in `.\_zozi_audit\**` which can do complete audit of the codebase in detail from all aspects and dimension in to one file `.\_zozi_audit\zozi_forensic_audit.md` 
+- I know just python can't provide 100% audit of the codebase, so you can use the sub-scripts in `.\_zozi_audit\**` browser tests, you can use the **Ollama LLM**, and other sub script which will help to complete 100% **accurate** and **complete** audit of the codebase.
+- We have to capture all the aspects to get 100% **production-ready** project which is included in the details and which are not included into the files details. 
+
+- First, Make a Detail **Plan File** which will keep all the list of functions.
+- Then read more and fine-tune skeptically and verify the **plan** until it will complete accurately from all aspects and capture 100% audit.
+- Then start making the files of the scripts.
+- Once you complete all the files then **verify** all the audits result/output with actual codebase problem and fine-tune skeptically until all the results are accurate 100%.
+- Use maximum sub-agent (50+ but max 10 agent at a time, not more then that) for *accuracy* and and give them *clear and detailed instructions* for better, complete, accurate and detail solution and test result which can be reliable/trusted for taking decisions.
 
 
 ---------------------------------------------------------------------------
@@ -5688,7 +5708,7 @@ We have to complete the browser test of each button, popup check, login, registr
 ---------------------------------------------------------------------------
 
 
-
+python _zozi_audit/zozi_audit.py --full --check-timeout 2400 --browser --db --load --llm
 
 
 
@@ -5708,4 +5728,5 @@ thk_live_Op8HZTp7ErEpixv6jEIzPqh7SWhH2ofNQN-shlQFrt7tWxkYIhiCLBaGbb6fqR1e
     }
   }
 }
+
 

@@ -3,17 +3,13 @@ import logging
 from decimal import Decimal
 from typing import Optional
 from sqlalchemy.orm import Session
+from infrastructure.utils.pagination import keyset_offset_window
 from domains.finance.models.finance import PayoutBatch
-# TODO: Module not yet created
-# from domains.finance.services.payments.base import BasePaymentGateway
-# TODO: Module not yet created
-# from domains.finance.services.payments.base_models import ConnectionTestResult
-# TODO: Module not yet created
-# from domains.finance.services.payments.base_models import PaymentResult
-# TODO: Module not yet created
-# from domains.finance.services.payments.base_models import RefundResult
-# TODO: Module not yet created
-# from domains.finance.services.payments.registry import PaymentGatewayRegistry
+from providers.payments.base import BasePaymentGateway
+from providers.payments.base_models import ConnectionTestResult
+from providers.payments.base_models import PaymentResult
+from providers.payments.base_models import RefundResult
+from providers.payments.registry import PaymentGatewayRegistry
 """
 Payout Batch Service — Smart automated payout generation.
 
@@ -37,7 +33,7 @@ from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import FinanceAuditLog
 from domains.finance.models.payments import LogisticsPartnerPayout
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance_service import general_ledger_service as gl
+from domains.finance.services.finance_service import general_ledger as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -332,139 +328,6 @@ def _log_automation(db: Session, kind: str, processed: int, changed: int,
 
 logger = logging.getLogger(__name__)
 
-
-class PayoutEngine:
-    def __init__(self, db: Session):
-        self.db = db
-
-    def _lazy_country_models(self):
-        from domains.country.ports import CountryConfig, PayoutRuleCategory, PayoutRuleProduct
-        return CountryConfig, PayoutRuleCategory, PayoutRuleProduct
-
-    def get_payout_rate(
-        self,
-        country_code: str,
-        supplier_id: int,
-        product_id: Optional[int] = None,
-        category_slug: Optional[str] = None,
-    ) -> Decimal:
-        country = self._get_country(country_code)
-        if not country:
-            logger.warning("Country %s not found", country_code)
-            return Decimal("0")
-
-        if product_id is not None:
-            rate = self._get_product_payout_rate(country_code, product_id)
-            if rate is not None:
-                return rate
-
-        if category_slug is not None:
-            rate = self._get_category_payout_rate(country_code, category_slug)
-            if rate is not None:
-                return rate
-
-        return self._get_default_payout_rate(country_code)
-
-    def _get_country(self, country_code: str):
-        CountryConfig, _, _ = self._lazy_country_models()
-        return self.db.query(CountryConfig).filter(
-            CountryConfig.code == country_code.upper(),
-            CountryConfig.is_active == True,
-        ).first()
-
-    def _get_product_payout_rate(self, country_code: str, product_id: int) -> Optional[Decimal]:
-        _, _, PayoutRuleProduct = self._lazy_country_models()
-        rule = (
-            self.db.query(PayoutRuleProduct)
-            .filter(
-                PayoutRuleProduct.country_code == country_code.upper(),
-                PayoutRuleProduct.product_id == product_id,
-                PayoutRuleProduct.is_active == True,
-            )
-            .first()
-        )
-        if rule:
-            return Decimal(str(rule.payout_rate))
-        return None
-
-    def _get_category_payout_rate(self, country_code: str, category_slug: str) -> Optional[Decimal]:
-        _, PayoutRuleCategory, _ = self._lazy_country_models()
-        rule = (
-            self.db.query(PayoutRuleCategory)
-            .filter(
-                PayoutRuleCategory.country_code == country_code.upper(),
-                PayoutRuleCategory.category_slug == category_slug.lower(),
-                PayoutRuleCategory.is_active == True,
-            )
-            .first()
-        )
-        if rule:
-            return Decimal(str(rule.payout_rate))
-        return None
-
-    def _get_default_payout_rate(self, country_code: str) -> Decimal:
-        country = self._get_country(country_code)
-        if country and country.payout_settings_json:
-            import json
-            try:
-                settings = json.loads(country.payout_settings_json)
-                if settings and "default_payout_rate" in settings:
-                    return Decimal(str(settings["default_payout_rate"]))
-            except (json.JSONDecodeError, TypeError, ValueError):
-                pass
-        return Decimal("0.10")
-
-    def get_minimum_payout(self, country_code: str) -> Decimal:
-        country = self._get_country(country_code)
-        if country and country.minimum_payout_amount:
-            return Decimal(str(country.minimum_payout_amount))
-        return Decimal("10.00")
-
-    def get_payout_currency(self, country_code: str) -> str:
-        country = self._get_country(country_code)
-        if country and country.payout_currency:
-            return country.payout_currency
-        if country:
-            return country.currency
-        return "USD"
-
-    def get_payout_schedule(self, country_code: str) -> dict:
-        country = self._get_country(country_code)
-        if country and country.payout_settings_json:
-            import json
-            try:
-                settings = json.loads(country.payout_settings_json)
-                return {
-                    "schedule": settings.get("payout_schedule", "weekly"),
-                    "day": settings.get("payout_day", "sunday"),
-                    "batch_size": settings.get("batch_size", 50),
-                }
-            except (json.JSONDecodeError, TypeError):
-                pass
-        return {"schedule": "weekly", "day": "sunday", "batch_size": 50}
-
-    def calculate_supplier_payout(
-        self,
-        country_code: str,
-        supplier_id: int,
-        order_amount: Decimal,
-        product_id: Optional[int] = None,
-        category_slug: Optional[str] = None,
-    ) -> dict:
-        rate = self.get_payout_rate(country_code, supplier_id, product_id, category_slug)
-        minimum = self.get_minimum_payout(country_code)
-        currency = self.get_payout_currency(country_code)
-
-        payout_amount = (order_amount * rate).quantize(Decimal("0.01"))
-        is_below_minimum = payout_amount < minimum
-
-        return {
-            "rate": rate,
-            "payout_amount": payout_amount,
-            "minimum_payout": minimum,
-            "currency": currency,
-            "is_below_minimum": is_below_minimum,
-        }
 
 # === MERGED from payment_engine.py ===
 
@@ -2582,21 +2445,30 @@ def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0, cursor:
         .filter(Payout.status.in_(["pending", "processing"]))
     )
     if cursor is not None:
-        payouts = payouts.filter(Payout.id < cursor)
+        payouts = payouts.filter(Payout.id < cursor).order_by(Payout.id.desc()).limit(min(max(1, limit), 200)).all()
     else:
-        payouts = payouts.offset(max(0, offset))
-    payouts = (
-        payouts
-        .order_by(Payout.id.desc())
-        .limit(min(max(1, limit), 200))
-        .all()
-    )
+        payouts = keyset_offset_window(payouts, sort_keys=[(Payout.id, 'desc')], offset=max(0, offset), limit=min(max(1, limit), 200))
     return [
         {
             "id": payout.id,
             "supplier_id": payout.supplier_id,
             "supplier_username": payout.supplier.username if payout.supplier else None,
-            "amount": float(cast(Any, getattr(payout, "amount")) or 0),
+            "amount": str(cast(Any, getattr(payout, "amount")) or 0),
+            "status": payout.status,
+            "method": payout.method,
+            "reference": payout.reference_id,
+            "notes": payout.notes,
+            "created_at": payout.created_at,
+            "processed_at": payout.processed_at,
+        }
+        for payout in payouts
+    ]
+    return [
+        {
+            "id": payout.id,
+            "supplier_id": payout.supplier_id,
+            "supplier_username": payout.supplier.username if payout.supplier else None,
+            "amount": str(cast(Any, getattr(payout, "amount")) or 0),
             "status": payout.status,
             "method": payout.method,
             "reference": payout.reference_id,
@@ -2883,9 +2755,9 @@ def _load_unbatched_payouts(db: Session, page: int, page_size: int, cursor: Opti
     total = query.count()
     if cursor is not None:
         query = query.filter(Payout.id < cursor)
+        payouts = query.order_by(Payout.id.desc()).limit(page_size).all()
     else:
-        query = query.offset((page - 1) * page_size)
-    payouts = query.order_by(Payout.id.desc()).limit(page_size).all()
+        payouts = keyset_offset_window(query, sort_keys=[(Payout.id, 'desc')], offset=(page - 1) * page_size, limit=page_size)
 
     supplier_ids = {cast(int, p.supplier_id) for p in payouts if p.supplier_id}
     supplier_names = _resolve_supplier_names(supplier_ids, db) if supplier_ids else {}
@@ -3756,7 +3628,7 @@ from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import FinanceAuditLog
 from domains.orders.ports import Order
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance_service import general_ledger_service as gl
+from domains.finance.services.finance_service import general_ledger as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -4031,9 +3903,9 @@ def _load_pending_batches_with_items(db: Session, page: int, page_size: int, cur
     total = query.count()
     if cursor is not None:
         query = query.filter(PayoutBatch.id < cursor)
+        batches = query.order_by(PayoutBatch.created_at.desc()).limit(page_size).all()
     else:
-        query = query.offset((page - 1) * page_size)
-    batches = query.order_by(PayoutBatch.created_at.desc()).limit(page_size).all()
+        batches = keyset_offset_window(query, sort_keys=[(PayoutBatch.id, 'desc')], offset=(page - 1) * page_size, limit=page_size)
     result = []
     for batch in batches:
         enriched_items = _enrich_batch_items(batch, db)
@@ -4086,9 +3958,9 @@ def _load_unbatched_payouts(db: Session, page: int, page_size: int, cursor: Opti
     total = query.count()
     if cursor is not None:
         query = query.filter(Payout.id < cursor)
+        payouts = query.order_by(Payout.created_at.desc()).limit(page_size).all()
     else:
-        query = query.offset((page - 1) * page_size)
-    payouts = query.order_by(Payout.created_at.desc()).limit(page_size).all()
+        payouts = keyset_offset_window(query, sort_keys=[(Payout.id, 'desc')], offset=(page - 1) * page_size, limit=page_size)
     supplier_ids = {cast(int, p.supplier_id) for p in payouts if p.supplier_id}
     supplier_names = _resolve_supplier_names(supplier_ids, db) if supplier_ids else {}
     result = []
@@ -4110,9 +3982,9 @@ def get_pending_payouts(page: int=Query(1, ge=1), page_size: int=Query(20, ge=1,
     logistics_payout_total = logistics_payout_q.count()
     if cursor is not None:
         logistics_payout_q = logistics_payout_q.filter(LogisticsPartnerPayout.id < cursor)
+        logistics_payouts = logistics_payout_q.order_by(LogisticsPartnerPayout.created_at.desc()).limit(page_size).all()
     else:
-        logistics_payout_q = logistics_payout_q.offset((page - 1) * page_size)
-    logistics_payouts = logistics_payout_q.order_by(LogisticsPartnerPayout.created_at.desc()).limit(page_size).all()
+        logistics_payouts = keyset_offset_window(logistics_payout_q, sort_keys=[(LogisticsPartnerPayout.id, 'desc')], offset=(page - 1) * page_size, limit=page_size)
     logistics_ids = {cast(int, lp.partner_id) for lp in logistics_payouts if lp.partner_id}
     logistics_names = _resolve_logistics_names(logistics_ids, db) if logistics_ids else {}
     unbatched_logistics = []
@@ -4158,9 +4030,9 @@ def list_payouts(country_code: str=Path(..., description='ISO country code'), _:
         total = q.count()
         if cursor is not None:
             q = q.filter(Payout.id < cursor)
+            rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
         else:
-            q = q.offset((page - 1) * page_size)
-        rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
+            rows = keyset_offset_window(q, sort_keys=[(Payout.id, 'desc')], offset=(page - 1) * page_size, limit=page_size)
         return {'data': rows, 'total': total, 'page': page, 'page_size': page_size}
     finally:
         clear_rls_context()
@@ -4186,9 +4058,9 @@ def list_pending_payouts(current_admin: User=Depends(require_admin), db: Session
     total = q.count()
     if cursor is not None:
         q = q.filter(Payout.id < cursor)
+        rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
     else:
-        q = q.offset((page - 1) * page_size)
-    rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
+        rows = keyset_offset_window(q, sort_keys=[(Payout.id, 'desc')], offset=(page - 1) * page_size, limit=page_size)
     return {'data': rows, 'total': total, 'page': page, 'page_size': page_size}
 
 def list_pending_payouts_by_country(country_code: str=Path(..., description='ISO country code'), current_admin: User=Depends(require_admin), db: Session=Depends(get_db), page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100), cursor: Optional[int] = None):
@@ -4200,9 +4072,9 @@ def list_pending_payouts_by_country(country_code: str=Path(..., description='ISO
         total = q.count()
         if cursor is not None:
             q = q.filter(Payout.id < cursor)
+            rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
         else:
-            q = q.offset((page - 1) * page_size)
-        rows = q.order_by(Payout.created_at.desc()).limit(page_size).all()
+            rows = keyset_offset_window(q, sort_keys=[(Payout.id, 'desc')], offset=(page - 1) * page_size, limit=page_size)
         return {'data': rows, 'total': total, 'page': page, 'page_size': page_size}
     finally:
         clear_rls_context()

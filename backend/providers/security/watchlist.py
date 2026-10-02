@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 import urllib.error
 import urllib.request
 
@@ -18,6 +19,10 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 HAS_WATCHLIST = True
+
+_CIRCUIT = {"failures": 0, "last_failure_ts": 0.0, "open": False}
+_CIRCUIT_FAILURE_THRESHOLD = 3
+_CIRCUIT_COOLDOWN_SECONDS = 30
 
 
 class WatchlistProviderError(Exception):
@@ -41,6 +46,12 @@ def screen_watchlist(
     if not base:
         raise WatchlistProviderError("WATCHLIST_API_URL is not configured")
 
+    if _CIRCUIT["open"]:
+        if time.time() - _CIRCUIT["last_failure_ts"] < _CIRCUIT_COOLDOWN_SECONDS:
+            raise WatchlistProviderError("Circuit breaker open: watchlist API unavailable")
+        _CIRCUIT["open"] = False
+        _CIRCUIT["failures"] = 0
+
     payload = json.dumps({
         "employee_code": employee_code,
         "full_name": full_name,
@@ -48,23 +59,34 @@ def screen_watchlist(
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }).encode()
 
-    try:
-        req = urllib.request.Request(
-            f"{base}/v1/screen",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            body = json.loads(resp.read().decode())
-    except (urllib.error.URLError, json.JSONDecodeError, KeyError) as exc:
-        raise WatchlistProviderError(str(exc)) from exc
+    last_exc = None
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(
+                f"{base}/v1/screen",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                body = json.loads(resp.read().decode())
+        except (urllib.error.URLError, json.JSONDecodeError, KeyError) as exc:
+            last_exc = exc
+            _CIRCUIT["failures"] += 1
+            _CIRCUIT["last_failure_ts"] = time.time()
+            if _CIRCUIT["failures"] >= _CIRCUIT_FAILURE_THRESHOLD:
+                _CIRCUIT["open"] = True
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+            continue
+        _CIRCUIT["failures"] = 0
+        return {
+            "status": body.get("status", "error"),
+            "score": float(body.get("score", 0.0)),
+            "details": body.get("details", "External check completed"),
+            "flagged_categories": body.get("flagged_categories", []),
+            "check_id": body.get("check_id"),
+        }
 
-    return {
-        "status": body.get("status", "error"),
-        "score": float(body.get("score", 0.0)),
-        "details": body.get("details", "External check completed"),
-        "flagged_categories": body.get("flagged_categories", []),
-        "check_id": body.get("check_id"),
-    }
+    raise WatchlistProviderError(str(last_exc)) from last_exc
 

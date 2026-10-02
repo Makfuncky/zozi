@@ -29,7 +29,6 @@ def list_all_campaigns_route(_: dict = Depends(require_admin), db: Session = Dep
 def admin_email_metrics(_: dict = Depends(require_admin), db: Session = Depends(get_db),
     _rf_gate: None = Depends(require_feature("orders.read"))
 ):
-    # TODO: implement via domains.comms.services.email_metrics_service when wired
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail="email_metrics not yet wired to a domain service",

@@ -1,0 +1,84 @@
+{
+  "batch": 5,
+  "files": [
+    {
+      "path": "backend/scripts/_debug/_smoke.py",
+      "findings": [
+        {
+          "id": "TECH-010",
+          "status": "VALID",
+          "evidence": "Line 1 reads `import requests, json` — the forbidden `requests` library is still imported in this debug script.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "TECHNOLOGY_STACK.md §6 explicitly forbids `requests`; httpx is the canonical async HTTP client. The script is a debug utility but still violates the approved stack. Fix is to replace `requests` with `httpx`."
+        }
+      ]
+    },
+    {
+      "path": "backend/uv.lock",
+      "findings": [
+        {
+          "id": "TECH-001",
+          "status": "VALID",
+          "evidence": "uv.lock contains only 8 lines: version=1, revision=3, requires-python, and a single [[package]] entry for `zozi-backend 0.1.0` virtual package. No actual dependency [[package]] entries exist.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "uv.lock is empty of resolved dependencies. Per TECHNOLOGY_STACK.md §19, uv 0.12.12 is the canonical package manager and uv.lock must contain resolved versions for every dependency. Running `uv lock` in backend/ would populate this file."
+        }
+      ]
+    },
+    {
+      "path": "frontend/mobile_app/package.json",
+      "findings": [
+        {
+          "id": "TECH-043",
+          "status": "VALID",
+          "evidence": "Line 22: `\"expo\": \"~57.0.9\"` — version specifier resolves to 57.0.x with ceiling at 57.0.9, below the canonical floor of 57.0.20.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "TECHNOLOGY_STACK.md §16 specifies Expo SDK 57.0.20+. The current ~57.0.9 range will not reach 57.0.20 without manual upgrade."
+        },
+        {
+          "id": "TECH-045",
+          "status": "VALID",
+          "evidence": "Line 28: `\"react-native\": \"0.81.4\"` — exactly 0.81.4, well below the canonical 0.86.3.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "TECHNOLOGY_STACK.md §16 specifies React Native 0.86.3. The installed version is 5+ minor versions behind."
+        },
+        {
+          "id": "TECH-047",
+          "status": "INVALID",
+          "evidence": "Line 25: `\"lucide-react-native\": \"^0.469.0\"` IS present in dependencies. The finding's Current description ('not in dependencies') is factually wrong.",
+          "counter_evidence": "The package IS listed at line 25. However, the version ^0.469.0 is below the canonical 0.563.0 — this is a separate version-mismatch finding that was not reported.",
+          "benchmark_mismatch": "",
+          "notes": "False positive on the 'missing' claim. The real issue is a version mismatch (^0.469.0 vs target 0.563.0), which a new finding should cover."
+        },
+        {
+          "id": "TECH-048",
+          "status": "VALID",
+          "evidence": "Scanned all 19 entries in the dependencies object (lines 17–34). `expo-secure-storage` is absent. No entry for it exists anywhere in package.json.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "TECHNOLOGY_STACK.md §16 specifies expo-secure-storage 14.2.3 as required for encrypted token storage on mobile. Its absence means tokens may be stored insecurely if AsyncStorage is used as fallback."
+        },
+        {
+          "id": "TECH-049",
+          "status": "VALID",
+          "evidence": "Scanned all 19 entries in the dependencies object (lines 17–34). `react-native-maps` is absent. No entry for it exists anywhere in package.json.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "TECHNOLOGY_STACK.md §16 specifies react-native-maps 1.29.0 for native tracking/delivery maps. Its absence means map screens cannot render without a placeholder."
+        },
+        {
+          "id": "MOB-007",
+          "status": "VALID",
+          "evidence": "Line 20: `\"@stripe/stripe-react-native\": \"^0.50.0\"` is present. The finding claims checkout.tsx uses web redirect strategy, creating a contradictory dual-SDK situation. Without reading checkout.tsx, the package presence itself is verified; the strategy contradiction requires frontend code inspection.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "The native Stripe SDK is installed but the TECHNOLOGY_STACK.md §15 documents web Stripe Elements as the canonical mobile card checkout path. If checkout.tsx indeed uses web redirect, having the native SDK installed is dead weight and creates a PCI scope ambiguity. This finding needs checkout.tsx verification to confirm the strategy contradiction."
+        }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Search, MapPin, Star, Package, Verified, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { resolveImage } from "@/lib/utils";
 
 interface Supplier {
   id: number;
@@ -96,7 +97,7 @@ export default function SuppliersPage() {
                     <div className="w-14 h-14 rounded-xl bg-surface-2 flex items-center justify-center overflow-hidden shrink-0">
                       {supplier.logo_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={supplier.logo_url} alt={supplier.name} className="w-full h-full object-cover" />
+                        <img src={resolveImage(supplier.logo_url)} alt={supplier.name} className="w-full h-full object-cover" />
                       ) : (
                         <Package className="w-7 h-7 text-text-faint" />
                       )}

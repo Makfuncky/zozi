@@ -43,6 +43,9 @@ def detect_country_from_ip(ip_address: str) -> Optional[str]:
     if ip_address.startswith("127."):
         return None
 
+    if httpx is None:
+        return None
+
     try:
         response = httpx.get(
             f"{_IPAPI_BASE_URL}{ip_address}",
@@ -53,20 +56,22 @@ def detect_country_from_ip(ip_address: str) -> Optional[str]:
             data = response.json()
             if data.get("status") == "success" and data.get("countryCode"):
                 return data["countryCode"].upper()
-    except Exception as exc:
+    except (httpx.HTTPError, ValueError) as exc:
         logger.warning("IP-API lookup failed for %s: %s", ip_address, exc)
 
     return _lookup_ipapi_co(ip_address)
 
 
 def _lookup_ipapi_co(ip_address: str) -> Optional[str]:
+    if httpx is None:
+        return None
     try:
         response = httpx.get(_IPICO_BASE_URL.format(ip_address), timeout=_REQUEST_TIMEOUT)
         if response.status_code == 200:
             data = response.json()
             if data.get("country_code"):
                 return data["country_code"].upper()
-    except Exception as exc:
+    except (httpx.HTTPError, ValueError) as exc:
         logger.warning("ipapi.co lookup failed for %s: %s", ip_address, exc)
     return None
 
@@ -86,6 +91,8 @@ def geocode_location(
     timeout: float = 8.0,
 ) -> Optional[List[Dict[str, Any]]]:
     """Geocode a place name via Open-Meteo; returns the ``results`` list or None."""
+    if httpx is None:
+        return None
     try:
         resp = httpx.get(
             _OPEN_METEO_GEOCODING_URL,
@@ -94,7 +101,7 @@ def geocode_location(
         )
         if resp.is_success:
             return resp.json().get("results", [])
-    except Exception as exc:
+    except (httpx.HTTPError, ValueError) as exc:
         logger.warning("Open-Meteo geocoding failed for %s: %s", name, exc)
     return None
 

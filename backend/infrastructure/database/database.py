@@ -59,6 +59,8 @@ elif _IS_POSTGRES:
     ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
     if ssl_mode and ssl_mode != "disable":
         connect_args["sslmode"] = ssl_mode
+    if "pooler" not in DATABASE_URL:
+        connect_args["options"] = f"-c statement_timeout={settings.db_statement_timeout}"
     if os.getenv("DB_SSL_CERT"):
         connect_args["sslcert"] = os.getenv("DB_SSL_CERT")
     if os.getenv("DB_SSL_KEY"):
@@ -203,6 +205,8 @@ async def _get_async_engine():
             ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
             if ssl_mode and ssl_mode != "disable":
                 async_connect_args["ssl"] = ssl_mode
+            if "pooler" not in async_url:
+                async_connect_args["server_settings"] = {"statement_timeout": str(settings.db_statement_timeout)}
 
         async_pool_kwargs: dict = {}
         if not async_url.startswith("sqlite"):
@@ -309,6 +313,8 @@ def _get_replica_engine():
         ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
         if ssl_mode and ssl_mode != "disable":
             replica_connect_args["sslmode"] = ssl_mode
+        if "pooler" not in replica_url:
+            replica_connect_args["options"] = f"-c statement_timeout={settings.db_statement_timeout}"
         if os.getenv("DB_SSL_CERT"):
             replica_connect_args["sslcert"] = os.getenv("DB_SSL_CERT")
         if os.getenv("DB_SSL_KEY"):

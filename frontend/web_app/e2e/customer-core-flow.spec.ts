@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bootstrapAdminSessionViaApi } from "./helpers/auth";
+import { bootstrapAdminSessionViaApi, bootstrapSessionViaApi, submitCredentialForm, waitForSessionFlag } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -52,33 +52,17 @@ async function waitForAuth(page: Page, timeoutMs = 90_000) {
 }
 
 async function bootstrapCustomerSession(page: Page) {
-  await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120_000 });
-
-  const credentials = [
-    { username: "customer@zozi.com", password: "customer123" },
-    { username: "customer", password: "customer123" },
-  ];
-
-  let authenticated = false;
-  for (const candidate of credentials) {
-    await bootstrapAdminSessionViaApi(page);
-
-    authenticated = true;
-    break;
-  }
-
-  expect(authenticated).toBeTruthy();
-  await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1"));
-  await page.request.get("/api/auth/me", { failOnStatusCode: false });
+  await bootstrapAdminSessionViaApi(page);
 }
 
 async function fetchFirstPurchasableProduct(page: Page): Promise<ProductDetail> {
-  const listRes = await page.request.get("http://localhost:8000/products?limit=50", {
+  const listRes = await page.request.get("http://localhost:8000/api/v1/customer/catalog/products?limit=50", {
     failOnStatusCode: false,
   });
   expect(listRes.ok()).toBeTruthy();
 
-  const listData = (await listRes.json()) as ProductSummary[];
+  const listJson = (await listRes.json()) as Record<string, unknown>;
+  const listData = Array.isArray(listJson.items) ? listJson.items : (listJson as unknown as ProductSummary[]);
   expect(Array.isArray(listData)).toBeTruthy();
 
   for (const candidate of listData) {
@@ -86,7 +70,7 @@ async function fetchFirstPurchasableProduct(page: Page): Promise<ProductDetail> 
       continue;
     }
 
-    const detailRes = await page.request.get(`http://localhost:8000/products/${candidate.id}`, {
+    const detailRes = await page.request.get(`http://localhost:8000/api/v1/customer/catalog/products/${candidate.id}`, {
       failOnStatusCode: false,
     });
     if (!detailRes.ok()) {

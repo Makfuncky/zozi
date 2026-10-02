@@ -43,6 +43,9 @@ class _Col:
     def __gt__(self, other):
         return _Cmp(self, "gt", other)
 
+    def __lt__(self, other):
+        return _Cmp(self, "lt", other)
+
     def asc(self):
         return self
 
@@ -229,6 +232,9 @@ class _Q:
 
     def all(self):
         return list(self._rows)
+
+    def __iter__(self):
+        return iter(self._rows)
 
 
 class FakeDB:

@@ -11,6 +11,8 @@ from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
+HAS_FX_RATES = True
+
 _RATE_CACHE_TTL = 3600  # 1 hour
 _cached_rates: dict[str, Decimal] = {}
 _cached_source: str = "fallback"
@@ -99,6 +101,7 @@ def reset_cache() -> None:
 
 
 __all__ = [
+    "HAS_FX_RATES",
     "get_fx_rates",
     "get_rate",
     "reset_cache",

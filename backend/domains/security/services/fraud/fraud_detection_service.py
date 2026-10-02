@@ -36,6 +36,17 @@ from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
+_CIRCUIT_BREAKER_REGISTRY: dict[str, dict[str, Any]] = {
+    "stripe":   {"provider": "providers.payments.stripe_sdk",   "threshold": 5, "timeout": 30, "verified": True},
+    "tap":      {"provider": "providers.payments.tap",          "threshold": 5, "timeout": 30, "verified": True},
+    "paytabs":  {"provider": "providers.payments.paytabs",      "threshold": 5, "timeout": 30, "verified": True},
+    "thawani":  {"provider": "providers.payments.thawani",      "threshold": 5, "timeout": 30, "verified": True},
+    "paypal":   {"provider": "providers.payments.paypal",       "threshold": 5, "timeout": 30, "verified": True},
+    "ai_text":  {"provider": "providers.ai.text",               "threshold": 3, "timeout": 30, "verified": True},
+    "sms":      {"provider": "providers.comms.sms",             "threshold": 5, "timeout": 30, "verified": True},
+    "shipping": {"provider": "providers.shipping.shipping_calculator", "threshold": 5, "timeout": 30, "verified": True},
+}
+
 # Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
 _LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
     "Shipment": ("domains.logistics.ports", "shipment_model"),

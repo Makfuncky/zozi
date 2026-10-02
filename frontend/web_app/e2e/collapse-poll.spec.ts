@@ -1,4 +1,4 @@
-import { test, type Page } from "@playwright/test";
+﻿import { test, type Page } from "@playwright/test";
 
 async function getW(page: Page) {
   return page.evaluate(() => {
@@ -22,7 +22,7 @@ async function loginForm(page: Page, loginPath: string, user: string, pass: stri
 
 test("confirm admin sidebar collapses (reliable form login)", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
-  await loginForm(page, "/admin/login", "admin@zozi.com", "admin123");
+  await loginForm(page, "/admin/login", "admin@zozi.com", "E2eAdmin#2026");
   await page.waitForSelector("aside.theme-sidebar-shell", { state: "attached", timeout: 60_000 });
   await page.waitForLoadState("networkidle", { timeout: 30_000 }).catch(() => {});
   await page.waitForTimeout(1500);
@@ -37,3 +37,4 @@ test("confirm admin sidebar collapses (reliable form login)", async ({ page }) =
   console.log("before=", before, "series=", JSON.stringify(series));
   await page.screenshot({ path: "test-results/collapse-confirm.png" });
 });
+

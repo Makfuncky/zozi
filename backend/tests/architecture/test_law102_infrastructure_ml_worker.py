@@ -143,7 +143,7 @@ def test_main_warms_up_before_polling_and_exits_on_idle(worker, monkeypatch) -> 
     """``main`` forwards its hook to the warm-up, then shuts down when idle."""
     calls: list[int] = []
 
-    class _EmptyRedis:
+    class _EmptyValkey:
         def keys(self, _pattern: str):
             return []
 
@@ -154,11 +154,11 @@ def test_main_warms_up_before_polling_and_exits_on_idle(worker, monkeypatch) -> 
     jobs.get_job = lambda job_id: None
     jobs._update_job = lambda job_id, **kwargs: None
 
-    redis_mod = types.ModuleType("infrastructure.utils.redis_client")
-    redis_mod.redis_client = _EmptyRedis
+    valkey_mod = types.ModuleType("infrastructure.valkey.client")
+    valkey_mod.valkey_client = _EmptyValkey
 
     monkeypatch.setitem(sys.modules, "infrastructure.utils.background_jobs", jobs)
-    monkeypatch.setitem(sys.modules, "infrastructure.utils.redis_client", redis_mod)
+    monkeypatch.setitem(sys.modules, "infrastructure.valkey.client", valkey_mod)
     monkeypatch.setattr(worker, "POLL_INTERVAL", 1)
     monkeypatch.setattr(worker, "IDLE_SHUTDOWN", 1)
 

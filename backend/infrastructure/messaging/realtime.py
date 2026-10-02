@@ -40,12 +40,12 @@ _ADMIN_ALERT_ROLE_MAP: dict[str, frozenset[str]] = {
 logger = logging.getLogger(__name__)
 
 
-def _create_realtime_redis_client():
-    if not settings.redis_url.strip():
+def _create_realtime_valkey_client():
+    if not settings.valkey_url.strip():
         return None
-    from infrastructure.utils.redis_client import redis_client
+    from infrastructure.valkey.client import valkey_client
 
-    client = redis_client()
+    client = valkey_client()
     try:
         if not client.ping():
             return None
@@ -54,7 +54,7 @@ def _create_realtime_redis_client():
     return client
 
 
-class _RedisRealtimeBridge:
+class _ValkeyRealtimeBridge:
     def __init__(self, channel: str, dispatcher) -> None:
         self._channel = channel
         self._dispatcher = dispatcher
@@ -77,7 +77,7 @@ class _RedisRealtimeBridge:
     def publish(self, message: dict[str, Any]) -> bool:
         client = self._publisher_client
         if client is None:
-            client = _create_realtime_redis_client()
+            client = _create_realtime_valkey_client()
             if client is None:
                 return False
             self._publisher_client = client
@@ -104,7 +104,7 @@ class _RedisRealtimeBridge:
 
     def _listen_forever(self) -> None:
         while not self._stop_event.is_set():
-            client = _create_realtime_redis_client()
+            client = _create_realtime_valkey_client()
             if client is None:
                 self._stop_event.wait(5)
                 continue
@@ -124,7 +124,7 @@ class _RedisRealtimeBridge:
                         continue
                     asyncio.run_coroutine_threadsafe(self._dispatcher(payload), self._loop)
             except Exception:
-                logger.debug("Realtime Redis listener disconnected for %s", self._channel, exc_info=True)
+                    logger.debug("Realtime Valkey listener disconnected for %s", self._channel, exc_info=True)
             finally:
                 try:
                     pubsub.close()
@@ -133,7 +133,7 @@ class _RedisRealtimeBridge:
                 try:
                     client.close()
                 except Exception as exc:
-                    logger.debug("Redis client close failed: %s", exc)
+                    logger.debug("Valkey client close failed: %s", exc)
 
             if not self._stop_event.is_set():
                 self._stop_event.wait(1)
@@ -144,7 +144,7 @@ class LogisticsRealtimeHub:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._partner_connections: dict[int, set[WebSocket]] = defaultdict(set)
         self._order_connections: dict[int, set[WebSocket]] = defaultdict(set)
-        self._bridge = _RedisRealtimeBridge(_LOGISTICS_REALTIME_CHANNEL, self._dispatch_remote_message)
+        self._bridge = _ValkeyRealtimeBridge(_LOGISTICS_REALTIME_CHANNEL, self._dispatch_remote_message)
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
@@ -235,7 +235,7 @@ class UserRealtimeHub:
     def __init__(self) -> None:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._user_connections: dict[str, set[WebSocket]] = defaultdict(set)
-        self._bridge = _RedisRealtimeBridge(_USER_REALTIME_CHANNEL, self._dispatch_remote_message)
+        self._bridge = _ValkeyRealtimeBridge(_USER_REALTIME_CHANNEL, self._dispatch_remote_message)
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop

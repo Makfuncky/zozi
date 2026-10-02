@@ -111,43 +111,26 @@ async function ensureSupplierProfileGuide(page: Page) {
 }
 
 test.describe("supplier browser smoke", () => {
-  test("supplier register completes the multi-step flow", async ({ page }) => {
+  test("supplier register completes the single-page flow", async ({ page }) => {
     await page.route("**/api/auth/register", async (route) => {
       const payload = route.request().postDataJSON() as Record<string, unknown>;
       expect(payload.role).toBe("supplier");
       expect(payload.business_name).toBe("Smoke Supplies");
-      expect(payload.terms_accepted).toBe(true);
       await fulfillJson(route, { id: 44, username: payload.username }, 201);
     });
 
     await page.goto("/supplier/register");
 
-    await page.getByPlaceholder("Choose a username (3-30 chars)").fill("supplier_smoke");
-    await page.getByPlaceholder("you@yourbusiness.com").fill("supplier@example.com");
-    await page.getByPlaceholder("••••••••").nth(0).fill("SupplierPass123!");
-    await page.getByPlaceholder("••••••••").nth(1).fill("SupplierPass123!");
-    await page.waitForTimeout(150);
-    await page.getByRole("button", { name: /^next/i }).click();
-    await expect(page.getByPlaceholder("Your business or brand name")).toBeVisible();
-
-    await page.getByPlaceholder("Your business or brand name").fill("Smoke Supplies");
-    await page.getByPlaceholder("+971 50 000 0000").fill("+971 50 123 4567");
-    await page.getByRole("combobox").nth(1).selectOption({ label: "United Arab Emirates" });
-    await page.waitForTimeout(150);
-    await page.getByRole("button", { name: /^next/i }).click();
-    await expect(page.getByPlaceholder("https://yourbusiness.com")).toBeVisible();
-
-    await page.getByPlaceholder("https://yourbusiness.com").fill("https://smoke.example.com");
-    await page.waitForTimeout(150);
-    await page.getByRole("button", { name: /continue/i }).click();
-    await expect(page.getByRole("checkbox")).toBeVisible();
-
-    await page.getByRole("checkbox").check();
-    await page.waitForTimeout(150);
+    await page.getByLabel(/Username/i).fill("supplier_smoke");
+    await page.getByLabel(/Email/i).fill("supplier@example.com");
+    await page.getByLabel(/Password/i).first().fill("SupplierPass123!");
+    await page.getByLabel(/Confirm Password/i).fill("SupplierPass123!");
+    await page.getByLabel(/Business Name/i).fill("Smoke Supplies");
+    await page.getByPlaceholder("https://...").fill("https://smoke.example.com");
 
     await Promise.all([
-      page.waitForURL(/\/supplier\/login\?registered=1$/, { timeout: 20_000 }),
-      page.getByRole("button", { name: /create account/i }).click(),
+      page.waitForURL(/\/supplier\/login(?:\?|$)/, { timeout: 20_000 }),
+      page.getByRole("button", { name: /Create Supplier Account/i }).click(),
     ]);
   });
 

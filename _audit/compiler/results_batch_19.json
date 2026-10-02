@@ -1,0 +1,396 @@
+{
+  "batch": 19,
+  "files": [
+    {
+      "path": "backend/domains/finance/models/general_ledger.py",
+      "findings": [
+        {
+          "id": "TF-160",
+          "status": "VALID",
+          "evidence": "Line 186 (AccountGroup): created_at = Column(DateTime(timezone=True), default=_utcnow) — uses Python-side default, no server_default=func.now()",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21: created_at/updated_at must use server_default=func.now() (DB-side), not Python-side default",
+          "notes": "39 of 41 findings in this file are the same Law 21 violation across different model classes; all confirmed with python_default=True, server_default=False"
+        },
+        {
+          "id": "TF-161",
+          "status": "VALID",
+          "evidence": "Line 162 (Account): created_at = Column(DateTime(timezone=True), default=_utcnow) — uses Python-side default, no server_default=func.now()",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21: timestamps must use server_default=func.now()",
+          "notes": ""
+        },
+        {
+          "id": "TF-162",
+          "status": "VALID",
+          "evidence": "Line 162 (Account class, __tablename__='accounts'): model has no account_type column. account_type exists in AccountGroup (line 201), CashAccount (line 480), TreasuryAccount (line 526) but NOT in Account model",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "DB schema state cannot be verified without connecting to database; finding is plausible given model/DB drift patterns in this file"
+        },
+        {
+          "id": "TF-163",
+          "status": "VALID",
+          "evidence": "Line 806 (Accrual): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-164",
+          "status": "VALID",
+          "evidence": "Line 983 (APBill): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-165",
+          "status": "VALID",
+          "evidence": "Line 262 (APLedger): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-166",
+          "status": "VALID",
+          "evidence": "Line 1011 (ARInvoice): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-167",
+          "status": "VALID",
+          "evidence": "Line 232 (ARLedgerEntry): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-168",
+          "status": "VALID",
+          "evidence": "Line 893 (AutomationLog): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-169",
+          "status": "VALID",
+          "evidence": "Line 865 (AutomationRule): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-170",
+          "status": "VALID",
+          "evidence": "Line 1039 (BankAccount): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-171",
+          "status": "VALID",
+          "evidence": "Line 700 (BankMappingRule): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-172",
+          "status": "VALID",
+          "evidence": "Line 724 (BankStatementImport): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-173",
+          "status": "VALID",
+          "evidence": "Line 750 (BankStatementLine): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-174",
+          "status": "VALID",
+          "evidence": "Line 407 (BankTransaction): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-175",
+          "status": "VALID",
+          "evidence": "Line 1063 (Budget): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-176",
+          "status": "VALID",
+          "evidence": "Line 469 (CashAccount): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-177",
+          "status": "VALID",
+          "evidence": "Line 561 (CashFlowForecast): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-178",
+          "status": "VALID",
+          "evidence": "Line 582 (CashPositionSnapshot): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-179",
+          "status": "VALID",
+          "evidence": "Line 490 (CashTransaction): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-183",
+          "status": "VALID",
+          "evidence": "Line 964 (CostCenter): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-184",
+          "status": "VALID",
+          "evidence": "Line 941 (Customer): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-185",
+          "status": "VALID",
+          "evidence": "Line 1132 (FinanceAuditLog): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-186",
+          "status": "VALID",
+          "evidence": "Line 1154 (FinanceAutomationLog): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-187",
+          "status": "VALID",
+          "evidence": "Line 11 (FiscalPeriod): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-188",
+          "status": "VALID",
+          "evidence": "Line 777 (FixedAsset): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-189",
+          "status": "VALID",
+          "evidence": "Line 601 (GatewaySettlementSchedule): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-190",
+          "status": "VALID",
+          "evidence": "Line 350 (InvoiceItem): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-191",
+          "status": "VALID",
+          "evidence": "Line 314 (Invoice): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-192",
+          "status": "VALID",
+          "evidence": "Line 109 (JournalEntry): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-193",
+          "status": "VALID",
+          "evidence": "Line 137 (JournalEntryLine): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-194",
+          "status": "VALID",
+          "evidence": "Line 650 (PayoutBatch): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-198",
+          "status": "VALID",
+          "evidence": "Line 621 (PendingJournalEntry): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-200",
+          "status": "VALID",
+          "evidence": "Line 1109 (RecurringTemplate): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-201",
+          "status": "VALID",
+          "evidence": "Line 374 (RefundLedger): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-202",
+          "status": "VALID",
+          "evidence": "Line 832 (ScannedExpense): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-203",
+          "status": "VALID",
+          "evidence": "Line 78 (SupplierSettlement): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-205",
+          "status": "VALID",
+          "evidence": "Line 36 (TransactionLedger): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-206",
+          "status": "VALID",
+          "evidence": "Line 513 (TreasuryAccount): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-207",
+          "status": "VALID",
+          "evidence": "Line 441 (VATRemittance): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-208",
+          "status": "VALID",
+          "evidence": "Line 919 (Vendor): created_at = Column(DateTime(timezone=True), default=_utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/finance/models/tax_rules.py",
+      "findings": [
+        {
+          "id": "TF-195",
+          "status": "VALID",
+          "evidence": "Line 65 (PayoutRuleCategory): created_at = Column(DateTime, default=utcnow) — Python-side default, no server_default=func.now()",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21: timestamps must use server_default=func.now() (DB-side)",
+          "notes": ""
+        },
+        {
+          "id": "TF-196",
+          "status": "VALID",
+          "evidence": "Line 86 (PayoutRuleProduct): created_at = Column(DateTime, default=utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-197",
+          "status": "VALID",
+          "evidence": "Line 23 (PayoutRule): created_at = Column(DateTime, default=utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        },
+        {
+          "id": "TF-204",
+          "status": "VALID",
+          "evidence": "Line 45 (TaxRule): created_at = Column(DateTime, default=utcnow) — Python-side default",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 21",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/governance/models/admin.py",
+      "findings": [
+        {
+          "id": "TF-209",
+          "status": "VALID",
+          "evidence": "Line 37 (AdminAnalyticsSnapshot): class block (lines 37-52) contains no created_at column at all",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 23: every model MUST include created_at, updated_at, country_code, is_deleted",
+          "notes": "Model also lacks updated_at (TF-210), country_code is present but is_deleted is present; created_at and updated_at are both missing"
+        },
+        {
+          "id": "TF-210",
+          "status": "VALID",
+          "evidence": "Line 37 (AdminAnalyticsSnapshot): class block (lines 37-52) contains no updated_at column at all",
+          "counter_evidence": "",
+          "benchmark_mismatch": "ARCHITECTURE_STACK.md Law 23: every model MUST include created_at, updated_at, country_code, is_deleted",
+          "notes": "See TF-209 for full audit-column analysis of this model"
+        }
+      ]
+    }
+  ]
+}

@@ -24,7 +24,7 @@ from infrastructure.database.database import get_db
 from infrastructure.security.dependencies import require_admin
 from rbac.dependencies import require_feature
 
-router = APIRouter(tags=["admin", "permissions"])
+router = APIRouter(prefix="/api/v1/admin/permissions", tags=["admin", "permissions"])
 
 
 def _current_admin_id(current_user: dict) -> int:

@@ -65,7 +65,7 @@ class TestLaw271AIAgentPromptInjectionPrevention:
                 found = True
                 break
         if not found:
-            pytest.skip("AI-agent prompt injection prevention not yet implemented")
+            raise AssertionError("AI-agent prompt injection prevention not yet implemented")
 
     def test_no_unsanitized_ai_inputs(self):
         """Verify that AI-related endpoints sanitize inputs."""
@@ -103,24 +103,25 @@ class TestLaw275EncryptionAtRest:
                 found = True
                 break
         if not found:
-            pytest.skip("Encryption at rest not yet implemented (may use infrastructure-level)")
+            raise AssertionError("Encryption at rest not yet implemented (may use infrastructure-level)")
 
     def test_sensitive_fields_encrypted(self):
         """Verify that sensitive fields (SSN, card numbers) are encrypted."""
         sensitive_pattern = re.compile(
-            r"(?:ssn|social_security|card_number|cvv|pin)",
+            r"\b(?:ssn|social_security|card_number|cvv)\b",
             re.IGNORECASE,
         )
         for path in _iter_py(_DOMAINS_DIR, exclude_dirs={"tests", "scripts"}):
+            if "models" not in path.relative_to(_DOMAINS_DIR).parts:
+                continue
             try:
                 src = path.read_text(encoding="utf-8")
             except OSError:
                 continue
             if sensitive_pattern.search(src) and "encrypt" not in src.lower():
-                pytest.skip(
+                raise AssertionError(
                     f"Sensitive fields in {path.name} may need encryption review"
                 )
-                return
 
 
 class TestLaw276EncryptionInTransit:
@@ -151,13 +152,14 @@ class TestLaw276EncryptionInTransit:
 
     def test_security_headers_include_hsts(self):
         headers_file = _MIDDLEWARE_DIR / "security_headers.py"
-        if not headers_file.exists():
-            pytest.skip("security_headers.py does not exist")
+        assert headers_file.exists(), "Law 276 violation: security_headers.py does not exist"
         src = headers_file.read_text(encoding="utf-8")
-        if "Strict-Transport-Security" in src:
-            assert "max-age" in src, (
-                "Law 276 violation: HSTS header missing max-age directive"
-            )
+        assert "Strict-Transport-Security" in src, (
+            "Law 276 violation: HSTS header not configured"
+        )
+        assert "max-age" in src, (
+            "Law 276 violation: HSTS header missing max-age directive"
+        )
 
 
 class TestLaw277KeyRotationEvery90Days:
@@ -180,7 +182,7 @@ class TestLaw277KeyRotationEvery90Days:
                 found = True
                 break
         if not found:
-            pytest.skip("Key rotation mechanism not yet implemented")
+            raise AssertionError("Key rotation mechanism not yet implemented")
 
 
 class TestLaw278WORMAudit:
@@ -196,8 +198,7 @@ class TestLaw278WORMAudit:
 
     def test_audit_logs_are_immutable(self):
         audit_dir = _DOMAINS_DIR / "audit"
-        if not audit_dir.exists():
-            pytest.skip("audit domain does not exist")
+        assert audit_dir.exists(), "Law 278 violation: audit domain does not exist"
         immutable_found = False
         for path in audit_dir.rglob("*.py"):
             try:
@@ -211,8 +212,7 @@ class TestLaw278WORMAudit:
             ):
                 immutable_found = True
                 break
-        if not immutable_found:
-            pytest.skip("WORM audit immutability not yet implemented")
+        assert immutable_found, "Law 278 violation: WORM audit immutability not yet implemented"
 
 
 class TestLaw279SessionBinding:
@@ -238,17 +238,15 @@ class TestLaw279SessionBinding:
                 found = True
                 break
         if not found:
-            pytest.skip("Session binding not yet implemented")
+            raise AssertionError("Session binding not yet implemented")
 
     def test_device_binding_middleware_exists(self):
         device_file = _MIDDLEWARE_DIR / "device_binding_middleware.py"
-        if device_file.exists():
-            src = device_file.read_text(encoding="utf-8")
-            assert "def " in src, (
-                "Law 279 violation: device_binding_middleware.py has no functions"
-            )
-        else:
-            pytest.skip("device_binding_middleware.py not found")
+        assert device_file.exists(), "Law 279 violation: device_binding_middleware.py not found"
+        src = device_file.read_text(encoding="utf-8")
+        assert "def " in src, (
+            "Law 279 violation: device_binding_middleware.py has no functions"
+        )
 
 
 class TestLaw280BruteForceDBLevelLockout:
@@ -288,7 +286,7 @@ class TestLaw280BruteForceDBLevelLockout:
             if "lockout" in src.lower() or "locked" in src.lower():
                 if "Column" in src or "is_locked" in src or "locked_at" in src:
                     return
-        pytest.skip("DB-level lockout verification inconclusive")
+        raise AssertionError("DB-level lockout verification inconclusive")
 
 
 class TestLaw281BotDetection:
@@ -311,7 +309,7 @@ class TestLaw281BotDetection:
                 found = True
                 break
         if not found:
-            pytest.skip("Bot detection not yet implemented")
+            raise AssertionError("Bot detection not yet implemented")
 
 
 class TestLaw282PIIMasking:
@@ -337,7 +335,7 @@ class TestLaw282PIIMasking:
                 found = True
                 break
         if not found:
-            pytest.skip("PII masking not yet implemented")
+            raise AssertionError("PII masking not yet implemented")
 
     def test_email_masking_in_responses(self):
         """Verify email addresses are masked in API responses."""
@@ -348,7 +346,7 @@ class TestLaw282PIIMasking:
                 continue
             if "email" in src.lower() and "mask" in src.lower():
                 return
-        pytest.skip("Email masking not explicitly implemented")
+        raise AssertionError("Email masking not explicitly implemented")
 
 
 class TestLaw283MFAForAdminEmployee:
@@ -371,7 +369,7 @@ class TestLaw283MFAForAdminEmployee:
                 found = True
                 break
         if not found:
-            pytest.skip("MFA not yet implemented")
+            raise AssertionError("MFA not yet implemented")
 
     def test_admin_employee_mfa_enforcement(self):
         """Verify MFA is enforced for admin and employee roles."""
@@ -384,4 +382,4 @@ class TestLaw283MFAForAdminEmployee:
                 continue
             if "admin" in src.lower() and "mfa" in src.lower():
                 return
-        pytest.skip("Admin/Employee MFA enforcement not explicitly implemented")
+        raise AssertionError("Admin/Employee MFA enforcement not explicitly implemented")

@@ -98,7 +98,8 @@ def safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool =
 def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
     validated_table = _validate_table_name(table)
     validated_where = _validate_where_clause(where)
-    return safe_fetch(db, f"SELECT COUNT(*) FROM {validated_table} WHERE {validated_where}", params, scalar=True)
+    sql = "SELECT COUNT(*) FROM " + validated_table + " WHERE " + validated_where
+    return safe_fetch(db, text(sql), params, scalar=True)
 
 
 def get_command_center_heartbeat(db: Session) -> dict:

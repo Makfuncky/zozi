@@ -1,10 +1,11 @@
 """Tests for EventPublisher (WIR-006, WIR-028).
 
 Verifies:
-  1. Listener failures are retried (1-2-4s backoff, max 3 attempts) and
-     routed to DLQ after exhaustion.
-  2. EventPublisher emits a DeprecationWarning on instantiation.
-  3. EventPublisher.publish writes event payload to Valkey for durability.
+   1. EventPublisher emits a DeprecationWarning on instantiation (WIR-028).
+   2. EventPublisher.publish delegates to event_bus: listener failures are
+      retried (max 5 attempts, 1-2-4-8s backoff) and routed to DLQ.
+   3. EventPublisher.publish writes event payload to Valkey Stream for
+      durability (WIR-028 outbox pattern).
 """
 from __future__ import annotations
 
@@ -45,7 +46,7 @@ class TestEventPublisher:
 
         calls = {"count": 0}
 
-        def failing_listener(event):
+        def failing_listener(payload):
             calls["count"] += 1
             raise RuntimeError("listener boom")
 
@@ -61,14 +62,16 @@ class TestEventPublisher:
             ),
         ):
             publisher = EventPublisher()
-            publisher.register_listener(str, failing_listener)
+            # register_listener normalises class-type keys to string keys
+            # in the canonical bus; use a string key directly for the test.
+            publisher.register_listener("test-event", failing_listener)
             publisher.publish("test-event")
 
-        assert calls["count"] == 3
+        assert calls["count"] == 5
         mock_client.rpush.assert_called_once()
         dlq_payload = mock_client.rpush.call_args[0][1]
         assert "listener boom" in dlq_payload
-        assert "str" in dlq_payload
+        assert "test-event" in dlq_payload
         mock_client.xadd.assert_called_once()
         stream_name = mock_client.xadd.call_args[0][0]
         assert "event_stream" in stream_name
@@ -78,8 +81,8 @@ class TestEventPublisher:
 
         received = []
 
-        def good_listener(event):
-            received.append(event)
+        def good_listener(payload):
+            received.append(payload)
 
         mock_client = MagicMock()
         mock_client.rpush.return_value = 1
@@ -93,10 +96,10 @@ class TestEventPublisher:
             ),
         ):
             publisher = EventPublisher()
-            publisher.register_listener(str, good_listener)
+            publisher.register_listener("hello", good_listener)
             publisher.publish("hello")
 
-        assert received == ["hello"]
+        assert received == [{"value": "hello"}]
         mock_client.xadd.assert_called_once()
         stream_name = mock_client.xadd.call_args[0][0]
         assert "event_stream" in stream_name

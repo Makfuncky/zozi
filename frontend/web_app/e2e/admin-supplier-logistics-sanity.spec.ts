@@ -1,9 +1,9 @@
-import { devices, expect, test, type Page, type Route } from "@playwright/test";
+﻿import { devices, expect, test, type Page, type Route } from "@playwright/test";
 
 test.describe.configure({ timeout: 180_000 });
 test.use({ browserName: "chromium", ...devices["iPhone 13"] });
 
-const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):8000/;
+const API_HOST = /https?:\/\/(?:localhost|127\.0\.0\.1):3100/;
 type LoginConfig = {
   username: string;
   password: string;
@@ -245,7 +245,7 @@ test.describe("admin supplier and logistics sanity", () => {
 
     await loginForSanity(page, {
       username: "admin@zozi.com",
-      password: "admin123",
+      password: "E2eAdmin#2026",
       landingRoute: "/admin/dashboard",
       expectedUrl: /\/admin\/dashboard(?:\?|$)/,
     });

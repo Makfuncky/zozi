@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HR Dashboard E2E Tests
  *
  * Exercises the admin HR dashboard page at /admin/hr:
@@ -25,13 +25,13 @@ import {
 
 test.describe.configure({ timeout: 120_000 });
 
-// ── Tests ───────────────────────────────────────────────────────────────
+// â”€â”€ Tests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 test.describe("HR Dashboard Page", () => {
   test("API: /hr/dashboard returns expected shape", async ({ request }) => {
     // First login to get a valid token
     const loginResp = await request.post("http://127.0.0.1:8000/auth/login", {
-      data: { email: "admin@zozi.com", password: "admin123" },
+      data: { email: "admin@zozi.com", password: "E2eAdmin#2026" },
     });
     expect(loginResp.status()).toBe(200);
     const loginBody = await loginResp.json();
@@ -84,7 +84,7 @@ test.describe("HR Dashboard Page", () => {
     test.beforeEach(async ({ page }) => {
       // Login via the UI form (not API) so the page's useAuth hook recognizes the session
       await page.goto("/admin/login");
-      await submitCredentialForm(page, "admin@zozi.com", "admin123");
+      await submitCredentialForm(page, "admin@zozi.com", "E2eAdmin#2026");
       await waitForSessionFlag(page, 60_000);
     });
 
@@ -97,7 +97,7 @@ test.describe("HR Dashboard Page", () => {
       // Wait for the stats row to render (data loaded from backend)
       await expect(page.getByText("Total Employees").first()).toBeVisible({ timeout: 30_000 });
 
-      // Verify StatCard labels are present (at least some of them — DB may have 0 values)
+      // Verify StatCard labels are present (at least some of them â€” DB may have 0 values)
       const statLabels = [
         "Total Employees",
         "Active Pipeline",
@@ -150,9 +150,9 @@ test.describe("HR Dashboard Page", () => {
       // Wait for performance health header
       await expect(page.getByText("Performance Health")).toBeVisible({ timeout: 30_000 });
 
-      // Health bars — check for at least one bar label
-      const greenBar = page.getByText("Green (≥ 4.0)");
-      const amberBar = page.getByText("Amber (2.5–4.0)");
+      // Health bars â€” check for at least one bar label
+      const greenBar = page.getByText("Green (â‰¥ 4.0)");
+      const amberBar = page.getByText("Amber (2.5â€“4.0)");
       const redBar = page.getByText("Red (&lt; 2.5)");
 
       // At least one health bar should be visible
@@ -163,3 +163,4 @@ test.describe("HR Dashboard Page", () => {
     });
   });
 });
+

@@ -6,7 +6,7 @@ const IMAGE_DIR = path.resolve(__dirname, "../../../image");
 async function loginSupplier(page: Page) {
   console.log("[login] Starting login...");
   // Get token from API
-  const loginRes = await page.request.post("http://localhost:8000/auth/login", {
+  const loginRes = await page.request.post("http://localhost:8000/api/v1/auth/login", {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     form: { username: "supplier@zozi.com", password: "supplier123" },
   });

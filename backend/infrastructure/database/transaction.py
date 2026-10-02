@@ -66,7 +66,7 @@ def db_transaction_context(
             try:
                 session.close()
             except Exception:
-                pass
+                logger.exception("Failed to close database session")
 
 
 def get_transaction_context(

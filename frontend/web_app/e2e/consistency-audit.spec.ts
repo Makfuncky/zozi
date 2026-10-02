@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 
 test.describe.configure({ timeout: 60_000 });
 
@@ -29,7 +29,7 @@ async function formLogin(page: Page, email: string, password: string) {
   await page.locator("button[type='submit']:visible").first().click();
   // After a successful login the panel shell (sidebar) is mounted even on
   // mobile (the drawer variant), proving we're past the login screen. Using
-  // "attached" avoids viewport-visibility flakiness and the login→dashboard
+  // "attached" avoids viewport-visibility flakiness and the loginâ†’dashboard
   // redirect race.
   await page.locator("aside.theme-sidebar-shell").first().waitFor({ state: "attached", timeout: 20000 });
   await page.waitForLoadState("domcontentloaded");
@@ -75,7 +75,7 @@ test("storefront: homepage and products page load, price slider present", async 
 
 test("admin: sidebar + supplier modal open with consistent glass card", async ({ page }) => {
   test.setTimeout(90_000);
-  await formLogin(page, "admin@zozi.com", "admin123");
+  await formLogin(page, "admin@zozi.com", "E2eAdmin#2026");
   const aside = page.locator("aside.theme-sidebar-shell");
   await expect(aside).toBeVisible({ timeout: 10000 });
 
@@ -96,7 +96,7 @@ test("admin: sidebar + supplier modal open with consistent glass card", async ({
 test("mobile: admin drawer opens without overflow", async ({ page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  await formLogin(page, "admin@zozi.com", "admin123");
+  await formLogin(page, "admin@zozi.com", "E2eAdmin#2026");
   const hamburger = page.getByRole("button", { name: "Open navigation" });
   await expect(hamburger).toBeVisible({ timeout: 10000 });
   await hamburger.click();
@@ -123,3 +123,4 @@ test("mobile: logistics dashboard must not overflow", async ({ page }) => {
   const rep = await reportOverflow(page, "logistics-mobile");
   expect(rep.overflow, JSON.stringify(rep)).toBe(false);
 });
+

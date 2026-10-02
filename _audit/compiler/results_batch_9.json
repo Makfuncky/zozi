@@ -1,0 +1,76 @@
+{
+  "batch": 9,
+  "files": [
+    {
+      "path": "backend/domains/catalog/models/products.py",
+      "findings": [
+        {
+          "id": "PERF-001",
+          "status": "VALID",
+          "evidence": "Line 107: `cart_items = relationship(\"CartItem\", back_populates=\"product\")` — no `lazy` parameter, defaults to `lazy=\"select\"`",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Confirmed: default lazy=select triggers N+1 when accessing product.cart_items. Law 45 explicitly forbids default lazy=select."
+        },
+        {
+          "id": "PERF-003",
+          "status": "VALID",
+          "evidence": "Lines 108-112: `variants` and `videos` relationships have no `lazy` parameter — `variants = relationship(\"ProductVariant\", back_populates=\"product\", order_by=\"ProductVariant.id\", cascade=\"all, delete-orphan\")` and `videos = relationship(\"ProductVideo\", back_populates=\"product\", order_by=\"ProductVideo.created_at.desc()\")`",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Confirmed: both relationships default to lazy=select. Other relationships in the same file (supplier, reviews, wishlist_items, wishlists) correctly use lazy=\"selectin\", making this an inconsistent application of Law 45."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/catalog/services/categories/admin_categories_service.py",
+      "findings": [
+        {
+          "id": "FEAT-013",
+          "status": "INVALID",
+          "evidence": "Line 36: `set_rls_context({country_code.upper()}, is_restricted=True)` — set with single country still present",
+          "counter_evidence": "The `set_rls_context` function signature at `backend/infrastructure/database/rls_interceptor.py:128` explicitly declares `scope: set[str] | frozenset[str] | None` and internally converts to frozenset (line 129: `rls_country_scope_ctx.set(frozenset(scope) if scope is not None else None)`). The finding's claim that 'Set-based RLS context may not match expected scalar binding' is directly contradicted by the implementation. Additionally, the file header explicitly states 'ARCHIVED MODULE — DO NOT IMPORT' and 'Retained for reference only; this file is NOT part of the running application.' No other Python files import from this service.",
+          "benchmark_mismatch": "",
+          "notes": "Finding is invalid on two grounds: (1) the RLS interceptor API is explicitly designed to accept sets, and (2) the file is archived and not imported anywhere in the active codebase."
+        },
+        {
+          "id": "FEAT-041",
+          "status": "INVALID",
+          "evidence": "Line 59: `rebuild_category_paths(db)` — still called after create_category",
+          "counter_evidence": "The file is explicitly archived (header: 'ARCHIVED MODULE — DO NOT IMPORT FROM domains/_parked. Retained for reference only; this file is NOT part of the running application.'). No Python files in backend/ import from admin_categories_service. The category tree rebuild concern does not apply to active code paths.",
+          "benchmark_mismatch": "",
+          "notes": "Finding references an archived module not part of the running application. If the category tree rebuild logic is still needed, it should be verified in the live category service implementation, not this archived file."
+        }
+      ]
+    },
+    {
+      "path": "backend/domains/catalog/services/products/products_service.py",
+      "findings": [
+        {
+          "id": "FEAT-003",
+          "status": "VALID",
+          "evidence": "Line 132: `price = float(product.price) if product.price else 0` — Decimal-to-float cast in serialization. Also line 133: `compare_price = float(product.compare_price) if product.compare_price else None`, line 346: `rating=float(data.pop(\"rating\", 0.0) or 0.0)`, line 727: `product.compare_price = float(compare_price) if compare_price else None`, line 752: `product.compare_price = float(payload[\"compare_price\"]) if payload[\"compare_price\"] else None`",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Confirmed: multiple float() casts on monetary fields (price, compare_price) throughout the service. Law 19 explicitly forbids float for money — 'Monetary values MUST use Decimal or Numeric. Float FORBIDDEN for money.' The serialization path (lines 132-133) is especially problematic because it drops precision before the value leaves the backend."
+        },
+        {
+          "id": "PERF-006",
+          "status": "VALID",
+          "evidence": "Line 305: `products = ordered.offset(offset).limit(limit).all()` — OFFSET pagination on customer product listing. Lines 287-303 show a cursor-based pagination path exists but is only used when the `cursor` parameter is provided; the default path falls through to OFFSET.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Confirmed: OFFSET is still the default pagination mechanism for the hottest path (customer product listing). Law 317 states 'NEVER OFFSET on hot lists'. A keyset cursor path exists (lines 287-303) but is not wired as the default, making this a valid performance finding."
+        },
+        {
+          "id": "PERF-008",
+          "status": "VALID",
+          "evidence": "Line 248: `q_obj = q_obj.filter(Product.name.ilike(f\"%{q}%\"))` — leading wildcard ILIKE with no GIN/pg_trgm support. The Product model (lines 42-48) defines B-tree indexes on supplier_id, category, created_at, and country_code but no GIN index on `name`.",
+          "counter_evidence": "",
+          "benchmark_mismatch": "",
+          "notes": "Confirmed: leading wildcard `%q%` forces sequential scan on products table. TECHNOLOGY_STACK.md §2 states pg_trgm is a built-in PG 18 feature for fuzzy search, but it is not utilized here. A GIN index on catalog.products.name using pg_trgm would allow the ILIKE to use an index."
+        }
+      ]
+    }
+  ]
+}
