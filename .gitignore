@@ -64,6 +64,8 @@ backend/schema_mapping.json
 # Playwright test artifacts
 backend/tests/playwright/test-results/
 backend/tests/playwright/auth-*.png
+# Browser test artifacts (large local traces/zips must stay out of Git)
+_browser_test/test-results/
 # Browser-test secrets (local only; copy from stack.env.ps1.example)
 config/stack.env.ps1
 

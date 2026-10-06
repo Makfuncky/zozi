@@ -23,11 +23,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency manifests
-COPY requirements.txt ./
+COPY pyproject.toml uv.lock ./
 
 # Install Python dependencies into a virtual environment
 RUN uv venv /app/.venv && \
-    VIRTUAL_ENV=/app/.venv uv pip install --no-cache-dir -r requirements.txt
+    uv sync --frozen --no-dev
 
 ##############
 # Runner stage
