@@ -240,3 +240,67 @@ def list_tickets_paginated(db, page: int = 1, page_size: int = 50, user_id=None,
     real query once the support-ticket model is provisioned.
     """
     return [], 0
+
+
+def build_ticket_payload(
+    db: Session,
+    ticket: SupportTicket,
+    messages: List[TicketMessage] | None = None,
+) -> dict[str, Any]:
+    """Serialize a support ticket and its messages for the admin support API.
+
+    Closes BOOT2-005: ``modules/admin/routers/tickets.py`` imports this symbol
+    at module level, so its absence raised ImportError and killed the whole
+    admin tickets router (list / get / reply / status = 4 endpoints 404ing).
+
+    Read-only (Law 14 business logic lives in the domain service, Law 89 the
+    router receives a plain dict and never a raw ORM object). ``db`` is part of
+    the signature because the four frozen call sites pass the session; the
+    serializer never issues a query and never writes, so the session is used
+    for nothing but keeping that contract stable.
+
+    Relationship access stays EAGER (Law 45): callers pass an already
+    ``selectinload``-ed collection (``get_ticket_with_details`` /
+    ``get_ticket_by_id`` / ``get_ticket_messages``). When ``messages`` is None
+    this falls back to the collection *only if SQLAlchemy has already loaded
+    it* - read out of the instance ``__dict__``, never through attribute
+    access, so no lazy SELECT is emitted and the function is safe on a
+    detached instance.
+
+    ``messages=None`` and an empty messages list both serialize to
+    ``messages: []`` with ``message: ""``, mirroring the sibling
+    ``admin_list_tickets`` dict literal. ``ticket=None`` is a programming error
+    at every call site (each one raises 404 first), so it raises ``ValueError``
+    rather than fabricating an all-null payload.
+    """
+    if ticket is None:
+        raise ValueError("build_ticket_payload requires a SupportTicket, got None")
+
+    resolved: list[Any] = []
+    if messages is not None:
+        resolved = list(messages)
+    else:
+        loaded = getattr(ticket, "__dict__", {}).get("messages")
+        if loaded is not None:
+            resolved = list(loaded)
+
+    return {
+        "id": ticket.id,
+        "user_id": ticket.user_id,
+        "subject": ticket.subject,
+        "message": getattr(resolved[0], "message", "") if resolved else "",
+        "status": ticket.status,
+        "priority": ticket.priority,
+        "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
+        "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None,
+        "messages": [
+            {
+                "id": m.id,
+                "sender_id": m.sender_id,
+                "message": m.message,
+                "is_admin": bool(getattr(m, "is_admin", False)),
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in resolved
+        ],
+    }

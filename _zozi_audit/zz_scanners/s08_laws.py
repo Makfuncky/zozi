@@ -108,6 +108,47 @@ def _reverse_imports(ctx: ScanContext) -> int:
     return bad
 
 
+def _fails_closed(text: str) -> tuple[bool, str]:
+    """Law 37: does the rate limiter deny when its backend is unreachable?
+
+    Two independent conditions, both required, so neither a comment nor a stray
+    4xx can satisfy the law on its own:
+      1. the module *acknowledges* fail-closed behaviour (any inflection of
+         "fail closed": `fail_closed`, `failing closed`, `fail-closed`);
+      2. some `except` handler actually *denies* -- it returns rather than
+         falling through to `call_next`, and the returned expression either
+         carries a 4xx/5xx `status_code` or is a false/empty denial value.
+    """
+    import ast as _ast  # local: this module deliberately has no top-level ast import
+
+    if not text:
+        return False, "rate limiter module not found"
+    acknowledged = bool(re.search(r"fail\w*[-_\s]?closed", text, re.I))
+    denies = False
+    detail = "no except-handler denial path"
+    try:
+        tree = _ast.parse(text)
+    except SyntaxError as exc:
+        return False, f"unparsable: {exc}"
+    for node in _ast.walk(tree):
+        if not isinstance(node, _ast.Try):
+            continue
+        for handler in node.handlers:
+            for stmt in _ast.walk(_ast.Module(body=handler.body, type_ignores=[])):
+                if not isinstance(stmt, _ast.Return) or stmt.value is None:
+                    continue
+                src = " ".join(_ast.unparse(stmt.value).split())
+                if re.search(r"status_code\s*=\s*[45]\d\d", src) or src in (
+                        "False", "False, 0, 10", "None"):
+                    denies = True
+                    detail = f"handler denies with: {src[:60]}"
+    if acknowledged and denies:
+        return True, detail
+    if not acknowledged:
+        return False, "no fail-closed acknowledgement in the limiter"
+    return False, detail
+
+
 def _predicates() -> dict:
     def pred(law):
         def deco(fn):
@@ -152,13 +193,18 @@ def _predicates() -> dict:
         literals = set()
         for p in ctx.py_files:
             rel = ctx.rel(p)
-            if "/modules/" not in rel:
+            if "/modules/" not in rel or "/tests/" in rel:
                 continue
             text, _ = read_text(p)
-            literals.update(re.findall(r'require_feature\(\s*["\']([^"\'*]+)["\']', text or ""))
+            # `\S` inside the literal, not `[^"\'*]+`. The negated class matched
+            # across newlines, so in
+            # `assert require_feature_count >= len(endpoints), (\n f"...` it
+            # swallowed 60 characters of assertion and produced one bogus
+            # "unknown gate literal" that no catalog could ever contain.
+            literals.update(re.findall(r'require_feature\(\s*["\']([^"\'*\s]+)["\']', text or ""))
         unknown = [l for l in literals if l not in catalog]
         return ("FAIL" if unknown else "PASS",
-                f"{len(unknown)} gate literal(s) missing from catalog ({', '.join(unknown[:5])})")
+                f"{len(unknown)} gate literal(s) missing from catalog ({', '.join(sorted(unknown)[:5])})")
 
     @pred(5)
     def law5(ctx):
@@ -332,9 +378,18 @@ def _predicates() -> dict:
     @pred(37)
     def law37(ctx):
         text, _ = read_text(ctx.backend / "middleware" / "rate_limit_middleware.py")
-        fails_closed = bool(re.search(r"return\s+JSONResponse\(\s*status_code=5\d\d|status_code=503|deny|fail.?closed", text or "", re.IGNORECASE))
-        return ("PASS" if fails_closed else "FAIL",
-                "rate limiter fails closed" if fails_closed else "rate limiter does not visibly fail closed")
+        ok, why = _fails_closed(text or "")
+        # The old predicate searched for `status_code=503` / `deny` / the literal
+        # regex `fail.?closed` and produced a P0 blocker against code that does
+        # fail closed: the limiter answers 429 from inside `except Exception`
+        # ("Valkey rate limit check failed — failing closed") and the token bucket
+        # returns `False, 0, 10`. "failing closed" does not match `fail.?closed`,
+        # and a 429 is not a 5xx. A predicate that cannot match the correct
+        # implementation is not a check; it is noise that the verifier then has to
+        # spend a probe disproving.
+        return ("PASS" if ok else "FAIL",
+                f"rate limiter fails closed ({why})" if ok
+                else f"rate limiter does not fail closed ({why})")
 
     @pred(38)
     def law38(ctx):

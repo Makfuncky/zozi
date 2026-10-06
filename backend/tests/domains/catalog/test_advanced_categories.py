@@ -9,10 +9,6 @@ Covers:
 - Layer 4: Bulk import/export
 - Layer 5: Taxonomy provider
 """
-import json
-import pathlib
-
-
 from domains.catalog.models.products import Category
 from domains.catalog.services.categories.bulk_category_service import (
     import_categories_json,
@@ -34,45 +30,52 @@ from domains.catalog.services.categories.attribute_schema_service import (
 class TestTaxonomySeedData:
     """Verify the comprehensive taxonomy seed data structure."""
 
-    def test_seed_file_exists(self):
-        """The categories_full.json file must exist."""
-        seed_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent
-        seed_path = seed_path / "infrastructure" / "database" / "seed_data" / "categories_full.json"
-        assert seed_path.exists(), f"Seed file not found: {seed_path}"
+    def test_taxonomy_source_available(self):
+        """The 'full' taxonomy source must be loadable."""
+        from domains.catalog.services.taxonomy_service import get_taxonomy_source
 
-    def test_seed_file_is_valid_json(self):
-        """The seed file must be valid JSON."""
-        seed_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent
-        seed_path = seed_path / "infrastructure" / "database" / "seed_data" / "categories_full.json"
-        with open(seed_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        source = get_taxonomy_source("full")
+        assert source is not None, "Taxonomy source 'full' must be available"
+        assert "name" in source
+        assert "categories" in source
+        assert source["total_categories"] > 0
+
+    def test_taxonomy_source_is_valid_json(self):
+        """The taxonomy source must be valid structured data."""
+        from domains.catalog.services.taxonomy_service import get_taxonomy_source
+
+        source = get_taxonomy_source("full")
+        assert source is not None
+        data = source["categories"]
         assert isinstance(data, list)
         assert len(data) > 0
 
-    def test_seed_file_has_top_level_categories(self):
+    def test_taxonomy_source_has_top_level_categories(self):
         """Must have multiple top-level categories."""
-        seed_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent
-        seed_path = seed_path / "infrastructure" / "database" / "seed_data" / "categories_full.json"
-        with open(seed_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        from domains.catalog.services.taxonomy_service import get_taxonomy_source
+
+        source = get_taxonomy_source("full")
+        assert source is not None
+        data = source["categories"]
         assert len(data) >= 10, f"Expected at least 10 top-level categories, got {len(data)}"
 
-    def test_seed_file_has_nested_structure(self):
+    def test_taxonomy_source_has_nested_structure(self):
         """Categories must have nested children."""
-        seed_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent
-        seed_path = seed_path / "infrastructure" / "database" / "seed_data" / "categories_full.json"
-        with open(seed_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        # At least some categories should have children
+        from domains.catalog.services.taxonomy_service import get_taxonomy_source
+
+        source = get_taxonomy_source("full")
+        assert source is not None
+        data = source["categories"]
         has_children = any("children" in c and len(c["children"]) > 0 for c in data)
         assert has_children, "No categories have children"
 
-    def test_seed_file_categories_have_required_fields(self):
+    def test_taxonomy_source_categories_have_required_fields(self):
         """Each category must have id, name, slug."""
-        seed_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent
-        seed_path = seed_path / "infrastructure" / "database" / "seed_data" / "categories_full.json"
-        with open(seed_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        from domains.catalog.services.taxonomy_service import get_taxonomy_source
+
+        source = get_taxonomy_source("full")
+        assert source is not None
+        data = source["categories"]
 
         def _check_categories(categories, path=""):
             for cat in categories:
@@ -727,3 +730,71 @@ class TestEdgeCases:
         deleted_cat = next(c for c in exported if c["slug"] == "export-test-deleted")
         assert "is_deleted" in deleted_cat
         assert deleted_cat["is_deleted"] is True
+
+
+# ── Paired Tests: Defect 1 (missing categories_full.json) ────────────────────
+
+
+class TestTaxonomyCanonicalSource:
+    """Paired tests for the missing categories_full.json defect.
+
+    The JSON file was removed per the seed migration; the canonical source
+    is infrastructure.database.seed._seed_constants.CATEGORIES.
+    """
+
+    def test_full_taxonomy_loads_without_json_file(self):
+        """'full' taxonomy must load from the canonical Python module."""
+        from domains.catalog.services.taxonomy_service import get_taxonomy_source
+
+        source = get_taxonomy_source("full")
+        assert source is not None
+        assert source["name"] == "full"
+        assert len(source["categories"]) > 0
+
+    def test_list_taxonomy_sources_reports_full_available(self):
+        """list_taxonomy_sources must report 'full' as available."""
+        from domains.catalog.services.taxonomy_service import list_taxonomy_sources
+
+        sources = list_taxonomy_sources()
+        assert any(s["name"] == "full" for s in sources)
+
+    def test_import_taxonomy_produces_flat_list(self):
+        """import_taxonomy('full') must return a non-empty flat list."""
+        from domains.catalog.services.taxonomy_service import import_taxonomy
+
+        data = import_taxonomy("full")
+        assert data is not None
+        assert len(data) > 0
+        # Every item must have the fields _flatten_for_import produces
+        for item in data:
+            assert "id" in item
+            assert "name" in item
+            assert "slug" in item
+
+
+# ── Paired Tests: Defect 2 (revoked_tokens.created_at schema drift) ──────────
+
+
+class TestRevokedTokensSchemaDrift:
+    """Paired tests for the revoked_tokens.created_at schema-drift defect.
+
+    The ORM model declares created_at, but the baseline migration does not.
+    The test DB is created via create_all() so it reflects the ORM, not the
+    migration. This documents the expected schema and guards against drift.
+    """
+
+    def test_revoked_tokens_has_created_at_in_orm_db(self, db_session):
+        """A DB session created from the ORM must expose created_at on revoked_tokens."""
+        from sqlalchemy import inspect
+
+        inspector = inspect(db_session.bind)
+        cols = [c["name"] for c in inspector.get_columns("revoked_tokens")]
+        assert "created_at" in cols, (
+            "revoked_tokens.created_at is missing from the ORM-created schema"
+        )
+
+    def test_revoked_tokens_model_declares_created_at(self):
+        """The RevokedToken model must declare created_at."""
+        from domains.accounts.models.user import RevokedToken
+
+        assert "created_at" in [c.name for c in RevokedToken.__table__.columns]

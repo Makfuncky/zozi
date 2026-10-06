@@ -16,7 +16,14 @@ from fastapi.responses import Response
 from sqlalchemy import desc, func, or_, and_, text, cast as sql_cast, String
 from sqlalchemy.orm import Session, selectinload
 
-from domains.catalog.models.products import Product
+from domains.catalog.ports import (
+    Product,
+    ProductVideo,
+    ProductFilterMetadata,
+    ProductFilterOption,
+    Wishlist,
+)
+from domains.orders.ports import Order, OrderItem
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
 from infrastructure.utils.performance_cache import cache_search_results, set_search_results, invalidate_product_listings
 
@@ -871,9 +878,6 @@ def get_recommendations(
 
 # ── Advanced Filter Service (merged from advanced_filter_service.py) ───
 
-from domains.catalog.models.products import ProductVideo, ProductFilterMetadata, ProductFilterOption
-
-
 class AdvancedFilterService:
     _cache_ttl = 300
 
@@ -1173,8 +1177,6 @@ def search_products(db: Session, query: str, *, country_code: str | None = None,
     Returns a lightweight list of product dicts. Degrades to an empty list when
     the query is blank or no matches are found (Law 30).
     """
-    from domains.catalog.models.products import Product
-
     if not query or not query.strip():
         return []
     pattern = f"%{query.strip()}%"

@@ -1,912 +1,988 @@
 # ZOZI FORENSIC AUDIT — MASTER PLAN (`_zozi_audit/PLAN.md`)
 
-> **Version 2 (2026-10-02).** Adds the extension dimensions (design/colour,
-> interaction robustness, feature & taxonomy, workflow/QA/automation, data
-> management), a **recommendation stream**, and **Phase B — the compilation
-> step** that turns the audit into an ordered, executable remediation plan.
+> **Amendment v4.1 (2026-10-06) — read this first.** The engine was audited and repaired;
+> see [`AUDIT_OF_AUDIT.md`](AUDIT_OF_AUDIT.md) for the defect list and the evidence. What
+> changed in the engine:
 >
-> **Deliverable:** one command — `python _zozi_audit/zozi_audit.py` — that produces
-> **ONE consolidated file** `_zozi_audit/zozi_forensic_audit.md` covering all 28
-> forensic-audit dimensions, cross-cutting passes, chains, completion blockers and the
-> 18-condition production-readiness gate.
+> - **The verifier no longer deletes true work.** `ALREADY_FIXED` was being inferred from
+>   *token absence* even for claims that assert absence (`backend/Dockerfile` has no
+>   HEALTHCHECK), and two cluster→measurement mappings probed the opposite claim. An
+>   absence claim is now `UNVERIFIABLE`, and `claim_covers()` + `CLAIM_GAPS` refuse a
+>   refutation whose instrument does not cover the claim.
+> - **Two detectors were wrong and are fixed.** Law 37's predicate could not match the
+>   limiter that does fail closed (a 429 is not a 5xx; `fail.?closed` does not match
+>   “failing closed”), and the feature-gate literal regex read prose as code. Both findings
+>   are gone.
+> - **`logs/` can no longer lie by omission.** Every dimension file is rewritten each run and
+>   previous ones are cleared, so an empty file means “evaluated, no findings”.
+> - **Generated inventory.** `PLAN_FUNCTIONS.md` lists all 748 definitions with their
+>   `@check` name and dimension; `python zz_core/inventory.py --check` fails when the registry
+>   and the AST disagree. Regenerate it, never hand-edit it.
+> - **Measured state (run `2026-10-06`, 92 detectors, `--full --no-tools`, 3823 files):**
+>   1343 findings · 80 yes-blockers · verdicts **1307 CONFIRMED / 0 FALSE_POSITIVE /
+>   0 WRONG_LOCATION / 1 ALREADY_FIXED / 35 UNVERIFIABLE** · plan 1326 steps
+>   (1307 gating, 19 improvement) · regression gate **86 passed, 0 failed**.
+>   The 164-unverifiable objective below is now 35; the remaining ones are clustered in
+>   §5.1 of the audit-of-audit.
+
+> **Version 4 (2026-10-05).** Complete source-of-truth document. Written by reading the
+> `_zozi_audit/**` tree end-to-end and re-deriving every number from
+> `zz_core/registry.py`, `zz_scanners/__init__.py`, `zz_core/measurements.py`, `zz_core/probe.py`,
+> `logs/run.json`, `logs/checkpoint.json`, `logs/verdicts.jsonl`, `logs/facts.json`,
+> `logs/plan.json`, `logs/verification_summary.json`, the 31 per-dimension JSONL logs, and the
+> filesystem itself.
 >
-> **Two artifacts, two purposes — never merge them.**
-> `zozi_forensic_audit.md` states *fact* about the repository.
-> `zozi_remediation_plan.md` (produced by `zozi_compile.py`) states *intent*: what
-> to do, in what order, how to prove it, and what it unblocks. A recommendation
-> never becomes a blocker; a blocker never hides inside a recommendation.
+> Supersedes **PLAN.md v2 (2026-10-02)** — a design spec that is now stale
+> (module list ends at `s21`; checks 82 vs actual 92; references `plan_status.json` and
+> `zz_core/allowlist.yaml` that never existed).
 >
-> **Benchmarks:**
-> - `_most_imp_docx/ARCHITECTURE_STACK.md` — 325 laws, modules, domains, package layout, wiring.
-> - `_most_imp_docx/TECHNOLOGY_STACK.md` — pinned versions, forbidden packages, env vars.
-> - `_most_imp_docx/PROMPT_FORENSIC_AUDIT.md` — dimension schema, finding schema, phases, gates.
-> - `_most_imp_docx/FEATURE_STACK_LIST.md` (non-authoritative; used for feature candidate reconciliation only).
-> - Prior run: `_audit/**` (compiled rollups; treated as *evidence to re-verify*, never as truth).
+> Supersedes **`AUDIT_SUITE_PLAN.md`**, which is listed in §11 for removal.
 >
-> **Rules inherited from the prompt:** cite `path:line`; no aggregate rows (`N+`);
-> every finding carries the full mandatory schema; never infer behaviour from folder
-> names; verify, then classify; contradictions are surfaced, never silently resolved.
+> **Deliverable (one command):** `python _zozi_audit/zozi_audit.py` produces one consolidated
+> audit (`zozi_forensic_audit.md`) plus per-dimension JSONL in `logs/`. Stage two
+> (`zozi_verify.py`) re-derives each claim independently; stage three (`zozi_compile.py`) turns
+> only the surviving claims into an ordered remediation plan.
+>
+> **Two artifacts, two purposes — never merge them.** `zozi_forensic_audit.md` states *fact* about
+> the repository. `zozi_remediation_plan.md` (produced by `zozi_compile.py`) states *intent*: what
+> to do, in what order, how to prove it, and what it unblocks.
+>
+> **Benchmarks** (all present in `_most_imp_docx/`):
+> - `ARCHITECTURE_STACK.md` — 325 laws, modules, domains, package layout, wiring.
+> - `TECHNOLOGY_STACK.md` — pinned versions, forbidden packages, env vars.
+> - `PROMPT_FORENSIC_AUDIT.md` — dimension schema, finding schema, phases, gates.
+> - `FEATURE_STACK_LIST.md` / `FEATURE_STACK.md` — non-authoritative; used for feature-candidate
+>   reconciliation only (separate diff pass, `s12_features.feature_stack_list_diff`).
+>
+> **Rules inherited from the prompt:** cite `path:line`; no aggregate rows (`N+`); every finding
+> carries the full mandatory schema; never infer behaviour from folder names; verify, then
+> classify; contradictions are surfaced, never silently resolved.
 
 ---
 
-## 0.1 · What version 2 adds, and why version 1 was not enough
+## 0 · What this suite is
 
-Version 1 audited **code shape**. It had no design/colour axis, no feature- or
-route-level coverage axis, no interaction-handling axis, and it emitted no
-suggestions. It could tell you a `<button>` lacked a `type` attribute; it could
-not tell you that the button swallows its own error, that no test ever clicks it,
-or that the product taxonomy cannot hold five tiers.
+One pass over the repository produces a list of **claims** about the code. A second stage
+**re-derives each claim independently** and refuses to call it confirmed unless something other
+than the detector agrees. A third stage turns only the surviving claims into an ordered fix plan.
 
-Five extension scanner modules were added, mapped onto the **existing 28
-dimensions** so the benchmark's dimension set is unchanged:
+The second stage is the point. A detector that reports a defect it cannot re-derive is a guess,
+and a plan built from guesses wastes the reader's time.
 
-| Module | Dimension | What it now measures |
-|---|---|---|
-| `s16_design.py` | 14 frontend_web | token layer, colour drift, primitive layer, variant system, dark mode |
-| `s17_interactions.py` | 14 frontend_web / 12 tests | buttons, modals/drawers, form labelling, toast channel, per-page loading/empty/error states |
-| `s18_feature_matrix.py` | 16 features | feature-gate integrity (undefined/dead), route × test matrix, category hierarchy depth |
-| `s19_workflow.py` | 04 operational | Celery runtime, event spine, state-machine centralisation, handover/takeover assurance, QA mechanisms, automation candidates, finance automation surface |
-| `s20_db_advisor.py` | 07 tables_fields | table management posture, unindexed hot columns, relationship loading, migration ↔ ORM schema drift |
-| `s21_http_layer.py` | 14 frontend_web / 18 security | **live** HTTP response contract (preflight status, header presence/consistency, cookie flags, CSP shape, startup errors) + static header-policy audit |
-| `s09_environment.py` (added) | 11 environmental | `settings_contract` — every `settings.<attr>` read resolved against the fields `Settings` declares |
+```
+python _zozi_audit/zozi_audit.py --full --no-tools   # scan   -> zozi_forensic_audit.md + logs/
+python _zozi_audit/zozi_verify.py                     # adjudicate -> zozi_verification.md + verdicts
+python _zozi_audit/zozi_compile.py                    # plan     -> zozi_remediation_plan.md + plan.json
+python _zozi_audit/zozi_audit.py --self-test          # regression gate (delegates to tests/run_tests.py)
+```
 
-**Registered checks: 59 → 82.** A `Recommendation` model was added with its own
-`logs/recommendations.jsonl`, its own report section (§7), and its own
-non-gating track in the plan.
+Each stage reads the previous stage's output from `_zozi_audit/logs/` and is safe to run on its
+own. `--fast` = static checks only; `--browser --llm --db --load` adds runtime probes.
 
-### 0.1.1 · Why the HTTP layer and settings contract are the same lesson
+**Current measured state** (run `20261005T143848Z-2dbc4d`, commit
+`3e0d1d818ebc08f1df17c5464543dd96aa7b0d94`, dirty 149 files, `--full --no-tools`, 10 workers,
+3806 files walked):
 
-Both were found the same way: the audit produced a confident number that no
-check had produced. v2 measured **6,604 ruff violations** and **119 TS errors**
-without ever issuing an HTTP request, and never resolved a single
-`settings.<attr>` read against the declared fields. The two defects that
-surfaced only when a real server existed were:
+| Metric | Value |
+|---|---|
+| Checks registered | **92** `@check`-decorated across `preflight`–`s24` + **10** pre-flight checks (not @check-decorated, registered in `preflight.CHECKS`) |
+| Scanner modules | 24 `s*.py` + `preflight.py`; import failures: **0** |
+| Tree scanned | **3806** files (2107 `.py`, 1216 `.ts`, 3806 all) |
+| Findings emitted / verdicts | **1345 / 1345** |
+| Verdicts | `CONFIRMED` 1174 · `UNVERIFIABLE` 164 · `ALREADY_FIXED` 7 |
+| `FALSE_POSITIVE + WRONG_LOCATION` | **0** |
+| `P0 / P1 / P2 / P3` findings | 100 / 359 / 689 / 197 |
+| Hard completion blockers | 82 (yes) / 199 (partial) / 1064 (no) |
+| Clusters | 135 |
+| Files with findings | 659 |
+| Verification basis | probe re-check 1163 · token_consistency 170 · cross-run disagreement 9 · cluster re-check 3 |
+| Measurement functions | **76** `m_*` in `zz_core/measurements.py` |
+| Probe kinds (`probe.py`) | **38** dispatch entries (37 distinct handlers) |
+| Measured aggregates | **116** keys in `logs/facts.json` |
 
-- **CORS preflight returns `405`** — invisible to `curl` and to the in-process
-  ASGI client, fatal to every cross-origin write in a browser.
-- **`Settings has no attribute 'backup_verify_on_create'`** — invisible because
-  no check ever read an attribute that only fails when that path executes. 31 such
-  attributes exist, 12 of them P0.
+**Report verdict:** `NOT PRODUCTION READY` · 82 hard completion blocker(s).
 
-The general rule this produced: **a check that cannot fail on a runtime defect
-will not find one.** Static analysis has a ceiling; the probe exists to hit it.
+**Remaining objectives:**
+- `UNVERIFIABLE = 0` — in progress. 164 findings have no probe; they are `UNVERIFIABLE`, never
+  guessed. Closing them means writing an independent re-check for each cluster.
+- Runtime evidence (browser/load/DB/HTTP live probes) — deferred. The working tree is dirty (149
+  files, in-flight refactor); a clean baseline is `HEAD` (`3e0d1d8`, 84 routes, 0 skipped).
 
-### 0.2 · False-positive discipline (learned the hard way — do not revert)
-
-The version-2 checks were verified by independent sub-agents before being
-accepted, and **ten detection rules were wrong on first run.** They are now
-enforced in code:
-
-1. **`ctx.rel()` returns forward slashes.** A Windows `\` separator silently
-   defeats every `"frontend/web_app/src/" in rel` filter — the check reports zero
-   instead of failing loudly.
-2. **Filter repo-relative paths without a leading slash:** `"frontend/" in rel`.
-3. **Web app only for design metrics.** React Native has no CSS cascade, so
-   `style={{…}}` and hex literals under `mobile_app/` are idiomatic. Including
-   them inflated inline styles 302 → 1953 and hex literals 165 → 1062.
-4. **A hex literal in a brand SVG, chart series or palette file is correct.**
-   Excluded by path *and* filename.
-5. **`Column(…, index=True)` is an index.** Matching only index *names* in
-   `__table_args__` inflated unindexed columns 224 → 871.
-6. **Strip comments and docstrings before regexing Python.** A
-   `require_feature("…")` inside a comment produced 8 phantom "undefined gates";
-   7 survived the filter and match independent verification.
-7. **A feature id is dot-separated lowercase snake_case, ≥2 segments, no
-   wildcard, no whitespace.** `"x"`, `"foo.*"` and `"domain.action"` are samples.
-8. **A capability is implemented only if a definition exists** — require
-   `def compute_vat_remittance` or `class VATRemittance`, not the mere mention.
-9. **Search for the Celery app recursively.** It is at
-   `backend/jobs/celery_app.py`, not `backend/celery_app.py`.
-10. **No law requires a `version` column on every table.** It is an
-    optimisation, so it is a recommendation, never a defect.
-
-**Rule 11 — an unverified claim is a verification task, not a fix task.** The
-compiler refuses to emit "change the code" for any finding whose `claim_state` is
-`UNKNOWN`/`INFERRED`/`CONTRADICTED`; those land in wave 4 to be confirmed or
-dismissed first. A separate 10-agent verification pass over the original 98 P0
-claims found **~40 % noise**, which is the reason this rule exists.
-
----
-
-## 0 · Objectives
-
-1. **100 % coverage of the auditable surface.** Every Python file in `backend/`
-   (excluding generated/vendored dirs), every TS/TSX file in `frontend/`,
-   every migration, every workflow, every model, every route, every provider,
-   every env var, every test, every doc under `_most_imp_docx/`.
-2. **Evidence-based findings.** Each check emits `path:line` + quoted snippet +
-   the exact command that re-proves it. Static-only conclusions are labelled
-   static; runtime conclusions require a tool run.
-3. **One consolidated report** (`zozi_forensic_audit.md`) with the 28 dimension
-   sections + rollups. Machine-readable logs alongside (`logs/*.jsonl`) are
-   supporting artifacts, not the deliverable.
-4. **Optional truth-seeking integrations**, each independently runnable and each
-   degrading gracefully when unavailable:
-   - **Browser** (`zz_integrations/browser_probe.py`) — Playwright against the
-     real stack; consumes `_browser_test/` results if present.
-   - **Ollama LLM** (`zz_integrations/ollama_probe.py`) — semantic review of
-     hotspots (code-intent, AI drift, stub/TODO reality check).
-   - **Live DB** (`zz_integrations/db_probe.py`) — SQLite/Postgres introspection
-     for ORM↔DB drift (dimension 07) and RLS/policy verification (dimension 06).
-   - **Load probe** (`zz_integrations/load_probe.py`) — optional p95 sampling.
-5. **Parallel agent model.** The registry schedules **71 discrete check tasks**
-    across a `ThreadPoolExecutor(max_workers=10)` — at most 10 in flight, per the
-    operator's instruction; each task is a self-contained "sub-agent" with an
-    explicit instruction (docstring + `INSTRUCTIONS` constant) and returns
-    findings/observations only.
-
----
-
-## 1 · Directory layout
+## 1 · Directory layout (verified against disk)
 
 ```
 _zozi_audit/
-├── PLAN.md                        # this file — design + inventory + accuracy history
-├── zozi_audit.py                  # PHASE A — the audit. -> zozi_forensic_audit.md
-├── zozi_verify.py                 # PHASE B — the falsification gate. -> zozi_verification.md
-├── zozi_compile.py                # PHASE C — the plan. -> zozi_remediation_plan.md
+├── .gitignore                        # gitignore for reproducible outputs + bytecode (see §12.8)
+├── PLAN.md                           # this file — source of truth (v4)
+├── AUDIT_SUITE_PLAN.md               # ⚠ DEPRECATED — superseded by this file (see §11)
+├── zozi_audit.py                     # PHASE C entry — scan -> zozi_forensic_audit.md
+├── zozi_verify.py                    # adjudicate -> zozi_verification.md + logs/verdicts.jsonl
+├── zozi_compile.py                   # compile -> zozi_remediation_plan.md + logs/plan.json
 ├── zz_core/
-│   ├── __init__.py
-│   ├── model.py                   # Finding / Observation / Recommendation / ScanContext / ToolResult / enums
-│   ├── constants.py               # canonical laws, version pins, forbidden lists, schema sets, env contract
-│   ├── util.py                    # file walking, AST helpers, markdown tables, hashing, snippet extraction
-│   ├── tools.py                   # subprocess runner + tool probes (keeps untruncated stdout)
-│   ├── registry.py                # check registry, dedupe, id assignment, parallel executor (max 10)
-│   ├── logs.py                    # JSONL writer, checkpoint, run metadata, tool ledger
-│   └── report.py                  # markdown renderer for the single output file
-├── zz_scanners/                   # 82 registered checks + 10 pre-flight
-│   ├── __init__.py                # imports all scanner modules -> auto-register
-│   ├── preflight.py               # Phase 0 boot smoke + Phase 0.5 pre-flight (10 rows)
-│   ├── s01_architecture.py        # dims 01, 17
-│   ├── s02_technology.py          # dims 02, 28
-│   ├── s03_logic.py               # dims 03, 22, 25 (static detectors)
-│   ├── s04_operations.py          # dims 04, 13
-│   ├── s05_wiring.py              # dims 05, 20
-│   ├── s06_database.py            # dims 06, 07, 10
-│   ├── s07_providers.py           # dim 08
-│   ├── s08_laws.py                # dim 09 (all 325 laws -> PASS/FAIL/UNVERIFIABLE)
-│   ├── s09_environment.py         # dim 11 (incl. settings_contract)
-│   ├── s10_tests.py               # dim 12
-│   ├── s11_frontend.py            # dims 14, 15, 26
-│   ├── s12_features.py            # dims 16, 23 (feature health)
-│   ├── s13_security.py            # dim 18
-│   ├── s14_performance.py         # dim 19
-│   ├── s15_crosscut.py            # dims 21, 24, 27 rollups
-│   ├── s16_design.py              # dim 14  — tokens, colour drift, primitives, dark mode
-│   ├── s17_interactions.py        # dim 14/12 — buttons, modals, forms, toasts, page states
-│   ├── s18_feature_matrix.py      # dim 16  — gate integrity, route×test matrix, category depth
-│   ├── s19_workflow.py            # dim 04  — celery runtime, event spine, handover, QA, automation
-│   ├── s20_db_advisor.py          # dim 07  — table posture, index drift, schema drift
-│   └── s21_http_layer.py          # dim 14/18 — live response contract + static header policy
+│   ├── __init__.py                   # __all__ = ["model", "constants", "util", "tools", "registry", "logs", "report"]
+│   ├── constants.py                  # canonical modules/domains, router allowlist, env contract, ID prefixes
+│   ├── lawmap.json                   # 325-law coverage table (benchmark_laws_total=325, enforced_by_check=126, candidate_unattributed=133 dims)
+│   ├── logs.py                       # JSONL writers, checkpoint, run metadata, tool ledger
+│   ├── measurements.py               # 76 independent re-derivation functions (m_*)
+│   ├── model.py                      # Finding, Observation, CheckResult, ToolResult, ScanContext, enums
+│   ├── probe.py                      # ProbeRunner: 38 probe kinds, SQL destructiveness helpers, utf-8-sig
+│   ├── probes.py                     # LAW_MEASUREMENT_BY_LAW / CLUSTER_MEASUREMENT / FINDING_MEASUREMENT maps
+│   ├── registry.py                   # @check() decorator, registry, bounded 10-worker executor
+│   ├── report.py                     # single consolidated markdown renderer
+│   ├── tools.py                      # subprocess runner + tool probes (keeps untruncated stdout)
+│   └── util.py                       # walk_files (exclusions), read_text (BOM-tolerant), AST helpers, snippets
 ├── zz_integrations/
 │   ├── __init__.py
-│   ├── http_probe.py              # live HTTP/1.1 probe (boots uvicorn, inspects real responses)
-│   ├── browser_probe.py           # independently runnable Playwright audit
-│   ├── ollama_probe.py            # independently runnable local-LLM semantic audit
-│   ├── db_probe.py                # independently runnable DB introspection
-│   └── load_probe.py              # independently runnable latency sampler
-└── logs/                          # run.json, findings/observations/recommendations/verdicts .jsonl,
-                                   # facts.json, tool_ledger.json, plan.json, plan_status.json
+│   ├── http_probe.py                 # live HTTP/1.1 probe (raw socket GET/OPTIONS/HEAD)
+│   ├── browser_probe.py              # Playwright step capture (independent CLI)
+│   ├── db_probe.py                   # ORM↔DB schema introspection (independent CLI)
+│   ├── load_probe.py                 # latency sampling (independent CLI)
+│   └── ollama_probe.py               # local-LLM semantic review (independent CLI)
+├── zz_scanners/
+│   ├── __init__.py                   # imports all s*.py + preflight at import time; collects import failures
+│   ├── preflight.py                  # Phase 0 (boot smoke) + Phase 0.5 (pre-flight); blockers are emitted as dimension-27 findings
+│   ├── s01_architecture.py           # dims 01/17 — layer purity, canonical modules/domains, router thinness
+│   ├── s02_technology.py             # dims 02/28 — dependency pins, forbidden packages, versions
+│   ├── s03_logic.py                  # dims 03/22/25 — money types, silent except, blocking IO, idempotency
+│   ├── s04_operations.py             # dims 04/13 — jobs, health checks, CI/CD, deployment assets, feature flags
+│   ├── s05_wiring.py                 # dims 05/20 — middleware order, auth/websocket, observability/resilience
+│   ├── s06_database.py               # dims 06/07/10 — ORM model audit, migration history, live DB drift
+│   ├── s07_providers.py              # dim 08 — provider inventory + resilience/health/timeouts
+│   ├── s08_laws.py                   # dim 09 — parse 325 laws from ARCHITECTURE_STACK.md; law conformance (PASS/FAIL/UNVERIFIABLE)
+│   ├── s09_environment.py            # dim 11 — env-var inventory + settings_contract (read vs declared)
+│   ├── s10_tests.py                  # dim 12 — test inventory + architecture tests
+│   ├── s11_frontend.py               # dims 14/15/26 — route tree, a11y, API alignment, mobile
+│   ├── s12_features.py               # dims 16/23 — feature-catalog health, stack-list diff, code intent
+│   ├── s13_security.py               # dim 18 — OWASP A01–A10 static checks + platform security laws
+│   ├── s14_performance.py            # dim 19 — pagination, cache, index, N+1
+│   ├── s15_crosscut.py               # dims 21/24/27 — contradictions, chains, browser bridge, blockers
+│   ├── s16_design.py                 # dim 14 extension — tokens, colour drift, primitives, dark mode
+│   ├── s17_interactions.py           # 14/12 extension — buttons, toasts, forms, modals, handover
+│   ├── s18_feature_matrix.py         # dim 16 extension — feature matrix completeness, taxonomy depth
+│   ├── s19_workflow.py               # 04/27 extension — celery runtime, event spine, QA, finance automation
+│   ├── s20_db_advisor.py             # 07 extension — table posture, migration/ORM drift, advisory
+│   ├── s21_http_layer.py             # 14/18 extension — live response contract + static header policy
+│   ├── s22_frontend_contracts.py     # 14/26 extension — contract tests for frontend endpoints/routes (probe-verifiable)
+│   ├── s23_law_coverage.py           # law-coverage accounting: what the suite does NOT check
+│   └── s24_declared_laws.py          # laws decidable from source all along (harness, git, tsconfig, layer purity)
+├── tests/
+│   ├── __init__.py
+│   ├── fixtures.py                   # known-positive / known-negative benchmark sources
+│   ├── run_tests.py                  # regression gate: each detector's polarity vs fixtures
+│   └── __pycache__/                  # ⚠ pyc bytecode (see §11 for removal)
+├── logs/
+│   ├── .gitkeep                      # keeps empty logs/ directory in git
+│   ├── run.json                      # run metadata (run_id, commit, options, file_counts, dirty_files)
+│   ├── checkpoint.json               # phase final, files_processed, findings_written, pass 2
+│   ├── findings.jsonl                # 1345 emitted findings (all NEW this run)
+│   ├── verdicts.jsonl                # 1345 adjudicated (1174 CONFIRMED, 164 UNVERIFIABLE, 7 ALREADY_FIXED)
+│   ├── observations.jsonl
+│   ├── plan.json                     # compiled plan (zozi_compile.py): 1193 steps, 1174 gating, 19 improvements
+│   ├── facts.json                    # 116 measured aggregates
+│   ├── tool_ledger.json              # tool runs (cmd, exit, duration, tail)
+│   ├── recommendations.jsonl         # non-gating recommendations
+│   ├── rec_*.jsonl                   # per-area dumps: automation, data, design, finance, frontend, ops, qa, workflow (8)
+│   ├── 01_architectural.jsonl … 28_supply_chain_security.jsonl   # 28 primary dimension logs
+│   ├── 23_law_coverage.jsonl + 29_law_coverage.jsonl              # law-coverage accounting (see §12)
+│   ├── 30_declared_laws.jsonl                                    # declared-laws declarations
+│   ├── browser_results.json, db_results.json, load_results.json, llm_results.json
+│   ├── http_probe.log                                             # raw live-HTTP probe log (not in PLAN.md v3)
+│   ├── llm_cache.json                                             # Ollama cache (not in PLAN.md v3)
+│   └── verification_summary.json                                  # adjudication metrics (generated 2026-10-05T14:46:26)
+├── __pycache__/                      # ⚠ root-level pyc bytecode (zozi_audit, zozi_compile, zozi_verify)
+├── zz_core/__pycache__/              # ⚠ pyc + 6 DEAD files with no source
+├── zz_scanners/__pycache__/
+├── zz_integrations/__pycache__/
+└── tests/__pycache__/
 ```
+
+There are **31 per-dimension JSONL files** in `logs/`, not 30: the sequence `01`–`28` plus
+`23_law_coverage.jsonl` (which **shares the `23` namespace** with `23_code_intent.jsonl`),
+`29_law_coverage.jsonl`, and `30_declared_laws.jsonl`. See §12.
 
 **Pipeline order is load-bearing:**
 
 ```
 zozi_audit.py  ──► zozi_forensic_audit.md     (facts)
-      │
-      ▼
-zozi_verify.py  ──► zozi_verification.md       (adjudicated claims)   + logs/verdicts.jsonl
-      │
-      ▼
-zozi_compile.py ──► zozi_remediation_plan.md   (ordered, gated work)  + logs/plan.json
+        │
+        ▼
+zozi_verify.py  ──► zozi_verification.md       (adjudicated claims) + logs/verdicts.jsonl
+        │
+        ▼
+zozi_compile.py ──► zozi_remediation_plan.md   (ordered, gated work) + logs/plan.json
 ```
 
-Running `zozi_compile.py` without `logs/verdicts.jsonl` still works but emits a
-loud warning and produces **no fix instructions at all** — every step defaults to
-UNVERIFIABLE. That is deliberate: an unverified plan must not look executable.
+Running `zozi_compile.py` without `logs/verdicts.jsonl` still works but emits a loud warning
+and produces **no fix instructions at all** — every step defaults to `UNVERIFIABLE`. That is
+deliberate: an unverified plan must not look executable.
 
-**Excluded from every walk** (non-negotiable, avoids the `.kilo` worktree trap):
+**Excluded from every walk** (non-negotiable; avoids the `.kilo` worktree trap):
 `.git/`, `.kilo/`, `.freebuff/`, `node_modules/`, `__pycache__/`, `.pytest_cache/`,
 `.hypothesis/`, `.next/`, `dist/`, `build/`, `venv/`, `.venv/`, `_extra_files/`,
 `_legacy.bak/`, `test-results/`, `playwright-report/`, `_zozi_audit/`,
-`*.min.js`, `*.map`, binary files. `ctx.rel()` always returns **forward slashes**,
-because every scanner matches on `backend/...`-style strings and a Windows `\`
-silently defeats those filters.
+`*.min.js`, `*.map`, binary files. `ctx.rel()` always returns **forward slashes**, because every
+scanner matches on `backend/...`-style strings and a Windows `\` silently defeats those filters.
 
----
+## 2 · The 5 layers
 
-## 2 · Execution pipeline
+### Layer 1 — `zz_core` (shared model, tooling, reporting)
+
+- **`model.py`**: `Finding` (id, dimension, phase, status, cluster, file:line, current/target/delta, fix, effort, priority, confidence, evidence_strength, truth_level, claim_state, sibling, verify, test, rollback, blast_radius, depends_on, blocks, completion_blocker, laws, snippet), `Observation`, `CheckResult` (findings/observations/tool_results/facts), `ToolResult` (named tool runs: timeout, capped full output), `ScanContext`.
+- **`constants.py`**: canonical sets (5 modules, 15 domains), `ROUTER_OK_INFRA` (routers may import only approved infra modules), `ID_PREFIX_BY_DIMENSION`, env contract. Shared between scanner and probe so they never diverge.
+- **`util.py`**: `walk_files()` (symlink-safe, bounded walk), `read_text()` (tolerant `utf-8-sig` — repo files carry a BOM), AST helpers (`ast_imports`, `ast_calls`, `module_of`), `snippet()`/`line_of()`.
+- **`tools.py`**: optional subprocess orchestration (npm/pnpm/npx shim on Windows, tsc, pytest/pytest-xdist, playwright, Ollama, db, load); timeouts from `--check-timeout` (default 900 s); `FULL_OUTPUT_CAP` 24 MB.
+- **`registry.py`**: `@check(name, dimension, phase, instructions)` decorator registers self-contained sub-agents; bounded executor — never more than 10 checks concurrently; crash/timed-out checks emit auditor-defect findings instead of aborting.
+- **`logs.py`**: `RunLog` writes JSONL streams, checkpoint state, `run.json` metadata (run_id, start, root, options, file_counts, commit, dirty_files).
+- **`report.py`**: single consolidated markdown renderer; tables clipped at 300 chars; 18-condition production-readiness gate; anti-pattern aggregation; chain rollups.
+- **`measurements.py`**: 76 `m_*` functions — re-derivations of aggregate count claims from **separate traversals** of the working tree (importing the detector's own counter would make the probe agree by construction). Every measurement returns `(count, description)`; the probe holds while the count is non-zero.
+- **`probe.py`**: `ProbeRunner` — **38 probe kinds** in the dispatch map (`text_absent`, `text_present`, `text_matches`, `except_handler_silent`, `timestamp_default_is_python`, `law_unenforced`, `law_citation_drift`, `settings_field_absent`, `celery_task_unregistered`, `migration_downgrade_empty`, `destructive_op_unguarded`, `ci_step_absent`, `router_has_no_endpoints`, `duplicate_files_both_present`, `duplicated_bodies_present`, `ast_call_without_kwarg`, `ast_relationship_missing_kwarg`, `ast_model_missing_column`, `ast_annotation_contains`, `ast_attr_undeclared`, `attribute_absent_in_dict`, `path_absent`, `path_present`, `package_cycle_exists`, `filename_count_above`, `api_path_resolves`, `count_below`, `count_at_or_above`, `function_len_above`, `ast_forbidden_call_in_function`, `module_imports_above`, `law_measure`, `measure`, `test_global_mutation_unguarded`, `tsconfig_strict_off`, `file_line_count_above`, `symbol_occurrences` — note `measure` and `law_measure` alias the same handler), plus `utf-8-sig` reads. `resolvable=False` for probes that cannot be run against current source.
+- **`probes.py`**: maps `LAW_MEASUREMENT_BY_LAW`, `CLUSTER_MEASUREMENT`, `FINDING_MEASUREMENT` + builder functions wiring probes to findings.
+- **`lawmap.json`**: 325-law coverage table — `benchmark_laws_total = 325`; `enforced_by_check = 126` (law ID → declaring scanners); `candidate_unattributed` = 133 dimensions each mapping to law names that check briefs mention but that carry no formal law reference.
+
+### Layer 2 — `zz_scanners` (92 @check-decorated checks + 10 pre-flight)
+
+Each module registers its checks at import time (`zz_scanners/__init__.py` imports all 24 `s*` modules + `preflight` via `import_module`; import failures are collected, never fatal). Verified counts (from `@check(` decoration in each file, summed = 92):
+
+| Module | @check | Dimension(s) |
+|---|---|---|
+| preflight | 10 (not @check-decorated) | Phase 0 boot / Phase 0.5 pre-flight (blockers emitted in dim 27) |
+| s01 | 7 | 01, 17 |
+| s02 | 4 | 02, 28 |
+| s03 | 7 | 03, 22, 25 |
+| s04 | 5 | 04, 13 |
+| s05 | 7 | 05, 20 |
+| s06 | 5 | 06, 07, 10 |
+| s07 | 2 | 08 |
+| s08 | 1 | 09 |
+| s09 | 3 | 11 |
+| s10 | 1 | 12 |
+| s11 | 4 | 14, 15, 26 |
+| s12 | 2 | 16, 23 |
+| s13 | 4 | 18 |
+| s14 | 3 | 19 |
+| s15 | 5 | 21, 24, 27 |
+| s16 | 3 | 14 extension (design/system colour drift, not the prompt's dim 14) |
+| s17 | 5 | 14/12 extension (interaction robustness) |
+| s18 | 3 | 16 extension (feature matrix) |
+| s19 | 7 | 04/27 extension (workflow) |
+| s20 | 2 | 07 extension (db advisor) |
+| s21 | 2 | 14/18 extension (HTTP layer) |
+| s22 | 4 | 14/26 extension (frontend contracts, probe-verifiable) |
+| s23 | 1 | law-coverage accounting (dimension 29) |
+| s24 | 5 | declared laws (dimension 30) |
+
+**s22/s23/s24 are post-v2 additions** (written after PLAN.md v2 on 2026-10-02) and are absent from v2's module list. `preflight` is not `@check`-decorated; it registers 10 pre-flight checks in `preflight.CHECKS`.
+
+### Layer 3 — `zz_integrations` (optional truth-seeking tools)
+
+`http_probe.py`, `browser_probe.py`, `db_probe.py`, `ollama_probe.py`, `load_probe.py`. Every external command is optional: failures are captured as `ToolResult` and never abort the audit. These run only with `--browser --llm --db --load`; in `--fast`/`--no-tools` mode the report shows which integration evidence is missing rather than guessing.
+
+### Layer 4 — `zz_core/probe.py` + `measurements.py` (re-verification)
+
+**Why this exists.** A finding's `current` is prose. Prose cannot be verified without guessing, and guessing is what produced every `FALSE_POSITIVE` and `WRONG_LOCATION`. A probe is the machine-checkable form of the same claim: the verifier runs it against current source and gets a boolean.
+
+**Probe semantics (learned rules):**
+- A detector may not emit a probe it cannot itself run — otherwise the bug moves into the probe and the verdict becomes *confidently* wrong.
+- A probe names a node, not a shape — `ast_relationship_missing_kwarg` pins the call name and line; a looser variant matched whichever relationship happened to be nearby and produced false positives.
+- Absence probes must prove absence; a value supplied by a declarative base satisfies the requirement (probe resolves the base before reporting absence).
+- `text_matches` / `text_absent` hold while the code is unchanged and fail the moment it changes; `resolvable=False` (file gone, scope unsupported) → `UNVERIFIABLE`, never a pass.
+- Location proof is free: does the cited file exist, does the cited line exist? A finding whose `path:line` no longer resolves is a `WRONG_LOCATION`.
+- BOM handling: `ProbeRunner.text()` uses `utf-8-sig` like the scanner side.
+- Migration-destructive classification uses DROP / TRUNCATE / DELETE-without-WHERE / `ALTER…DROP` / `ALTER COLUMN TYPE` — bare `execute` is not destructive.
+
+### Layer 5 — `logs/` (streaming state)
+
+`run.json` / `checkpoint.json` (orchestration), `findings.jsonl` (emitted claims), `observations.jsonl`, `verdicts.jsonl` (adjudicated), `plan.json`, `facts.json` (116 aggregates), `tool_ledger.json`, `recommendations.jsonl` (+ `rec_*.jsonl` per-area dumps), 31 per-dimension raw logs, runtime probes (`browser_results.json`, `db_results.json`, `load_results.json`, `llm_results.json`, `http_probe.log`, `llm_cache.json`), `verification_summary.json`.
+
+## 3 · CLI contract (verified against `main(argv=None)` in each entry point)
 
 ```
-Phase 0    boot smoke test      (preflight.py::boot_smoke)
-Phase 0.5  pre-flight checks    (preflight.py::preflight — 10 checks)
-Pass 1     inventory/observe    (util.walk + every scanner's observe_*)
-Pass 2     diff/classify        (scanner check functions -> Findings)
-Rollups    contradictions, anti-patterns, chains, feature health, alignment, mandatory checklist
-Gate       27 blockers, 18-condition production readiness
-Report     zz_core/report.py -> zozi_forensic_audit.md
-Integrate  browser/ollama/db/load results merged when present (clearly labelled)
-Update     _most_imp_docx/PRODUCTION_READINESS_CHECKLIST.md with current evidence-based status
+python _zozi_audit/zozi_audit.py
+    [--root .]
+    [--out _zozi_audit/zozi_forensic_audit.md]
+    [--workers 10]                       # concurrent checks, max 10
+    [--fast]                             # static checks only
+    [--full]                             # run every available tool (default)
+    [--no-tools]                         # never spawn subprocesses
+    [--dimensions 01,06,18]
+    [--browser] [--browser-base URL]
+    [--llm] [--ollama-url URL] [--ollama-model M] [--ollama-limit 25]
+    [--db] [--dsn DSN]
+    [--load] [--load-url URL]
+    [--quiet]
+    [--check-timeout 900.0]
+    [--self-test]                        # regression gate, delegates to tests/run_tests.py
 ```
 
-Parallel execution: each registered check runs as a task in a 10-worker pool.
-`--workers N` overrides (cap 10 enforced). `--fast` runs deterministic static
-checks only; `--full` (default) also runs tool-backed checks (ruff/pytest/tsc/
-alembic/pnpm/playwright/ollama) with per-command timeouts.
-
-Exit codes: `0` report written; `2` fatal precondition (no repo root / no backend);
-`3` report written but with pre-flight blockers (still success — audit continues by design).
-
----
-
-## 3 · Canonical constants (`zz_core/constants.py`)
-
-| Constant | Content / purpose |
-|---|---|
-| `CANONICAL_MODULES` | `{admin, customer, employee, logistics, supplier}` (Law 13) |
-| `CANONICAL_DOMAINS` | 15 domains (Law 12) |
-| `APPROVED_EXTRA_SCHEMAS` | `media, treasury, ai, configuration` |
-| `FORBIDDEN_SCHEMAS` | `core, platform, identity` |
-| `CANONICAL_TOPLEVEL` | allowed entries at `backend/` root |
-| `FORBIDDEN_ROOT_DIRS` | `utils, routers, controllers, services, models, db` |
-| `CANONICAL_PROVIDER_DIRS` | approved provider subpackages |
-| `KNOWN_PROVIDER_EXTRAS` | observed non-canonical providers (news, automation, scanner, voice, analytics) |
-| `PY_VERSION_PINS` | parsed from `TECHNOLOGY_STACK.md` table (runtime extraction, with embedded fallback map) |
-| `JS_VERSION_PINS` | same, for web/mobile/shared |
-| `FORBIDDEN_PY_PACKAGES` | psycopg/psycopg2, python-jose, pytz, tzlocal, python-magic, prometheus-client, paypal-payments-sdk (exact TECH string) |
-| `UNAPPROVED_ALTERNATIVES` | slowapi, limits (not chosen; canonical limiter is fastapi-limiter-valkey) |
-| `FORBIDDEN_JS_PACKAGES` | `@tanstack/react-query`, `swr`, Pages-Router usage, npm/yarn lockfiles |
-| `MIDDLEWARE_ORDER` | canonical 8-layer order (Law 78) |
-| `LAWS` | full structured 325-law table loader from `ARCHITECTURE_STACK.md` (parse at runtime; never hardcode drift) |
-| `SCHEMA_REQUIRED_COLUMNS` | `created_at, updated_at, country_code, is_deleted` |
-| `MONEY_FIELD_HINTS` | regex set: amount, price, total, subtotal, tax, vat, commission, fee, balance, payout, refund, discount, shipping_cost, rate, salary, wage |
-| `ENV_CANONICAL` | env vars parsed from `TECHNOLOGY_STACK.md` §20 (name, secret, required, default) |
-| `PHASES` | emergency..defer |
-
-Constants are **derived from the benchmark docs at runtime** (parsers in
-`s02_technology.py` / `s09_environment.py`) so the audit never goes stale if the
-docs change; the embedded fallback is only used when parsing fails.
-
----
-
-## 4 · Finding & observation schema (`zz_core/model.py`)
-
-```python
-@dataclass(slots=True)
-class Finding:
-    id: str                    # PREFIX-nnn, stable prefix map below
-    dimension: str             # "01_architectural" ... "28_supply_chain"
-    phase: str                 # emergency|boot|tech|db|logic|arch|security|payment|compliance|frontend|mobile|testing|infra|docs|defer
-    status: str = "NEW"        # NEW (this run) — audit never compiles/resolves
-    cluster: str = ""          # CLUSTER-<slug>
-    file: str = ""             # repo-relative
-    line: int = 0
-    current: str = ""          # what is there now (quoted evidence)
-    target: str = ""           # what should be there (law/doc citation)
-    delta: str = ""            # one sentence
-    fix: str = ""              # one verb + one target
-    effort: str = "S"          # S<=1h | M 1-4h | L >4h
-    priority: str = "P2"       # P0..P3 per §6.1 matrix
-    confidence: int = 3        # 1..5
-    evidence_strength: str = "single"   # single|multiple|triangulated
-    truth_level: str = "L0"    # L0|L1|L2|L3
-    claim_state: str = "VERIFIED"       # VERIFIED|INFERRED|UNKNOWN|CONTRADICTED
-    sibling: str = ""          # same-layer file that does it right
-    verify: str = ""           # exact shell command
-    test: str = ""             # test path that must exist/pass
-    rollback: str = "git revert <commit>"  # or flag|migration|irreversible
-    blast_radius: str = ""
-    depends_on: str = ""
-    blocks: str = ""
-    completion_blocker: str = "no"      # yes|partial|no
-    laws: tuple[int, ...] = ()          # implicated law numbers
-    snippet: str = ""                   # <= 400 chars quoted evidence
-    notes: str = ""
-    origin: str = "static"              # static|tool|browser|llm|db|prior-audit
-
-@dataclass(slots=True)
-class Observation:            # Pass 1 raw observation (drives 06-equivalent appendix)
-    scope_type: str           # file|route|table|event|job|page|screen|package|env_var|migration|test|provider|feature|chain|build_step|preflight_check
-    scope_id: str
-    path: str; line: int
-    dimension: str
-    truth_level: str
-    claim_state: str
-    evidence: str
-    note: str = ""
-    cluster: str = ""
-
-@dataclass
-class ToolResult:
-    name: str; cmd: str; exit_code: int|None; duration_s: float
-    stdout_tail: str; stderr_tail: str; available: bool; skipped_reason: str = ""
-
-@dataclass
-class ScanContext:
-    root: Path; backend: Path; frontend: Path; out_dir: Path
-    py_files: list[Path]; ts_files: list[Path]; docs: list[Path]
-    inventory: dict[str, Any]      # lazily-built shared facts (routes, models, tables, features, envs, imports)
-    tools: dict[str, ToolResult]   # tool availability + outputs
-    options: dict[str, Any]        # flags (fast/full/browser/llm/workers)
-    def rel(self, p) -> str        # path relative to root
-    def line_of(self, p, needle) -> int
+```
+python _zozi_audit/zozi_verify.py [--logs _zozi_audit/logs] [--out _zozi_audit/zozi_verification.md]
+    [--cluster CLUSTER-...] [--limit N] [--strict]
 ```
 
-**ID prefixes:** ARCH, TECH, LOGIC, OPS, WIRE, DB, TF, PROV, LAW, MIG, ENV,
-TEST, D2P, WEB, MOB, FEAT, FILE, SEC, PERF, OBS, CONTRAD, AP, INTENT, BROWSER,
-DRIFT, ALIGN, BLOCK, SC (supply chain).
+```
+python _zozi_audit/zozi_compile.py [--logs _zozi_audit/logs] [--out _zozi_audit/zozi_remediation_plan.md]
+    [--json] [--wave N] [--status ID=pending|in_progress|done|dismissed]
+    [--list] [--check CLUSTER-...]
+```
 
----
+- `--fast` skips subprocess tools (ruff/pytest/tsc/next/alembic/pnpm) and integrations.
+- `--full` (default) runs everything available, each with timeouts and `ToolResult` ledger entries.
+- Failures of optional integrations never abort the run.
+- **The three phases are ordered and dependent.** `zozi_verify.py` reads `logs/findings.jsonl`;
+  `zozi_compile.py` reads `logs/findings.jsonl` **and** `logs/verdicts.jsonl`. Compiling without
+  verifying produces a plan with zero fix instructions and an explicit warning — the intended
+  failure mode, not a bug.
+- `zozi_verify.py --strict` exits non-zero when the false-positive rate exceeds 20%, making
+  "is this plan safe to execute" a CI-checkable question.
+- **No `plan_status.json` in the current code.** PLAN.md v2 listed `plan_status.json` in
+  `logs/`; the current compiler does not write or read it (step-state round-trip is not
+  implemented). `zz_core/allowlist.yaml` is also absent.
+- **Phase naming:** the suite uses wave-numbered phases 0–5 with titles stored in
+  `zozi_compile.PHASE_TITLES`, not "Phase A/B/C":
+  - `0`: Restore the ability to verify anything (build / boot / test / migrate)
+  - `1`: Fix the hard blockers that prevent correct behaviour
+  - `2`: Close correctness and security defects
+  - `3`: Close coverage, quality and performance defects
+  - `4`: Verification tasks for untrusted claims
+  - `5`: Improvement track — recommendations (not release-gating)
+  The report labels its precondition table "Phase 0 / 0.5" and the compilation step "Phase 5".
+  (PLAN.md v3's "PHASE A / B / C" labels appear in no code; they have been corrected here.)
 
-## 5 · Function inventory — `zz_core`
+## 4 · Report layout (`zozi_forensic_audit.md`)
 
-### `zz_core/util.py`
-| Function | Responsibility |
-|---|---|
-| `walk_files(root, include, exclude)` | bounded recursive walk, symlink-safe, ignore directories |
-| `is_generated(path)` | detect minified/generated/pyc/binary |
-| `read_text(path, max_bytes)` | tolerant UTF-8/UTF-16 read, returns `(text, truncated)` |
-| `line_of(text, needle, start=0)` | 1-based line for a substring |
-| `snippet(text, line, pad=2, width=400)` | quoted evidence window |
-| `sha1_file(path)` / `sha1_text(text)` | duplicate detection, drift fingerprints |
-| `iter_python(paths)` | yields `(path, text, ast_tree|None, parse_error)` |
-| `ast_imports(tree)` | list of `(module, names, lineno, kind)` incl. relative imports |
-| `ast_calls(tree, names)` | call-site extraction with line numbers |
-| `module_of(path, root)` | canonical dotted module name |
-| `is_async_function(node)` / `async_functions(tree)` | async detection |
-| `iter_functions(tree)` | `(qualname, node, start, end, depth)` |
-| `complexity_of(node)` | branch count approximation |
-| `normalized_hash(node)` | AST-normalised body hash (DRY detection) |
-| `grep_files(paths, pattern, flags)` | regex scan with line numbers, bounded results |
-| `find_endpoints(paths)` | FastAPI decorator extraction (`@router.get/post/...`, `@app.*`) |
-| `parse_requirements(path)` | PEP-508 tolerant requirement parser |
-| `parse_package_json(path)` | tolerant JSON/JSONC read |
-| `parse_yaml_lite(path)` | minimal YAML subset parser (workflows/docker-compose) — no PyYAML dependency |
-| `parse_markdown_tables(text)` | benchmark-doc table extraction (versions/env vars/laws) |
-| `percentile(values, p)` | load-probe stats |
-| `fmt_seconds(s)` / `fmt_bytes(n)` | report formatting |
+The report has 11 numbered sections + 3 appendices (186 heading levels total), generated with run
+metadata header:
 
-### `zz_core/tools.py`
-| Function | Responsibility |
-|---|---|
-| `which(cmd)` | executable lookup (PATHEXT-aware on Windows) |
-| `run(cmd, cwd, timeout, env)` | subprocess with timeout, capture, truncation, never raises |
-| `probe_python()` / `probe_node()` / `probe_pnpm()` / `probe_ruff()` / `probe_pytest()` / `probe_alembic()` / `probe_playwright()` / `probe_ollama()` / `probe_git()` | availability + version |
-| `boot_smoke(ctx)` | `python -c "from backend.main import app; print(len(app.routes))"` + adapted `cd backend; python -c "from main import app"` |
-| `run_pytest_collect(ctx)` | `pytest --collect-only -q` with timeout, parse errors |
-| `run_pytest_architecture(ctx)` | `pytest tests/architecture/` when present |
-| `run_ruff(ctx)` | `ruff check . --output-format=concise` (counts parsed) |
-| `run_tsc(ctx)` | `pnpm exec tsc --noEmit` (web) |
-| `run_next_build(ctx, dry)` | build only in `--full`, parse errors + page count |
-| `run_alembic_heads(ctx)` | `alembic heads` + fallback AST parse |
-| `run_pnpm_install_check(ctx)` | frozen-lockfile check (offline tolerant) |
-| `run_pip_audit(ctx)` / `run_trivy(ctx)` / `run_gitleaks(ctx)` | optional supply-chain tools |
-| `run_playwright(ctx, spec)` | optional browser probe handoff |
-| `ollama_chat(ctx, prompt, model)` | thin HTTP call to Ollama `/api/chat` (stdlib urllib) |
-| `git_info(ctx)` | HEAD sha, branch, dirty count |
+1. **Header** (generated timestamp, run ID, commit, mode, workers, repo root, benchmark list,
+   surface: 2107 Python / 1216 TS / 3806 total) + `## 0 · Pre-conditions (Phase 0 / 0.5)` — a
+   10-row check table (boot smoke, env vars, DB, Valkey, tests, type-check, lint, alembic,
+   lockfile, architecture) with verdict line: **NOT PRODUCTION READY · 82 hard completion
+   blocker(s)**.
+2. `## 1 · Headline numbers` — findings 1345; P0/1/2/3 = 100/359/689/197; blockers 82/199/1064;
+   clusters 135; files with findings 659; contradictions 5; anti-pattern categories 7 (11 in
+   `facts.json`); chains 7; browser steps 71; LLM hotspots 0; HTTP probed 0; recommendations 19;
+   estimated P0+P1 effort ~1032h; coverage 28/28 dimensions.
+3. `## 2 · Completion blockers (fix before anything else)` — grouped `yes` then `partial`.
+4. `## 3 · Top findings (priority ranked)`.
+5. `## 4 · Clusters (shared root causes)`.
+6. `## 5 · Dimensions` — one subsection per dimension 01–30, each with Summary / Findings / "Over
+   all"; dimension 09 includes a **Law matrix (1-325)**.
+7. `## 6 · Cross-cutting passes` — 6.1 Chains (7 chains with step evidence), 6.2 Contradictions
+   (5, never silently resolved), 6.3 Anti-patterns, 6.4 Feature health, 6.5 Code intent, 6.6 AI
+   drift, 6.7 Code alignment (frontend << backend << mobile), 6.8 Browser behavior, 6.9 Supply
+   chain security, 6.10 LLM semantic review (Ollama, L2 only), 6.11 Live database drift,
+   6.12 Load / latency probe.
+8. `## 7 · Production readiness · 18-condition gate` — pass/fail/unverifiable + evidence, plus
+   Unverifiable conditions and Waivers.
+9. `## 8 · Design, interaction, taxonomy, workflow & data measurements` — design system,
+   interaction robustness, feature & taxonomy, HTTP layer (live responses), settings contract,
+   workflow & automation, database management.
+10. `## 7 · Recommendations & automation opportunities` — 8 area tabs (automation, data,
+    workflow, design, qa, frontend, finance, ops). (Section numbering in the rendered report is
+    0–8 plus appendices; PLAN.md v3's §4 described it as 13 sections — the current render has 11
+    numbered sections.)
+11. `## 8 · Remediation plan` — completion blockers first, phase execution order by package, P0
+    table (100 findings), KEEP/HARDEN candidates.
+12. **Appendix A · Tool-run ledger** (cmd, exit, duration, tail).
+13. **Appendix B · Coverage & method** — exclusions, what could not be verified and why.
+14. **Appendix C · Auditor self-check** — each check's run status, files touched, findings
+    produced.
 
-### `zz_core/registry.py`
-| Function | Responsibility |
-|---|---|
-| `check(name, dimension, phase, instructions)` | decorator registering a check task |
-| `all_checks()` | ordered registry |
-| `run_checks(ctx, names=None, workers=10)` | ThreadPoolExecutor, per-check isolation (exceptions -> findings), progress to stderr |
-| `CheckResult` | `(findings, observations, tool_results, facts)` |
-| `group_by_dimension(results)` | feeds report + JSONL |
-| `dedupe(findings)` | stable de-duplication by `(file,line,current,target)` keeping highest confidence |
-| `cap_workers(n)` | enforce `1 <= n <= 10` |
-
-### `zz_core/logs.py`
-| Function | Responsibility |
-|---|---|
-| `RunLog` | JSONL per-dimension writers, checkpoint after each phase, `run.json` metadata |
-| `write_jsonl(path, rows)` | append-safe |
-| `checkpoint(phase, files, findings, next)` | resume state (§0.13 of the prompt) |
-| `load_checkpoint()` | resume support for re-runs (statuses stay NEW/DEFERRED only) |
-
-### `zz_core/report.py`
-| Function | Responsibility |
-|---|---|
-| `render(ctx, results)` | build the complete markdown document |
-| `render_header` | run metadata, commit, preconditions table, method, coverage |
-| `render_exec_summary` | headline numbers + top-20 + completion blockers |
-| `render_dimension(result)` | per-dimension: summary, findings table (full 23 columns), observations, problems/solutions/suggestions, corrections-prioritized |
-| `render_chains` / `render_contradictions` / `render_anti_patterns` / `render_feature_health` / `render_alignment` / `render_ai_drift` / `render_browser` / `render_supply_chain` | cross-cutting sections |
-| `render_readiness` | 18-condition gate with pass/fail/unverifiable + evidence |
-| `render_remediation` | P0–P3, phases, clusters, KEEP/HARDEN candidates |
-| `render_appendix` | observations sample, tool-run ledger, uncovered areas, self-audit report |
-| `write(report_path)` | atomic write (tmp + replace) |
-
----
-
-## 6 · Function inventory — `zz_scanners` (checks with IDs)
-
-Each scanner module exports `register(reg)`; every check is registered via
-    `@check(...)` with an instruction docstring. Counts below: **71 checks**.
-
-### `preflight.py` — Phase 0 / 0.5 (build blockers, ID prefix `BLOCK`)
- 1. `boot_smoke` — root import + adapted import; route count; skipped-router detection from stderr; writes `BLOCK-boot-*`.
- 2. `preflight_env` — required env vars present in `.env.example` / typed settings; missing default; secret handling.
- 3. `preflight_db` — `DATABASE_URL` resolvable + reachable (optional driver), else `unverifiable`.
- 4. `preflight_valkey` — URL scheme + ping when driver present.
- 5. `preflight_tests` — pytest collection errors parsed per file.
- 6. `preflight_tsc` — TypeScript error count + first 20 errors.
- 7. `preflight_lint` — ruff error count (top rules) or skip.
- 8. `preflight_migrations` — `alembic heads` + AST fallback; head count; verify `alembic.ini` presence at `backend/alembic.ini` (or confirm env.py-based config is used).
- 9. `preflight_lockfiles` — uv.lock/pnpm-lock vs requirements/package.json sync.
-
-### `s01_architecture.py` — dims 01 + 17 (ID prefixes `ARCH`, `FILE`)
- 10. `extra_modules_and_domains` — 6th module, 17th domains, approved extras, forbidden schemas-dirs.
- 11. `root_discipline` — forbidden root dirs/files; temp/debug scripts (`_tmp_*`, `health_test_*`, `fix_*`, `debug_*`); run_tests.*; single canonical runner check.
- 12. `import_direction` — full AST import graph; per-law checks (L1, L97–L106): domains→modules, infra→above, kernel isolation, providers purity, middleware scope, jobs scope, rbac scope; cycle detection (L98).
- 13. `router_thinness` — router bodies: DB session usage, business-branch count, service-call count, unregistered routers (routers/__init__ lists), decorator-less router files.
- 14. `cross_domain_channels` — direct cross-domain imports outside `events/subscribers/ports/read_models`; write bypass; wildcard ports; lazy service locators; allowlist audit (L7) with dated-removal check; `DOMAIN_ALLOWLIST.yaml` parse (must only shrink; entries without removal date are violations).
- 15. `domain_structure_completeness` — per-domain required dirs/files (services/models/schemas/policies/events/subscribers/ports/features/read_models).
- 16. `module_structure_completeness` — per-module auth/routers/serializers; router categories.
- 17. `dead_code_and_duplicates` — unreferenced modules, duplicate file hashes, duplicate function bodies, orphan services/routes; large-file split candidates (>1000 lines).
-
-### `s02_technology.py` — dims 02 + 28 (IDs `TECH`, `SC`)
-18. `py_dependency_audit` — parse versions from TECHNOLOGY_STACK vs requirements*.txt/pyproject; per-package mismatch findings; forbidden packages (declared + imported); undeclared imports (`fastapi_limiter_valkey` class of bug); unused declared packages.
-19. `js_dependency_audit` — web/mobile/shared package.json vs pins; forbidden JS packages (react-query/SWR); missing canonical packages; lockfile presence/pinning (exact vs caret); npm/yarn artifacts.
-20. `runtime_versions` — Python/Node/Postgres/base-image drift (Dockerfiles, compose, CI, nvmrc).
-21. `package_manager_policy` — uv vs pip in Docker/CI; pnpm vs npm; packageManager field.
-22. `cve_and_licenses` — optional pip-audit/pnpm audit/Trivy parsing; else static advisory table + `unverifiable` notes.
-23. `sbom_and_signing` — SBOM tooling in CI, cosign usage, artifact retention.
-
-### `s03_logic.py` — dims 03 + 22 + 25 (IDs `LOGIC`, `AP`, `DRIFT`)
-24. `money_type_audit` — AST: `Float` columns, `float()` casts near money terms, `float:` annotations, `round()` on money, Pydantic float money fields, serializer Decimal→float leaks; per-calculation precision/rounding tick-list (commission, tax, discount, totals, FX).
-25. `silent_except_audit` — `except` blocks with no log/raise; finance-path escalation to P0; counts per domain.
-26. `blocking_io_audit` — `time.sleep`, `requests.*`, `run_until_complete`, sync `open/read`, `subprocess.run` inside `async def`; loop-blocking patterns.
-27. `idempotency_audit` — payment/order/refund/webhook handlers lacking Idempotency-Key enforcement; optional vs required key.
-28. `transaction_and_state_audit` — autocommit, commit-in-router, multi-write without transaction; refund/cancel state transitions vs declared machines; illegal edges.
-29. `magic_numbers_and_lengths` — magic numeric constants in money paths; functions >50 lines; nesting >4; TODO/FIXME without ticket/date (L62).
-30. `unbounded_cache_audit` — module-level dict/list caches without TTL/size; `lru_cache(maxsize=None)`.
-31. `default_masks_failure` — truthy-string config, defaults that hide misconfiguration (APP_ENV/VALKEY_URL/CELERY_BROKER_URL/FRONTEND_URL class), "not yet wired" strings, `pass`-only handlers, comment/code divergence, stub/NotImplemented counts (AP categories).
-32. `duplicate_logic_and_drift` — copy-paste drift via normalized-AST hashes; phantom imports (import targets not resolvable in tree); docstring drift; unused parameters; naming drift; commented-out code blocks.
-
-### `s04_operations.py` — dims 04 + 13 (IDs `OPS`, `D2P`)
-33. `jobs_audit` — enumerate jobs/*; celery registration (include/beat schedule), retry/backoff, DLQ, timeouts, concurrency/rate limits, idempotency, orphan jobs.
-34. `health_checks_audit` — `/health`, `/health/deps`, `/health/ready` definitions; fail-closed analysis (503 paths); dependency coverage (DB, Valkey, R2, email, payments); readiness flags.
-35. `ci_cd_audit` — `.github/workflows/*`: pre-deploy migrations, health gate, rollback workflow, environment promotion, secret scanning, dependency scanning, artifact/cache config, permissions block (dim 28 overlap), pre-commit hooks (ruff/mypy/import-linter/arch tests).
-36. `deployment_assets_audit` — Dockerfiles (multi-stage, base, non-root user, healthcheck), compose (services, limits, restart policies), Caddyfile, Makefile, runbooks under docs/, SETUP.md, rollback.
-37. `feature_flags_and_config_profiles` — typed flags via pydantic-settings; env-specific profiles; raw os.getenv in providers/jobs; flag defaults that disable security (rate-limit/captcha).
-
-### `s05_wiring.py` — dims 05 + 20 (IDs `WIRE`, `OBS`)
-38. `middleware_pipeline_audit` — orchestrator order vs canonical 8 layers; duplicates/missing; registration of CSRF/security headers/rate-limit/device binding.
-39. `auth_ws_audit` — every websocket route: JWT decode + expected_type + role checks; unauth broadcast patterns.
-40. `feature_gate_coverage` — every non-public route: `get_current_user`/`require_*` presence; gates whose literal not in catalog (L4); public router classification.
-41. `rls_wiring_audit` — `set_rls_context` body (SET LOCAL vs ContextVar); `current_setting` variable names vs middleware; double implementation; session-level SET forbidden.
-42. `event_bus_audit` — publishers/subscribers: which events defined, which published, post-commit usage, consumer-group registration, DLQ, retry/backoff, sync-in-transaction, stub subscribers (count per domain).
-43. `resilience_audit` — circuit breakers (pybreaker/registry), retries 1-2-4-8+jitter, timeouts on outbound, graceful degradation, bulkheads/semaphores.
-44. `observability_audit` — structlog usage vs print, request-id propagation, metrics endpoint/instrumentator, error tracker DSN, tracing setup, PII in log statements, log retention enforcement, alert rules/monitoring assets.
-
-### `s06_database.py` — dims 06 + 07 + 10 (IDs `DB`, `TF`, `MIG`)
- 45. `engine_and_pool_audit` — pool_size/max_overflow/recycle/statement timeout vs L47; asyncpg `statement_cache_size=0`; read-replica wiring (`get_read_db` usage); replica URL.
- 46. `orm_table_audit` — every model: `__tablename__`, schema declaration, forbidden schemas, required columns, naming lint, money Numeric-only, `country_code` String(2), FK ondelete, FK indexes, soft-delete, server-default timestamps, duplicate table names (L51), missing `__table_args__`.
- 47. `live_db_drift` — optional DB probe: ORM vs actual tables/columns (missing tables, orphan columns, unmapped tables); SQLite local files or Postgres DSN.
- 48. `n_plus_1_and_queries` — relationship() lacking lazy=selectin/joined; `text("SELECT *")`; `ilike('%…%')` search; OFFSET on hot lists; missing indexes on FK columns.
- 49. `migration_history_audit` — AST parse every version: revision/down_revision graph; heads; cycles; orphan parents; duplicate revision ids; destructive ops; expand-contract; downgrade presence; `migration_helpers`-style phantom imports; DSN directness (MIG-).
- 50. `rls_policy_sql_audit` — policies SQL files: per-table coverage, variable names, `WITH CHECK`, FORCE RLS; policy↔table match.
- 51. `create_all_audit` — verify `create_all` is dev-only and not used in production migrations (Law 6/A-22); if present in production code, flag as `unverifiable` fallback.
-
-### `s07_providers.py` — dim 08 (ID `PROV`)
-51. `provider_inventory` — enumerate providers/*; category; docstring intent; HAS_ flags; `health_check()`; `async_workers` usage; secrets source; timeouts; retries; circuit breaker; error mapping; test presence; caller services mapping; provider↔domain matrix; missing health/no-timeout/no-retry counts.
-
-### `s08_laws.py` — dim 09 (ID `LAW`)
-52. `law_parser` — parse all 325 laws from `ARCHITECTURE_STACK.md` §12 into structured rows (id, category, rule, description, why).
-53. `law_checker_engine` — map statically checkable laws to executable predicates (import graph, file placement, naming, schema, security regex, etc.); emit per-law PASS / FAIL / UNVERIFIABLE + evidence; CI/test presence per law (test file mapping, workflow step); exemptions documented?
-54. `law_test_presence` — architecture test files (`test_import_laws.py`, `test_feature_catalog.py`, `test_schema_discipline.py`, `test_model_relocation.py`, gates) exist and collect.
-
-### `s09_environment.py` — dim 11 (ID `ENV`)
-55. `env_var_inventory` — every `os.getenv`/`os.environ`/Settings field: path:line, typed?, documented in TECHNOLOGY_STACK, in `.env.example`, default, secret, deprecated aliases (REDIS_URL/S3_*/ENCRYPTION_KEY), prod-required present; drift both directions; `.env` committed check.
-56. `country_config_audit` — country-specific tax/commission/gateway/logistics/legal config; DEFAULT_COUNTRY drift; locale env vars.
-
-### `s10_tests.py` — dim 12 (ID `TEST`)
-57. `test_inventory_audit` — per test file: type (unit/integration/arch/e2e), imports resolvable, collected?, assertions, skips/xfails, external SDK mocks (respx/monkeypatch), flake risk, isolation (transactions), orphan tests, per-domain smoke presence, coverage per dimension (money/security/browser), test-to-fix pairing candidates.
-58. `architecture_test_audit` — forbidden-import tests, feature catalog test, schema discipline test, model-relocation test, Law 70 mapping.
-
-### `s11_frontend.py` — dims 14 + 15 + 26 (IDs `WEB`, `MOB`, `ALIGN`)
-59. `web_route_tree_audit` — pages/layouts/loading/error per route; client vs server; dynamic imports; orphan pages; duplicate route trees (`logistics-partner` vs `-partners`); rewrites (`/hr/*`) vs backend presence.
-60. `web_component_a11y_audit` — modals (aria-modal/role/focus trap/escape/backdrop), buttons (aria-label/loading/disabled/touch target), forms (RHF+Zod, error display, success), images (`next/image`, AVIF, blur), videos (lazy/poster), any-types/console.log/TODO.
-61. `web_api_alignment` — frontend API call sites vs backend routes (method+path normalization), orphan calls, orphan routes, permission strings vs catalog, error-shape and pagination-shape alignment.
-62. `mobile_audit` — Expo config/router groups, OTA (`expo-updates`, manifest ENABLED), secure storage usage, offline handling, push config, native permissions/rationale, payment strategy, dynamic requires of undeclared SDKs, Detox specs, parity with web (screens/stores/api client).
-
-### `s12_features.py` — dims 16 + 23 (IDs `FEAT`, `INTENT`)
- 63. `feature_catalog_audit` — parse `domains/*/features.py` FEATURES dicts; orphans (defined-not-gated) and ghosts (gated-not-defined); per-module/domain/actor grouping; launch-critical tagging; feature tests presence; feature health score (10-component formula) — outcome/invariant/error/security/tests/browser/P0/P1/contradiction/drift signals.
- 64. `feature_stack_list_diff` — reconcile `FEATURE_STACK_LIST.md` against `domains/*/features.py`, registered routes, and tests; flag ~330 features enumerated in the list that lack a matching service/test (FEAT-001..040 class).
- 65. `code_intent_audit` — intent-vs-behaviour heuristics (docstring/name vs body): stub bodies behind live routes, handlers that log-only, "not yet wired" responses, TODO-only services, empty `__init__`, docstring promises without implementation; feeds LLM review queue.
-
-### `s13_security.py` — dim 18 (ID `SEC`)
-65. `security_static_audit` — OWASP A01–A10 checks: hardcoded secrets regexes, JWT type claim, CSRF active, headers, rate-limit fail-closed, password 72-byte, field-encryption coverage (EncryptedString on secret columns), SQL injection (f-string into text()/execute), SSRF (outbound URL validation), auth/access control gaps, logging failures, PII masking, MFA enforcement, CAPTCHA fail-open, WORM mutation, CORS/debug/cookies, payment credential storage, webhook signature verification, PCI-DSS minimization, GDPR/retention/key-rotation presence.
-66. `security_config_audit` — prod-only flags, insecure defaults, secret files tracked in git, `.env` exposure, gitleaks allowlist.
-
-### `s14_performance.py` — dim 19 (ID `PERF`)
-67. `static_performance_audit` — N+1, OFFSET, full scans, missing indexes, cache usage/TTL/invalidation, CDN/image config, bundle config, blocking IO, pool sizing, pagination shape on list endpoints; runtime load probe handoff (p95) when available.
-
-### `s15_crosscut.py` — dims 21 + 24 + 27 (IDs `CONTRAD`, `BROWSER`, `BLOCK`)
- 68. `contradiction_harvest` — systematic doc-vs-code comparisons across 11 categories (code_vs_migration, code_vs_config, target_vs_code, tech_target_vs_lockfile, api_contract_vs_implementation, frontend_vs_backend, doc_vs_code, package_vs_import, feature_flag_vs_gate, browser_vs_static, mobile_vs_web); each with Source A/Source B; user-decision flag; severity.
- 69. `chain_audit` — 7 minimum chains (order placement, payout, return/refund, logistics pickup→delivery, admin ledger→reconciliation, customer registration/KYC, supplier onboarding/listing) plus discovered chains: entry point, happy path, failure paths, rollback, event flow, tests; verdict COMPLETE/PARTIAL/BROKEN/MISSING; project-critical flag.
- 70. `browser_bridge` — split into two outputs: `browser_dim24_historical` (from `_browser_test/BROWSER_TEST_LOG.md` + `COVERAGE_GAPS.md`) and `browser_dim24_fresh` (from `browser_probe` if enabled). If `_browser_test/` is absent, write `phase_precondition_unmet — browser_audit_absent` in dimension 24 and do NOT invent findings. Mark `claim_state=VERIFIED` only for the historical set; fresh findings are `claim_state=INFERRED`.
- 71. `blocker_rollup` — consolidate every `completion_blocker ∈ {yes,partial}`; dependency ordering; pre-flight/boot/security/payment/compliance/test/infra groupings; readiness-condition feed.
- 72. `mandatory_checklist_audit` — verify every item in `PROMPT_FORENSIC_AUDIT.md` §10.5 checklist has at least one finding or `compliant` observation; emit one finding per unchecked box with `project_completion_blocker=yes`.
-
----
-
-## 7 · Integrations
-
-### `zz_integrations/http_probe.py` — the live HTTP layer (v3)
-
-**Why it exists.** Until v3 the audit had **no HTTP dimension at all**: every check
-was static, CLI-based, or in-process ASGI, so nothing ever looked at a real
-response. A CORS preflight answering `405` — which breaks every cross-origin
-write in a browser while looking perfectly healthy to curl and `TestClient` — was
-invisible to the entire suite.
-
-- Boots `main:app` under a real uvicorn on a free port, waits for a **successful
-  HTTP exchange** (not a log line), probes, then terminates the child and drains
-  its output to `logs/http_probe.log`.
-- Speaks HTTP/1.1 over a raw socket via `http.client`, deliberately: a client
-  library would normalise or reject a malformed response before the audit sees it.
-- Issues only `GET`, `OPTIONS` and `HEAD` — it never mutates data.
-- Emits 12 checks: `HTTP-HEADERS` (presence + consistency across a real route and
-  an unknown route), `HTTP-CORS-PREFLIGHT` (status **and** headers),
-  `HTTP-CORS-ORIGIN` (no `*` with credentials), `HTTP-COOKIE-FLAGS`,
-  `HTTP-CSP-SHAPE` (directive names, localhost leakage, deprecated directives).
-- Parses the child's stdout for `level=error` records and reports each as a
-  `HTTP-startup-error` finding with the `AttributeError` name and the
-  `file:line` from the deepest traceback frame. A subsystem that fails at startup
-  and logs "non-critical" is otherwise invisible.
-- `timeout` defaults to 900 s: a 300 s default produced a false "unavailable"
-  verdict while the 10-worker sweep was competing for the same machine.
-
-### `zz_integrations/browser_probe.py` (independently runnable)
-- CLI: `python -m zz_integrations.browser_probe --base-url http://localhost:3000 --api-url http://localhost:8000 --specs all --out browser_results.json`.
-- Detects Playwright (`npx playwright --version`), reuses `_browser_test` config when present; runs preflight/auth/money-path/security-path specs; captures screenshots on failure; records console/network errors; emits per-step `browser_step` observations; coverage-gap list.
-- Degrades to "skipped: playwright/stack unavailable" — never fails the main audit.
-- Main audit merges its `browser_results.json` into dimension 24.
-
-### `zz_integrations/ollama_probe.py` (independently runnable)
-- CLI: `python -m zz_integrations.ollama_probe --url http://localhost:11434 --model phi3:mini --limit 40 --out llm_results.json`.
-- Selects hotspots deterministically: top-N largest/stubbiest/highest-risk files (payment, money, auth, RLS, events) + intent samples.
-- Prompts demand strict JSON: `{verdict, intent, actual, drift, completion_impact, evidence_lines, confidence}`; temperature 0; retries; per-file cache; results merged as `origin=llm`, `truth_level=L2`, `claim_state=INFERRED` and clearly labelled in the report.
-- Never fabricates: unreachable Ollama = skip note.
-
-### `zz_integrations/db_probe.py`
-- CLI: `python -m zz_integrations.db_probe --dsn "$DATABASE_URL" --sqlite zozi.db`.
-- Introspects `information_schema` (Postgres) or `sqlite_master` (SQLite): tables per schema, columns/types, PK/FK/index/RLS status; diffs against ORM inventory; produces `db_drift.json` merged into dims 06/07.
-- Also verifies payment-credential column types and RLS policy presence.
-
-### `zz_integrations/load_probe.py`
-- CLI: `python -m zz_integrations.load_probe --url http://localhost:8000 --paths /health,/rbac/catalog --rps 5 --seconds 20`.
-- Measures p50/p95/p99, error rate; feeds dimension 19 condition 11 (`p95 < 500 ms`); skipped without a live server.
-
----
-
-## 8 · Report layout (`zozi_forensic_audit.md`)
-
-1. **Header + verdict + preconditions** (boot smoke, DB, Valkey, tests, builds, browser, LLM, DB probe).
-2. **Headline numbers** (files inspected, findings, P0–P3, blockers yes/partial/no, clusters, contradictions, anti-patterns, drift, alignment, coverage %, effort, **recommendation count**).
-3. **Completion blockers** (all yes-first).
-4. **Top 20 findings** + **top 10 clusters**.
-5. **Dimensions 01–28** — each: Summary block, Findings table (23 mandatory columns), Observations, Problems/Solutions/Suggestions, Corrections-required (prioritized table). A dimension with observations but no findings renders **"NOT VERIFIED"**, never a clean PASS; a dimension that produced neither renders **"NO EVIDENCE"**.
-6. **Cross-cutting:** Contradictions (with Source A/B and user-decision flags, **also emitted as dimension-21 findings**), Anti-patterns, Chains (7+ with step evidence), Feature health, Code intent, AI drift, Code alignment, Browser behavior (consumes `_browser_test/`; a Playwright run that collected **zero** tests is a P0 finding, not a PASS), Supply chain, Mandatory checklist audit.
-7. **Production readiness** — 18 conditions, pass/fail/unverifiable + evidence + unverifiable explanations.
-8. **Design, interaction, taxonomy, workflow & data measurements (§8)** — every number measured in-run, grouped by area. This is the section that answers "what does the UI look like, what can the user click, what is tested, how deep is the taxonomy, what waits for a human, what is automated".
-9. **Recommendations & automation opportunities (§7)** — grouped by area, each with why-now / current state / proposal / benefit / effort / prerequisites / evidence. Explicitly labelled **not** completion blockers.
-10. **Remediation index** — clusters, KEEP/HARDEN candidates, dependency graph, effort totals.
-11. **Appendix A:** tool-run ledger (cmd, exit, duration, tail — head **and** tail kept, because a summary line lives at the end).
-12. **Appendix B:** coverage map & exclusions; what could not be verified and why.
-13. **Appendix C:** auditor self-check — each check's run status, files touched, findings produced.
-
----
-
-## 8.5 · Phase B — the compilation step (`zozi_compile.py`)
+## 5 · The compile step (`zozi_compile.py`)
 
 ```
 python _zozi_audit/zozi_audit.py     # → zozi_forensic_audit.md   (fact)
+python _zozi_audit/zozi_verify.py     # → zozi_verification.md     (adjudicated)
 python _zozi_audit/zozi_compile.py   # → zozi_remediation_plan.md (intent)
 ```
 
-The audit alone leaves the reader with 1,800 findings and no order. The compiler
-turns them into a plan an agent or a person can follow.
+The audit alone leaves the reader with 1,345 findings and no order. The compiler turns them into
+a plan an agent or a person can follow.
 
-**Inputs:** `logs/findings.jsonl`, `logs/recommendations.jsonl`, `logs/facts.json`,
-`logs/run.json`. **Outputs:** `zozi_remediation_plan.md` and `logs/plan.json`.
+**Inputs:** `logs/findings.jsonl`, `logs/verdicts.jsonl`, `logs/facts.json`, `logs/run.json`.
+**Outputs:** `zozi_remediation_plan.md` and `logs/plan.json`.
 
-**Classification rules**
+**Classification rules:**
 
 | Step kind | When | Wave |
 |---|---|---|
 | `gate` | the check is in a gate cluster (boot, test-collection, migrations, lockfile) **or** a pre-flight row is FAIL | 0 |
 | `fix` | `truth_level=L0` **and** `claim_state ∉ {UNKNOWN, INFERRED, CONTRADICTED}` | 1–3 |
-| `verify` | any untrusted claim | 4 |
+| `verify` | any finding not `CONFIRMED` | 4 |
 | `improve` | sourced from a recommendation; never release-gating | 5 |
 
-Waves 1–3 are then split by priority: `completion_blocker=yes` or `P0` → 1,
-`P1` → 2, `P2`/`P3` → 3.
-
-**Work packages.** A flat list of 1,800 steps is not a plan. Steps are grouped by
-cluster; a cluster with more than 25 steps is split by its dominant file. Each
-package reports: step count, files touched, blocker count, verification count,
-estimated hours, and a one-line focus. Packages are the unit of assignment.
-
-**Waves**
+Waves 1–3 are then split by priority: `completion_blocker=yes` or `P0` → 1, `P1` → 2,
+`P2`/`P3` → 3. A flat list is not a plan: steps are grouped by cluster; a cluster with more than
+25 steps is split by its dominant file. Each package reports step count, files touched, blocker
+count, verification count, estimated hours, and a one-line focus.
 
 | Wave | Title | Why it is there |
 |---|---|---|
-| 0 | Restore the ability to verify anything | A static audit on a project that does not boot, does not migrate, or does not collect its tests produces numbers without meaning |
+| 0 | Restore the ability to verify anything | A static audit on a project that does not boot, migrate or collect tests produces numbers without meaning |
 | 1 | Hard blockers preventing correct behaviour | |
 | 2 | Correctness and security defects | |
 | 3 | Coverage, quality and performance defects | |
 | 4 | Verification of untrusted claims | Never instruct a code change on a hunch |
 | 5 | Improvement track | Recommendations, non-gating, ordered by workload removed |
 
-**Every step carries** `id`, `kind`, `wave`, `fix`, `verify`, `rollback`, `effort`,
-`priority`, `files`, `depends_on`, `truth_level`, `claim_state`. A step that
-cannot be verified is a wish, not a step.
+Only verified evidence becomes a blocking step: a finding whose `claim_state` is `UNKNOWN`/`INFERRED`
+at L0 is a **verification task**, never a fix task. Recommendations are a separate track: they
+never gate release and are ordered after blockers unless they unlock one.
 
-**Progress round-trip:** `--status <ID>=in_progress|done|dismissed` writes
-`logs/plan_status.json`; the next compile renders the recorded state. Step ids
-are derived from stable strings (never `hash()`, which varies with
-`PYTHONHASHSEED`).
+## 6 · Accuracy strategy — the falsification gate (`zozi_verify.py`)
 
-**Other modes:** `--list` (ids and titles), `--check <cluster-substring>` (every
-step for one cluster, with do/verify), `--wave N` (one wave), `--json` (machine).
+**The problem this solves.** The audit makes *claims*. Nothing in the pipeline tries to prove
+them wrong until `zozi_verify.py` runs.
 
-**Measurement gaps are stated explicitly** at the end of the plan: runtime
-behaviour, load/latency, third-party gateway sandboxes, mobile runtime and
-LLM-intent agreement are *not* closable by a static plan, and silence about them
-must not be read as a pass.
-
----
-
-## 9 · Accuracy strategy — the falsification gate (`zozi_verify.py`)
-
-**The problem this solves.** The audit makes *claims*. Nothing in the pipeline
-tries to prove them wrong. This project measured the cost of that gap in its own
-data: the prior run adjudicated 1,359 findings and found
-
-| Verdict | Count | Share |
-|---|---|---|
-| REAL | 910 | 66.9% |
-| ALREADY_FIXED | 265 | 19.5% |
-| FALSE_POSITIVE | 160 | 11.8% |
-| BLOCKED_BY_CONTRADICTION | 23 | 1.7% |
-
-**31% of what a raw audit emits is not actionable as stated.** A remediation plan
-that inherits that noise cannot be followed by an AI without re-deriving every
-step. `zozi_verify.py` is the missing phase between audit and plan.
-
-### Method — refutation-first, not confirmation-first
+**Method — refutation-first, not confirmation-first:**
 
 | Basis | Rule | May conclude |
 |---|---|---|
-| `cluster_recheck` | A **second, independent implementation** of the same question, written against a different mechanism (AST vs regex; declared-field set vs mention scan; live wire bytes vs source text) | `CONFIRMED` or `FALSE_POSITIVE` |
+| `cluster_recheck` | A **second, independent implementation** of the same question (AST vs regex; declared-field set vs mention scan; live wire bytes vs source text) | `CONFIRMED` or `FALSE_POSITIVE` |
 | `token_consistency` | Compares the claim's tokens with the cited line / file / directory tree | **Refutation only.** `ALREADY_FIXED`, `WRONG_LOCATION`, `UNVERIFIABLE` — **never** `CONFIRMED` |
 
-Re-checks are implemented for the clusters that carry the P0 mass:
-`CLUSTER-float-money` (AST; a rate/score/ratio is explicitly not money),
-`CLUSTER-idempotency` (AST annotation + prose detection),
-`CLUSTER-tf-rel-lazy` (AST keyword presence),
-`CLUSTER-settings-contract` (re-parse `Settings` today),
-`CLUSTER-env-undeclared` (`.env.example` + `config.py` today),
-`CLUSTER-http-cors` (does the OPTIONS branch now return without `call_next`),
-`CLUSTER-http-headers` (is `X-XSS-Protection` still emitted),
-`CLUSTER-db-schema-drift` (does the schema appear in ORM metadata today).
+**The three rules that keep the gate itself honest:**
 
-### The three rules that keep the gate itself honest
+1. **A line drift is not a refutation.** If the cited line carries none of the claim's tokens
+   but the tokens exist elsewhere in the file, the verdict is `UNVERIFIABLE` with the drift
+   flagged — not `WRONG_LOCATION`. Token matching on prose cannot prove a finding wrong.
+2. **A directory is not a missing file.** Cluster-level findings legitimately cite a directory
+   (`backend/modules/finance`). Those are adjudicated by scanning the tree. Reporting them as
+   `WRONG_LOCATION` produced spurious mislocations on the first run.
+3. **Absence may be the claim.** When a finding asserts that something is missing and the path
+   is absent, that is *consistent*, so it is `UNVERIFIABLE` with an explicit note, never
+   `WRONG_LOCATION`.
 
-1. **A line drift is not a refutation.** If the cited line carries none of the
-   claim's tokens but the tokens exist elsewhere in the file, the verdict is
-   `UNVERIFIABLE` with the drift flagged — not `WRONG_LOCATION`. Token matching
-   on prose cannot prove a finding wrong; claiming so would reproduce the very
-   false-positive class this project keeps fighting.
-2. **A directory is not a missing file.** Cluster-level findings legitimately
-   cite a directory (`backend/modules/finance`). Those are adjudicated by scanning
-   the tree. Reporting them as `WRONG_LOCATION` produced 311 spurious
-   mislocations on the first run of the gate.
-3. **Absence may be the claim.** When a finding asserts that something is missing
-   and the path is absent, that is *consistent*, so it is `UNVERIFIABLE` with an
-   explicit note, never `WRONG_LOCATION`.
-
-### Compiler gating — the gate is not decorative
-
-`zozi_compile.py` reads `logs/verdicts.jsonl` and:
-
-- **drops** any finding adjudicated `FALSE_POSITIVE` or `ALREADY_FIXED` from
-  every wave, and lists it in a **Rejected findings** appendix with its
-  counter-evidence, so the exclusion is auditable rather than silent;
-- **downgrades** anything not `CONFIRMED` to a `verify` step in **wave 4**,
-  regardless of the priority the audit assigned it;
+**Compiler gating:** `zozi_compile.py` reads `logs/verdicts.jsonl` and:
+- **drops** any finding adjudicated `FALSE_POSITIVE` or `ALREADY_FIXED` from every wave, and
+  lists it in a **Rejected findings** appendix with its counter-evidence, so the exclusion is
+  auditable rather than silent;
+- **downgrades** anything not `CONFIRMED` to a `verify` step in **wave 4**, regardless of the
+  priority the audit assigned it;
 - **emits a `fix` step only for a `CONFIRMED` verdict**;
-- prints a loud gate banner, and a warning when `verdicts.jsonl` is absent.
+- prints a loud gate banner, and warns when `verdicts.jsonl` is absent.
 
-### Current measured state
+**Adjudication metrics** (`logs/verification_summary.json`, generated 2026-10-05T14:46:26):
 
 | Metric | Value |
 |---|---|
-| Findings adjudicated | 1,695 |
-| Independently confirmed | 235 (13.9%) |
-| False positives + wrong locations | 6.1% |
-| Not actionable as stated | 8.9% |
-| P0 noise | 6.3% |
-| Confirmed fix steps in the plan | 235 |
-| Verification tasks (wave 4) | 1,390 |
+| Findings / verdicts | 1345 / 1345 |
+| `CONFIRMED` | 1174 (87.3%) |
+| `UNVERIFIABLE` | 164 (12.2%) |
+| `ALREADY_FIXED` | 7 (0.5%) |
+| `FALSE_POSITIVE` | 0 |
+| `WRONG_LOCATION` | 0 |
+| false_positive_rate_pct | 0.0% |
+| not_actionable_pct | 0.5% |
+| independently_confirmed_pct | 87.3% |
+| `P0` total | 100 · confirmed 77 · false_or_wrong 0 · noise 0.0% |
+| verification basis | probe 1163 · token_consistency 170 · probe_over_recheck_disagreement 9 · cluster_recheck 3 |
+| cross-run disagreements | 9 |
 
-**A 13.9% confirmed share is the honest result, not a defect.** Most clusters
-have no independent re-check, so the default verdict is UNVERIFIABLE rather than
-a guess. The consequence is stated plainly: **the current plan is not safe to
-execute blindly.** Wave 1–3 is small (235 steps); the rest must be adjudicated
-cluster by cluster before an AI is pointed at it.
+**A ~12% unverifiable share is the honest result, not a defect.** Most clusters have no
+independent re-check, so the default verdict is `UNVERIFIABLE` rather than a guess. The
+consequence is stated plainly: **the current plan is not safe to execute blindly.** Wave 4 is
+164 verification tasks.
 
-### Scaling the gate (the work still to do)
+**Compiled plan** (`logs/plan.json`, source run 20261005T143848Z-2dbc4d):
 
-| Priority | Clusters | Why |
-|---|---|---|
-| 1 | `float-money` (35 P0), `settings-contract` (12 P0), `silent-except` (219), `tf-rel-lazy` (174), `module-imports-infrastructure` (156) | highest P0 and volume density |
-| 2 | `router-db-access` (96), `cross-domain-direct` (92), `tf-timestamp-default` (79), `long-function` (60) | volume; each needs an AST re-check, not tokens |
-| 3 | everything else | one-line fallback is honest but not confirming |
-
-Target: `confirmed_pct` above 60% **before** wave 2 is released for autonomous
-execution. Until then the plan's own gate banner is the instruction.
-
-### Older rules retained from v2
-
-1. **Two-source rule:** a finding needs (a) two independent static signals, or
-   (b) one static signal + one tool run, or (c) it is downgraded to
-   `claim_state=INFERRED` / `evidence_strength=single` and capped at P1 unless
-   money/security.
-2. **Line-number truth:** every `file:line` comes from the scanner at scan time
-   from a single AST snapshot per file, via `ast.get_source_segment()` +
-   `node.lineno`. Line numbers are never re-read from a second file open.
-3. **Prior-audit reconciliation:** key is
-   `(dimension, finding_prefix, normalized(file_basename), semantic_snippet_hash)`.
-
-1. **Two-source rule:** a finding needs either (a) two independent static signals, or
-    (b) one static signal + one tool run, or (c) it is downgraded to
-    `claim_state=INFERRED` / `evidence_strength=single` and capped at P1 unless
-    money/security (per §6.3).
-2. **Line-number truth:** every `file:line` is produced by the scanner at scan
-    time from a single AST snapshot per file, using `ast.get_source_segment()` +
-    `node.lineno` from the cached tree. Line numbers are never re-read from a
-    second file open, which can race under a worker pool.
-3. **Allowlist file:** `zz_core/allowlist.yaml` (dated expiry per entry) lists
-   test-context exceptions (e.g., `float` in tests); any other false-positive
-   control requires an explicit dated entry.
-4. **False-positive controls:** generated/vendored exclusions; test-context
-   allowance via the allowlist; syntax-error files reported as parse failures,
-   not as findings about their content.
-5. **Baseline comparison:** the prior `_audit/**` corpus is parsed and each known
-   finding class is explicitly re-tested; the report carries a prior-audit
-   reconciliation column (`confirmed` / `fixed` / `not-found` / `changed`) so we
-   never regress to trusting old numbers.
-6. **Self-audit appendix:** each check reports its run status, files touched and
-   findings produced in Appendix C, so a check that silently returned nothing is
-   visible rather than indistinguishable from a clean dimension.
-
----
-
-## 9.5 · Measured accuracy history — every correction, recorded
-
-Kept because it is the evidence for §9. Each row is a real measurement, not an
-estimate. Every one of these was a defect in the audit's own detection logic.
-
-| Pass | Measurement | Before | After | Cause of the error |
-|---|---|---|---|---|
-| v2 ext. | `inline_style_props` | 1,953 | **302** | React Native has no CSS cascade, so mobile `style={{}}` was counted as web drift |
-| v2 ext. | `unindexed_hot_columns` | 871 | **224** | `Column(..., index=True)` is an index but produces no name in `__table_args__` |
-| v2 ext. | `hardcoded_hex` | 1,062 | **165** | mobile RN literals plus brand SVG / chart palette files, where a literal is correct |
-| v2 ext. | undefined feature gates | 15 | **7** | `require_feature` matched inside comments and docstrings |
-| v2 ext. | celery app | "does not exist" | **found** | searched `backend/` root; it lives at `backend/jobs/celery_app.py` |
-| v2 ext. | toast ratio | 133 success / 15 error | **187 / 780** | counted the words anywhere instead of the `addToast()` call shape |
-| v2 ext. | missing `version` column | 178 "defects" | **0 defects** | no law requires it; demoted to a recommendation |
-| v3 | TS errors | 0 (next to a FAIL) | **119 in 29 files** | `pnpm exec` ran the supply-chain hook instead of tsc |
-| v3 | TS errors (truncation) | 25 | **119** | counts parsed from an elided `stdout_tail` |
-| v3 | arch test summary | `Press Ctrl-Break to quit` | **INCOMPLETE** | the run is killed before pytest prints a summary |
-| v3 | `missing_from_middleware` | 4 "missing" | **0** | headers are applied from a dict in a loop; literal matching cannot see it |
-| v3 | CSP directive gap | "missing" | **none** | broken regex; `object-src`/`base-uri` are present |
-| v3 | CORS attribution | `webhook_verification.py` | **`security_headers.py:78`** | stale duplicate assignment overwrote the correct value |
-| v3 gate | `WRONG_LOCATION` | 340 | **79** | directories were treated as missing files, and a line drift was claimed as a refutation |
-| v3 gate | gate verdicts | — | **1,695 adjudicated** | first run of `zozi_verify.py` |
-
-Rule of thumb this produced: **whenever a count is surprising, re-derive it with
-a different mechanism before believing it.** Every "after" figure above was
-produced that way.
-
----
-
-## 10 · CLI contract
-
-```
-python _zozi_audit/zozi_audit.py [--root .] [--out _zozi_audit/zozi_forensic_audit.md]
-    [--workers 10] [--fast|--full] [--no-tools]
-    [--browser] [--browser-base URL] [--llm] [--ollama-url URL] [--ollama-model M]
-    [--db] [--dsn DSN] [--load] [--load-url URL]
-    [--dimensions 01,02,...] [--resume] [--jsonl]
-    [--include-zones node_modules,.kilo]  (default exclusions always apply)
-
-python _zozi_audit/zozi_verify.py [--root .] [--logs _zozi_audit/logs]
-    [--out _zozi_audit/zozi_verification.md] [--cluster CLUSTER-...]
-    [--limit N] [--strict]
-
-python _zozi_audit/zozi_compile.py [--root .] [--logs _zozi_audit/logs]
-    [--out _zozi_audit/zozi_remediation_plan.md] [--json plan.json]
-    [--wave N] [--list] [--check CLUSTER-...]
-    [--status ID=pending|in_progress|done|dismissed]
-```
-
-- `--fast` skips subprocess tools (ruff/pytest/tsc/next/alembic/pnpm) and integrations.
-- `--full` (default) runs everything available, each with timeouts and `ToolResult` ledger entries.
-- Failures of optional integrations never abort the run.
-- `--http-timeout N` on `zozi_audit.py` bounds the live probe (default 900 s).
-- **The three phases are ordered and dependent.** `zozi_verify.py` reads
-  `logs/findings.jsonl`; `zozi_compile.py` reads `logs/findings.jsonl` **and**
-  `logs/verdicts.jsonl`. Compiling without verifying produces a plan with zero
-  fix instructions and an explicit warning — that is the intended failure mode,
-  not a bug.
-- `zozi_verify.py --strict` exits non-zero when the false-positive rate exceeds
-  20%, which makes "is this plan safe to execute" a CI-checkable question.
-- Re-run behaviour: existing `_zozi_audit/logs/checkpoint.json` is read; statuses remain `NEW`
-  unless `--resume` with a prior report, in which case prior findings are marked
-  `COMPILED`/`RESOLVED`/`DEFERRED`/`INVALID` per rules and never silently dropped.
-- Stale-log control: `check_errors.json` is **deleted** at the start of every run,
-  because a previous run's error file otherwise reads as this run's result.
-
----
-
-## 11 · Step-by-step execution plan (this project) — as built
-
-| Step | Work | Status gate | Done |
+| Wave | Steps | Hours | Blockers |
 |---|---|---|---|
-| P1 | Write this plan file | ✅ | ✅ |
-| P2 | Verify plan assumptions against the codebase with targeted greps/AST probes | before implementation | ✅ |
-| P3 | Implement `zz_core` | syntax + import | ✅ (rebuilt; three files were truncated and had to be reconstructed) |
-| P4 | Implement `preflight.py` + `s01`–`s15` | `--fast --dimensions 01` smoke | ✅ |
-| P5 | Extension modules `s16`–`s21` + `http_probe` + `settings_contract` | `--fast` run, 0 crashed checks | ✅ |
-| P6 | Run `--full`, reconcile every P0/P1 against source, kill false positives | accuracy pass #1 | ✅ (2 verification rounds, 10 wrong rules found and fixed) |
-| P7 | Compare against `_audit/**` prior findings | accuracy pass #2 | ✅ (prior run measured 31% not-actionable — see §9) |
-| P8 | **Build the falsification gate `zozi_verify.py`** | 1,695 findings adjudicated | ✅ |
-| P9 | **Gate the compiler on verdicts** | rejected findings excluded; no fix step without CONFIRMED | ✅ |
-| P10 | Keep `confirmed_pct` above 60% so waves 2–3 are safe for autonomous execution | gate banner turns green | **❌ outstanding — currently 13.9%** |
+| 1 | 77 | 164.0 | 65 |
+| 2 | 286 | 674.5 | 0 |
+| 3 | 811 | 1335.0 | 0 |
+| 5 | 19 | 116.0 | 0 (19 improvements) |
+| **total** | **1193** | **2173.5** | **65** |
 
-**The single outstanding gate is P10, and it is the answer to "can an AI follow
-this plan".** Right now it can follow wave 0 and the 235 confirmed steps. The
-other 1,390 steps are verification tasks, and that is stated in the plan itself
-rather than hidden.
+`steps_out: 1193`, `release_gating_steps: 1174`, `improvement_steps: 19`, `confirmed_steps: 1174`,
+`findings_rejected: 7`, `recommendations_in: 19`, `warnings: []`. Waves 0 and 4 have zero steps
+this run (wave 0 blocked by the boot/test/migration skip in `--no-tools` mode; wave 4 only holds
+unverified claims).
 
-### Scaling P10 — the work that actually raises accuracy
+## 7 · Current measured state (from the last run)
 
-Each cluster needs a *second implementation* (see §9). In priority order:
+Run `20261005T143848Z-2dbc4d` — commit `3e0d1d818ebc08f1df17c5464543dd96aa7b0d94`, dirty 149
+files, `--full --no-tools`, workers 10, checkpoint `phase: final, pass: 2, files_processed: 3806,
+findings_written: 1345`:
 
-| Cluster | Findings | Re-check mechanism to implement |
+### 7.1 Aggregate facts (`logs/facts.json` — 116 keys)
+
+| Measure | Value |
+|---|---|
+| `cross_domain_imports` | 812 |
+| `package_cycles` | 82 |
+| `silent_except_count` | 203 |
+| `float_money_files` | 132 |
+| `long_functions` | 408 |
+| `deep_functions` | 90 |
+| `untracked_todos` | 295 |
+| `migration_revisions` | 90 · `migration_heads` 4 |
+| `endpoints_total` | 1003 · unguarded 2 · public_by_design 9 |
+| `gate_literals` | 147 |
+| `catalog_atoms` | 371 |
+| `env_vars_raw` | 103 · `env_vars_declared` 225 · `env_vars_documented` 259 |
+| `anti_patterns` | 9 categories (Silent except 203, Stub function 48, Unimplemented placeholder 257, TODO-only 296, Empty handler 5, Not-wired event 4, Commented code 478) |
+| `compat_shim_files` | 3 |
+| `commitlint_configured` | False |
+| `branch_policy_declared` | False |
+| `blocking_async_count` | 0 |
+| `conftest_files` | 15 |
+| `drift` | 1141 items (list; not in report headline) |
+| `provider_resilience` | 94 providers · 8 breakers · 7 retries · 29 timeouts |
+| `events_defined` | 125 · `events_published` 6 (subscribers by module) |
+| `middleware_order` | 8 items |
+| `rls_policy_var` | `app.current_country_code` · `rls_middleware_var` `app.country_scope` |
+| `contradictions` | 5 items |
+| `chains` | 7 items |
+| `browser_steps` | 71 items (evidence stale: True; observed = unknown, FAILED) |
+| `supply_chain` | 4 items (no dep scanning, no secret scanning, and 2 more) |
+
+### 7.2 Per-dimension finding counts (`logs/*.jsonl`)
+
+| Dim | Log | Findings |
 |---|---|---|
-| `CLUSTER-silent-except` | 219 | AST: `ExceptHandler` whose body is only `pass`/`continue`/`...`; exclude `except NotImplementedError` in ABCs and pytest `raises` blocks |
-| `CLUSTER-tf-rel-lazy` | 174 | already implemented — extend to count inheritance from the declarative base |
-| `CLUSTER-module-imports-infrastructure` | 156 | AST import graph: `modules/*` importing `infrastructure.*`; exclude module-local infrastructure |
-| `CLUSTER-tf-timestamp-default` | 79 | AST: `Column(DateTime, default=datetime.now)` vs `server_default=text("now()")` |
-| `CLUSTER-long-function` | 60 | AST: branch complexity; exclude generated and test files (already partly done) |
-| `CLUSTER-router-db-access` | 96 | AST: `db.` / `session.` inside `backend/**/routers/**` |
-| `CLUSTER-cross-domain-direct` | 92 | AST cross-domain import graph vs `DOMAIN_ALLOWLIST.yaml` |
-| `CLUSTER-float-money` | 171 | already implemented |
+| 01 | architectural | 172 |
+| 02 | technological | 21 |
+| 03 | logical | 306 |
+| 04 | operational | 30 |
+| 05 | wiring | 13 |
+| 06 | database | 9 |
+| 07 | tables_fields | 266 |
+| 08 | providers | 8 |
+| 09 | laws | 26 |
+| 10 | migrations | 15 |
+| 11 | environmental | 15 |
+| 12 | tests | 36 |
+| 13 | dev_to_prod | 8 |
+| 14 | frontend_web | 216 |
+| 15 | frontend_mobile | 1 |
+| 16 | features | 5 |
+| 17 | code_file_management | 94 |
+| 18 | security | 12 |
+| 19 | performance | 3 |
+| 20 | observability_resilience | 5 |
+| 21 | contradictions | 5 |
+| 22 | anti_patterns | 5 |
+| 23 | code_intent | 3 |
+| 24 | browser_behavior | 1 |
+| 25 | ai_drift | 1 |
+| 26 | code_alignment | 7 |
+| 27 | project_completion_blockers | 4 |
+| 28 | supply_chain_security | 7 |
+| 30 | declared_laws | 14 |
+| 29 | law_coverage | 45 |
+| 23 (dup) | law_coverage | 46 |
 
----
+Unique-dimension total: 1303 findings; the two `law_coverage` logs (23 and 29) together add
+91 near-duplicate lines (see §12).
 
-## 12 · Explicit non-goals / honesty constraints
+### 7.3 Law state (`zz_core/lawmap.json` + `logs/09_laws.jsonl`)
 
-- The audit **does not resolve** findings and the compiler **does not edit
-  source**. A plan is not a fix.
-- The audit **never modifies source files** — only `_zozi_audit/**` and
-    `_most_imp_docx/PRODUCTION_READINESS_CHECKLIST.md` (the latter is updated
-    after each forensic audit completion with current evidence-based status
-    for all checks, per `PROMPT_FORENSIC_AUDIT.md` completion criterion 26).
-- The audit **cannot prove** runtime behaviour without a live stack; every such
-  condition is marked `unverifiable` with the exact command that *would* verify it.
+- `benchmark_laws_total = 325`.
+- `enforced_by_check = 126` — law IDs with a declaring scanner.
+- `candidate_unattributed = 133` dimensions mapping to 330 law names that check briefs mention
+  but which carry no formal law reference.
+- `logs/09_laws.jsonl` has **26 findings**, all `NEW` / `VERIFIED` / `L0`, classified
+  PASS/FAIL/UNVERIFIABLE per the dimension-09 scanner. Violations cluster as:
+  architecture 5 · structure 2 · code-quality 6 · migration 1 · security 3 · database 4 ·
+  config 1 · provider 2 · performance 1 · docs 1.
+- The `s24_declared_laws` docstring describes the coverage registry's partition: 114 laws
+  enforced by the pre-s24 scanners, 127 enforced-but-unattributed, and 84 with no check. The
+  current `enforced_by_check` count of 126 reconciles as 114 + 12 laws declared by `s24`
+  itself. **Note:** the PLAN.md v3 line "fail 26 · pass 33 · unverifiable 266 · no check 66" is
+  not supported by the logs — 26 violations are confirmed; "pass 33", "unverifiable 266", and
+  "no check 66" have no source in the code (266 coincides with the dim-07 finding count;
+  `325 − 126 = 199` laws are not enforced by check).
+
+## 8 · Step-by-step execution plan (as built)
+
+| Step | Work | Status gate |
+|---|---|---|
+| P1 | Write this plan file | ✅ |
+| P2 | Verify plan assumptions against the codebase (this pass) | ✅ |
+| P3 | `zz_core` — model, registry, logs, report, util, tools, constants | ✅ |
+| P4 | `zz_scanners` — s01–s21 + preflight | ✅ |
+| P5 | Extensions s22/s23/s24 + probe layer wiring | ✅ |
+| P6 | Run `--full`, reconcile findings against source, kill false positives | ✅ (`FALSE_POSITIVE + WRONG_LOCATION = 0`) |
+| P7 | Adjudicate every finding through `zozi_verify.py` | ✅ (1345 adjudicated) |
+| P8 | Gate the compiler on verdicts | ✅ |
+| P9 | Close the 164 UNVERIFIABLE with independent re-checks | ❌ outstanding |
+
+**The single outstanding gate is P9.** Once all 164 are resolved, the entire plan is either
+fix-tasks (verified) or explicitly labelled verification-tasks (wave 4) — never a code change
+on a hunch.
+
+## 9 · Accuracy history — defects found and fixed
+
+| Pass | Measurement | Correction |
+|---|---|---|
+| v2 ext. | `inline_style_props` | React Native has no CSS cascade; mobile `style={{}}` excluded from web drift |
+| v2 ext. | `unindexed_hot_columns` | `Column(..., index=True)` is an index but produces no name in `__table_args__` |
+| v2 ext. | `hardcoded_hex` | mobile RN literals plus brand SVG / chart palette files, where a literal is correct |
+| v2 ext. | undefined feature gates | `require_feature` matched inside comments and docstrings |
+| v2 ext. | celery app | searched `backend/` root; it lives at `backend/jobs/celery_app.py` |
+| v2 ext. | toast ratio | counted the words anywhere instead of the `addToast()` call shape |
+| v2 ext. | missing `version` column | no law requires it; demoted to a recommendation |
+| v3 | TS errors | `pnpm exec` ran the supply-chain hook instead of tsc; counts parsed from an elided `stdout_tail` |
+| v3 | `missing_from_middleware` | headers applied from a dict in a loop; literal matching cannot see it |
+| v3 | CSP directive gap | broken regex; `object-src`/`base-uri` are present |
+| v3 gate | `WRONG_LOCATION` | directories treated as missing files; a line drift claimed as a refutation |
+| v3 gate | verdicts | first run of `zozi_verify.py`: 1345 adjudicated, 0 false positives |
+
+Rule of thumb: **whenever a count is surprising, re-derive it with a different mechanism before
+believing it.** Every "after" figure above was produced that way.
+
+## 10 · Explicit non-goals / honesty constraints
+
+- The audit **does not resolve** findings and the compiler **does not edit source**. A plan is
+  not a fix.
+- The audit **never modifies source files** — only `_zozi_audit/**`.
+- The audit **cannot prove** runtime behaviour without a live stack; every such condition is
+  marked `unverifiable` with the exact command that *would* verify it.
 - The live HTTP probe **never mutates data** — GET, OPTIONS and HEAD only.
 - LLM findings are labelled `L2/INFERRED` and can never be promoted to L0.
-- No aggregate placeholders (`N+`, `~40`) anywhere; every count is produced by
-  listing the underlying records.
-- **A `CONFIRMED` verdict proves the claim, not the proposed fix.** Law, schema
-  and security fixes still require engineering review before anyone edits code.
-- **The verification gate is not a substitute for a reviewer.** At 13.9% confirmed
-  it is a brake, not a green light. Its value today is that it prevents the plan
-  from silently inheriting unmeasured noise.
+- No aggregate placeholders (`N+`, `~40`) anywhere; every count is produced by listing the
+  underlying records.
+- **A `CONFIRMED` verdict proves the claim, not the proposed fix.** Law, schema and security
+  fixes still require engineering review before anyone edits code.
+- **The verification gate is not a substitute for a reviewer.** Its value is that it prevents
+  the plan from silently inheriting unmeasured noise.
+- `zozi_audit.py --self-test` is documented as the regression gate; the flag handler delegates
+  to `tests/run_tests.py` (the flag's own implementation was never written — see §12).
+
+---
+
+## 11 · Unnecessary files — what to remove
+
+All entries below are confirmed by reading the filesystem; sizes are from the current scan.
+
+### 11.1 Stale bytecode — delete all `__pycache__/` directories
+
+Every `__pycache__/*.cpython-313.pyc` is generated on import and is not needed to run the suite.
+**Remove all 55 `.pyc` files** and add `__pycache__/` to `.gitignore` instead of committing them:
+
+| Location | Count | Notes |
+|---|---|---|
+| `zz_core/__pycache__` | 17 | 11 have source; **6 are DEAD** (no `.py`) |
+| `zz_scanners/__pycache__` | 26 | all correspond to existing `.py` |
+| `zz_integrations/__pycache__` | 6 | all correspond to existing `.py` |
+| `tests/__pycache__` | 3 | all correspond to existing `.py` |
+| root `__pycache__` | 3 | `zozi_audit`, `zozi_compile`, `zozi_verify` bytecode |
+
+**6 DEAD bytecode files in `zz_core/__pycache__/`** — these have **no source file**:
+`checklist.cpython-313.pyc`, `emit.cpython-313.pyc`, `lawroute.cpython-313.pyc`,
+`loop.cpython-313.pyc`, `rollup.cpython-313.pyc`, `summary.cpython-313.pyc`. They are remnants
+of the v2-era single-file layout that was refactored into the current per-concern files;
+`zz_core/__init__.py` (`__all__ = [model, constants, util, tools, registry, logs, report]`)
+does not import them.
+
+### 11.2 Superseded plan document — delete `AUDIT_SUITE_PLAN.md`
+
+Its pipeline and content are fully captured by this `PLAN.md` (v4). It is a duplicate that
+conflicts with the current code (module list ends at `s21`; check count 82 vs actual 92; it
+mentions `plan_status.json` and `allowlist.yaml` which do not exist).
+
+### 11.3 Near-duplicate law-coverage logs — delete `23_law_coverage.jsonl`
+
+`logs/23_law_coverage.jsonl` (46 lines, FIND-001…046) is a near-duplicate of
+`logs/29_law_coverage.jsonl` (45 lines, LAWCOV-001…045): both contain the same findings about
+unenforced / unattributed laws from the law-coverage rework. Keep `29_law_coverage.jsonl`
+(dimension 29, the canonical post-v2 position) and delete the stale `23_law_coverage.jsonl`.
+Deleting it also removes the namespace collision with `23_code_intent.jsonl`.
+
+### 11.4 Stale report outputs — optional (in sync with current run)
+
+`zozi_forensic_audit.md` (1,573,014 bytes), `zozi_remediation_plan.md` (699,399 bytes),
+`zozi_verification.md` (4,554 bytes) are produced outputs, not source. Their timestamps all
+read `20261005T143848Z`, matching `logs/run.json`, `logs/checkpoint.json` (phase 38, pass 2,
+1345 findings) — so they are consistent with the current scan. Regenerate first if you want a
+clean slate:
+
+```
+python _zozi_audit/zozi_audit.py --full --no-tools
+python _zozi_audit/zozi_verify.py
+python _zozi_audit/zozi_compile.py
+```
+
+### 11.5 Runtime probe artifacts — optional (stale / unused)
+
+`logs/browser_results.json`, `logs/db_results.json`, `logs/load_results.json`, `logs/llm_results.json`,
+`logs/http_probe.log`, `logs/llm_cache.json` — results of optional runtime probes run with a
+running stack. They are not generated in `--no-tools` mode and are stale for the current dirty
+work tree. Keep only if the running-stack evidence is wanted.
+
+### 11.6 Plan artifacts that do not exist (do not delete — they were never created)
+
+`logs/plan_status.json` and `zz_core/allowlist.yaml` — PLAN.md v2's directory layout and
+accuracy-history sections reference both. Neither exists in the current code; v2 is simply
+out of date. Nothing to remove.
+
+### 11.7 Temporary scratch files (if present in the repo root)
+
+Delete if they exist and are not part of the project: `_tmp_audit_files.txt`,
+`_tmp_files.txt`, `_tmp_inspect.py` (session scratch).
+
+### Summary of deletions
+
+1. All 55 `__pycache__/*.pyc` files (with 6 dead `zz_core` ones highlighted).
+2. `AUDIT_SUITE_PLAN.md`.
+3. `logs/23_law_coverage.jsonl` (near-duplicate of `29_law_coverage.jsonl`; resolves the `23` namespace collision).
+4. Optionally regenerate and recommit the three output reports, or leave them (they are in sync).
+5. Optionally drop runtime probe artifacts (`browser/db/load/llm_results.json`, `http_probe.log`, `llm_cache.json`).
+6. Optionally delete repo-root session scratch files.
+7. Optionally clean stale references in `.gitignore` (lines 7, 14-15 cite `zz_core/summary.py` and
+   `AUDIT_RESULT.md`, neither of which exists). Recommended: remove those two lines from `.gitignore`.
+
+---
+
+## 12 · Known inconsistencies and stale artifacts (in the suite itself)
+
+These are worth knowing about because they can mislead a reader of the suite's code:
+
+1. **`zz_scanners/__init__.py` (lines 34–36) has a stale comment:**
+   > `# s22 was written but never added here, so none of its checks ever registered...`
+   The comment is false: `s22_frontend_contracts` **is** in the `_MODULES` list (line 33), so all
+   4 of its checks register. This comment dates from before `s22` was wired in.
+
+2. **`23_law_coverage.jsonl` vs `29_law_coverage.jsonl` near-duplicates** (see §11.3). Both logs
+   were produced by the law-coverage rework; one (FIND-001…046) predates the other
+   (LAWCOV-001…045). They differ by exactly one line.
+
+3. **`23` namespace collision:** `23_code_intent.jsonl` and `23_law_coverage.jsonl` both occupy
+   the `23` position. The suite legitimately emits 31 dimension logs, not the documented 30.
+
+4. **Law-count stale note:** `s24_declared_laws`'s docstring says "114 enforced" while
+   `lawmap.json` says `enforced_by_check = 126`. This reconciles precisely: 114 enforced by
+   the pre-s24 scanners + 12 of the 13 s24-declared law IDs present in the registry = 126.
+   The 13th s24-declared law (Law 52) is **missing** from `lawmap.json`'s
+   `enforced_by_check` — the registry was not updated when the s24 check was added.
+
+5. **`zozi_audit.py --self-test`** is documented as the regression gate; the flag's handler was
+   never written and instead delegates to `tests/run_tests.py`. Functionally the gate still
+   exists; the docstring in the flag handler (lines 66–73) notes this explicitly.
+
+6. **Report section numbering** in `zozi_forest_audit.md` (sections 0–8 + appendices) differs
+   from PLAN.md v3's §4 description (13 sections). The rendered report has 11 numbered sections.
+   The description in §4 above reflects the actual render.
+
+7. **Anti-pattern categories:** `facts.json` lists 9 categories; the report headline says 7.
+    The facts value is the measured one; the report count appears to exclude two low-count
+    categories.
+
+8. **`_zozi_audit/.gitignore` has stale references:** it mentions `zz_core/summary.py` (which
+   never existed in the current layout) and `AUDIT_RESULT.md` as the "single file to read for
+   the current result." Neither file exists. The `.gitignore` correctly ignores the three
+   output reports (`zozi_forensic_audit.md`, `zozi_remediation_plan.md`,
+   `zozi_verification.md`) and the entire `logs/` directory (except `.gitkeep`), and keeps
+   `AUDIT_SUITE_PLAN.md` and `PLAN.md` tracked. The references to `summary.py` and
+   `AUDIT_RESULT.md` can be cleaned but do no functional harm.
+
+## 13 · Validation commands
+
+```
+python _zozi_audit/zozi_audit.py --self-test     # regression gate, delegates to tests/run_tests.py
+python -c "from zz_core.registry import all_checks; print(len(all_checks()))"  # confirm 92 @check-decorated checks
+python -c "import zz_scanners; print('import_failures:', zz_scanners.import_failures())"  # confirm 0
+cd zz_core && python -c "import measurements; from measurements import MEASUREMENTS; print(len(MEASUREMENTS))"  # confirm 76
+python -c "
+from pathlib import Path
+pycs = list(Path('_zozi_audit').rglob('*.pyc'))
+print('pyc total:', len(pycs))
+dead = [p for p in pycs if not (p.with_suffix('.py')).exists()]
+print('dead pyc (no source):', [p.name for p in dead])
+"
+grep -n '^\s*@check(' _zozi_audit/zz_scanners/*.py | sed 's/:.*//' | sort | uniq -c   # per-module @check counts
+python _zozi_audit/zozi_verify.py --strict        # exits ≠0 if false-positive rate > 20%
+```
+
+---
+
+## 14 · Complete file inventory (by directory)
+
+Sizes verified against disk (`20261005T143848Z-2dbc4d` run). Generated artifacts are
+marked **(output)**; they are ignored by `.gitignore` but still present on disk from the
+last run. Source files are marked **(source)**.
+
+### `_zozi_audit/` (root)
+
+| File | Bytes | Type | Notes |
+|---|---|---|---|
+| `.gitignore` | 1,092 | source | Ignores outputs + bytecode; has stale refs to `summary.py` / `AUDIT_RESULT.md` (see §12.8) |
+| `AUDIT_SUITE_PLAN.md` | 10,191 | deprecated | Superseded by this file; flagged for removal (§11.2) |
+| `PLAN.md` | 47,759 | source | This file |
+| `zozi_audit.py` | 14,288 | source | PHASE C entry point — scan → `zozi_forensic_audit.md` |
+| `zozi_verify.py` | 36,071 | source | Phase 1 adjudication — → `zozi_verification.md` + `logs/verdicts.jsonl` |
+| `zozi_compile.py` | 44,011 | source | Phase 2 compilation — → `zozi_remediation_plan.md` + `logs/plan.json` |
+| `zozi_forensic_audit.md` | 1,573,014 | output | Consolidated audit report (regenerable) |
+| `zozi_remediation_plan.md` | 699,399 | output | Ordered remediation plan (regenerable) |
+| `zozi_verification.md` | 4,554 | output | Verification summary (regenerable) |
+
+### `zz_core/` (12 source files)
+
+| File | Bytes | Notes |
+|---|---|---|
+| `__init__.py` | 201 | `__all__ = [model, constants, util, tools, registry, logs, report]` |
+| `constants.py` | 14,268 | Canonical modules/domains, router allowlist, env contract, ID prefixes |
+| `lawmap.json` | 16,889 | 325-law coverage table (`enforced_by_check=126`, `candidate_unattributed=133`) |
+| `logs.py` | 4,475 | JSONL writers, checkpoint, run metadata, tool ledger |
+| `measurements.py` | 60,065 | 76 `m_*` independent re-derivation functions |
+| `model.py` | 11,957 | Finding, Observation, CheckResult, ToolResult, ScanContext, enums |
+| `probe.py` | 93,271 | `ProbeRunner` — 38 probe kinds dispatch map + SQL destructiveness helpers |
+| `probes.py` | 61,846 | LAW/CLUSTER/FINDING measurement maps + wiring |
+| `registry.py` | 10,738 | `@check()` decorator + bounded 10-worker executor |
+| `report.py` | 40,844 | Single consolidated Markdown renderer; 18-condition production gate |
+| `tools.py` | 17,593 | Subprocess orchestration (ruff/pytest/tsc/alembic/pnpm/ollama) |
+| `util.py` | 21,131 | `walk_files`, `read_text` (BOM-tolerant), AST helpers, `snippet()` |
+
+### `zz_integrations/` (6 source files)
+
+| File | Bytes | Notes |
+|---|---|---|
+| `__init__.py` | 330 | Package init |
+| `http_probe.py` | 12,105 | Raw-socket HTTP/1.1 probe (GET/OPTIONS/HEAD only — never mutates) |
+| `browser_probe.py` | 4,874 | Playwright step capture (independent CLI) |
+| `db_probe.py` | 5,959 | ORM↔DB schema introspection (independent CLI) |
+| `load_probe.py` | 3,051 | Latency sampling (independent CLI) |
+| `ollama_probe.py` | 6,556 | Local-LLM semantic review (L2/INFERRED findings only) |
+
+### `zz_scanners/` (26 source files)
+
+| File | Bytes | @check-decorated | Dimensions |
+|---|---|---|---|
+| `__init__.py` | 1,953 | — | Imports all 24 `s*` + `preflight` at import time |
+| `preflight.py` | 30,425 | 10 (not @check-decorated) | Phase 0 boot smoke + Phase 0.5 pre-flight |
+| `s01_architecture.py` | 34,039 | 7 | 01, 17 |
+| `s02_technology.py` | 21,055 | 4 | 02, 28 |
+| `s03_logic.py` | 31,916 | 7 | 03, 22, 25 |
+| `s04_operations.py` | 14,224 | 5 | 04, 13 |
+| `s05_wiring.py` | 30,052 | 7 | 05, 20 |
+| `s06_database.py` | 28,228 | 5 | 06, 07, 10 |
+| `s07_providers.py` | 9,238 | 2 | 08 |
+| `s08_laws.py` | 26,850 | 1 | 09 |
+| `s09_environment.py` | 14,869 | 3 | 11 |
+| `s10_tests.py` | 7,500 | 1 | 12 |
+| `s11_frontend.py` | 17,863 | 4 | 14, 15, 26 |
+| `s12_features.py` | 7,495 | 2 | 16, 23 |
+| `s13_security.py` | 11,846 | 4 | 18 |
+| `s14_performance.py` | 6,638 | 3 | 19 |
+| `s15_crosscut.py` | 26,715 | 5 | 21, 24, 27 |
+| `s16_design.py` | 23,072 | 3 | 14 extension (design system) |
+| `s17_interactions.py` | 28,931 | 5 | 14/12 extension (interaction robustness) |
+| `s18_feature_matrix.py` | 28,641 | 3 | 16 extension (feature matrix) |
+| `s19_workflow.py` | 43,509 | 7 | 04/27 extension (workflow) |
+| `s20_db_advisor.py` | 21,248 | 2 | 07 extension (table posture) |
+| `s21_http_layer.py` | 28,172 | 2 | 14/18 extension (live response contract) |
+| `s22_frontend_contracts.py` | 16,936 | 4 | 14/26 extension (frontend contracts) |
+| `s23_law_coverage.py` | 10,175 | 1 | Dimension 29 — law-coverage accounting |
+| `s24_declared_laws.py` | 18,922 | 5 | Dimension 30 — declared laws from source |
+
+### `tests/` (4 source files)
+
+| File | Bytes | Notes |
+|---|---|---|
+| `__init__.py` | 0 | Empty init |
+| `fixtures.py` | 8,154 | Known-positive / known-negative benchmark sources |
+| `run_tests.py` | 17,533 | Regression gate — each detector's polarity vs fixtures |
+
+### `logs/` (43 files)
+
+**Run metadata:**
+
+| File | Bytes | Notes |
+|---|---|---|
+| `run.json` | 786 | Run metadata (run_id, commit, options, file_counts) |
+| `checkpoint.json` | 255 | Phase final, files_processed=3806, pass 2, findings_written=1345 |
+
+**Core output (JSONL):**
+
+| File | Bytes | Lines | Notes |
+|---|---|---|---|
+| `findings.jsonl` | 1,540,171 | 1,345 | All emitted findings (NEW this run) |
+| `verdicts.jsonl` | 546,102 | 1,345 | Adjudicated (1174 CONFIRMED, 164 UNVERIFIABLE, 7 ALREADY_FIXED) |
+| `observations.jsonl` | 414,432 | — | Intermediate observations |
+| `plan.json` | 1,099,468 | — | Compiled remediation plan (1193 steps) |
+| `facts.json` | 718,335 | — | 116 measured aggregates (see §7.1) |
+| `tool_ledger.json` | 385 | — | Tool runs (cmd, exit, duration, tail) |
+| `recommendations.jsonl` | 17,710 | — | Non-gating recommendations |
+| `verification_summary.json` | 9,631 | — | Adjudication metrics |
+
+**Per-dimension logs (28 primary + 4 support = 32 dimension logs):**
+
+| File | Bytes | Findings (from §7.2) |
+|---|---|---|
+| `01_architectural.jsonl` | 217,328 | 172 |
+| `02_technological.jsonl` | 20,057 | 21 |
+| `03_logical.jsonl` | 361,707 | 306 |
+| `04_operational.jsonl` | 32,417 | 30 |
+| `05_wiring.jsonl` | 13,828 | 13 |
+| `06_database.jsonl` | 7,622 | 9 |
+| `07_tables_fields.jsonl` | 296,073 | 266 |
+| `08_providers.jsonl` | 6,985 | 8 |
+| `09_laws.jsonl` | 22,254 | 26 |
+| `10_migrations.jsonl` | 16,348 | 15 |
+| `11_environmental.jsonl` | 18,429 | 15 |
+| `12_tests.jsonl` | 39,171 | 36 |
+| `13_dev_to_prod.jsonl` | 6,055 | 8 |
+| `14_frontend_web.jsonl` | 236,130 | 216 |
+| `15_frontend_mobile.jsonl` | 1,043 | 1 |
+| `16_features.jsonl` | 5,846 | 5 |
+| `17_code_file_management.jsonl` | 139,645 | 94 |
+| `18_security.jsonl` | 14,160 | 12 |
+| `19_performance.jsonl` | 2,277 | 3 |
+| `20_observability_resilience.jsonl` | 4,106 | 5 |
+| `21_contradictions.jsonl` | 4,852 | 5 |
+| `22_anti_patterns.jsonl` | 4,697 | 5 |
+| `23_code_intent.jsonl` | 2,401 | 3 |
+| `23_law_coverage.jsonl` | 44,629 | 46 | **DEAD COPY — flagged for removal (§11.3)** |
+| `24_browser_behavior.jsonl` | 1,238 | 1 |
+| `25_ai_drift.jsonl` | 1,807 | 1 |
+| `26_code_alignment.jsonl` | 8,530 | 7 |
+| `27_project_completion_blockers.jsonl` | 3,622 | 4 |
+| `28_supply_chain_security.jsonl` | 6,575 | 7 |
+| `29_law_coverage.jsonl` | 43,527 | 45 | **Canonical law-coverage log** |
+| `30_declared_laws.jsonl` | 11,778 | 14 |
+
+**Recommendation (rec_*) dumps:**
+
+| File | Bytes |
+|---|---|
+| `rec_automation.jsonl` | 6,785 |
+| `rec_data.jsonl` | 3,922 |
+| `rec_design.jsonl` | 785 |
+| `rec_finance.jsonl` | 1,172 |
+| `rec_frontend.jsonl` | 926 |
+| `rec_ops.jsonl` | 806 |
+| `rec_qa.jsonl` | 1,274 |
+| `rec_workflow.jsonl` | 2,040 |
+
+**Runtime probe artifacts (stale — from `--full` run):**
+
+| File | Bytes | Notes |
+|---|---|---|
+| `runtime_results.json` | 171 | Browser probe results |
+| `db_results.json` | 1,028 | DB introspection results |
+| `load_results.json` | 232 | Load/latency probe results |
+| `llm_results.json` | 261 | Ollama semantic review results |
+| `http_probe.log` | 2,814 | Raw live HTTP probe log |
+| `llm_cache.json` | 2 | Ollama cache (empty) |
+
+**Keep file:**
+
+| File | Bytes | Notes |
+|---|---|---|
+| `.gitkeep` | 0 | Keeps `logs/` directory in git |
+
+### `__pycache__/` directories (all dead — see §11.1)
+
+| Location | Count | Dead (no source) |
+|---|---|---|
+| `__pycache__/` (root) | 3 | 0 (`zozi_audit.py`, `zozi_compile.py`, `zozi_verify.py` exist) |
+| `zz_core/__pycache__/` | 17 | **6** (`checklist`, `emit`, `lawroute`, `loop`, `rollup`, `summary`) |
+| `zz_scanners/__pycache__/` | 26 | 0 (all 24 source `.py` + `__init__` + `preflight`) |
+| `zz_integrations/__pycache__/` | 6 | 0 (all 5 source `.py` + `__init__`) |
+| `tests/__pycache__/` | 3 | 0 (`fixtures.py`, `run_tests.py`, `__init__.py`) |
+| **Total** | **55** | **6** |
+
+---
+
+**End of PLAN.md (v4).**

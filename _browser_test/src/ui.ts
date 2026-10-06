@@ -10,8 +10,8 @@ export async function waitForPageLoad(page: Page): Promise<void> {
 
 export function glassPanel(locator: Locator) {
   return locator.evaluate((el) => {
-    const style = getComputedStyle(el);
-    return style.backdropFilter.includes("blur") || style.webkitBackdropFilter?.includes("blur");
+    const style = getComputedStyle(el) as CSSStyleDeclaration & { webkitBackdropFilter?: string };
+    return style.backdropFilter.includes("blur") || (style.webkitBackdropFilter ?? "").includes("blur");
   });
 }
 

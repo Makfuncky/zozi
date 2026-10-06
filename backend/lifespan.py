@@ -23,6 +23,9 @@ import structlog
 # Ensure all models are registered before any mapper configuration
 from infrastructure.database import models  # noqa: F401
 
+# Startup bootstrap-step outcomes, surfaced by ``/health/deps`` (Law 59/81).
+_BOOTSTRAP_STATUS: dict = {}
+
 logger = structlog.get_logger(__name__)
 
 
@@ -119,11 +122,69 @@ def _startup_register_services() -> None:
     logger.debug("Service side-effect registry import skipped — no registry module present")
 
 
+_DOMAIN_SUBSCRIBER_MODULES: tuple[tuple[str, str], ...] = (
+    ("domains.analytics.subscribers", "register_analytics_subscribers"),
+    ("domains.audit.subscribers", "register_audit_subscribers"),
+    ("domains.comms.subscribers", "register_comms_subscribers"),
+    ("domains.country.subscribers", "register_country_subscribers"),
+    ("domains.customers.subscribers", "register_customers_subscribers"),
+    ("domains.finance.subscribers", "register_finance_subscribers"),
+    ("domains.governance.subscribers", "register_governance_subscribers"),
+    ("domains.logistics.subscribers", "register_logistics_subscribers"),
+    ("domains.orders.subscribers", "register_orders_subscribers"),
+    ("domains.payments.subscribers", "register_payments_subscribers"),
+    ("domains.promotions.subscribers", "register_promotions_subscribers"),
+    ("domains.security.subscribers", "register_security_subscribers"),
+    ("domains.suppliers.subscribers", "register_suppliers_subscribers"),
+)
+
+
+def _startup_register_domain_subscribers() -> None:
+    """Invoke every ``register_<domain>_subscribers()`` entry point.
+
+    Law 3 / WIR-009: each domain ships its own ``subscribers.py`` exposing a
+    ``register_<domain>_subscribers()`` function, but nothing called them, so
+    all 13 domains stayed permanently unsubscribed and every business chain in
+    ``_audit/10_CHAINS_run2.md`` was PARTIAL. Registration is per-module
+    fault-isolated: one broken domain logs and the rest still register, and the
+    function reports the failed module names so startup evidence is complete.
+    """
+    import importlib
+
+    registered: list[str] = []
+    failed: list[str] = []
+
+    for module_path, func_name in _DOMAIN_SUBSCRIBER_MODULES:
+        try:
+            module = importlib.import_module(module_path)
+            getattr(module, func_name)()
+            registered.append(func_name)
+        except Exception as exc:
+            failed.append(f"{func_name} ({type(exc).__name__}: {exc})")
+            logger.exception("Subscriber registration failed for %s", module_path)
+
+    if failed:
+        logger.error(
+            "Domain subscriber registration incomplete: %d of %d failed: %s",
+            len(failed),
+            len(_DOMAIN_SUBSCRIBER_MODULES),
+            "; ".join(failed),
+        )
+    logger.info(
+        "Domain event subscribers registered: %d/%d (%s)",
+        len(registered),
+        len(_DOMAIN_SUBSCRIBER_MODULES),
+        ", ".join(registered) or "none",
+    )
+
+
 def _startup_register_event_listeners() -> None:
     """Register event listeners for domain events.
 
     Non-critical: failure is logged but does not prevent startup.
     """
+    _startup_register_domain_subscribers()
+
     try:
         from infrastructure.messaging.events.event_bus import subscribe
         from infrastructure.messaging.events import PaymentConfirmedEvent
@@ -167,6 +228,17 @@ def _startup_seed_treasury() -> None:
         logger.warning("Failed to seed treasury chart of accounts at startup (non-critical): %s", exc)
 
 
+def _record_bootstrap_status(step: str, status: str) -> None:
+    """Record the outcome of a startup bootstrap step so ``/health/deps`` can
+    surface it (Law 59 — failures are visible, never swallowed)."""
+    _BOOTSTRAP_STATUS[step] = status
+
+
+def get_bootstrap_status() -> dict:
+    """Copy of the bootstrap-step statuses collected during startup."""
+    return dict(_BOOTSTRAP_STATUS)
+
+
 def _seed_demo_data() -> None:
     """Seed demo catalog data from ``db.seed`` if enabled.
 
@@ -185,8 +257,26 @@ def _seed_demo_data() -> None:
 
         seed_data(SessionLocal)
         logger.info("Demo data seeded successfully")
+        _record_bootstrap_status("seed", "ok")
     except Exception:
         logger.exception("Failed to seed demo data at startup (non-critical)")
+        _record_bootstrap_status("seed", "failed")
+        return
+
+    # Default promotion banners are domain content: seeded here (app bootstrap,
+    # Law 1 arrows allow it) instead of lazily inside a GET request (Law 90).
+    try:
+        from infrastructure.database.database import SessionLocal
+        from domains.promotions.services.banners.banner_service import seed_default_banners
+
+        _db = SessionLocal()
+        try:
+            if seed_default_banners(_db):
+                logger.info("Default banners seeded successfully")
+        finally:
+            _db.close()
+    except Exception:
+        logger.exception("Failed to seed default banners at startup (non-critical)")
 
 
 def _ensure_default_accounts() -> None:

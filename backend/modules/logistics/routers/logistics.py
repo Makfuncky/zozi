@@ -304,7 +304,11 @@ async def update_shipment_event_gps(
 
 
 @router.get("")
-def list_assigned_shipments(current_user: Any = Depends(require_logistics), db: Session = Depends(get_db)):
+def list_assigned_shipments(
+    current_user: Any = Depends(require_logistics),
+    db: Session = Depends(get_db),
+    _rf_gate: None = Depends(require_feature("logistics.shipping.tracking")),
+):
     from domains.logistics.services.geo.logistics_locations_service import list_assigned_shipments as _svc_list
     return _svc_list(db, current_user)
 

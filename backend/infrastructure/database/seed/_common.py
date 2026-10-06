@@ -59,6 +59,7 @@ def _ensure_demo_user(
     log_label: str,
 ):
     from infrastructure.utils.auth import get_password_hash, verify_password
+    logger.debug("_ensure_demo_user %s: password hasher ready", log_label)
     User = get_model("User")
     user = db.query(User).filter(User.email == email).first()
     if not user:

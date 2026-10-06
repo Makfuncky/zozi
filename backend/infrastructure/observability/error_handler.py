@@ -15,6 +15,7 @@ Standardized Error Response Format (RFC 7807 Problem Details):
 }
 """
 import logging
+import os
 import traceback
 from typing import Any, Dict, Optional
 from datetime import datetime, timezone
@@ -58,6 +59,10 @@ class ErrorHandler:
             from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
             from sentry_sdk.integrations.redis import RedisIntegration
 
+            traces_sample_rate = float(
+                os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")
+            )
+
             sentry_sdk.init(
                 dsn=self.sentry_dsn,
                 integrations=[
@@ -65,7 +70,7 @@ class ErrorHandler:
                     SqlalchemyIntegration(),
                     RedisIntegration(),
                 ],
-                traces_sample_rate=0.1,
+                traces_sample_rate=traces_sample_rate,
                 environment=self.environment,
                 before_send=self._before_send,
                 attach_stacktrace=True,
@@ -78,7 +83,6 @@ class ErrorHandler:
             raise
         except Exception as e:
             logger.error("sentry_init_failed", error=str(e))
-            raise
 
     def _before_send(self, event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Filter and enrich Sentry events before sending."""

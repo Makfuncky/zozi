@@ -1,5 +1,6 @@
 """Cash Management Service — encapsulates cash management operations."""
 
+import logging
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional
@@ -7,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 from infrastructure.utils.country_rls import get_country_or_404
+
+logger = logging.getLogger(__name__)
 
 
 def commit_db(db: Session) -> None:
@@ -294,3 +297,67 @@ def serialize_cod_remittance_receipt(receipt: Any, db: Session) -> dict:
         "status": getattr(receipt, "status", "pending"),
         "created_at": str(getattr(receipt, "created_at", "")),
     }
+
+
+def run_scheduled_finance_cycle(db: Session) -> dict[str, Any]:
+    """Periodic finance cycle: auto-payout sweeps for suppliers and logistics.
+
+    Delegates to the payout batch service, which already implements the
+    eligibility checks and settlement gathering. Failures are caught per-step
+    so one failing sweep does not abort the other.
+    """
+    from domains.finance.services.payouts.payout_batch_service import (
+        run_auto_logistics_payout_sweep,
+        run_auto_payout_sweep,
+    )
+
+    results: dict[str, Any] = {"supplier_payouts": {}, "logistics_payouts": {}}
+    try:
+        results["supplier_payouts"] = run_auto_payout_sweep(db)
+    except Exception:
+        logger.exception("Scheduled supplier payout sweep failed")
+        results["supplier_payouts"] = {"status": "error", "error": "supplier sweep failed"}
+    try:
+        results["logistics_payouts"] = run_auto_logistics_payout_sweep(db)
+    except Exception:
+        logger.exception("Scheduled logistics payout sweep failed")
+        results["logistics_payouts"] = {"status": "error", "error": "logistics sweep failed"}
+    return results
+
+
+def run_scheduled_reconciliation_cycle(db: Session) -> dict[str, Any]:
+    """Periodic bank reconciliation pass.
+
+    Runs the gateway 3-way reconciliation and the COD deposit reconciliation
+    that the payment orchestrator already implements, then logs a summary to
+    ``FinanceAutomationLog``. Returns per-step counts.
+    """
+    from domains.finance.models.finance import FinanceAutomationLog
+    from domains.finance.services.payments.payment_orchestrator import (
+        reconcile_all_cod_deposits,
+        run_gateway_3way_reconciliation,
+    )
+
+    results: dict[str, Any] = {"gateway_3way": {}, "cod_deposits": {}}
+    try:
+        results["gateway_3way"] = run_gateway_3way_reconciliation(db)
+    except Exception:
+        logger.exception("Scheduled gateway 3-way reconciliation failed")
+        results["gateway_3way"] = {"status": "error", "error": "gateway 3-way failed"}
+    try:
+        results["cod_deposits"] = reconcile_all_cod_deposits(db)
+    except Exception:
+        logger.exception("Scheduled COD deposit reconciliation failed")
+        results["cod_deposits"] = {"status": "error", "error": "cod reconciliation failed"}
+
+    try:
+        db.add(FinanceAutomationLog(
+            kind="scheduled_reconciliation_cycle",
+            records_processed=1,
+            records_changed=1,
+            detail=results,
+        ))
+        db.commit()
+    except Exception:
+        logger.exception("Failed to log scheduled reconciliation cycle")
+    return results

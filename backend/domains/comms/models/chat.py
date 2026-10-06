@@ -25,8 +25,9 @@ class EntityChatThread(Base):
     title = Column(String(200), nullable=True)
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     messages = relationship("EntityChatMessage", back_populates="thread", cascade="all, delete-orphan")
     __table_args__ = (Index("ix_entity_thread", "entity_type", "entity_id"), {"schema": "comms"})
 
@@ -69,7 +70,8 @@ class VideoRoomParticipant(Base):
     joined_at = Column(DateTime, default=_utcnow)
     left_at = Column(DateTime, nullable=True)
     country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True)
-    updated_at = Column(DateTime, default=_utcnow, server_default=func.now(), onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
     room = relationship("VideoRoom", back_populates="participants")
     user = relationship("User")
@@ -100,6 +102,9 @@ class GroupChatMember(Base):
     role = Column(String(20), default="member")
     joined_at = Column(DateTime, default=_utcnow)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     room = relationship("GroupChatRoom", back_populates="members")
     user = relationship("User")
 
@@ -121,7 +126,9 @@ class EscalationSLALog(Base):
     escalated_at = Column(DateTime, nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class EntityChatMessage(Base):
@@ -134,7 +141,9 @@ class EntityChatMessage(Base):
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     thread = relationship("EntityChatThread", back_populates="messages")
     sender = relationship("User")
 
@@ -202,8 +211,9 @@ class GroupChatMessage(Base):
     message_type = Column(String(20), default="text")
     read_at = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     room = relationship("GroupChatRoom", back_populates="messages")
     sender = relationship("User", foreign_keys=[sender_id])
 

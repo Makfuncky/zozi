@@ -70,3 +70,36 @@ if _OTEL_AVAILABLE:
 
         logger.info("OpenTelemetry tracing initialized", endpoint=otlp_endpoint)
 
+
+class _NoOpTracer:
+    """Fallback tracer when OpenTelemetry is not installed."""
+
+    def start_as_current_span(self, name, *args, **kwargs):
+        class _NoOpSpan:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                return False
+
+            def set_attribute(self, *args, **kwargs):
+                pass
+
+        return _NoOpSpan()
+
+
+if _OTEL_AVAILABLE:
+    tracer = trace.get_tracer(__name__)
+else:
+    tracer = _NoOpTracer()
+
+
+def is_tracing_enabled() -> bool:
+    """Return True when OpenTelemetry tracing is configured and active."""
+    if not _OTEL_AVAILABLE:
+        return False
+    if os.environ.get("OTEL_DISABLED"):
+        return False
+    otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+    return bool(otlp_endpoint)
+

@@ -154,15 +154,60 @@ def rls_seed_session(db_session, engine, monkeypatch):
         Column("country_code", String(2)),
     )
 
-    from sqlalchemy import text
-    db_session.execute(text(
-        "INSERT INTO products (id, name, slug, price, is_active, is_deleted, country_code) "
-        "VALUES "
-        "(1, 'AE widget', 'ae-widget', 1.0, 1, 0, 'AE'),"
-        "(2, 'SA widget', 'sa-widget', 1.0, 1, 0, 'SA'),"
-        "(3, 'AE gadget', 'ae-gadget', 1.0, 1, 0, 'AE'),"
-        "(4, 'SA gadget', 'sa-gadget', 1.0, 1, 0, 'SA')"
-    ))
+    from sqlalchemy import inspect, text
+
+    # Reflect the live table instead of assuming a fixed column set. The
+    # real Product model is only present in the test database when other
+    # modules happen to import it, and it carries NOT NULL columns such as
+    # ``currency`` that a hardcoded INSERT would violate.
+    inspector = inspect(db_session.bind)
+    live_cols = {c["name"]: c for c in inspector.get_columns("products")}
+    if not live_cols:
+        pytest.skip("products table is not present in this test database")
+
+    _MISSING = object()
+
+    seeded = {
+        1: ("AE widget", "ae-widget", "AE"),
+        2: ("SA widget", "sa-widget", "SA"),
+        3: ("AE gadget", "ae-gadget", "AE"),
+        4: ("SA gadget", "sa-gadget", "SA"),
+    }
+    fixed = {"is_active": 1, "is_deleted": 0, "price": 1.0}
+
+    from sqlalchemy import Boolean, DateTime, Float, Integer, Numeric
+    from sqlalchemy.types import String as _Str
+
+    def _placeholder(col_type):
+        # isinstance checks, not class names: SQLite reflects String(3) as VARCHAR.
+        if isinstance(col_type, _Str):
+            return "OMR"
+        if isinstance(col_type, Boolean):
+            return 1
+        if isinstance(col_type, (Integer, Float, Numeric)):
+            return 1
+        if isinstance(col_type, DateTime):
+            return None
+        return _MISSING
+
+    for pk, (name, slug, cc) in seeded.items():
+        values = {"id": pk, "name": name, "slug": slug, "country_code": cc}
+        values.update(fixed)
+        for col, meta in live_cols.items():
+            if col in values:
+                continue
+            if meta.get("default") is not None or meta.get("nullable", True):
+                continue
+            value = _placeholder(meta.get("type"))
+            if value is _MISSING:
+                pytest.skip(f"cannot synthesize value for NOT NULL column {col}")
+            values[col] = value
+        cols = ", ".join(values)
+        marks = ", ".join(f":{c}" for c in values)
+        db_session.execute(
+            text(f"INSERT INTO products ({cols}) VALUES ({marks})"),
+            values,
+        )
     db_session.flush()
 
     class _Session:

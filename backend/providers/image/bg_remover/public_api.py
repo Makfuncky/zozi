@@ -1,14 +1,23 @@
 from typing import List, Optional, Dict, Any
 import logging
+import time
+import gc
+from pathlib import Path
+import io
 import numpy as np
 # ========================== PUBLIC API ==========================
 from .configuration import ProcessingConfig
+from .__header__ import settings
+from .enums___constants import AVAILABLE_MODELS
 
 from PIL import Image
 
 from .rembg_lazy_load import _ensure_rembg, _HAS_REMBG, remove, new_session
 from .core_i_o import _bytes_to_image, _image_to_bytes, bytes_to_image, create_rembg_session, create_frugal_rembg_session, rembg_remove_bytes
 from .session_management import _SessionManager
+from .memory_management__br_08_ import MemoryManager
+from .image_helpers import _adaptive_max_rembg_dimension, _compose_pure_alpha, _create_canvas, _resize_image, _run_model_with_dimension
+from .strategy_config import _get_strategy_config
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +55,7 @@ def remove_background(
 
     if strategy:
         try:
+            from .removal_strategy_runners import _run_strategy
             return _run_strategy(image_bytes, strategy, config, img, input_np)
         except Exception as exc:
             logger.error("Strategy %s failed: %s", strategy, exc)
@@ -144,13 +154,13 @@ def remove_background_preset(image_bytes: bytes, preset_name: str) -> bytes:
     Returns:
         PNG bytes with transparent background.
     """
-    preset_models = settings.bg_preset_models.get(preset_name)
+    preset_models = getattr(settings, "bg_preset_models", {"general": ["u2net"]}).get(preset_name)
     if not preset_models:
         logger.warning("Unknown preset %s, falling back to general", preset_name)
-        preset_models = settings.bg_preset_models["general"]
+        preset_models = getattr(settings, "bg_preset_models", {"general": ["u2net"]})["general"]
 
     config = ProcessingConfig(
-        max_rembg_dimension=settings.max_image_dim,
+        max_rembg_dimension=getattr(settings, "bg_max_image_dim", 512),
         models_to_try=preset_models,
         background="transparent",
     )

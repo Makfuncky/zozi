@@ -44,6 +44,7 @@ from infrastructure.utils.auth import (
     blacklist_token,
 )
 from infrastructure.database.database import SessionLocal
+from domains.accounts.models.mfa_factor import MfaFactor, MfaFactorType
 from domains.accounts.models.user import User
 from domains.accounts.models.user import UserDevice
 from domains.accounts.ports import get_user_by_id
@@ -141,6 +142,43 @@ def _check_login_rate_limit(identifier: str, request: Optional[Request] = None) 
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Rate limiting temporarily unavailable. Please try again later.",
         )
+
+
+def _get_totp_factor(db: Session, user_id: int) -> MfaFactor | None:
+    """Return the active TOTP MfaFactor for a user, or None."""
+    return (
+        db.query(MfaFactor)
+        .filter(
+            MfaFactor.user_id == user_id,
+            MfaFactor.factor_type == MfaFactorType.TOTP,
+            MfaFactor.enabled.is_(True),
+            MfaFactor.is_deleted.is_(False),
+        )
+        .first()
+    )
+
+
+def _get_any_totp_factor(db: Session, user_id: int) -> MfaFactor | None:
+    """Return any non-deleted TOTP MfaFactor for a user (enabled or not), or None."""
+    return (
+        db.query(MfaFactor)
+        .filter(
+            MfaFactor.user_id == user_id,
+            MfaFactor.factor_type == MfaFactorType.TOTP,
+            MfaFactor.is_deleted.is_(False),
+        )
+        .first()
+    )
+
+
+def _decrypt_totp_secret(secret: str | None) -> str | None:
+    """Return the decrypted TOTP secret, or None."""
+    if not secret:
+        return None
+    from infrastructure.security.encryption import field_encryptor
+    if field_encryptor and field_encryptor.is_encrypted(secret):
+        return field_encryptor.decrypt(secret)
+    return secret
 
 
 def _record_registration_consents(persisted_user: User, registration_payload, db: Session) -> None:
@@ -427,13 +465,15 @@ def authenticate_password(
             )
 
         # TOTP challenge
-        if user.totp_enabled:
+        totp_factor = _get_totp_factor(db, user.id)
+        if totp_factor:
             if not totp_code:
                 raise HTTPException(
                     status_code=status.HTTP_428_PRECONDITION_REQUIRED,
                     detail="TOTP code required",
                 )
-            if not totp_provider.verify(user.totp_secret, totp_code):
+            secret = _decrypt_totp_secret(totp_factor.secret)
+            if not totp_provider.verify(secret, totp_code):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid TOTP code",
@@ -1083,11 +1123,8 @@ async def authenticate_sso(
             # Link SSO user to employee
             user = User(
                 email=email,
-                username=email.split("@")[0],
                 is_active=True,
-                is_verified=True,
                 role=employee.department or "employee",
-                totp_enabled=False,
             )
             db.add(user)
             db.flush()
@@ -1251,7 +1288,7 @@ def refresh_session(refresh_token: str, db: Session | None = None) -> dict:
     """Refresh an access token using a valid refresh token."""
     from infrastructure.utils.auth import verify_refresh_token
 
-    username = verify_refresh_token(refresh_token)
+    username, _family_id = verify_refresh_token(refresh_token)
     if db is None:
         db = SessionLocal()
         close_db = True
@@ -1261,6 +1298,9 @@ def refresh_session(refresh_token: str, db: Session | None = None) -> dict:
         user = db.query(User).filter(User.email == username).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
 
         employee = db.query(Employee).filter(Employee.user_id == user.id).first()
         if not employee:
@@ -1471,12 +1511,10 @@ def check_username_exists(db: Session, username: str) -> bool:
     return db.query(User).filter(User.email == username).first() is not None
 
 
-def create_user(db: Session, email: str, username: str, full_name: str, phone: str | None, role: str, hashed_password: str) -> User:
+def create_user(db: Session, email: str, full_name: str, role: str, hashed_password: str) -> User:
     user = User(
         email=email,
-        username=username,
         full_name=full_name,
-        phone=phone,
         role=role,
         hashed_password=hashed_password,
     )
@@ -2060,8 +2098,7 @@ def _record_login_history(db: Session, user: User, request: Request | None = Non
 
 
 def _create_tokens_response(response: Response, user: User, db: Session, request: Request | None = None, method: str = "password") -> dict:
-    import sys
-    print(f"LOGIN_DEBUG: _create_tokens_response user.id={user.id} user.email={user.email}", file=sys.stderr, flush=True)
+    logger.debug("_create_tokens_response user.id=%s method=%s", user.id, method)
     device_fp = getattr(request.state, "device_fingerprint", None) if request else None
     access_token = create_access_token(data={"sub": str(_user_id(user)), "role": _user_role(user)}, device_fp=device_fp)
     refresh_token = create_refresh_token(data={"sub": str(_user_id(user))})
@@ -2150,13 +2187,11 @@ def _create_social_user(email: str, name: str | None, db: Session, profile: dict
             base = name
     user = User(
         email=email,
-        username=_unique_username(base, db),
         hashed_password=get_password_hash(secrets.token_urlsafe(24)),
         full_name=name or None,
         profile_image=_extract_avatar_url(profile),
         role="customer",
         country_code=DEFAULT_COUNTRY,
-        referral_code=_generate_unique_referral_code(db),
         email_verified=True,
     )
     db.add(user)
@@ -2418,11 +2453,8 @@ def register_user(user: UserCreate, db: Session) -> UserSchema:
     
     db_user = User(
         email=user.email,
-        username=user.username,
         hashed_password=get_password_hash(user.password),
         role=user.role,
-        phone=user.phone,
-        referral_code=_generate_unique_referral_code(db),
         country_code=DEFAULT_COUNTRY,
         referred_by_user_id=_user_id(referrer) if referrer is not None else None,
         email_verified=customer_auto_verified,
@@ -2696,7 +2728,7 @@ def login_user(
 
     _normalize_customer_verification_when_gate_disabled(user, db)
 
-    if getattr(user, "totp_enabled", False):
+    if _get_totp_factor(db, user.id):
         return _issue_totp_challenge(user, request, response, db)
 
     return _create_tokens_response(response, user, db, request=request, method="password")
@@ -2774,7 +2806,7 @@ def json_login_user(
 
     _normalize_customer_verification_when_gate_disabled(user, db)
 
-    if getattr(user, "totp_enabled", False):
+    if _get_totp_factor(db, user.id):
         return _issue_totp_challenge(user, request, response, db)
 
     tokens = _create_tokens_response(response, user, db, request=request, method="password")
@@ -2823,6 +2855,9 @@ def refresh_access_token(request: Request, response: Response, db: Session, body
     user = _resolve_user_from_subject(subject, db)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
 
     # Mark the old JTI as used (rotation)
     mark_refresh_token_used(family_id, old_jti)
@@ -3273,7 +3308,8 @@ def get_totp_status(current_user: dict, db: Session) -> dict:
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"totp_enabled": bool(getattr(user, "totp_enabled", False))}
+    factor = _get_totp_factor(db, user.id)
+    return {"totp_enabled": bool(factor)}
 
 
 def _generate_totp_provisioning_uri(user: User) -> tuple[str, str]:
@@ -3298,11 +3334,18 @@ def setup_totp(current_user: dict, db: Session) -> dict:
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if getattr(user, "totp_enabled", False):
+    if _get_totp_factor(db, user.id):
         raise HTTPException(status_code=400, detail="TOTP 2FA is already enabled")
 
     secret, uri = _generate_totp_provisioning_uri(user)
-    setattr(user, "totp_secret", secret)
+    factor = MfaFactor(
+        user_id=user.id,
+        factor_type=MfaFactorType.TOTP,
+        secret=secret,
+        enabled=False,
+        is_deleted=False,
+    )
+    _bind(db, factor)
     db.commit()
     return {
         "secret": secret,
@@ -3316,12 +3359,13 @@ def enable_totp(current_user: dict, db: Session, code: str) -> dict:
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    secret = cast(str | None, getattr(user, "totp_secret", None))
-    if not secret:
+    factor = _get_any_totp_factor(db, user.id)
+    if not factor:
         raise HTTPException(status_code=400, detail="TOTP not set up. Call /auth/2fa/setup first.")
-    if getattr(user, "totp_enabled", False):
+    if _get_totp_factor(db, user.id):
         raise HTTPException(status_code=400, detail="TOTP 2FA is already enabled")
 
+    secret = _decrypt_totp_secret(factor.secret)
     if not _validate_totp_code(secret, code):
         raise HTTPException(status_code=400, detail="Invalid TOTP code")
 
@@ -3329,8 +3373,9 @@ def enable_totp(current_user: dict, db: Session, code: str) -> dict:
     for _ in range(8):
         recovery_codes.append(secrets.token_hex(8))
 
-    setattr(user, "totp_enabled", True)
-    setattr(user, "totp_recovery_codes", recovery_codes)
+    factor.enabled = True
+    factor.backup_codes = recovery_codes
+    _bind(db, factor)
     db.commit()
     invalidate_user_cache(_user_id(user))
     return {
@@ -3345,33 +3390,41 @@ def disable_totp(current_user: dict, db: Session, password: str) -> dict:
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not getattr(user, "totp_enabled", False):
+    if not _get_totp_factor(db, user.id):
         raise HTTPException(status_code=400, detail="TOTP 2FA is not enabled")
 
     if not verify_password(password, cast(str, getattr(user, "hashed_password", None))):
         raise HTTPException(status_code=400, detail="Incorrect password")
 
-    setattr(user, "totp_secret", None)
-    setattr(user, "totp_enabled", False)
-    setattr(user, "totp_recovery_codes", None)
+    factor = _get_any_totp_factor(db, user.id)
+    if factor:
+        factor.enabled = False
+        factor.is_deleted = True
+        factor.backup_codes = None
+        _bind(db, factor)
     db.commit()
     invalidate_user_cache(_user_id(user))
     return {"detail": "TOTP 2FA disabled successfully."}
 
 
-def _verify_totp_code_with_fallback(user: User, code: str) -> bool:
+def _verify_totp_code_with_fallback(db: Session, user: User, code: str) -> bool:
     """Verify TOTP code, also checking against stored recovery codes."""
     if not code:
         return False
 
-    secret = cast(str | None, getattr(user, "totp_secret", None))
+    factor = _get_any_totp_factor(db, user.id)
+    if not factor:
+        return False
+
+    secret = _decrypt_totp_secret(factor.secret)
     if secret and _validate_totp_code(secret, code):
         return True
 
-    recovery_codes = cast(list[str] | None, getattr(user, "totp_recovery_codes", None))
-    if recovery_codes and code in recovery_codes:
-        recovery_codes.remove(code)
-        setattr(user, "totp_recovery_codes", recovery_codes)
+    backup_codes = factor.backup_codes or []
+    if code in backup_codes:
+        backup_codes.remove(code)
+        factor.backup_codes = backup_codes
+        _bind(db, factor)
         return True
 
     return False
@@ -3398,10 +3451,10 @@ def complete_totp_login(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not getattr(user, "totp_enabled", False):
+    if not _get_totp_factor(db, user.id):
         raise HTTPException(status_code=400, detail="TOTP 2FA is not enabled for this account")
 
-    if not _verify_totp_code_with_fallback(user, code):
+    if not _verify_totp_code_with_fallback(db, user, code):
         raise HTTPException(status_code=400, detail="Invalid TOTP code or recovery code")
 
     return _create_tokens_response(response, user, db, request=request, method="2fa")
@@ -3422,10 +3475,10 @@ def admin_verify_totp(
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not getattr(user, "totp_enabled", False):
+    if not _get_totp_factor(db, user.id):
         raise HTTPException(status_code=400, detail="TOTP 2FA is not enabled")
 
-    if not _verify_totp_code_with_fallback(user, code):
+    if not _verify_totp_code_with_fallback(db, user, code):
         raise HTTPException(status_code=400, detail="Invalid TOTP code")
 
     from infrastructure.utils.auth import ADMIN_2FA_VERIFY_TTL
@@ -3915,11 +3968,8 @@ logger = structlog.get_logger(__name__)
 def create_user(
     *,
     email: Optional[str],
-    username: Optional[str],
     hashed_password: str,
     role: str = "customer",
-    phone: Optional[str] = None,
-    referral_code: Optional[str] = None,
     country_code: Optional[str] = None,
     referred_by_user_id: Optional[int] = None,
     email_verified: bool = False,
@@ -3928,11 +3978,8 @@ def create_user(
     """Insert a new user row and return the persisted instance (id assigned)."""
     user = User(
         email=email,
-        username=username,
         hashed_password=hashed_password,
         role=role,
-        phone=phone,
-        referral_code=referral_code,
         country_code=country_code,
         referred_by_user_id=referred_by_user_id,
         email_verified=email_verified,
@@ -3999,22 +4046,18 @@ def create_social_user(
     db: Session,
     *,
     email: str,
-    username: str,
     hashed_password: str,
     full_name: Optional[str] = None,
     profile_image: Optional[str] = None,
     country_code: Optional[str] = None,
-    referral_code: Optional[str] = None,
 ) -> User:
     """Create a user derived from an OAuth identity."""
     user = User(
         email=email,
-        username=username,
         hashed_password=hashed_password,
         full_name=full_name,
         profile_image=profile_image,
         country_code=country_code,
-        referral_code=referral_code,
         role="customer",
         email_verified=True,
     )
@@ -4026,12 +4069,10 @@ def update_or_create_social_user(
     db: Session,
     *,
     email: str,
-    username: str,
     hashed_password: str,
     full_name: Optional[str] = None,
     profile_image: Optional[str] = None,
     country_code: Optional[str] = None,
-    referral_code: Optional[str] = None,
 ) -> User:
     """Return an existing social user (by email) or create one."""
     existing = db.query(User).filter(User.email == email).first()
@@ -4040,12 +4081,10 @@ def update_or_create_social_user(
     return create_social_user(
         db,
         email=email,
-        username=username,
         hashed_password=hashed_password,
         full_name=full_name,
         profile_image=profile_image,
         country_code=country_code,
-        referral_code=referral_code,
     )
 
 
@@ -4332,19 +4371,15 @@ def create_registration_user(
     db: Session,
     *,
     email: Optional[str],
-    username: Optional[str],
     full_name: Optional[str],
-    phone: Optional[str],
     role: str,
     hashed_password: str,
 ) -> User:
     """Persist a new local-registration user and return the refreshed instance."""
     user = create_user(
         email=email,
-        username=username,
         hashed_password=hashed_password,
         role=role,
-        phone=phone,
         full_name=full_name,
     )
     create_user_persist(db, user)
@@ -4418,9 +4453,14 @@ def add_user_device(
 
 def update_user_totp(db: Session, user: User, secret: str, code: str) -> User:
     """Enable TOTP for a user and store the verified secret."""
-    user.totp_secret = secret
-    user.totp_enabled = True
-    db.add(user)
+    factor = MfaFactor(
+        user_id=user.id,
+        factor_type=MfaFactorType.TOTP,
+        secret=secret,
+        enabled=True,
+        is_deleted=False,
+    )
+    _bind(db, factor)
     db.commit()
     db.flush()
     return user
@@ -4432,10 +4472,12 @@ def disable_user_totp(db: Session, user: User, password: str, verify_password) -
     if not verify_password(password, hashed):
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail="Incorrect password")
-    user.totp_enabled = False
-    user.totp_secret = None
-    user.totp_recovery_codes = None
-    db.add(user)
+    factor = _get_any_totp_factor(db, user.id)
+    if factor:
+        factor.enabled = False
+        factor.is_deleted = True
+        factor.backup_codes = None
+        _bind(db, factor)
     db.commit()
     db.flush()
     return user

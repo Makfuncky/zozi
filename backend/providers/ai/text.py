@@ -24,6 +24,13 @@ logger = logging.getLogger(__name__)
 
 HAS_AI_TEXT = True
 
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+    np = None  # type: ignore[assignment]
+
 _AI_BREAKER = get_circuit_breaker("ai_text", failure_threshold=3, recovery_timeout=30.0)
 _DEFAULT_AI_TIMEOUT = settings.ollama_ai_timeout
 _MAX_RETRIES = 2

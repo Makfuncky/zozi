@@ -10,11 +10,17 @@ Wire it at app startup by importing this module, or call
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict
 
 from infrastructure.messaging.events.event_bus import subscribe
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_implemented(feature: str) -> None:
+    if os.getenv("APP_ENV", "development").lower() != "development":
+        raise NotImplementedError(f"{feature} event handler is not implemented")
 
 
 def _on_payment_confirmed(payload: Dict[str, Any]) -> None:
@@ -23,31 +29,31 @@ def _on_payment_confirmed(payload: Dict[str, Any]) -> None:
     The finance domain accrues commission and posts the corresponding
     transaction-ledger entry once a payment settles.
     """
+    _ensure_implemented("payments.confirmed")
     logger.info(
         "payment confirmed: order_id=%s amount=%s — accrue commission",
         payload.get("order_id", "?"),
         payload.get("amount", "?"),
     )
-    # Future: post commission accrual to TransactionLedger, update balances.
 
 
 def _on_payment_refunded(payload: Dict[str, Any]) -> None:
     """React to a payment refunded in the payments domain."""
+    _ensure_implemented("payments.refunded")
     logger.info(
         "payment refunded: order_id=%s amount=%s — post refund ledger entry",
         payload.get("order_id", "?"),
         payload.get("amount", "?"),
     )
-    # Future: post RefundLedger entry, reverse commission accrual.
 
 
 def _on_order_completed(payload: Dict[str, Any]) -> None:
     """React to an order completion in the orders domain."""
+    _ensure_implemented("orders.order.completed")
     logger.info(
         "order completed: order_id=%s — post settlement journal",
         payload.get("order_id", "?"),
     )
-    # Future: post SupplierSettlement journal entry when order fulfils.
 
 
 def register_finance_subscribers() -> None:

@@ -30,7 +30,7 @@ SCOPE_DIRS = [
 # count must not grow without an explicit, reasoned addition.
 OFFSET_ALLOWLIST = {
     (
-        "domains/suppliers/services/supplier_service.py",
+        "domains/suppliers/services/orders/supplier_orders.py",
         "get_supplier_orders",
     ): "scalar-select query (order_id-only) cannot derive sort columns for keyset; refactor to entity select before migrating",
 }
@@ -102,4 +102,52 @@ def test_allowlist_entries_still_present():
     assert not missing, (
         "OFFSET_ALLOWLIST entries no longer correspond to a live .offset() call; "
         "remove the stale entry(ies):\n  " + "\n  ".join(f"{p}:{f}" for p, f in missing)
+    )
+
+
+def test_allowlist_paths_resolve_to_real_files():
+    """Guard against stale allowlist paths: every entry must point to a real file."""
+    bad = []
+    for (rel_path, _func), _reason in OFFSET_ALLOWLIST.items():
+        abs_path = os.path.join(BACKEND, rel_path)
+        if not os.path.isfile(abs_path):
+            bad.append(rel_path)
+    assert not bad, (
+        "OFFSET_ALLOWLIST contains paths that do not resolve to real source files; "
+        "fix the stale path(es):\n  " + "\n  ".join(bad)
+    )
+
+
+def test_offset_implies_limit():
+    """Every .offset() call in scope must be paired with a .limit() in the same function."""
+    offenders = []
+    for path in _iter_py_multi():
+        rel = os.path.relpath(path, BACKEND).replace(os.sep, "/")
+        try:
+            tree = ast.parse(open(path, encoding="utf-8").read())
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                if node.func.attr == "offset":
+                    func = _function_for_node(tree, node)
+                    fn_node = next(
+                        (n for n in ast.walk(tree)
+                         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                         and n.name == func),
+                        None,
+                    )
+                    if fn_node is None:
+                        continue
+                    has_limit = any(
+                        isinstance(child, ast.Call)
+                        and isinstance(child.func, ast.Attribute)
+                        and child.func.attr == "limit"
+                        for child in ast.walk(fn_node)
+                    )
+                    if not has_limit:
+                        offenders.append(f"{rel}: .offset() in '{func}' has no paired .limit()")
+    assert not offenders, (
+        "Found .offset() without a paired .limit() — unbounded offset queries can "
+        "return an entire table. Fix:\n  " + "\n  ".join(sorted(offenders))
     )

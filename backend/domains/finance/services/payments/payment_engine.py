@@ -38,7 +38,7 @@ import os
 import re
 
 from providers.payments.registry import PaymentGatewayRegistry
-from providers.payments.stripe_sdk import stripe
+from providers.payments.stripe_sdk import stripe, _load_stripe, HAS_STRIPE
 
 import httpx
 
@@ -145,11 +145,7 @@ def store_payment_idempotency(idempotency_key: str, result: dict) -> None:
     _store_payment_idempotency_result(idempotency_key, result)
 
 
-stripe.api_key = str(getattr(settings, "stripe_secret_key", "") or "").strip()
 
-if str(getattr(settings, "stripe_api_version", "") or "").strip():
-
-    stripe.api_version = str(getattr(settings, "stripe_api_version", "") or "").strip()
 
 
 
@@ -1232,15 +1228,10 @@ def _resolve_stripe_secret_key(db: Session | None = None) -> str:
             return str(getattr(record, "secret_key") or "").strip()
 
     return str(
-
         os.getenv("STRIPE_SECRET_KEY")
-
         or getattr(settings, "stripe_secret_key", "")
-
-        or stripe.api_key
-
+        or (stripe.api_key if stripe is not None else "")
         or ""
-
     ).strip()
 
 
@@ -1264,17 +1255,17 @@ def _resolve_stripe_webhook_secret(db: Session | None = None) -> str:
 
 
 def _apply_stripe_runtime_key(db: Session | None = None) -> str:
-
+    _load_stripe()
+    global stripe
+    from providers.payments import stripe_sdk
+    stripe = stripe_sdk.stripe
+    if stripe is None or not stripe_sdk.HAS_STRIPE:
+        return ""
     resolved = _resolve_stripe_secret_key(db)
-
     stripe.api_key = resolved
-
     runtime_api_version = str(getattr(settings, "stripe_api_version", "") or "").strip()
-
     if runtime_api_version:
-
         stripe.api_version = runtime_api_version
-
     return resolved
 
 
@@ -3294,7 +3285,12 @@ def test_payment_gateway_connection(provider_code: str, db: Session) -> PaymentG
     try:
 
         if normalized_code == "stripe":
-
+            _load_stripe()
+            global stripe
+            from providers.payments import stripe_sdk
+            stripe = stripe_sdk.stripe
+            if stripe is None or not stripe_sdk.HAS_STRIPE:
+                raise HTTPException(status_code=503, detail="Stripe SDK is not available")
             secret_key = _resolve_stripe_secret_key(db)
 
             if not _is_non_placeholder_secret(secret_key, ("sk_test_", "sk_live_")):
@@ -4206,14 +4202,38 @@ def _finalize_inventory_for_paid_order(order: Order, db: Session) -> list[str]:
 
 
 
-    # Batch-load all products at once instead of one-by-one
+    # Batch-load all products at once instead of one-by-one.
+    #
+    # Two things are required here, and the second is easy to miss:
+    #
+    # 1. `with_for_update()` takes a row lock on every product row for the rest
+    #    of the enclosing transaction, so the read-check-write of `stock` below
+    #    cannot interleave with a concurrent payment confirmation for the same
+    #    SKU (STOCK-001). Matches the sibling idiom at
+    #    orders/services/core/order_engine.py:223-229.
+    #
+    # 2. `populate_existing()` is what makes the lock actually load-bearing.
+    #    The OrderItem load above pulls each Product in eagerly, because
+    #    OrderItem.product is `lazy='selectin'`. Those Product instances are
+    #    therefore already in this session's identity map carrying the PRE-lock
+    #    stock. Without `populate_existing()`, the locking SELECT still runs in
+    #    the database and still blocks correctly, but SQLAlchemy hands back the
+    #    already-present instances WITHOUT refreshing their columns -- so the
+    #    code reads the stale pre-lock `stock` and both concurrent
+    #    confirmations still decrement from it. Measured on PostgreSQL:
+    #    `with_for_update()` alone leaves the oversell in place; adding
+    #    `populate_existing()` is what closes it.
+    #
+    # Law 45: still a single batched query -- no N+1.
+    # Law 50: the lock is held until the caller commits, so read-check-write is
+    # one transaction. `with_for_update()` is a no-op on SQLite, which keeps the
+    # SQLite unit-test suite working (Law 108).
 
     products_by_id: dict[int, Product] = {
 
         cast(int, p.id): p
 
-        .limit(1000)
-        for p in db.query(Product).filter(Product.id.in_(list(requested_quantities.keys()))).all()
+        for p in db.query(Product).filter(Product.id.in_(list(requested_quantities.keys()))).populate_existing().with_for_update().limit(1000).all()
 
     } if requested_quantities else {}
 

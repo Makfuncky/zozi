@@ -215,11 +215,6 @@ def rls_before_execute(conn: Any, clause: Any, multiparams: Any, params: Any, ex
     return clause, multiparams, params
 
 
-def instrument_rls(engine: Engine) -> None:
-    event.listen(engine, "before_execute", rls_before_execute, retval=True)
-    logger.info("RLS interceptor installed on database engine")
-
-
 def generate_rls_policy_sql(schema: str = "public") -> str:
     """Generate PostgreSQL CREATE POLICY SQL for all country-aware tables.
 

@@ -180,3 +180,23 @@ class ParcelLocationTracker(Base):
     parcel = relationship("Shipment")
     country = relationship("CountryConfig")
 
+
+# LogisticsPartner, Shipment, and User are imported after all dependent classes
+# are defined so the SQLAlchemy registry can resolve them at configure_mappers().
+# Deferred to bottom to avoid circular import with logistics_entities.py, which
+# itself defers its CountryConfig/ShippingCarrier/Order imports for the same reason.
+#
+# ImportError is tolerated rather than fatal: order_entities -> countries ->
+# country_control -> logistics_entities -> order_entities is a cycle, so when
+# order_entities is the entry point this link sees a partially-initialised
+# logistics_entities. Raising here left the module half-imported and broke the
+# startup import of FulfillmentService. Both names are only needed as
+# relationship() string targets, which SQLAlchemy resolves from the declarative
+# registry once every models package has been imported (see
+# lifespan._preload_all_models), so skipping the link here is safe.
+try:
+    from domains.logistics.models.logistics_entities import LogisticsPartner, Shipment  # noqa: E402,F401
+except ImportError:  # pragma: no cover - circular import guard
+    pass
+from domains.accounts.models.user import User  # noqa: E402,F401
+

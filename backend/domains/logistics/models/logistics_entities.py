@@ -5,7 +5,6 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from infrastructure.database.types import GUID
 from . import Base
-from domains.country.models.countries import CountryConfig  # noqa: F401
 from domains.finance.models.payments import LogisticsPartnerPayout
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 __all__ = ['LogisticsPartner', 'LogisticsPartnerProfile', 'LogisticsPartnerServiceArea', 'LogisticsPricingProfile', 'LogisticsVehicleRule', 'Shipment', 'ShipmentEvent', 'LogisticsCategoryPricingRule']
@@ -262,7 +261,7 @@ class Shipment(Base):
     country_code = Column(String(2), nullable=True, index=True)
     order = relationship('Order', back_populates='shipments', lazy='selectin')
     supplier = relationship('User', backref='shipments', lazy='selectin')
-    assigned_partner = relationship('LogisticsPartner', backref='shipments')
+    assigned_partner = relationship('LogisticsPartner', backref='shipments', lazy='selectin')
     carrier = relationship('ShippingCarrier', backref='shipments', lazy='selectin')
 
 class ShipmentEvent(Base):
@@ -292,3 +291,26 @@ class ShipmentEvent(Base):
     notes = Column(String(255), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     country_code = Column(String(2), nullable=True, index=True)
+
+
+# Cross-domain string relationship targets are imported after all local classes
+# are defined to avoid circular imports. Deferred to bottom so that
+# configure_mappers() can resolve them at runtime.
+#
+# The orders link closes the cycle
+# order_entities -> countries -> country_control -> logistics_entities -> order_entities,
+# so it raises ImportError when order_entities is the import entry point. The
+# name is only needed as a relationship() string target, resolved from the
+# declarative registry after every models package is imported
+# (lifespan._preload_all_models), so a skipped link is safe.
+try:
+    from domains.orders.models.order_entities import Order  # noqa: E402,F401
+except ImportError:  # pragma: no cover - circular import guard
+    pass
+from domains.accounts.models.user import User  # noqa: E402,F401
+from domains.country.models.countries import CountryConfig  # noqa: E402,F401
+from domains.finance.models.general_ledger import BankTransaction  # noqa: E402,F401
+from domains.finance.models.tax_rules import TaxRule  # noqa: E402,F401
+from domains.governance.models.admin import ShippingCarrier  # noqa: E402,F401
+from domains.hr.models.employee_models import Employee  # noqa: E402,F401
+from domains.promotions.models.promotions import FlashSale  # noqa: E402,F401

@@ -5643,13 +5643,14 @@ _most_imp_docx\TECHNOLOGY_STACK.md
 -----------------------------------------------------------------------------------------------------
 
 - Read must `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` from top to bottom because it is $Benchmark$.
-- Read in detail `_most_imp_docx\PROMPT_RESOLUTION_ORCHESTRATOR.md` top to bottom and start re-investigation compiler work and fine-tune the solution with correct solution and start solution by dispatch complete details to sub-agent.
+- Read in detail `_most_imp_docx\PROMPT_RESOLUTION_ORCHESTRATOR.md` top to bottom and start re-investigation work of the compiler and fine-tune the solution with correct solution and dispatch sub-agent to start solution by complete details.
 - Use maximum sub-agent (50+ but max 10 agent at a time, not more then that) for *accuracy* and and give them *clear and detailed instructions* for better, complete, accurate and detail solution and test result which can be reliable/trusted for taking decisions.
 - Use loging system to track all the agent performance and working to ensure solution happen proper skeptical.
 
 -----------------------------------------------------------------------------------------------------
 
 | Target | Nature of Problem | Problem | Solution | Changes Should to make |
+| Target | Audit Problem | Audit Solution | Verification of Problem | Verification of Solution | Changes should to make in codebase | Reason |
 
 
 - Read in detail each file of `_audit\**` and start resolving according to the `_most_imp_docx\PROMPT_RESOLUTION_ORCHESTRATOR.md` all the problems.
@@ -5689,7 +5690,7 @@ can you list down which router functions will be go at which file make a documen
 - Read `_audit\**` all the files.
 - Read complete **codebase** in detail.
 
-- Create a main script `zozi_audit.py` in `.\_zozi_audit\**` which can do complete audit of the codebase in detail from all aspects and dimension in to one file `.\_zozi_audit\zozi_forensic_audit.md` 
+- The main script `zozi_audit.py` in `.\_zozi_audit\**` which can do complete audit of the codebase in detail from all aspects and dimension in to one file `.\_zozi_audit\zozi_forensic_audit.md` 
 - I know just python can't provide 100% audit of the codebase, so you can use the sub-scripts in `.\_zozi_audit\**` browser tests, you can use the **Ollama LLM**, and other sub script which will help to complete 100% **accurate** and **complete** audit of the codebase.
 - We have to capture all the aspects to get 100% **production-ready** project which is included in the details and which are not included into the files details. 
 
@@ -5703,6 +5704,34 @@ can you list down which router functions will be go at which file make a documen
 ---------------------------------------------------------------------------
 
 We have to complete the browser test of each button, popup check, login, registration, upload, communication, database, seaching engine, and everything in detail, each feature, function, operation, workflow and everything, you should be read complete codebase in detail and have to check all the step of each workflow and everything and make a detail pipeline for browser playwright test in `.\_browser_test\**` and also make a detail prompt which we will use everything for doing browser test and each test must be follow all the decided steps of each workflow and also we should have each feature/workflow/operation playwright file which can anytime change and update according to the updation of the project. each browser test must report correctly according to the features last time we got problem that browser test just open the browser and give green signal even agent didn't login and perform any task according to the feature/workflow.
+
+
+---------------------------------------------------------------------------
+
+- Read must `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` from top to bottom because these are $Benchmark$ files.
+- Run the `.\run_zozi.bat` and check what are happening into the running of the problems of backend, web_app, mobile_app. 
+- Read complete **codebase** in detail and investigate the below problem and make a document `RUNTIME_PROBLEM.md`
+	| Sno | Investigated Problem | Investigation Process | Benchmark / Logical requirement | Solution to be apply | Implementation Status | 
+- You can use maximum sub-agent (50+ but max 10 agent at a time, not more then that) for **accuracy** and and give them **clear and detailed instructions** for better, complete, accurate details
+
+---------------------------------------------------------------------------
+
+- Read must `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` from top to bottom because these are $Benchmark$ files.
+- Read `RUNTIME_PROBLEM.md` and check all problems are correct or not ?
+- Then investigate what are the correct `Solution to be Applied` should be apply to resolve the problems which will lead to production-ready project.
+- Update properly `Solution to be Applied` to resolve the problem correctly step by step which you can dispatch to the agent properly but for that you must have to investigate deeply and also do some internet research also for correct solution implementation.
+
+
+
+---------------------------------------------------------------------------
+
+- Read must `_most_imp_docx\ARCHITECTURE_STACK.md` and `_most_imp_docx\TECHNOLOGY_STACK.md` from top to bottom because these are $Benchmark$ files.
+- Read complete **codebase** in detail and investigate in detail make a list of unnecessary and temp files which should **remove** in a document `UNNECESSARY_FILE_LIST.md`
+	| Sno | Particular Location | File Location | Reason for Remove | Status of Removal |
+
+
+accoridng to the document `UNNECESSARY_FILE_LIST.md`, we have around 2025 file in `_audit\**` folder, some are important files of the audit which might be max 250 files but remaining are unnecessary files.
+list down after investigate which are important and which are not.
 
 
 ---------------------------------------------------------------------------

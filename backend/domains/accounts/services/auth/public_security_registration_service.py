@@ -135,7 +135,7 @@ def register(payload: RegisterRequest, db: Session=Depends(get_db)):
             import logging as _logging
             _logging.getLogger(__name__).warning('Password truncated to 72 characters due to bcrypt limit for user %s', payload.email)
         # TODO Law 3: Replace with domain event for cross-domain write
-        user = User(email=payload.email, username=payload.username, full_name=payload.full_name or payload.username, phone=payload.phone, role=payload.role, hashed_password=get_password_hash(payload.password))
+        user = User(email=payload.email, full_name=payload.full_name or payload.username, role=payload.role, hashed_password=get_password_hash(payload.password))
         db.add(user)
         db.commit()
         db.refresh(user)

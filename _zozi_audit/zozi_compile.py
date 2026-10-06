@@ -63,6 +63,46 @@ PHASE_TITLES = {
 }
 
 
+def _write_reliably(path: Path, text: str, attempts: int = 6) -> None:
+    """Write a file, retrying transient Windows sharing violations.
+
+    `OSError: [Errno 22]` on a write to an open file hit this stage on 3 of 8
+    runs, which meant the remediation plan was silently left stale. Attempts are
+    bounded and the final failure is re-raised: an unwritten plan must not be
+    reported as a written one.
+    """
+    import time as _time
+    last: Exception | None = None
+    for i in range(attempts):
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+            return
+        except OSError as exc:
+            last = exc
+            # 22=EINVAL, 13=EACCES, 32=sharing violation on Windows
+            if exc.errno not in (13, 22, 32):
+                raise
+            _time.sleep(0.4 * (i + 1))
+    raise last if last else OSError(f"could not write {path}")
+
+
+def _build_probe_runner(root: Path):
+    """A `ProbeRunner` for re-deciding findings, or None if unavailable.
+
+    The probe layer is a separate concern from the compiler and must never be
+    able to break the plan: if the import or the runner fails, the caller falls
+    back to verdict-only gating rather than crashing.
+    """
+    try:
+        if str(HERE) not in sys.path:
+            sys.path.insert(0, str(HERE))
+        from zz_core.probe import ProbeRunner
+        return ProbeRunner(Path(root))
+    except Exception:
+        return None
+
+
 @dataclass
 class Step:
     id: str
@@ -113,6 +153,9 @@ class Compiler:
         # expected input for the no-gate path, not an exceptional case.
         self.warnings: list[str] = []
         self.rejected: list[dict] = []
+        #: findings no instrument could verify — reported, never planned
+        self.undecided: list[dict] = []
+        self._probe_runner = None
         self.steps: list[Step] = []
         self.findings: list[dict] = self._load_jsonl("findings.jsonl")
         self.observations: list[dict] = self._load_jsonl("observations.jsonl")
@@ -135,6 +178,20 @@ class Compiler:
         v = self.verdicts.get(finding_id)
         return v.get("verdict", "UNVERIFIABLE") if v else "UNVERIFIABLE"
 
+    def relocated_of(self, finding_id: str) -> int:
+        """Line the verifier re-located the construct to, or 0.
+
+        The finding's own line number is a snapshot from scan time. When the
+        gate re-locates the construct it records the real line, and a step that
+        pointed at the stale one would send whoever executes the plan to edit
+        the wrong place.
+        """
+        v = self.verdicts.get(finding_id) or {}
+        try:
+            return int(v.get("relocated_to") or 0)
+        except (TypeError, ValueError):
+            return 0
+
     # -- input ----------------------------------------------------------------
     def _load_jsonl(self, name: str) -> list[dict]:
         path = self.logs / name
@@ -142,7 +199,7 @@ class Compiler:
             self.warnings.append(f"missing input: {name}")
             return []
         rows = []
-        for line in path.read_text(encoding="utf-8").splitlines():
+        for line in path.read_text(encoding="utf-8-sig").splitlines():
             line = line.strip()
             if line:
                 try:
@@ -157,7 +214,7 @@ class Compiler:
             self.warnings.append(f"missing input: {name}")
             return {}
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            return json.loads(path.read_text(encoding="utf-8-sig"))
         except json.JSONDecodeError:
             self.warnings.append(f"{name}: invalid JSON")
             return {}
@@ -167,13 +224,46 @@ class Compiler:
         return (f.get("truth_level") in TRUSTED_TRUTH
                 and f.get("claim_state") not in UNTRUSTED_CLAIM)
 
+    def _probe_confirms(self, f: dict) -> bool | None:
+        """Run this finding's attached probe. True/False, or None if it has none.
+
+        `zozi_verify.py` only re-checks eight clusters on token consistency, so it
+        marks everything else UNVERIFIABLE -- which is a *measurement* gap, not a
+        statement that the finding is doubtful. The probe layer is the stronger
+        instrument, so a finding whose probe actually holds is as trustworthy as
+        one the text gate confirmed, and belongs in the plan.
+        """
+        probe = f.get("probe") or {}
+        if not probe:
+            return None
+        if self._probe_runner is None:
+            self._probe_runner = _build_probe_runner(self.root)
+        if self._probe_runner is None:
+            return None
+        try:
+            res = self._probe_runner.run(probe)
+        except Exception:
+            return None
+        return bool(res.holds) if res.resolvable else None
+
+    def _actionable(self, f: dict) -> tuple[bool, str]:
+        """May this finding become a plan step at all? Returns (ok, reason)."""
+        if self.verdict_of(f.get("id") or "") == "CONFIRMED":
+            return True, "verdict=CONFIRMED"
+        holds = self._probe_confirms(f)
+        if holds is True:
+            return True, "probe holds"
+        if holds is False:
+            return False, "probe refutes it"
+        return False, "no independent verification"
+
     def _wave_for(self, f: dict) -> int:
         cluster = f.get("cluster") or ""
         if cluster in GATE_CLUSTERS:
             return 0
         # Verification state overrides the finding's own confidence: a P0 nobody
         # could adjudicate is a verification task, not an instruction.
-        if self.verdict_of(f.get("id") or "") != "CONFIRMED":
+        if not self._actionable(f)[0]:
             return 4
         if f.get("completion_blocker") == "yes" or f.get("priority") == "P0":
             return 1
@@ -185,7 +275,7 @@ class Compiler:
         cluster = f.get("cluster") or ""
         if cluster in GATE_CLUSTERS:
             return "gate"
-        return "fix" if self.verdict_of(f.get("id") or "") == "CONFIRMED" else "verify"
+        return "fix" if self._actionable(f)[0] else "verify"
 
     # -- build ----------------------------------------------------------------
     def build(self) -> None:
@@ -215,7 +305,13 @@ class Compiler:
                 truth_level="L0", claim_state="VERIFIED",
             ))
 
-        # 2. Findings — adjudicated claims only become steps.
+        # 2. Findings — only adjudicated claims become steps.
+        #
+        # The gate here used to be "not REJECTED", which admitted every
+        # UNVERIFIABLE finding: the plan came out at 1222 steps of which 1007 were
+        # its own `untrusted claims` count. A step is an instruction to edit code,
+        # so it must be backed by either a CONFIRMED verdict or a probe that
+        # actually holds. Everything else is reported as needing triage instead.
         for f in self.findings:
             fid = f.get("id") or "FIND-?"
             verdict = self.verdict_of(fid)
@@ -228,12 +324,44 @@ class Compiler:
                     "evidence": v.get("evidence", ""),
                 })
                 continue
+            actionable, why = self._actionable(f)
+            if not actionable:
+                # A probe that actively refutes the finding is a disproof, and
+                # belongs beside the text-gate rejections. Calling it "needs
+                # triage" understated the instrument's own result.
+                if why == "probe refutes it":
+                    self.rejected.append({
+                        "id": fid, "verdict": "PROBE_REFUTED",
+                        "cluster": f.get("cluster"),
+                        "priority": f.get("priority"),
+                        "claim": (f.get("current") or "")[:180],
+                        "evidence": _probe_evidence(self._probe_runner, f),
+                    })
+                    continue
+                self.undecided.append({
+                    "id": fid,
+                    "cluster": f.get("cluster") or "(unclustered)",
+                    "priority": f.get("priority"),
+                    "verdict": verdict,
+                    "reason": why,
+                    "claim": (f.get("current") or "")[:180],
+                    "file": f.get("file") or "",
+                    "line": f.get("line") or 0,
+                })
+                continue
+            reloc = self.relocated_of(fid)
+            detail = (f.get("delta") or "")[:400]
+            if reloc:
+                detail += (f"\n\n> **Re-located.** The cited line "
+                           f"{f.get('line') or 0} no longer holds this construct; "
+                           f"the verification gate found it at "
+                           f"`{f.get('file')}:{reloc}`. Act on that line.")
             self.steps.append(Step(
                 id=fid,
                 kind=self._kind_for(f),
                 wave=self._wave_for(f),
                 title=(f.get("current") or "")[:180],
-                detail=(f.get("delta") or "")[:400],
+                detail=detail,
                 files=[f["file"]] if f.get("file") else [],
                 fix=f.get("fix", ""),
                 verify=f.get("verify", ""),
@@ -551,6 +679,40 @@ class Compiler:
 
         out += [
             "---",
+            "## Needs triage (not planned — nothing verified these yet)",
+            "",
+        ]
+        if not self.undecided:
+            out += ["_Every finding was either verified or rejected._", ""]
+        else:
+            by_cluster: dict[str, int] = {}
+            for r in self.undecided:
+                by_cluster[r["cluster"]] = by_cluster.get(r["cluster"], 0) + 1
+            out += [
+                f"{len(self.undecided)} finding(s) had no independent confirmation, so "
+                f"they are **not** in any wave above. A plan step is an instruction to "
+                f"edit code; an unverified claim is not yet known to be a real defect. "
+                f"They need a probe rule or a human decision first.",
+                "",
+                "| Cluster | Count | Why unverified |",
+                "|---------|-------|----------------|",
+            ]
+            for c, n in sorted(by_cluster.items(), key=lambda kv: -kv[1])[:40]:
+                why = next(r["reason"] for r in self.undecided if r["cluster"] == c)
+                out.append(f"| `{_one_line(c, 40)}` | {n} | {why} |")
+            out += ["", "<details><summary>all of them</summary>", "",
+                    "| ID | Cluster | Priority | Verdict | Claim |", "|---|---|---|---|---|"]
+            for r in self.undecided[:300]:
+                out.append(f"| `{r['id']}` | `{_one_line(r['cluster'], 30)}` | "
+                           f"{r['priority']} | {r['verdict']} | "
+                           f"{_one_line(r['claim'], 90)} |")
+            if len(self.undecided) > 300:
+                out.append(f"| … | | | | {len(self.undecided)-300} more in "
+                           f"`_zozi_audit/logs/plan.json` |")
+            out += ["", "</details>", ""]
+
+        out += [
+            "---",
             "## Rejected findings (not work)",
             "",
         ]
@@ -607,7 +769,7 @@ class Compiler:
         if not path.exists():
             return {}
         try:
-            return json.loads(path.read_text(encoding="utf-8")).get("steps", {})
+            return json.loads(path.read_text(encoding="utf-8-sig")).get("steps", {})
         except json.JSONDecodeError:
             return {}
 
@@ -621,7 +783,7 @@ class Compiler:
             raise SystemExit(f"unknown step id: {step_id} "
                              f"(run without --status to list the plan)")
         path = self._status_path()
-        data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"steps": {}}
+        data = json.loads(path.read_text(encoding="utf-8-sig")) if path.exists() else {"steps": {}}
         data.setdefault("steps", {})[step_id] = {
             "state": state, "at": datetime.now(timezone.utc).isoformat()}
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -679,6 +841,17 @@ def _gate_block(sm: dict) -> list[str]:
         "independent re-check cannot honestly be called confirmed. It is routed to a "
         "verification task instead of being silently trusted.",
     ]
+
+
+def _probe_evidence(runner, f: dict) -> str:
+    """Why the probe disagreed with the finding, for the rejected table."""
+    probe = f.get("probe") or {}
+    if runner is None or not probe:
+        return ""
+    try:
+        return (runner.run(probe).detail or "")[:180]
+    except Exception as exc:
+        return f"probe error: {type(exc).__name__}"
 
 
 def _one_line(text: str, limit: int = 120) -> str:
@@ -747,16 +920,22 @@ def main(argv=None) -> int:
 
     out = Path(args.out).resolve() if args.out else root / "_zozi_audit" / "zozi_remediation_plan.md"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(text, encoding="utf-8")
+    _write_reliably(out, text)
     sm = comp.summary()
     logs.mkdir(parents=True, exist_ok=True)
-    (logs / "plan.json").write_text(
-        json.dumps({"summary": sm, "steps": [s.to_dict() for s in comp.steps]},
-                   indent=2), encoding="utf-8")
+    _write_reliably(logs / "plan.json",
+                    json.dumps({"summary": sm,
+                                "steps": [s.to_dict() for s in comp.steps],
+                                "needs_triage": comp.undecided,
+                                "rejected": comp.rejected},
+                               indent=2))
     print(f"[compile] {sm['steps_out']} step(s) -> {out}")
     print(f"[compile] release-gating: {sm['release_gating_steps']} "
           f"(~{sm['total_hours']}h) | improvement: {sm['improvement_steps']} | "
           f"untrusted claims: {sm['untrusted_claims']}")
+    print(f"[compile] verified-and-planned: {len(comp.steps)} | "
+          f"needs triage (not planned): {len(comp.undecided)} | "
+          f"rejected: {len(comp.rejected)}")
     if sm["warnings"]:
         for wmsg in sm["warnings"]:
             print(f"[compile] WARNING: {wmsg}", file=sys.stderr)

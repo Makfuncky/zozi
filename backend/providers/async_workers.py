@@ -23,6 +23,40 @@ Usage:
     # Returns {bg_result, ai_result} processed in parallel
 
 Test file: backend/tests/_test_provider/test_async_workers.py
+
+Module vs. package (PERF2-018)
+------------------------------
+ARCHITECTURE_STACK.md §3 draws ``providers/async_workers/`` with a trailing
+slash, but this component is canonically the single module
+``backend/providers/async_workers.py`` and stays that way. The normative
+references all name the module path rather than a package layout: ARCH §3.1
+("CPU-bound provider work runs through ``providers.async_workers``"), Law 128
+("CPU-bound provider work via providers/async_workers") and
+TECHNOLOGY_STACK.md §2 ("| providers/async_workers |"). The §3 slash is a
+drawing of the conceptual group ("Thread/process pool executors for CPU-bound
+work"), the same way the tree draws ``providers/_base.py`` as a leaf file.
+
+A split was rejected on evidence, not preference:
+  * There is no PDF worker here and never was — the module covers
+    background removal, vision, OCR, text/embedding and search. Splitting into
+    "image / PDF / ML" modules would invent a PDF module that has no code.
+  * The audit's proposed ``ProcessPoolExecutor`` is a regression, not a fix.
+    ``_run_in_thread`` is called with keyword arguments and with closures
+    defined inside function bodies (``_search``, ``ollama_chat``); neither is
+    picklable, and forking processes while the ONNX / Ollama / Pillow sessions
+    are live is exactly the OOM this module exists to prevent (Law 121, Law
+    128, Law 261/269). The heavy native work already releases the GIL, so the
+    thread pool is the correct primitive.
+  * A directory split is a rename/move and requires proving every import
+    updates atomically; the current importer set is tests-only, but the
+    restructure would still create files outside the allowed edit set.
+
+Concurrency limits
+------------------
+Every operator-tunable limit is read from the typed pydantic-settings object
+(``config.settings``) — i.e. from the environment variables documented in
+TECHNOLOGY_STACK.md §20. No limit is hard-coded, so raising a knob in Coolify
+takes effect instead of being silently defeated (Law 66, Law 67).
 """
 from __future__ import annotations
 
@@ -36,16 +70,21 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
+from config import settings
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Global thread pool for CPU-bound provider work
 # ---------------------------------------------------------------------------
-# Use a bounded pool to prevent 1000+ threads on a VPS.
-# Pool size = min(32, os.cpu_count() * 4) — enough for concurrent requests
-# without overwhelming a 1-2 vCPU VPS.
+# A bounded pool prevents 1000+ threads on a VPS. The pool is sized from the
+# CPU count (one worker thread per core) under a hard ceiling, so the pool can
+# never grow without bound on a large host.
 
-_POOL_SIZE = min(32, os.cpu_count() or 2)
+_THREAD_POOL_HARD_CEILING = 32
+_THREAD_POOL_CPU_FLOOR = 2
+
+_POOL_SIZE = max(1, min(_THREAD_POOL_HARD_CEILING, os.cpu_count() or _THREAD_POOL_CPU_FLOOR))
 _executor = ThreadPoolExecutor(
     max_workers=_POOL_SIZE,
     thread_name_prefix="async_provider",
@@ -404,35 +443,199 @@ class ConcurrencyManager:
     Ensures the system never exceeds safe resource limits when handling
     1000+ concurrent users. Uses a semaphore-based token bucket system.
 
+    Every limit resolves from a documented environment knob read through the
+    typed settings object (TECHNOLOGY_STACK.md §20, Law 84/203), with named
+    constants as the fallback where no knob exists yet:
+
+        bg_removal   -> BG_MAX_CONCURRENT              settings.bg_max_concurrent
+        ai_analysis  -> COUNTRY_AI_MAX_CONCURRENT_JOBS settings.country_ai_max_concurrent_jobs
+        ocr          -> (no documented knob)           _FALLBACK_MAX_OCR
+        embedding    -> (no documented knob)           _FALLBACK_MAX_EMBED
+        http         -> (no documented knob)           _FALLBACK_MAX_HTTP
+
+    Two mappings are deliberately NOT made, and the reasons matter:
+
+      * ``BG_MAX_SESSION_CACHE`` has no home here. This module builds
+        semaphores; it has no session cache. That knob is correctly consumed
+        one layer down by ``providers/bg_removal/bg_removal_service.py``
+        (``MAX_SESSION_CACHE = settings.bg_max_session_cache``), which owns the
+        rembg LRU. Wiring it here would be a second, competing definition.
+      * ``ML_WORKERS`` is likewise consumed one layer down, by
+        ``infrastructure/utils/background_jobs.py``, which sizes its own
+        dedicated ML thread pool. Reading it here too would make one operator
+        knob silently resize two independent pools.
+
+    Explicit keyword overrides are still honoured and still bypass the pool
+    clamp, so a caller that deliberately wants more than the pool is not
+    second-guessed.
+
     Usage:
-        manager = ConcurrencyManager(max_bg=4, max_ai=8, max_ocr=4)
+        manager = ConcurrencyManager()          # documented knobs
+        manager = ConcurrencyManager(max_bg=4)  # explicit override
         async with manager.bg_removal:
             result = await remove_background_async(image)
     """
 
     def __init__(
         self,
-        max_bg: int = 4,
-        max_ai: int = 8,
-        max_ocr: int = 4,
-        max_embed: int = 8,
-        max_http: int = 4,
+        max_bg: Optional[int] = None,
+        max_ai: Optional[int] = None,
+        max_ocr: Optional[int] = None,
+        max_embed: Optional[int] = None,
+        max_http: Optional[int] = None,
     ):
-        self.bg_removal = asyncio.Semaphore(max_bg)
-        self.ai_analysis = asyncio.Semaphore(max_ai)
-        self.ocr = asyncio.Semaphore(max_ocr)
-        self.embedding = asyncio.Semaphore(max_embed)
-        self.http = asyncio.Semaphore(max_http)
+        limits = resolve_concurrency_limits(
+            max_bg=max_bg,
+            max_ai=max_ai,
+            max_ocr=max_ocr,
+            max_embed=max_embed,
+            max_http=max_http,
+        )
+        self.bg_removal = asyncio.Semaphore(limits["max_bg"])
+        self.ai_analysis = asyncio.Semaphore(limits["max_ai"])
+        self.ocr = asyncio.Semaphore(limits["max_ocr"])
+        self.embedding = asyncio.Semaphore(limits["max_embed"])
+        self.http = asyncio.Semaphore(limits["max_http"])
+
+    def describe(self) -> Dict[str, Any]:
+        """Return the resolved limits and where each came from.
+
+        Useful for startup logging and for operators confirming that a knob
+        actually took effect, which is precisely what the two-sources-of-truth
+        defect made impossible to see.
+        """
+        limits = resolve_concurrency_limits()
+        return {
+            "limits": limits,
+            "pool_size": _POOL_SIZE,
+            "settings": {
+                "bg_max_concurrent": _read_setting("bg_max_concurrent", None),
+                "country_ai_max_concurrent_jobs": _read_setting(
+                    "country_ai_max_concurrent_jobs", None
+                ),
+            },
+        }
 
 
-# Global concurrency manager with conservative defaults for VPS
-concurrency = ConcurrencyManager(
-    max_bg=min(4, _POOL_SIZE // 2),
-    max_ai=min(8, _POOL_SIZE),
-    max_ocr=min(4, _POOL_SIZE // 2),
-    max_embed=min(8, _POOL_SIZE),
-    max_http=min(8, _POOL_SIZE),
-)
+# ---------------------------------------------------------------------------
+# CONCURRENCY LIMIT RESOLUTION — single source of truth
+# ---------------------------------------------------------------------------
+# Historical defaults, kept as named constants so the value lives in exactly
+# one place (Law 66, Law 67). They are FALLBACKS: a documented env knob always
+# wins. They are deliberately never raised above what the current code used,
+# so an operator who sets nothing observes the pre-existing behaviour.
+
+_FALLBACK_MAX_BG = 4
+_FALLBACK_MAX_AI = 8
+_FALLBACK_MAX_OCR = 4
+_FALLBACK_MAX_EMBED = 8
+_FALLBACK_MAX_HTTP = 4
+
+# How many of the pool's threads each gate may use when nothing is configured.
+# The `// 2` gates are the memory-hungry ones (Law 121 — rembg/ONNX sessions):
+# a pool of N threads is assumed able to hold N/2 live native sessions safely.
+_BG_POOL_SHARE = 2
+_OCR_POOL_SHARE = 2
+_AI_POOL_SHARE = 1
+_EMBED_POOL_SHARE = 1
+_HTTP_POOL_SHARE = 1
+
+
+def _read_setting(name: str, fallback: Optional[int]) -> Optional[int]:
+    """Read one typed integer knob off ``settings``.
+
+    Law 84/203 forbid raw ``os.getenv()`` in production code, so knobs are read
+    through pydantic-settings only. A field that does not exist on the settings
+    model (or is unset/None) yields ``fallback`` rather than raising — the
+    settings object is a growing surface and a missing tuning knob must not take
+    the provider layer down (Law 30).
+
+    Existence is tested against ``model_fields`` rather than ``getattr``: a
+    pydantic-settings model raises AttributeError (and logs) for an undeclared
+    field, which would turn every import of this module into console noise for
+    the three gates that have no documented knob.
+    """
+    if name not in type(settings).model_fields:
+        return fallback
+    value = getattr(settings, name, None)
+    if value is None:
+        return fallback
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        logger.warning(
+            "async_workers: setting %s=%r is not an integer; using %r",
+            name,
+            value,
+            fallback,
+        )
+        return fallback
+    if parsed < 1:
+        logger.warning(
+            "async_workers: setting %s=%d is below 1; using %r",
+            name,
+            parsed,
+            fallback,
+        )
+        return fallback
+    return parsed
+
+
+def _pool_clamp(configured: int, share: int) -> int:
+    """Clamp a configured limit to what the thread pool can actually serve.
+
+    The clamp is a memory guard, not a tuning ceiling: raising
+    ``BG_MAX_CONCURRENT`` above the pool size must not be able to create more
+    simultaneous native sessions than there are threads to drive them. It is
+    intentionally as tight as the pre-fix code was, so the fix never weakens the
+    OOM guard while making the knob effective.
+    """
+    return max(1, min(configured, max(1, _POOL_SIZE // share)))
+
+
+def resolve_concurrency_limits(
+    max_bg: Optional[int] = None,
+    max_ai: Optional[int] = None,
+    max_ocr: Optional[int] = None,
+    max_embed: Optional[int] = None,
+    max_http: Optional[int] = None,
+) -> Dict[str, int]:
+    """Resolve the five concurrency limits.
+
+    Precedence, highest first:
+      1. an explicit keyword argument (caller intent, unclamped);
+      2. the documented typed settings knob;
+      3. the named historical constant, clamped to the pool.
+
+    Both the ``ConcurrencyManager`` signature and the module-level ``concurrency``
+    singleton route through this one function, so the two can no longer drift
+    apart — that drift was the finding.
+    """
+    bg_setting = _read_setting("bg_max_concurrent", _FALLBACK_MAX_BG)
+    ai_setting = _read_setting("country_ai_max_concurrent_jobs", _FALLBACK_MAX_AI)
+    ocr_setting = _read_setting("ocr_max_concurrent", _FALLBACK_MAX_OCR)
+    embed_setting = _read_setting("embed_max_concurrent", _FALLBACK_MAX_EMBED)
+    http_setting = _read_setting("http_max_concurrent", _FALLBACK_MAX_HTTP)
+
+    def _resolve(explicit: Optional[int], setting: int, fallback: int, share: int) -> int:
+        if explicit is not None:
+            return max(1, int(explicit))
+        configured = setting if setting is not None else fallback
+        return _pool_clamp(configured, share)
+
+    return {
+        "max_bg": _resolve(max_bg, bg_setting, _FALLBACK_MAX_BG, _BG_POOL_SHARE),
+        "max_ai": _resolve(max_ai, ai_setting, _FALLBACK_MAX_AI, _AI_POOL_SHARE),
+        "max_ocr": _resolve(max_ocr, ocr_setting, _FALLBACK_MAX_OCR, _OCR_POOL_SHARE),
+        "max_embed": _resolve(max_embed, embed_setting, _FALLBACK_MAX_EMBED, _EMBED_POOL_SHARE),
+        "max_http": _resolve(max_http, http_setting, _FALLBACK_MAX_HTTP, _HTTP_POOL_SHARE),
+    }
+
+
+# Global concurrency manager with conservative defaults for VPS.
+# Built through the same resolution path as any hand-made manager, so the
+# singleton cannot drift away from the documented knobs.
+concurrency = ConcurrencyManager()
 
 
 # ---------------------------------------------------------------------------

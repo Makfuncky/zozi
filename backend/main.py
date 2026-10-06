@@ -110,17 +110,39 @@ async def health_check():
 
     db_ok = check_connection_health()
     valkey_status = get_valkey_health_status()
+    email_status = get_email_delivery_status()
+
+    try:
+        from infrastructure.database.database import get_db_context
+        from domains.finance.services.payments.payment_engine import _payment_provider_runtime_status
+        with get_db_context() as db:
+            payments_runtime = _payment_provider_runtime_status(db)
+        online_provider = (
+            payments_runtime.get("online_provider")
+            if isinstance(payments_runtime, dict)
+            else getattr(payments_runtime, "online_provider", None)
+        )
+        payments_ok = bool(online_provider)
+    except Exception:
+        payments_ok = False
 
     deps = {
         "database": {"status": "ok" if db_ok else "failed"},
         "valkey": {"status": "ok" if valkey_status.get("available") else "unavailable"},
+        "email": {"status": "ok" if email_status.get("available") else "unavailable"},
+        "payments": {"status": "ok" if payments_ok else "unavailable"},
     }
 
     readiness_require_valkey = getattr(settings, "readiness_require_valkey", False)
-    valkey_required = readiness_require_valkey and valkey_status.get("configured", False)
+    readiness_require_email = getattr(settings, "readiness_require_email", False)
+    readiness_require_payments = getattr(settings, "readiness_require_payments", False)
+
+    valkey_blocking = readiness_require_valkey and valkey_status.get("configured", False) and not valkey_status.get("available")
+    email_blocking = readiness_require_email and not email_status.get("available")
+    payments_blocking = readiness_require_payments and not payments_ok
 
     app_env = (settings.app_env or "").lower()
-    if not db_ok or (valkey_required and not valkey_status.get("available")):
+    if not db_ok or valkey_blocking or email_blocking or payments_blocking:
         if app_env == "test":
             return {
                 "status": "degraded",
@@ -213,7 +235,19 @@ async def health_deps():
         "storage": storage_status.get("status") == "ok",
     }
 
-    failed_deps = [name for name, ok in critical_deps.items() if not ok]
+    readiness_require_valkey = getattr(settings, "readiness_require_valkey", False)
+    readiness_require_email = getattr(settings, "readiness_require_email", False)
+    readiness_require_payments = getattr(settings, "readiness_require_payments", False)
+
+    flag_map = {
+        "database": False,
+        "valkey": readiness_require_valkey,
+        "email": readiness_require_email,
+        "payments": readiness_require_payments,
+        "storage": False,
+    }
+
+    failed_deps = [name for name, ok in critical_deps.items() if not ok and flag_map.get(name, False)]
 
     response_body = {
         "runtime_profile": settings.runtime_profile,
@@ -251,25 +285,33 @@ async def health_ready():
     deps = {"valkey": "ok", "email": "ok", "payments": "ok"}
     blocking = []
 
+    readiness_require_valkey = getattr(settings, "readiness_require_valkey", False)
+    readiness_require_email = getattr(settings, "readiness_require_email", False)
+    readiness_require_payments = getattr(settings, "readiness_require_payments", False)
+
     valkey_client = get_valkey()
     if not valkey_client:
         deps["valkey"] = "unavailable"
-        blocking.append("valkey")
+        if readiness_require_valkey:
+            blocking.append("valkey")
 
     email = get_email_delivery_status()
     if not email.get("available"):
         deps["email"] = "unavailable"
-        blocking.append("email")
+        if readiness_require_email:
+            blocking.append("email")
 
     try:
         with get_db() as db:
             payments = _payment_provider_runtime_status(db)
         if not payments.get("online_provider"):
             deps["payments"] = "unavailable"
-            blocking.append("payments")
+            if readiness_require_payments:
+                blocking.append("payments")
     except Exception:
         deps["payments"] = "unavailable"
-        blocking.append("payments")
+        if readiness_require_payments:
+            blocking.append("payments")
 
     status_code = 503 if blocking else 200
     return JSONResponse(
@@ -351,28 +393,64 @@ def _load_routers():
     ``routers`` and ``public_routers`` lists built from its router modules. A
     router carries its own ``APIRouter(prefix=...)``, so it is mounted at that
     prefix (no extra module prefix is added, to preserve existing URLs).
+
+    A modular monolith must keep serving its healthy modules, so a failing
+    submodule does not abort the boot. It is however never *silent*: failures
+    are recorded in ``infrastructure.utils.router_loader`` with a full
+    traceback, printed in the boot summary, and exposed through
+    ``/health/ready``. Previously these failures were only logged with a single
+    ``Skipping router`` line, which is how an entire router package could
+    vanish while the app booted healthy and its routes 404'd.
     """
     import importlib
     import logging
 
+    from infrastructure.utils.router_loader import record_package_failure
+
     logger = logging.getLogger(__name__)
 
+    _failed_packages = 0
+    _failed_mounts = 0
+
     for _module in ["customer", "supplier", "logistics", "admin", "employee"]:
+        _pkg_path = f"modules.{_module}.routers"
         try:
-            _pkg = importlib.import_module(f"modules.{_module}.routers")
+            _pkg = importlib.import_module(_pkg_path)
         except Exception as e:
-            logger.error("Failed to import modules.%s.routers: %s", _module, e, exc_info=e)
+            record_package_failure(_pkg_path, f"{type(e).__name__}: {e}")
+            logger.error("Failed to import %s", _pkg_path, exc_info=e)
+            _failed_packages += 1
             continue
-        for _router in getattr(_pkg, "routers", []) or []:
-            try:
-                app.include_router(_router)
-            except Exception as e:  # noqa: BLE001
-                logger.error("Skipping router in %s: %s", _module, e)
-        for _prouter in getattr(_pkg, "public_routers", []) or []:
-            try:
-                app.include_router(_prouter)
-            except Exception as e:  # noqa: BLE001
-                logger.error("Skipping public router in %s: %s", _module, e)
+
+        for _label, _attr in (("router", "routers"), ("public router", "public_routers")):
+            for _r in getattr(_pkg, _attr, []) or []:
+                try:
+                    app.include_router(_r)
+                except Exception as e:  # noqa: BLE001
+                    record_package_failure(
+                        f"{_pkg_path}:{_label}", f"{type(e).__name__}: {e}"
+                    )
+                    logger.error(
+                        "Failed to mount %s %r from %s",
+                        _label,
+                        getattr(_r, "prefix", _r),
+                        _pkg_path,
+                        exc_info=e,
+                    )
+                    _failed_mounts += 1
+
+    if _failed_packages or _failed_mounts:
+        from infrastructure.utils.router_loader import boot_summary
+
+        logger.error(
+            "ROUTER BOOT DEGRADED: %d package(s), %d mount(s) failed; app is "
+            "serving a REDUCED route surface. Summary:\n%s",
+            _failed_packages,
+            _failed_mounts,
+            boot_summary() or "(no detail)",
+        )
+    else:
+        logger.info("Router boot clean: no package or mount failures.")
 
 
 

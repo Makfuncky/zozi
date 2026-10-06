@@ -10,6 +10,7 @@ and NEVER imports another module.
 from __future__ import annotations
 
 import ast
+import sys
 from pathlib import Path
 
 import pytest
@@ -611,6 +612,7 @@ _MODULE_ALLOWED_ROOTS = frozenset(
         "pillow_xpm",
         "pillow_tiff",
     }
+    | set(sys.stdlib_module_names)
 )
 
 
@@ -621,6 +623,39 @@ def _iter_py(root: Path):
         if path.name == "__init__.py":
             continue
         yield path
+
+
+def _lower_layer_violations(layer: str) -> set[str]:
+    """Scan one production layer for top-level upward import violations."""
+    layer_dir = _BACKEND / layer
+    if not layer_dir.is_dir():
+        return set()
+    forbidden = laws.FORBIDDEN_IMPORT_RULES.get(layer, ())
+    if not forbidden:
+        return set()
+    offenders: set[str] = set()
+    for path in sorted(layer_dir.rglob("*.py")):
+        if path.name == "__init__.py":
+            continue
+        rel = path.relative_to(_BACKEND).as_posix()
+        try:
+            tree = laws.read_source(path)
+        except SyntaxError:
+            offenders.add(f"{layer}:{rel}:<syntax error>")
+            continue
+        for root in laws.module_import_roots(tree):
+            if root in forbidden:
+                offenders.add(f"{layer}:{rel}:{root}")
+    return offenders
+
+
+_LAW1_FROZEN_DEBT: frozenset[str] = frozenset(
+    {
+        "infrastructure:infrastructure/messaging/email_service.py:providers",
+        "infrastructure:infrastructure/storage/storage.py:providers",
+        "middleware:middleware/dependencies/auth.py:domains",
+    }
+)
 
 
 class TestLowerLayersHaveNoUpwardImports:

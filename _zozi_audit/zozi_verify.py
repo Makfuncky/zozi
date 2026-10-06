@@ -53,6 +53,85 @@ STOPWORDS = {
     "only", "also", "one", "two", "all", "if", "so", "up", "out", "use", "used",
 }
 
+def claim_tokens(text: str) -> set[str]:
+    """Content words of a claim: lowercase, singular-ish, stopwords dropped."""
+    words = re.findall(r"[A-Za-z][A-Za-z0-9_]{2,}", (text or "").lower())
+    out = set()
+    for w in words:
+        if w in STOPWORDS:
+            continue
+        for suffix in ("(s)", "s"):
+            if w.endswith(suffix) and len(w) > len(suffix) + 3:
+                w = w[: -len(suffix)]
+                break
+        out.add(w)
+    return out
+
+
+# A claim can assert that something is ABSENT. "Absent" is then the claim, so
+# finding the thing absent corroborates it -- it can never disprove it.
+#
+# This regex was defined only inside the missing-file branch, so the two branches
+# that refute on token absence ignored it:
+#   D2P-003 "container has no HEALTHCHECK" (backend/Dockerfile)
+#   D2P-004 "container has no HEALTHCHECK" (backend/Dockerfile.prod)
+#   PERF-001 "no bundle analyzer configured" (next.config.ts)
+#   DECLLAW-011 "no commit-message linter is configured" (package.json)
+# All four were true (`grep -c HEALTHCHECK backend/Dockerfile` -> 0, no analyzer
+# key, no commitlint/lint-staged key) and all four were marked ALREADY_FIXED and
+# dropped from the plan, because none of their tokens appeared in the file.
+ABSENCE_CLAIM = re.compile(
+    r"\b(cannot|could not|does not|doesn't|do not|not found|no such|no\b|"
+    r"missing|absent|is not defined|is absent|not present|undeclared|"
+    r"zero\b.*\bdeclared|nothing|lacks?|without\b|never\b)")
+
+# Clusters whose re-check instrument measures only PART of the finding's claim.
+#
+# Free text cannot decide claim alignment -- I first tried requiring the
+# instrument's words to cover every content word of the claim and it refused
+# every refutation in the suite, including the correct ones, because both sides
+# are prose. So the gap is declared as data, from cases inspected by hand against
+# the source:
+#
+#   CLUSTER-table-governance   probe counts the two audit TIMESTAMPS; the finding
+#                             is "2 tables lack soft delete" (both true).
+#   CLUSTER-feature-gate       probe counts gated-but-undefined atoms; the finding
+#                             is the opposite set, declared-but-never-gated. The
+#                             mapping is now fixed, and this keeps a future
+#                             mis-mapping from deleting 146 real orphans again.
+#   CLUSTER-law-security       probe greps for a fail-closed path; the finding
+#                             cites a specific law verdict, which the grep cannot
+#                             settle either way.
+#   CLUSTER-public-by-design   probe was file-level, the finding endpoint-level.
+#
+# A refutation is refused when the claim mentions any declared gap token: the
+# instrument does not cover that part of the claim, so a low count cannot
+# disprove it. The finding is deferred to triage (UNVERIFIABLE) instead of
+# deleted. A lower count can never *confirm* anything, but it can silently delete
+# real work, so the two errors are not symmetric.
+CLAIM_GAPS: dict[str, set[str]] = {
+    "CLUSTER-table-governance": {"soft", "delete", "country", "code", "nullable"},
+    "CLUSTER-feature-gate": {"declared", "never", "gate", "referenced", "orphan"},
+    "CLUSTER-ghost-feature": {"undefined", "catalog", "literal"},
+    "CLUSTER-law-security": {"law", "violated", "verdict"},
+    "CLUSTER-public-by-design": {"design", "public", "sample", "logout", "recorded"},
+}
+
+
+def claim_covers(cluster: str, claim: str, detail: str) -> tuple[bool, set[str]]:
+    """May a probe whose description is ``detail`` refute ``claim``?
+
+    Allowed by default; refused when the cluster is known to measure only part of
+    its claim (``CLAIM_GAPS``) and the claim mentions a part the instrument does
+    not cover. Returns ``(allowed, uncovered_tokens)``.
+    """
+    gaps = CLAIM_GAPS.get(cluster or "")
+    if not gaps:
+        return True, set()
+    uncovered = claim_tokens(claim) & gaps
+    return not uncovered, uncovered
+
+
 # Identifiers worth extracting from a claim, longest first.
 TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.]{3,}")
 MONEY_RE = re.compile(r"\b(amount|total|price|balance|subtotal|tax|vat|"
@@ -74,19 +153,120 @@ def _tokens(claim: str) -> list[str]:
     return sorted(set(out), key=len, reverse=True)[:8]
 
 
+# Re-location thresholds. The cited line drifts whenever the file is edited
+# between the scan and the adjudication, which is the normal case on an active
+# tree, so the verifier has to be able to say "the construct is here, not there".
+RELOCATE_MIN_SCORE = 2    # distinct claim tokens that must land on the winner
+RELOCATE_MIN_TOKEN = 6    # ...and at least one of them must be this specific
+RELOCATE_WINDOW = 40      # lines either side of an anchor that may corroborate
+
+
+def _prose_lines(lines: list[str]) -> set[int]:
+    """1-based line numbers that hold prose, not code.
+
+    A comment or a docstring cannot be the construct a finding is about. The
+    first relocation attempt put all four `schema is not canonical` claims on the
+    module docstring of `payment_models.py`, because `canonical` occurs exactly
+    once in the file -- inside the sentence "the canonical Payment / Payout /
+    Gateway models still live in ...", which is about a different thing
+    entirely. Matching `#` alone is not enough; a docstring has no marker.
+    """
+    out: set[int] = set()
+    fence: str | None = None
+    for i, ln in enumerate(lines, 1):
+        s = ln.strip()
+        if fence is not None:
+            out.add(i)
+            if fence in ln:
+                fence = None
+            continue
+        if s.startswith(("#", "//", "*", "/*")):
+            out.add(i)
+            continue
+        m = re.search(r'("""|\'\'\')', ln)
+        if m:
+            quote = m.group(1)
+            if quote in ln[m.end():]:
+                out.add(i)          # opened and closed on this line
+            else:
+                fence = quote       # opened here, prose runs on
+                out.add(i)
+    return out
+
+
 class Verifier:
     def __init__(self, root: Path, logs: Path):
         self.root = root
         self.logs = logs
         self._ast_cache: dict[str, ast.AST | None] = {}
         self._text_cache: dict[str, str] = {}
+        self._probe_runner = None
+        self._probe_unavailable = ""
+        self._relocated: dict[str, int] = {}
+
+    # -- probe layer ----------------------------------------------------------
+    def probe_runner(self):
+        """The `ProbeRunner`, or None. Never raises: this stage is advisory."""
+        if self._probe_runner is None and not self._probe_unavailable:
+            try:
+                from zz_core.probe import ProbeRunner
+                self._probe_runner = ProbeRunner(self.root)
+            except Exception as exc:
+                self._probe_unavailable = f"{type(exc).__name__}: {exc}"
+        return self._probe_runner
+
+    def probe_verdict(self, f: dict) -> tuple[str, str] | None:
+        """Re-decide a finding with its own probe.
+
+        This stage existed nowhere before, so the verifier could only *refute* on
+        token consistency and marked 1300+ findings `UNVERIFIABLE` -- 81% of the
+        suite's output passed through unexamined while the summary read as
+        healthy. The probe is the stronger instrument: it re-executes the claim's
+        own check against the source.
+
+        Returns None when the probe is absent, errors, or cannot resolve the
+        claim -- None means "no evidence", which is different from "no verdict".
+        """
+        probe = f.get("probe") or {}
+        if not probe:
+            return None
+        runner = self.probe_runner()
+        if runner is None:
+            return None
+        try:
+            res = runner.run(probe)
+        except Exception as exc:
+            return None
+        detail = res.detail or res.summary or ""
+        if res.holds and res.resolvable:
+            return ("CONFIRMED", f"probe holds — {detail}")
+        if res.resolvable and not res.holds:
+            # A refutation deletes work, so it is only allowed when the probe's
+            # own description actually covers the claim. Measured on this run:
+            # `CLUSTER-table-governance` refuted "2 lack soft delete" with a
+            # measurement of the two audit *timestamps* (which are present), and
+            # `CLUSTER-feature-gate` refuted "146 declared but never gated" with
+            # the opposite measurement ("gated but undefined"). Both claims were
+            # true; both findings left the plan. `claim_covers()` refuses a
+            # refutation whose instrument answers a narrower or different
+            # question and defers the finding to triage instead.
+            ok, uncovered = claim_covers(f.get("cluster") or "",
+                                         f.get("current") or "", detail)
+            if not ok:
+                return ("UNVERIFIABLE",
+                        f"probe cannot decide this claim — it measures "
+                        f"'{detail}'; the claim also asserts "
+                        f"{', '.join(sorted(uncovered)[:6]) or 'more'} "
+                        f"(deferred, not refuted)")
+            return ("FALSE_POSITIVE", f"probe refutes it — {detail}")
+        return None
 
     # -- IO -------------------------------------------------------------------
     def text(self, rel: str) -> str:
         if rel not in self._text_cache:
             p = self.root / rel
             try:
-                self._text_cache[rel] = p.read_text(encoding="utf-8", errors="replace")
+                self._text_cache[rel] = p.read_text(encoding="utf-8-sig", errors="replace")
             except Exception:
                 self._text_cache[rel] = ""
         return self._text_cache[rel]
@@ -104,6 +284,104 @@ class Verifier:
         if 1 <= line <= len(lines):
             return lines[line - 1]
         return ""
+
+    # -- re-location ----------------------------------------------------------
+    def relocate(self, f: dict, toks: list[str]) -> tuple[int, str] | None:
+        """Where does the claim's construct actually sit? ``(line, note)``.
+
+        A cited line that no longer carries the claim is not evidence that the
+        finding is wrong. `comms.py` was 203 lines when LOGIC-041 was scanned,
+        180 when it was adjudicated and 156 minutes later -- while the
+        `except WebSocketDisconnect: pass` it reports (Law 59)never stopped existing, it only moved to line 150. Refuting on a drifted line deleted
+        a real violation, so the construct is re-located first. Two routes are
+        tried: a single line that carries enough of the claim, then a unique
+        anchor (a token occurring exactly once) corroborated nearby, because
+        "table X declares schema Y" spans two lines by construction.
+
+        Deliberately strict, because promoting a verdict is the dangerous
+        direction: a candidate must collect at least ``RELOCATE_MIN_SCORE``
+        distinct tokens (rarity only *ranks* the survivors -- weighting it into
+        the cut-off let a lone `pass` on the next line outweigh the
+        `except WebSocketDisconnect` that was actually being cited), at least
+        one token must be long enough to be specific rather than generic prose,
+        and the winner must beat every rival outright, since a tie means the
+        claim does not single out one construct. Comment lines cannot host a
+        construct. An absence claim is never re-located -- finding the thing is
+        not evidence about a claim that says the thing is not there.
+        """
+        if not toks or ABSENCE_CLAIM.search((f.get("current") or "").lower()):
+            return None
+        lines = self.text(f.get("file") or "").splitlines()
+        if not lines:
+            return None
+        lows = [ln.lower() for ln in lines]
+        prose = _prose_lines(lines)
+        code = [i for i in range(1, len(lines) + 1) if i not in prose]
+        if not code:
+            return None
+        # Score by rarity, not by count. `schema` appears on every table in the
+        # file and identifies nothing; `payment_methods` appears once and names
+        # the construct outright. Counting matches equally made four identical
+        # table declarations tie and refused to resolve a real finding.
+        scores: list[tuple[float, int, int, list[str]]] = []
+        df = {t: sum(1 for low in lows if t.lower() in low) for t in toks}
+        for i in code:
+            low = lows[i - 1]
+            matched = [t for t in toks if t.lower() in low]
+            if matched:
+                scores.append((sum(1.0 / df[t] for t in matched),
+                               len(matched), i, matched))
+        if scores:
+            # Qualify first, rank second. A rival only counts if it could have
+            # won on its own merits: letting a lone `pass` on the next line
+            # (one rare token) veto the `except WebSocketDisconnect` that the
+            # claim is actually about made every two-token line unresolvable.
+            cands = [s for s in scores
+                     if s[1] >= RELOCATE_MIN_SCORE
+                     and any(len(t) >= RELOCATE_MIN_TOKEN for t in s[3])]
+            cands.sort(key=lambda s: (-s[0], -s[1], s[2]))
+            if cands:
+                score, n_match, line_no, matched = cands[0]
+                runner_up = cands[1][0] if len(cands) > 1 else 0.0
+                # Ambiguity is refused: a rival line scoring the same means the
+                # claim does not single out one construct, so nothing is claimed.
+                if score > runner_up:
+                    snippet = lines[line_no - 1].strip()[:100]
+                    note = f"{', '.join(sorted(matched)[:4])} -> `{snippet}`"
+                    self._relocated[str(f.get("id") or "")] = line_no
+                    return line_no, note
+
+        # Fallback for a claim that spans two lines. "table `payment_methods`
+        # declares schema `payments`" puts the name on one line and the schema
+        # a few lines below, so no single line can carry the whole claim. Anchor
+        # on a token that occurs exactly once and is long enough to be a name,
+        # then require the rest of the claim nearby.
+        best: tuple[int, int, str, list[str]] | None = None
+        tie = False
+        for t in toks:
+            if len(t) < RELOCATE_MIN_TOKEN or df[t] != 1:
+                continue
+            line_no = next((i for i in code if t.lower() in lows[i - 1]), 0)
+            if not line_no:
+                continue
+            lo = max(1, line_no - RELOCATE_WINDOW)
+            hi = min(len(lows), line_no + RELOCATE_WINDOW)
+            near = {u for u in toks if u != t
+                    and any(u.lower() in lows[j - 1] for j in range(lo, hi + 1))}
+            if not near:
+                continue
+            if best and len(near) == best[0]:
+                tie = True
+            elif not best or len(near) > best[0]:
+                best, tie = (len(near), line_no, t, sorted(near)), False
+        if best and not tie:
+            _, line_no, anchor, near = best
+            snippet = lines[line_no - 1].strip()[:100]
+            note = (f"`{anchor}` -> `{snippet}` corroborated by "
+                    f"{', '.join(near[:3])} within {RELOCATE_WINDOW} lines")
+            self._relocated[str(f.get("id") or "")] = line_no
+            return line_no, note
+        return None
 
     # -- cluster re-checks ----------------------------------------------------
     def recheck(self, f: dict) -> tuple[str, str] | None:
@@ -287,27 +565,40 @@ class Verifier:
                 f"{key} is read but absent from .env.example and config.py")
 
     def _re_cors_preflight(self, f: dict) -> tuple[str, str]:
+        """Does the CITED middleware still delegate the preflight to the router?
+
+        This previously scanned every file in the text cache and returned
+        FALSE_POSITIVE as soon as ANY of them answered OPTIONS itself. That let
+        `middleware/country_context.py`, an unrelated layer, overturn a finding
+        about `middleware/security_headers.py`. Whether another middleware might
+        answer first depends on registration order, which a static read cannot
+        establish -- so it cannot refute the claim about the cited file either
+        way. The verdict has to follow the file the finding names.
+        """
         pat = re.compile(
             r'(?:method|request\.method)\s*==\s*["\']OPTIONS["\'][\s\S]{0,600}?'
             r'(call_next\s*\(\s*request\s*\))')
-        checked = []
-        for rel in list(self._text_cache) or ["backend/middleware/security_headers.py"]:
+        cited = (f.get("file") or "").replace("\\", "/")
+        targets = [cited] if cited else ["backend/middleware/security_headers.py"]
+        matched = False
+        for rel in targets:
             src = self.text(rel)
             if not src:
                 continue
             for m in pat.finditer(src):
+                matched = True
                 seg = src[m.start():m.start() + 700]
                 after = seg[m.end(1) - m.start():]
                 if re.match(r"^\s*return\b", after):
                     return ("FALSE_POSITIVE",
-                            f"{rel} now returns its own response for OPTIONS without "
-                            f"calling the router")
-                checked.append(rel)
-        if checked:
+                            f"{rel} now returns its own response for OPTIONS "
+                            f"without calling the router")
+        if matched:
             return ("CONFIRMED",
-                    f"{checked[0]} still calls call_next() in the OPTIONS branch, so "
-                    f"the router answers the preflight first")
-        return ("UNVERIFIABLE", "no OPTIONS branch matched the expected shape")
+                    f"{targets[0]} still calls call_next() in the OPTIONS branch, "
+                    f"so the router answers the preflight first")
+        return ("UNVERIFIABLE",
+                f"no OPTIONS branch matching the expected shape in {targets[0]}")
 
     def _re_xss_header(self, f: dict) -> tuple[str, str]:
         hits = []
@@ -330,7 +621,7 @@ class Verifier:
             if p.suffix != ".py" or "models" not in p.as_posix():
                 continue
             try:
-                tree = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+                tree = ast.parse(p.read_text(encoding="utf-8-sig", errors="replace"))
             except Exception:
                 continue
             for node in ast.walk(tree):
@@ -385,6 +676,11 @@ class Verifier:
             return ("UNVERIFIABLE",
                     f"{rel}: {hit}/{len(toks)} claim token(s) present across "
                     f"{scanned} file(s)")
+        if ABSENCE_CLAIM.search((f.get("current") or "").lower()):
+            return ("UNVERIFIABLE",
+                    f"{rel}: none of the {len(toks)} claim token(s) appear in any "
+                    f"of the {scanned} file(s) — but the claim ASSERTS that "
+                    f"absence, so this corroborates it rather than disproving it")
         return ("FALSE_POSITIVE",
                 f"none of the {len(toks)} claim token(s) ({', '.join(toks[:4])}) "
                 f"appear in any of the {scanned} file(s) under {rel}")
@@ -400,16 +696,35 @@ class Verifier:
         if kind == "absent":
             # The claim may be "this file is missing". Absence is then the
             # evidence, not a refutation.
+            #
+            # The marker test must NOT require a preceding "no": a claim can
+            # assert absence without it. Requiring `\bno\b` before the marker
+            # misread every phrasing like "`docs/runbooks/deploy.md` does not
+            # exist" or "no deploy / rollback / migration runbook found" and
+            # returned WRONG_LOCATION for a finding that was plainly correct.
             claim = (f.get("current") or "").lower()
-            if re.search(r"\bno\b.*\b(cannot|could not|does not|not found|missing|"
-                         r"absent|is not defined)", claim):
+            if ABSENCE_CLAIM.search(claim):
                 return ("UNVERIFIABLE",
                         f"{detail}; the claim asserts absence, which is consistent — "
                         f"an auditor must read it")
             return ("WRONG_LOCATION",
                     f"{detail}, but the claim does not assert absence")
         if "past EOF" in detail:
-            return ("WRONG_LOCATION", detail)
+            # Being past EOF proves the file changed, not that the finding is
+            # wrong. LOGIC-041 was refuted here while the `except` it reports was
+            # still in the file at line 150: a real Law 59 violation deleted from
+            # the plan by a line number. Re-locate; if that fails, defer.
+            hit = self.relocate(f, toks)
+            if hit:
+                line_no, note = hit
+                return ("CONFIRMED",
+                        f"cited line {f['line']} is past EOF, but the claim's "
+                        f"construct is present at {f['file']}:{line_no} ({note}); "
+                        f"the location drifted, the extent of the claim is not "
+                        f"re-derived")
+            return ("UNVERIFIABLE",
+                    f"{detail} — line drift, not a refutation; no line carries the "
+                    f"claim's tokens, so an auditor must read the file")
         line_text = detail
         if toks:
             hit = sum(1 for t in toks if t.lower() in line_text.lower())
@@ -424,14 +739,28 @@ class Verifier:
             whole = self.text(f.get("file") or "")
             present = sum(1 for t in toks if t in whole)
             if present == 0:
+                if ABSENCE_CLAIM.search((f.get("current") or "").lower()):
+                    return ("UNVERIFIABLE",
+                            f"none of the {len(toks)} claim token(s) "
+                            f"({', '.join(toks[:4])}) appear in {f['file']} — but the "
+                            f"claim asserts that absence, so the file agrees with "
+                            f"it; an auditor must read it")
                 return ("ALREADY_FIXED",
                         f"none of the {len(toks)} claim token(s) "
                         f"({', '.join(toks[:4])}) appear anywhere in {f['file']}")
             # Tokens exist in the file but not on the cited line. That is
             # evidence the line drifted — it is NOT proof the finding is wrong.
             # Claiming a refutation here would be the same false-positive class
-            # this project keeps hitting, so it is reported as unverifiable with
-            # the drift signal attached and routed to a verification task.
+            # this project keeps hitting, so the construct is re-located and
+            # reported with its corrected line; only an unresolvable claim is
+            # deferred to triage.
+            hit = self.relocate(f, toks)
+            if hit:
+                line_no, note = hit
+                return ("CONFIRMED",
+                        f"cited line {f['file']}:{f['line']} drifted; the claim's "
+                        f"construct is present at line {line_no} ({note}); the "
+                        f"extent of the claim is not re-derived")
             return ("UNVERIFIABLE",
                     f"cited line {f['file']}:{f['line']} carries none of the "
                     f"{len(toks)} claim token(s) ({', '.join(toks[:4])}) but "
@@ -451,7 +780,21 @@ class Verifier:
                 continue
             kind, detail = self.locate(f)
             checked = self.recheck(f)
-            if checked:
+            probed = self.probe_verdict(f)
+
+            # A probe verdict and a cluster re-check that disagree are the most
+            # valuable thing this stage can produce, so the disagreement is
+            # reported rather than resolved silently. The probe wins because it
+            # re-executes the claim's own check; the re-check is kept as context.
+            if probed and checked and checked[0] in ("CONFIRMED", "FALSE_POSITIVE") \
+                    and checked[0] != probed[0]:
+                verdict, evidence = probed
+                basis = "probe_over_recheck_disagreement"
+                evidence += (f"  ||  cluster re-check said {checked[0]}: {checked[1]}")
+            elif probed:
+                verdict, evidence = probed
+                basis = "probe"
+            elif checked:
                 verdict, evidence = checked
                 basis = "cluster_recheck"
             else:
@@ -471,6 +814,10 @@ class Verifier:
                 "cited_line": (detail.strip()[:160] if kind == "file" else ""),
                 "evidence": evidence[:400],
                 "location": detail if kind != "file" else "",
+                # Set when the verdict re-located the construct to a different
+                # line, so the plan can carry the corrected location instead of
+                # pointing a fix at a line that no longer holds the defect.
+                "relocated_to": self._relocated.get(str(f.get("id") or ""), ""),
             })
         return out
 
@@ -503,6 +850,13 @@ def summarise(verdicts: list[dict], findings: list[dict]) -> dict:
         "p0_confirmed": p0_conf,
         "p0_false_or_wrong": p0_fp,
         "p0_noise_pct": round(100.0 * p0_fp / (len(p0) or 1), 1),
+        # Which instrument actually decided each verdict. Without this the summary
+        # reads as one number while 1300+ findings were decided by nothing and
+        # merely labelled UNVERIFIABLE.
+        "by_basis": {b: n for b, n in
+                     Counter(v.get("basis") or "?" for v in verdicts).most_common()},
+        "disagreements": sum(1 for v in verdicts
+                             if v.get("basis") == "probe_over_recheck_disagreement"),
         "by_cluster": {c: dict(Counter(v["verdict"] for v in vs))
                        for c, vs in _by_cluster(verdicts).items()},
     }
@@ -602,7 +956,7 @@ def main(argv=None) -> int:
     if not fp.exists():
         print(f"FATAL: {fp} not found. Run zozi_audit.py first.", file=sys.stderr)
         return 2
-    findings = [json.loads(l) for l in fp.read_text(encoding="utf-8").splitlines()
+    findings = [json.loads(l) for l in fp.read_text(encoding="utf-8-sig").splitlines()
                 if l.strip()]
     if args.limit:
         findings = findings[:args.limit]
@@ -612,6 +966,7 @@ def main(argv=None) -> int:
     sm = summarise(verdicts, findings)
 
     logs.mkdir(parents=True, exist_ok=True)
+    # plain utf-8 on WRITE -- utf-8-sig would prepend a BOM to verdicts.jsonl
     with (logs / "verdicts.jsonl").open("w", encoding="utf-8") as fh:
         for row in verdicts:
             fh.write(json.dumps(row) + "\n")

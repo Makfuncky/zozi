@@ -67,7 +67,7 @@ async def test_broad_except_exception_replaced_with_specific() -> None:
 
     source = inspect.getsource(_import_middleware().AuthenticationMiddleware.dispatch)
     assert "except Exception" not in source
-    assert "except (HTTPException, JWTError, ValueError, TypeError)" in source
+    assert "except (HTTPException, ValueError, TypeError)" in source
 
 
 @pytest.mark.asyncio

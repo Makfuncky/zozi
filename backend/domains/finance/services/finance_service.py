@@ -317,6 +317,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from domains.finance.services.ledger.general_ledger import (
+    CommissionEngine,
     get_global_config, update_global_config, list_category_rates, update_category_rate,
     list_badge_tiers, update_badge_tier, list_ledger_entries, create_ledger_adjustment,
     preview_commission, list_all_supplier_commissions, get_supplier_commission,
@@ -324,6 +325,7 @@ from domains.finance.services.ledger.general_ledger import (
     get_product_commission_override, list_product_commission_overrides,
     set_product_commission_override, delete_product_commission_override,
 )
+commission_engine = CommissionEngine()
 from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ListPage

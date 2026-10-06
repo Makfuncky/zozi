@@ -10,6 +10,7 @@ checks (callers remain responsible for feature gating via ``rbac``).
 
 from __future__ import annotations
 
+import importlib
 from functools import lru_cache
 from typing import List, Optional
 
@@ -37,7 +38,54 @@ def _keyset_list(model, db: Session, limit: int = 100) -> list:
 @lru_cache(maxsize=128)
 def _get_model(name):
     import importlib
-    model_map = {
+    _gl_model_map = {
+        'Accrual': 'domains.finance.models.general_ledger',
+        'Account': 'domains.finance.models.general_ledger',
+        'AccountBalance': 'domains.finance.models.general_ledger',
+        'AccountGroup': 'domains.finance.models.general_ledger',
+        'APBill': 'domains.finance.models.general_ledger',
+        'APLedger': 'domains.finance.models.general_ledger',
+        'ARInvoice': 'domains.finance.models.general_ledger',
+        'ARLedgerEntry': 'domains.finance.models.general_ledger',
+        'AutomationLog': 'domains.finance.models.general_ledger',
+        'AutomationRule': 'domains.finance.models.general_ledger',
+        'BankAccount': 'domains.finance.models.general_ledger',
+        'BankMappingRule': 'domains.finance.models.general_ledger',
+        'BankReconciliation': 'domains.finance.models.general_ledger',
+        'BankStatementImport': 'domains.finance.models.general_ledger',
+        'BankStatementLine': 'domains.finance.models.general_ledger',
+        'BankTransaction': 'domains.finance.models.general_ledger',
+        'Budget': 'domains.finance.models.general_ledger',
+        'CashAccount': 'domains.finance.models.general_ledger',
+        'CashFlowForecast': 'domains.finance.models.general_ledger',
+        'CashPositionSnapshot': 'domains.finance.models.general_ledger',
+        'CashTransaction': 'domains.finance.models.general_ledger',
+        'CostCenter': 'domains.finance.models.general_ledger',
+        'Customer': 'domains.finance.models.general_ledger',
+        'FinanceAuditLog': 'domains.finance.models.general_ledger',
+        'FinanceAutomationLog': 'domains.finance.models.general_ledger',
+        'FinancialReport': 'domains.finance.models.general_ledger',
+        'FiscalPeriod': 'domains.finance.models.general_ledger',
+        'FixedAsset': 'domains.finance.models.general_ledger',
+        'GatewaySettlementSchedule': 'domains.finance.models.general_ledger',
+        'Invoice': 'domains.finance.models.general_ledger',
+        'InvoiceItem': 'domains.finance.models.general_ledger',
+        'JournalEntry': 'domains.finance.models.general_ledger',
+        'JournalEntryLine': 'domains.finance.models.general_ledger',
+        'PayoutBatch': 'domains.finance.models.general_ledger',
+        'PayoutBatchItem': 'domains.finance.models.general_ledger',
+        'PendingJournalEntry': 'domains.finance.models.general_ledger',
+        'RecurringTemplate': 'domains.finance.models.general_ledger',
+        'RefundLedger': 'domains.finance.models.general_ledger',
+        'ScannedExpense': 'domains.finance.models.general_ledger',
+        'SupplierSettlement': 'domains.finance.models.general_ledger',
+        'TransactionLedger': 'domains.finance.models.general_ledger',
+        'TreasuryAccount': 'domains.finance.models.general_ledger',
+        'TreasuryTransaction': 'domains.finance.models.general_ledger',
+        'VATRemittance': 'domains.finance.models.general_ledger',
+        'Vendor': 'domains.finance.models.general_ledger',
+    }
+    model_map = _gl_model_map | {
         'CommissionAgreement': 'domains.finance.models.commission',
         'CommissionCategoryRate': 'domains.finance.models.commission',
         'CommissionLedgerEntry': 'domains.finance.models.commission',
@@ -49,6 +97,11 @@ def _get_model(name):
         'ImportShipment': 'domains.finance.models.erp',
         'ImportShipmentLine': 'domains.finance.models.erp',
         'LandedCostAllocation': 'domains.finance.models.erp',
+        'Payment': 'domains.finance.models.payments',
+        'Payout': 'domains.finance.models.payments',
+        'PaymentGatewayConnection': 'domains.finance.models.payments',
+        'PaymentReconciliationRun': 'domains.finance.models.payments',
+        'LogisticsPartnerPayout': 'domains.finance.models.payments',
         'PurchaseOrder': 'domains.finance.models.erp',
         'PurchaseOrderLine': 'domains.finance.models.erp',
         'SalesOrder': 'domains.finance.models.erp',
@@ -59,8 +112,7 @@ def _get_model(name):
     if name in model_map:
         mod = importlib.import_module(model_map[name])
         return getattr(mod, name)
-    mod = importlib.import_module('domains.finance.models.general_ledger')
-    return getattr(mod, name)
+    raise AttributeError(f"model {name!r} not found in _get_model map")
 
 
 
@@ -577,7 +629,22 @@ def get_automation_log_by_id(db: Session, id_: int) -> Optional[AutomationLog]:
 def list_automation_logs(db: Session, limit: int = 100) -> List[AutomationLog]:
     """Return up to ``limit`` AutomationLog rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(AutomationLog, db, limit)
+def get_payment_by_id(db: Session, id_: int) -> Optional[Payment]:
+    """Return Payment by primary key (or None)."""
+    return db.get(_get_model("Payment"), id_)
 
+def list_payments(db: Session, limit: int = 100) -> List[Payment]:
+    """Return up to ``limit`` Payment rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(_get_model("Payment"), db, limit)
+
+
+def get_payout_by_id(db: Session, id_: int) -> Optional[Payout]:
+    """Return Payout by primary key (or None)."""
+    return db.get(_get_model("Payout"), id_)
+
+def list_payouts(db: Session, limit: int = 100) -> List[Payout]:
+    """Return up to ``limit`` Payout rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(_get_model("Payout"), db, limit)
 
 
 # --- Query delegation (Law 3 sanctioned cross-domain query surface) ---
@@ -591,21 +658,15 @@ def journal_entry_model() -> type:
     """Return the ``JournalEntry`` model class (for column reference only)."""
     return JournalEntry
 
-# --- P11 re-exports (Law 3 sanctioned read/behavior surface) ---
-from domains.finance.models.finance import *
-from domains.finance.services.ledger.general_ledger import post_logistics_cod_remittance_journal, post_supplier_settlement_journal
-from domains.finance.services.ledger.je_reversal_service import reverse_journal_entry
 
 # --- Lazy service exports (Law 3 sanctioned cross-domain surface) ---
 # Cross-domain consumers import these from ports instead of reaching
-# into the services tree directly.
+# into the services tree directly.  These are resolved on first access
+# via ``__getattr__`` so that ``ports.py`` never eagerly imports a
+# service module at top-level — avoiding circular imports with
+# ``general_ledger`` and friends.
 _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
-    "commission_engine": ("domains.finance.services.finance_service", "commission_engine"),
     "create_invoice_from_order": ("domains.finance.services.ledger.invoice_service", "create_invoice_from_order"),
-    "_apply_stripe_runtime_key": ("domains.finance.services.payments.payment_engine", "_apply_stripe_runtime_key"),
-    "apply_order_status_change": ("domains.finance.services.payments.payment_engine", "apply_order_status_change"),
-    "_order_holds_inventory": ("domains.finance.services.payments.payment_engine", "_order_holds_inventory"),
-    "remove_background": ("domains.finance.services.shared.bg_removal_service", "remove_background"),
     "confirm_purchase_order": ("domains.finance.services.trading_service", "confirm_purchase_order"),
     "confirm_sales_order": ("domains.finance.services.trading_service", "confirm_sales_order"),
     "create_purchase_order": ("domains.finance.services.trading_service", "create_purchase_order"),
@@ -618,16 +679,9 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "get_stock_level": ("domains.finance.services.trading_service", "get_stock_level"),
     "invoice_sales_order": ("domains.finance.services.trading_service", "invoice_sales_order"),
     "list_goods_receipts": ("domains.finance.services.trading_service", "list_goods_receipts"),
-    "list_purchase_orders": ("domains.finance.services.trading_service", "list_purchase_orders"),
-    "list_sales_orders": ("domains.finance.services.trading_service", "list_sales_orders"),
-    "list_stock_movements": ("domains.finance.services.trading_service", "list_stock_movements"),
-    "list_warehouses": ("domains.finance.services.trading_service", "list_warehouses"),
     "receive_purchase_order": ("domains.finance.services.trading_service", "receive_purchase_order"),
     "run_dunning_engine": ("domains.finance.services.trading_service", "run_dunning_engine"),
     "three_way_match": ("domains.finance.services.trading_service", "three_way_match"),
-    "run_scheduled_finance_cycle": ("domains.finance.services.treasury.cash_management_service", "run_scheduled_finance_cycle"),
-    "run_scheduled_reconciliation_cycle": ("domains.finance.services.treasury.cash_management_service", "run_scheduled_reconciliation_cycle"),
-    "apply_shipment_vehicle_selection": ("domains.finance.services.treasury.cash_management_service", "apply_shipment_vehicle_selection"),
     "create_cod_remittance_receipt": ("domains.finance.services.treasury.cash_management_service", "create_cod_remittance_receipt"),
     "create_settlements_on_delivery": ("domains.finance.services.treasury.cash_management_service", "create_settlements_on_delivery"),
     "deserialize_pricing_breakdown_json": ("domains.finance.services.treasury.cash_management_service", "deserialize_pricing_breakdown_json"),
@@ -635,10 +689,7 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "list_cod_remittance_receipts": ("domains.finance.services.treasury.cash_management_service", "list_cod_remittance_receipts"),
     "serialize_cod_remittance_receipt": ("domains.finance.services.treasury.cash_management_service", "serialize_cod_remittance_receipt"),
     "log_refund_bank_transaction": ("domains.finance.services.treasury.cash_management_service", "log_refund_bank_transaction"),
-    "log_bank_transaction": ("domains.finance.services.treasury.cash_management_service", "log_bank_transaction"),
-    "create_cash_account": ("domains.finance.services.treasury.cash_write_service", "create_cash_account"),
-    "create_cash_transaction": ("domains.finance.services.treasury.cash_write_service", "create_cash_transaction"),
-    "TreasuryService": ("domains.finance.services.treasury.treasury_service", "TreasuryService"),
+    "generate_forecast": ("domains.finance.services.treasury.cash_management_service", "generate_forecast"),
     "controller_get_ap_summary": ("domains.finance.services.ledger.accounting_controller", "controller_get_ap_summary"),
     "FinancialReportingService": ("domains.finance.services.ledger.accounting_controller", "FinancialReportingService"),
     "get_or_create_fiscal_period": ("domains.finance.services.ledger.accounting_controller", "get_or_create_fiscal_period"),
@@ -649,7 +700,14 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "controller_post_ar_payment": ("domains.finance.services.ledger.accounting_controller", "controller_post_ar_payment"),
     "controller_post_ap_payable": ("domains.finance.services.ledger.accounting_controller", "controller_post_ap_payable"),
     "controller_post_ap_payment": ("domains.finance.services.ledger.accounting_controller", "controller_post_ap_payment"),
-    "list_pending_payouts": ("domains.finance.services.payouts.payout_batch_service", "list_pending_payouts"),
+    "list_periods": ("domains.finance.services.ledger.general_ledger", "list_periods"),
+    "post_logistics_cod_remittance_journal": ("domains.finance.services.ledger.general_ledger", "post_logistics_cod_remittance_journal"),
+    "post_supplier_settlement_journal": ("domains.finance.services.ledger.general_ledger", "post_supplier_settlement_journal"),
+    "reverse_journal_entry": ("domains.finance.services.ledger.je_reversal_service", "reverse_journal_entry"),
+    "Coupon": ("domains.promotions.models.promotions", "Coupon"),
+    "commission_engine": ("domains.finance.services.finance_service", "commission_engine"),
+    "CommissionEngine": ("domains.finance.services.finance_service", "CommissionEngine"),
+    # --- Payout batch service exports (missing, causing collection errors) ---
     "approve_payout": ("domains.finance.services.payouts.payout_batch_service", "approve_payout"),
     "reject_payout": ("domains.finance.services.payouts.payout_batch_service", "reject_payout"),
     "approve_batch": ("domains.finance.services.payouts.payout_batch_service", "approve_batch"),
@@ -660,14 +718,18 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "stop_auto_payout_background_job": ("domains.finance.services.payouts.payout_batch_service", "stop_auto_payout_background_job"),
     "run_auto_payout_sweep": ("domains.finance.services.payouts.payout_batch_service", "run_auto_payout_sweep"),
     "run_auto_logistics_payout_sweep": ("domains.finance.services.payouts.payout_batch_service", "run_auto_logistics_payout_sweep"),
-    "list_periods": ("domains.finance.services.ledger.general_ledger", "list_periods"),
-    "reverse_journal_entry": ("domains.finance.services.ledger.je_reversal_service", "reverse_journal_entry"),
-    "generate_forecast": ("domains.finance.services.treasury.cash_management_service", "generate_forecast"),
-    "Coupon": ("domains.promotions.models.promotions", "Coupon"),
-    # Model re-exports (for cross-domain column access)
-    "JournalEntry": ("domains.finance.models.finance", "JournalEntry"),
+    "list_pending_payouts": ("domains.finance.services.payouts.payout_batch_service", "list_pending_payouts"),
+    # --- Payment engine exports (missing, causing collection errors) ---
+    "_apply_stripe_runtime_key": ("domains.finance.services.payments.payment_engine", "_apply_stripe_runtime_key"),
+    "get_order_gateway": ("domains.finance.services.payments.payment_engine", "get_order_gateway"),
+    "apply_order_status_change": ("domains.finance.services.payments.payment_engine", "apply_order_status_change"),
+    # Gate for returns refund eligibility (domains/orders/services/returns/service.py).
+    "_order_holds_inventory": ("domains.finance.services.payments.payment_engine", "_order_holds_inventory"),
+    # --- Cash management exports (missing, causing collection errors) ---
+    "apply_shipment_vehicle_selection": ("domains.finance.services.treasury.cash_management_service", "apply_shipment_vehicle_selection"),
+    "run_scheduled_finance_cycle": ("domains.finance.services.treasury.cash_management_service", "run_scheduled_finance_cycle"),
+    "run_scheduled_reconciliation_cycle": ("domains.finance.services.treasury.cash_management_service", "run_scheduled_reconciliation_cycle"),
 }
-import importlib
 
 def __getattr__(name: str):
     if name in _LAZY_SERVICE_EXPORTS:
@@ -676,6 +738,12 @@ def __getattr__(name: str):
         value = getattr(mod, name)
         globals()[name] = value
         return value
+    try:
+        value = _get_model(name)
+        globals()[name] = value
+        return value
+    except AttributeError:
+        pass
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

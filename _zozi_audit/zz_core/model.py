@@ -98,6 +98,12 @@ class Finding:
     snippet: str = ""
     notes: str = ""
     origin: str = "static"
+    #: Machine-checkable rule that re-decides this finding on the next run.
+    #: Attached by `zz_core.probes.attach()`. It MUST be declared here: `Finding`
+    #: is a `slots=True` dataclass, so assigning an undeclared attribute raises
+    #: `AttributeError` — which silently killed the entire probe layer while every
+    #: consumer (`emit.py`, `checklist.py`, `loop.py`) kept reading `f.probe`.
+    probe: dict = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -165,6 +171,10 @@ def _finding_row(self) -> dict:
         "completion_blocker": self.completion_blocker,
         "laws": list(self.laws), "snippet": self.snippet,
         "notes": self.notes, "origin": self.origin,
+        # Without this key the probe never reaches findings.jsonl, so every
+        # downstream reader (`zozi_verify.py`, `zozi_compile.py`, the self-test)
+        # sees a finding it can never re-decide.
+        "probe": dict(self.probe or {}),
     }
 
 

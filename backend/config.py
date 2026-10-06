@@ -21,7 +21,14 @@ logger = logging.getLogger(__name__)
 try:
     from dotenv import load_dotenv
     _app_env = os.environ.get("APP_ENV", "development")
-    if _app_env in ("development", "test"):
+    # Skip .env loading when running tests so test fixtures have clean
+    # env state; .env dummy values would otherwise leak into tests via the
+    # module-level side-effect below (c.f. test_payments_providers "empty" tests).
+    # APP_ENV=test is set by conftest.py before any test imports, so it is a
+    # reliable signal even during test collection, unlike PYTEST_CURRENT_TEST
+    # which is only set when a test body is actually executing.
+    _in_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
+    if _app_env == "development" and not _in_pytest:
         ROOT = Path(__file__).resolve().parent.parent
         load_dotenv(ROOT / ".env", override=False)
 except ImportError:
@@ -152,6 +159,15 @@ class Settings(BaseSettings):
     backup_max_files: int = Field(default=48)
     backup_interval_minutes: int = Field(default=30)
     backup_enabled: bool = Field(default=True)
+    backup_verify_on_create: bool = Field(default=False)
+    backup_cloud_enabled: bool = Field(default=False)
+    backup_cloud_provider: str = Field(default="")
+    backup_s3_bucket: str = Field(default="")
+    backup_s3_prefix: str = Field(default="")
+    backup_s3_region: str = Field(default="")
+    backup_s3_endpoint_url: str = Field(default="")
+    backup_s3_access_key_id: str = Field(default="")
+    backup_s3_secret_access_key: str = Field(default="")
     encryption_key: str = Field(default="")
     kms_encryption_key: str = Field(default="")
     hash_salt: str = Field(default="")
@@ -170,9 +186,9 @@ class Settings(BaseSettings):
     facebook_client_secret: str = Field(default="")
     sso_client_id: str = Field(default="")
     customer_email_verification_mode: str = Field(default="auto")
-    readiness_require_valkey: bool = Field(default=True, alias="readiness_require_valkey")
-    readiness_require_email: bool = Field(default=True)
-    readiness_require_payments: bool = Field(default=True)
+    readiness_require_valkey: bool = Field(default=False, alias="readiness_require_valkey")
+    readiness_require_email: bool = Field(default=False)
+    readiness_require_payments: bool = Field(default=False)
     email_scheduler_enabled: bool = Field(default=False)
     background_job_workers: int = Field(default=2)
     background_job_ttl_seconds: int = Field(default=3600)
@@ -203,7 +219,7 @@ class Settings(BaseSettings):
     bank_api_source_account_id: str = Field(default="")
     bank_api_timeout_seconds: int = Field(default=30)
     media_storage_base: str = Field(default="")
-    storage_backend: str = Field(default="r2")
+    storage_backend: str = Field(default="local")
     r2_bucket: str = Field(default="")
     r2_region: str = Field(default="auto")
     r2_endpoint_url: str = Field(default="")
@@ -286,6 +302,32 @@ class Settings(BaseSettings):
 
         normalized_values.pop("_env_file", None)
         normalized_values.pop("_env_file_encoding", None)
+
+        app_env = str(
+            normalized_values.get("app_env", os.environ.get("APP_ENV", "development"))
+        ).strip().lower()
+        if app_env == "test":
+            normalized_values.setdefault(
+                "secret_key",
+                "test-secret-key-for-unit-tests-only-" + "a" * 32,
+            )
+            if "DATABASE_URL" not in os.environ:
+                normalized_values.setdefault("database_url", "sqlite:///:memory:")
+            if "DATABASE_URL_DIRECT" not in os.environ:
+                normalized_values.setdefault("database_url_direct", "sqlite:///:memory:")
+            normalized_values.setdefault(
+                "field_encryption_salt",
+                "test-salt-for-unit-tests-only",
+            )
+            normalized_values.setdefault(
+                "field_encryption_key",
+                "test-field-encryption-key-for-unit-tests-only-" + "a" * 32,
+            )
+            normalized_values.setdefault(
+                "audit_chain_key",
+                "test-audit-chain-key-for-unit-tests-only-" + "a" * 16,
+            )
+
         super().__init__(**normalized_values)
 
         object.__setattr__(self, "_field_encryption_key_cache", None)
@@ -358,7 +400,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _validate_required_secrets_in_non_production(self) -> "Settings":
         app_env = str(self.app_env or "development").strip().lower()
-        if app_env == "production":
+        if app_env in ("production", "test"):
             return self
 
         _required_secrets = [

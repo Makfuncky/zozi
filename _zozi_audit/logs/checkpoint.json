@@ -1,11 +1,11 @@
 {
   "phase": "final",
   "phase_number": 38,
-  "completed_at": "2026-10-02T20:38:10.215024+00:00",
-  "files_processed": 3895,
-  "findings_written": 574,
+  "completed_at": "2026-10-06T01:49:33.609455+00:00",
+  "files_processed": 3823,
+  "findings_written": 1335,
   "next_file": null,
   "pass": 2,
   "run_number": 1,
-  "run_id": "20261002T203716Z-9d68f1"
+  "run_id": "20261006T014348Z-6f76c8"
 }

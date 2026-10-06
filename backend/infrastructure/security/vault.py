@@ -64,7 +64,7 @@ class VaultService:
         """Check if a value appears to be encrypted."""
         if not isinstance(value, str):
             return False
-        return value.startswith(_VAULT_PREFIX)
+        return value.startswith(_VAULT_PREFIX) or value.startswith("enc::")
     
     def encrypt(self, plaintext: str) -> str:
         """Encrypt a string using Fernet (AES-256-CBC with HMAC)."""
@@ -130,7 +130,7 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
     Returns a dict with rotation status and counts.
     """
     global _vault_instance
-    from infrastructure.database.database import get_db
+    from infrastructure.database.database import get_db_session
     from sqlalchemy import text as _text
     import json as _json
 
@@ -149,7 +149,10 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
     reencrypted_count = 0
     errors = []
 
-    with get_db() as db:
+    db = get_db_session()
+    try:
+        from infrastructure.security.encryption import field_encryptor as _field_encryptor
+
         rows = db.execute(_text("SELECT id, provider_code, secret_key, webhook_secret, extra_config_json FROM payment_gateway_connections")).fetchall()
         for row in rows:
             conn_id = row[0]
@@ -157,20 +160,26 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
             for field_idx, field in enumerate(['secret_key', 'webhook_secret', 'extra_config_json'], start=2):
                 _validate_field(field)
                 val = row[field_idx]
-                if val and old_vault.is_encrypted(val):
-                    try:
+                if not val:
+                    continue
+                try:
+                    if val.startswith("enc::"):
+                        decrypted = _field_encryptor.decrypt(val)
+                    elif old_vault.is_encrypted(val):
                         decrypted = old_vault.decrypt(val)
-                        new_encrypted = new_vault.encrypt(decrypted)
-                        from sqlalchemy.sql import quoted_name
-                        safe_field = quoted_name(field, quote=True)
-                        safe_table = quoted_name(_VAULT_TABLE, quote=True)
-                        db.execute(
-                            _text("UPDATE " + safe_table + " SET " + safe_field + " = :val WHERE id = :id"),
-                            {"val": new_encrypted, "id": conn_id},
-                        )
-                        reencrypted_count += 1
-                    except Exception as e:
-                        errors.append(f"Connection {provider_code}: {str(e)}")
+                    else:
+                        continue
+                    new_encrypted = new_vault.encrypt(decrypted)
+                    from sqlalchemy.sql import quoted_name
+                    safe_field = quoted_name(field, quote=True)
+                    safe_table = quoted_name(_VAULT_TABLE, quote=True)
+                    db.execute(
+                        _text("UPDATE " + safe_table + " SET " + safe_field + " = :val WHERE id = :id"),
+                        {"val": new_encrypted, "id": conn_id},
+                    )
+                    reencrypted_count += 1
+                except Exception as e:
+                    errors.append(f"Connection {provider_code}: {str(e)}")
 
         db.commit()
         _vault_instance = new_vault
@@ -181,6 +190,11 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
             "errors": errors,
             "rotated_at": _utcnow().isoformat(),
         }
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
 
 
 

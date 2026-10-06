@@ -21,6 +21,22 @@ def _f(dimension, phase, file, line, current, target, fix, *, priority="P2",
     )
 
 
+#: Variables set by the test runner or the interpreter, not by the application.
+#: `PYTEST_CURRENT_TEST` is injected by pytest for every test; declaring it in
+#: `.env.example` would be wrong, so it must not be reported as a declaration gap.
+RUNTIME_INTRINSIC_ENV: frozenset[str] = frozenset({
+    "PYTEST_CURRENT_TEST",
+    "PYTEST_ADDOPTS",
+    "PYTEST_XDIST_WORKER",
+    "PYTEST_XDIST_WORKER_COUNT",
+    "PYTEST_PLUGINS",
+    "COVERAGE_FILE",
+    "PYTHONPATH",
+    "PYTHONHASHSEED",
+    "PYTHONDONTWRITEBYTECODE",
+})
+
+
 def _env_doc_names() -> set[str]:
     text = load_doc("TECHNOLOGY_STACK.md")
     names: set[str] = set()
@@ -60,6 +76,12 @@ def env_inventory(ctx: ScanContext) -> CheckResult:
     typed_fields = set(re.findall(r"^\s*([a-z_][a-z0-9_]*)\s*:\s*[A-Za-z]", cfg or "", re.MULTILINE))
     typed_upper = {f.upper() for f in typed_fields}
     for name, sites in sorted(reads.items()):
+        # Variables injected by the test runner or the interpreter are not
+        # application configuration. `PYTEST_CURRENT_TEST` is set by pytest
+        # itself, so declaring it in `.env.example` would be wrong -- and
+        # demanding it as a "declaration gap" is a defect in the check.
+        if name in RUNTIME_INTRINSIC_ENV:
+            continue
         res.observations.append(Observation(
             "env_var", name, sites[0].split(":")[0], int(sites[0].split(":")[1]),
             "11_environmental",

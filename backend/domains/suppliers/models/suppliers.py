@@ -270,4 +270,6 @@ class SupplierDispute(Base):
     reason = Column(Text, nullable=True)
     status = Column(String(32), default="open")
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)

@@ -52,14 +52,10 @@ def create_ssm_client(region: str) -> Any:
 __all__ = ["create_s3_client", "create_ssm_client"]
 
 
-from providers.storage import r2_client
+from providers.storage.r2_client import create_r2_client, HAS_R2
 
-create_r2_client = r2_client.create_r2_client
-HAS_R2 = r2_client.HAS_R2
+# Keep S3 and R2 as distinct factories; do NOT alias one onto the other.
+HAS_S3 = HAS_STORAGE
+HAS_BOTO3 = HAS_STORAGE
 
-# The canonical implementation lives in r2_client.py; keep the legacy name
-# as a module-level alias so both names resolve to the identical function.
-create_s3_client = create_r2_client
-HAS_S3 = HAS_BOTO3 = HAS_R2
-
-__all__ = ["create_s3_client", "create_ssm_client", "create_r2_client"]
+__all__ = ["create_s3_client", "create_ssm_client", "create_r2_client", "HAS_S3", "HAS_BOTO3", "HAS_R2"]

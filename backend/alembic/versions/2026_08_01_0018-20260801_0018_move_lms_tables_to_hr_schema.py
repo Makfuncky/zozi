@@ -13,9 +13,8 @@ from __future__ import annotations
 from typing import Sequence, Union
 
 from alembic import op
-from sqlalchemy import text
-
-
+from sqlalchemy import inspect as sa_inspect, text
+from sqlalchemy.exc import NoInspectionAvailable
 
 revision: str = "20260801_0018"
 down_revision: Union[str, None] = "20260730_0005"
@@ -23,7 +22,20 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _is_offline(conn) -> bool:
+    """Return True when running in alembic --sql offline mode."""
+    if conn is None:
+        return True
+    try:
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 def _table_in_schema(conn, table_name: str, schema_name: str) -> bool:
+    if _is_offline(conn):
+        raise RuntimeError("Catalog introspection unavailable in offline (--sql) mode")
     row = conn.execute(
         text(
             "SELECT 1 FROM information_schema.tables "
@@ -36,11 +48,12 @@ def _table_in_schema(conn, table_name: str, schema_name: str) -> bool:
 
 def upgrade() -> None:
     conn = op.get_bind()
-    if conn.dialect.name == "sqlite":
+    offline = _is_offline(conn)
+    if not offline and conn.dialect.name == "sqlite":
         return
 
     for table_name in ["training_modules", "employee_trainings"]:
-        if _table_in_schema(conn, table_name, "public"):
+        if offline or _table_in_schema(conn, table_name, "public"):
             op.execute(
                 text('ALTER TABLE IF EXISTS public."' + table_name + '" SET SCHEMA "hr"')
             )
@@ -48,11 +61,12 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     conn = op.get_bind()
-    if conn.dialect.name == "sqlite":
+    offline = _is_offline(conn)
+    if not offline and conn.dialect.name == "sqlite":
         return
 
     for table_name in ["training_modules", "employee_trainings"]:
-        if _table_in_schema(conn, table_name, "hr"):
+        if offline or _table_in_schema(conn, table_name, "hr"):
             op.execute(
                 text('ALTER TABLE IF EXISTS "hr".' + table_name + ' SET SCHEMA "public"')
             )

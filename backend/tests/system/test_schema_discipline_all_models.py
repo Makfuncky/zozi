@@ -42,7 +42,7 @@ class TestEveryModelHasSchemaDiscipline:
     def test_all_models_declare_schema(self, _import_all_models):
         from infrastructure.database.base import Base
 
-        models = [m for m in Base.__subclasses__() if getattr(m, "__table__", None)]
+        models = [m for m in Base.__subclasses__() if getattr(m, "__table__", None) is not None]
         assert models, "No ORM models found — models failed to import"
 
         offenders: list[str] = []
@@ -64,7 +64,7 @@ class TestEveryForeignKeyHasOndelete:
     def test_all_foreign_keys_have_ondelete(self, _import_all_models):
         from infrastructure.database.base import Base
 
-        models = [m for m in Base.__subclasses__() if getattr(m, "__table__", None)]
+        models = [m for m in Base.__subclasses__() if getattr(m, "__table__", None) is not None]
         assert models, "No ORM models found"
 
         offenders: list[str] = []
@@ -96,7 +96,7 @@ class TestEveryDomainHasModels:
         domain_models = [
             m for m in Base.__subclasses__()
             if getattr(m, "__module__", "").startswith(f"domains.{domain}.")
-            and getattr(m, "__table__", None)
+            and getattr(m, "__table__", None) is not None
         ]
         assert domain_models, (
             f"Domain {domain} has no ORM models registered in Base.metadata"

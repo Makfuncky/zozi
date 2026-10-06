@@ -18,7 +18,7 @@ os.environ.setdefault("SECRET_KEY", os.getenv("TEST_SECRET_KEY", ""))
 os.environ.setdefault("FIELD_ENCRYPTION_KEY", os.getenv("TEST_FIELD_ENCRYPTION_KEY", "a" * 64))
 os.environ.setdefault("AUDIT_CHAIN_KEY", os.getenv("TEST_AUDIT_CHAIN_KEY", "b" * 32))
 # Force DATABASE_URL to a valid scheme so Settings() can be instantiated in tests.
-os.environ["DATABASE_URL"] = os.getenv("TEST_DATABASE_URL", "postgresql+asyncpg://localhost/test")
+os.environ.setdefault("DATABASE_URL", "sqlite://")
 
 import pytest
 from slowapi import Limiter
@@ -51,7 +51,7 @@ class TestLoginRateLimited:
             f"Expected '{route_key}' in limiter._route_limits"
         )
         limits = global_limiter._route_limits[route_key]
-        assert any("10" in str(l.limit) for l in limits), (
+        assert any("10" in str(l) for l in limits), (
             "Expected RL_SENSITIVE (10/minute) limit on login endpoint"
         )
 

@@ -12,30 +12,36 @@ import logging
 from infrastructure.observability.circuit_breaker import CircuitBreakerError, get_circuit_breaker
 
 HAS_STRIPE = False
-stripe = None
+stripe = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
-try:
-    import stripe as _stripe
-    stripe = _stripe
-    HAS_STRIPE = True
-except ImportError:  # pragma: no cover - optional SDK
-    pass
+
+def _load_stripe():
+    """Lazily import stripe; return the module or None."""
+    global stripe, HAS_STRIPE
+    if stripe is not None:
+        return stripe
+    try:
+        import stripe as _stripe  # type: ignore[import-untyped]
+        stripe = _stripe
+        HAS_STRIPE = True
+        return stripe
+    except ImportError:  # pragma: no cover - optional SDK
+        HAS_STRIPE = False
+        stripe = None
+        return None
+
 
 _stripe_breaker = get_circuit_breaker("stripe", failure_threshold=5, recovery_timeout=30)
 
 __all__ = ["stripe", "HAS_STRIPE"]
 
 
-@_stripe_breaker
-def _create_refund(payment_intent_id: str) -> dict:
-    return stripe.Refund.create(payment_intent=payment_intent_id)
-
-
 def refund_payment_intent(payment_intent_id: str, api_key: str = "") -> dict:
     """Refund a payment intent via Stripe SDK."""
-    if HAS_STRIPE and stripe:
+    _sdk = _load_stripe()
+    if _sdk is not None:
         try:
             return _create_refund(payment_intent_id)
         except CircuitBreakerError as exc:
@@ -49,3 +55,12 @@ def refund_payment_intent(payment_intent_id: str, api_key: str = "") -> dict:
             logger.warning("Failed to refund payment intent %s: %s", payment_intent_id, exc)
             raise
     return {"id": "stub_refund", "status": "succeeded"}
+
+
+# Lazily resolved: _create_refund is defined after _load_stripe so it can
+# reference the stripe module via the loader rather than a bare name.
+def _create_refund(payment_intent_id: str) -> dict:
+    _sdk = _load_stripe()
+    if _sdk is None:
+        raise RuntimeError("Stripe SDK is not available")
+    return _sdk.Refund.create(payment_intent=payment_intent_id)

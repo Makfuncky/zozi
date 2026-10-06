@@ -62,5 +62,4 @@ def downgrade() -> None:
         batch_op.drop_constraint(
             "fk_finance_pgc_country_code",
             type_="foreignkey",
-            schema="finance",
         )

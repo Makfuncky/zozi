@@ -17,7 +17,7 @@ from infrastructure.database.database import get_db, get_db_session
 
 from infrastructure.utils.config import settings
 
-from domains.comms.services.messaging.chat.chat_write_service import (
+from domains.comms.services.messaging.chat_write_service import (
     get_user_display_name,
     get_user_role,
     persist_message,

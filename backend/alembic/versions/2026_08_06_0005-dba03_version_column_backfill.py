@@ -23,7 +23,8 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import inspect
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.exc import NoInspectionAvailable
 
 from migration_helpers import safe_add_column, safe_drop_column
 
@@ -32,6 +33,17 @@ revision: str = "20260806_0005"
 down_revision: Union[str, None] = "20260806_0004"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
+
+def _is_offline(conn) -> bool:
+    """Return True when running in alembic --sql offline mode."""
+    if conn is None:
+        return True
+    try:
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
 
 
 def _version_column() -> sa.Column:
@@ -44,8 +56,14 @@ def _version_column() -> sa.Column:
 
 
 def _iter_deployed_tables(conn):
-    import infrastructure.database.models as models  # local import: keeps this revision importable in isolation
-    inspector = inspect(conn)
+    import infrastructure.database.base as models  # local import: keeps this revision importable in isolation
+    if _is_offline(conn):
+        # In offline mode we cannot introspect the catalog, so we yield every
+        # ORM table and let safe_add_column emit DDL unconditionally.
+        for table in models.Base.metadata.tables.values():
+            yield table.schema, table.name
+        return
+    inspector = sa_inspect(conn)
     for table in models.Base.metadata.tables.values():
         schema = table.schema
         name = table.name
@@ -55,7 +73,7 @@ def _iter_deployed_tables(conn):
 
 def upgrade() -> None:
     conn = op.get_bind()
-    if conn.dialect.name == "sqlite":
+    if not _is_offline(conn) and conn.dialect.name == "sqlite":
         return
     for schema, name in _iter_deployed_tables(conn):
         safe_add_column(op, name, _version_column(), schema=schema)
@@ -63,7 +81,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     conn = op.get_bind()
-    if conn.dialect.name == "sqlite":
+    if not _is_offline(conn) and conn.dialect.name == "sqlite":
         return
     for schema, name in _iter_deployed_tables(conn):
         safe_drop_column(op, name, "version", schema=schema)

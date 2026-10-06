@@ -65,10 +65,23 @@ def logic_money_type(ctx: ScanContext) -> CheckResult:
 
         def is_rate(name: str) -> bool:
             """Law 19 forbids float for MONEY. A rate/percentage/ratio/score is
-            not money: 4 of 14 adjudicated samples were exactly that."""
-            return bool(re.search(r"_rate$|_rate_|_percent|_pct$|_ratio|_score|"
-                                  r"_weight$|^rate$|^percent$|^ratio$|^score$|"
-                                  r"_multiplier$|^factor$|^coefficient$", name, re.I))
+            not money: 4 of 14 adjudicated samples were exactly that.
+
+            This is called both with an IDENTIFIER (`amount`, `open_rate`) and
+            with a whole SOURCE LINE (`    open_rate = round(...)`). It used to
+            anchor the token with `^`/`$`, which an identifier satisfies but a
+            line never does, so every `round()`-on-a-rate line was reported as
+            float-for-money. Seven findings were exactly that:
+            `open_rate`, `click_through_rate`, `return_rate` and `percent`.
+
+            The anchor is therefore a *word* boundary, not the ends of the string:
+            `(?<![a-z])` still blocks `credit` matching `rate`, and `_` counts as
+            a boundary so `open_rate` matches while `revenue` does not.
+            """
+            return bool(re.search(
+                r"(?<![a-z])(?:rate|percent|pct|ratio|score|weight|multiplier|"
+                r"factor|coefficient|marquee)(?:s|es)?(?![a-z])",
+                name, re.I))
 
         def converted_to_decimal(ln: int) -> bool:
             """A transport float that becomes a Decimal before it is stored is

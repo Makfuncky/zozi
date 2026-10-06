@@ -149,6 +149,59 @@ class TestPIIRedaction:
         assert hasattr(middleware, "REDACTION_PLACEHOLDER")
         assert middleware.REDACTION_PLACEHOLDER == "<redacted>"
 
+    def test_redact_pii_redacts_field_name_variants(self):
+        middleware = _import_middleware()
+        data = {
+            "user_email": "variant@example.com",
+            "customerEmail": "cust@example.com",
+            "phone_number": "+971-500-1234",
+            "E-Mail": "emasked@example.com",
+        }
+        result = middleware.redact_pii(data)
+        assert result["user_email"] == "<redacted>"
+        assert result["customerEmail"] == "<redacted>"
+        assert result["phone_number"] == "<redacted>"
+        assert result["E-Mail"] == "<redacted>"
+
+    def test_redact_pii_bypass_nested_object(self):
+        middleware = _import_middleware()
+        data = {"outer": {"nested": {"user_email": "nested@example.com", "safe": "keep"}}}
+        result = middleware.redact_pii(data)
+        assert result["outer"]["nested"]["user_email"] == "<redacted>"
+        assert result["outer"]["nested"]["safe"] == "keep"
+
+    def test_redact_pii_bypass_list_of_dicts(self):
+        middleware = _import_middleware()
+        data = [{"email": "a@b.com"}, {"password": "secret"}, {"safe": "ok"}]
+        result = middleware.redact_pii(data)
+        assert result[0]["email"] == "<redacted>"
+        assert result[1]["password"] == "<redacted>"
+        assert result[2]["safe"] == "ok"
+
+    def test_redact_pii_bypass_non_string_object(self):
+        class PIIStr:
+            def __str__(self):
+                return "secret123"
+
+        middleware = _import_middleware()
+        result = middleware.redact_pii({"obj": PIIStr()})
+        assert isinstance(result["obj"], PIIStr)
+
+    def test_redact_pii_bypass_nested_list_in_dict(self):
+        middleware = _import_middleware()
+        data = {"users": [{"email": "a@b.com"}, {"password": "secret"}]}
+        result = middleware.redact_pii(data)
+        assert result["users"][0]["email"] == "<redacted>"
+        assert result["users"][1]["password"] == "<redacted>"
+
+    def test_redact_pii_does_not_echo_secrets_in_string(self):
+        middleware = _import_middleware()
+        payload = "api_key=AKIAIOSFODNN7EXAMPLE and password=VeryLongPassword1234567890"
+        result = middleware.redact_pii(payload)
+        assert "AKIAIOSFODNN7EXAMPLE" not in result
+        assert "VeryLongPassword1234567890" not in result
+        assert "<redacted>" in result
+
 
 class TestLoggingMiddlewareBehavior:
     """Ensure existing logging middleware behavior is unchanged."""

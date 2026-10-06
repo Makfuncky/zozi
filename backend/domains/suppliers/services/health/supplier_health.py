@@ -39,6 +39,7 @@ from domains.suppliers.services.supplier_shared import (
 )
 from domains.suppliers.services.profile.supplier_profile import update_supplier_profile
 from infrastructure.utils.cache import cache_get_json
+from infrastructure.utils.pagination import keyset_offset_window
 
 __all__ = [
     "get_supplier_analytics",
@@ -2651,11 +2652,16 @@ def get_public_supplier_products(
         Product.is_active == True,  # noqa: E712
     ).scalar() or 0
 
-    products = db.query(Product).filter(
-        Product.supplier_id == supplier_id,
-        Product.is_deleted == False,  # noqa: E712
-        Product.is_active == True,  # noqa: E712
-    ).order_by(Product.created_at.desc()).offset(offset).limit(limit).all()
+    products = keyset_offset_window(
+        db.query(Product).filter(
+            Product.supplier_id == supplier_id,
+            Product.is_deleted == False,  # noqa: E712
+            Product.is_active == True,  # noqa: E712
+        ),
+        sort_keys=[(Product.created_at, "desc"), (Product.id, "desc")],
+        offset=offset,
+        limit=limit,
+    )
 
     items = [
         {

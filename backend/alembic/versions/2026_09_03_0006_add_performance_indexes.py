@@ -100,36 +100,20 @@ def upgrade() -> None:
     # Single-column country_code indexes (idempotent).
     for schema, table in SINGLE_COUNTRY_INDEXES:
         idx_name = f"ix_{schema}_{table}_country_code"
-        if dialect == "postgresql":
-            sch = sql_identifier(schema)
-            tbl = sql_identifier(table)
-            idx = sql_identifier(idx_name)
+        if dialect in ("postgresql", "mysql", "mariadb"):
             op.execute(
-                sa.text('CREATE INDEX IF NOT EXISTS :idx ON :sch.:tbl ("country_code")'),
-                {"idx": idx, "sch": sch, "tbl": tbl},
+                f"CREATE INDEX IF NOT EXISTS {idx_name} ON {schema}.{table} (country_code)"
             )
         elif dialect == "sqlite":
             continue
-        else:
-            sch = sql_identifier(schema)
-            tbl = sql_identifier(table)
-            idx = sql_identifier(idx_name)
-            op.execute(
-                sa.text('CREATE INDEX IF NOT EXISTS :idx ON :sch.:tbl ("country_code")'),
-                {"idx": idx, "sch": sch, "tbl": tbl},
-            )
 
     # Composite indexes (Postgres only — SQLite handles these via the ORM).
     for schema, table, idx_name, columns in COMPOSITE_INDEXES:
         if dialect == "sqlite":
             continue
         col_list = ", ".join(columns)
-        sch = sql_identifier(schema)
-        tbl = sql_identifier(table)
-        idx = sql_identifier(idx_name)
         op.execute(
-            sa.text('CREATE INDEX IF NOT EXISTS :idx ON :sch.:tbl (:cols)'),
-            {"idx": idx, "sch": sch, "tbl": tbl, "cols": col_list},
+            f"CREATE INDEX IF NOT EXISTS {idx_name} ON {schema}.{table} ({col_list})"
         )
 
 
@@ -140,20 +124,14 @@ def downgrade() -> None:
     for schema, table, idx_name, _columns in reversed(COMPOSITE_INDEXES):
         if dialect == "sqlite":
             continue
-        sch = sql_identifier(schema)
-        idx = sql_identifier(idx_name)
         op.execute(
-            sa.text('DROP INDEX IF EXISTS :sch.:idx'),
-            {"sch": sch, "idx": idx},
+            f"DROP INDEX IF EXISTS {schema}.{idx_name}"
         )
 
     for schema, table in reversed(SINGLE_COUNTRY_INDEXES):
         idx_name = f"ix_{schema}_{table}_country_code"
         if dialect == "sqlite":
             continue
-        sch = sql_identifier(schema)
-        idx = sql_identifier(idx_name)
         op.execute(
-            sa.text('DROP INDEX IF EXISTS :sch.:idx'),
-            {"sch": sch, "idx": idx},
+            f"DROP INDEX IF EXISTS {schema}.{idx_name}"
         )

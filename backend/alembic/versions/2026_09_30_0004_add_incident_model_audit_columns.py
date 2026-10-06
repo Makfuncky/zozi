@@ -20,6 +20,19 @@ from alembic import op
 
 from migration_helpers import safe_add_column
 
+
+def _is_offline(conn) -> bool:
+    if conn is None:
+        return True
+    try:
+        from sqlalchemy import inspect as sa_inspect
+        from sqlalchemy.exc import NoInspectionAvailable
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 revision: str = "20260930_0004"
 down_revision: Union[str, None] = "20260930_0003"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -32,6 +45,9 @@ def upgrade() -> None:
         return
 
     bind = op.get_bind()
+    offline = _is_offline(bind)
+    if offline:
+        return
     inspector = sa.inspect(bind)
 
     # incident_war_rooms: add created_at, country_code
@@ -122,6 +138,9 @@ def downgrade() -> None:
         return
 
     bind = op.get_bind()
+    offline = _is_offline(bind)
+    if offline:
+        return
     inspector = sa.inspect(bind)
 
     # Drop indexes first

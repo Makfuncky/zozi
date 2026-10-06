@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import time
-import os
 import threading
 import hashlib
 import math
@@ -20,8 +19,23 @@ from infrastructure.valkey.client import valkey_client
 
 logger = logging.getLogger(__name__)
 
-# Disable rate limiting in development/test mode
-_RATE_LIMIT_ENABLED = str(os.getenv("RATE_LIMIT_ENABLED", "false")).lower() in ("true", "1", "yes")
+# WHY the flag lives here and not in an `os.getenv` read: the previous default
+# was `str(os.getenv("RATE_LIMIT_ENABLED", "false")).lower() in (...)`, so with
+# no env var set the global limiter evaluated OFF while `settings.rate_limit_enabled`
+# defaults to True - two disagreeing sources of truth for one security flag
+# (Law 39), and a raw `os.getenv` read breaks Law 84 / Law 203.
+# `settings` is the typed pydantic-settings object and `rate_limit_enabled`
+# already binds the RATE_LIMIT_ENABLED env var, so reading the field here keeps
+# the operator escape hatch (`RATE_LIMIT_ENABLED=false` -> disabled, needed for
+# load tests) AND makes the code default True. This mirrors the sibling pattern
+# in middleware/security_headers.py, which reads its flag off the typed settings.
+def _resolve_rate_limit_enabled() -> bool:
+    return bool(settings.rate_limit_enabled)
+
+
+# The single canonical gate read by `dispatch` below. Fail-closed default:
+# True unless an operator explicitly disables the limiter.
+_RATE_LIMIT_ENABLED = _resolve_rate_limit_enabled()
 
 PATH_LIMITS: list[tuple[str, int, int]] = [
     ("/auth/register", 5, 60),
@@ -29,10 +43,23 @@ PATH_LIMITS: list[tuple[str, int, int]] = [
     ("/auth/forgot", 5, 60),
     ("/auth/reset-password", 5, 60),
     ("/auth/2fa/admin-verify", 5, 60),
-    ("/admin/payouts", 5, 60),
-    ("/admin/bulk", 5, 60),
     ("/admin/backup", 3, 60),
     ("/admin/security", 3, 60),
+    # Explicit tiers for high-value admin surfaces, required by
+    # tests/security/test_rls_enforcement.py::TestRateLimiting.
+    # ORDER IS LOAD-BEARING: `_get_path_tier` is first-match-wins on
+    # `path.startswith()`, so these specific prefixes MUST stay ahead of the
+    # generic "/admin/" and "/api/v1/admin/" entries below, otherwise the
+    # generic entry swallows them and the tighter limits never apply.
+    ("/admin/finance", 3, 60),
+    ("/admin/payouts", 5, 60),
+    ("/admin/orders", 5, 60),
+    ("/admin/suppliers", 5, 60),
+    ("/admin/catalog/categories", 10, 60),
+    ("/admin/catalog/products", 10, 60),
+    ("/admin/bulk", 5, 60),
+    ("/admin/", 5, 60),
+    ("/api/v1/admin/", 5, 60),
     ("/payments", 20, 60),
     ("/cart", 30, 60),
     ("/orders", 20, 60),
@@ -44,10 +71,12 @@ LOADTEST_PATH_LIMITS: list[tuple[str, int, int]] = [
     ("/auth/forgot", 60, 60),
     ("/auth/reset-password", 60, 60),
     ("/auth/2fa/admin-verify", 60, 60),
-    ("/admin/payouts", 60, 60),
-    ("/admin/bulk", 60, 60),
     ("/admin/backup", 20, 60),
     ("/admin/security", 20, 60),
+    ("/admin/bulk", 60, 60),
+    ("/admin/payouts", 60, 60),
+    ("/admin/", 60, 60),
+    ("/api/v1/admin/", 60, 60),
     ("/payments", 200, 60),
     ("/cart", 300, 60),
     ("/orders", 200, 60),
@@ -118,7 +147,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         app_env = str(getattr(settings, "app_env", "development")).lower()
-        if app_env == "test" or not settings.rate_limit_enabled:
+        if app_env == "test" or not _RATE_LIMIT_ENABLED:
             return await call_next(request)
 
         if request.method == "OPTIONS":

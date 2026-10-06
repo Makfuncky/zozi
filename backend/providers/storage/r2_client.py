@@ -43,6 +43,13 @@ def create_r2_client(
     )
 
 
-# Backward-compatibility aliases for one minor version (ADR-027 rename sweep).
-create_s3_client = create_r2_client
-HAS_S3 = HAS_BOTO3 = HAS_R2
+def health_check() -> dict[str, Any]:
+    return {
+        "status": "ok" if HAS_R2 else "unavailable",
+        "provider": "r2",
+        "module": __name__,
+        "has_r2": HAS_R2,
+    }
+
+
+__all__ = ["create_r2_client", "HAS_R2", "health_check"]

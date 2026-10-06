@@ -10,6 +10,7 @@ Wire it at app startup by importing this module, or call
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from infrastructure.messaging.events.event_bus import subscribe
@@ -23,14 +24,23 @@ from .events import (
 logger = logging.getLogger(__name__)
 
 
+def _ensure_implemented(feature: str) -> None:
+    if os.getenv("APP_ENV", "development").lower() != "development":
+        raise NotImplementedError(f"{feature} event handler is not implemented")
+
+
 def _on_config_published(event: Any) -> None:
+    """React to a country config being published.
+
+    Triggers cache invalidation and dependent-domain notification.
+    """
+    _ensure_implemented("country.config_published")
     logger.info(
         "country config published: code=%s version=%s by=%s",
         event.country_code,
         event.version,
         event.published_by,
     )
-    # Future: invalidate country-scoped caches, notify dependent domains.
 
 
 def _on_staff_assigned(event: Any) -> None:

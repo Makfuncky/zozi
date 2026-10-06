@@ -1,6 +1,6 @@
 import path from "path";
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
-import { bootstrapAdminSessionViaApi } from "../../../src/auth.ts";
+import { bootstrapAdminSessionViaApi } from "../../../src/auth";
 
 async function fulfillJson(route: Route, body: unknown, status = 200) {
   await route.fulfill({

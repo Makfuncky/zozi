@@ -39,7 +39,9 @@ ALL_DOMAINS: tuple[str, ...] = (
     "governance",
     "hr",
     "logistics",
+    "media",
     "orders",
+    "payments",
     "promotions",
     "security",
     "suppliers",
@@ -67,7 +69,7 @@ FORBIDDEN_IMPORT_RULES: dict[str, tuple[str, ...]] = {
     "middleware": ("domains", "modules"),
 }
 
-BACKEND_ROOT = Path(__file__).resolve().parent.parent
+BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 # ---------------------------------------------------------------------------
@@ -96,13 +98,13 @@ def assert_feature_in_catalog(feature: str) -> None:
 # Source-level import checks (Law 1 / 97-102)
 # ---------------------------------------------------------------------------
 def read_source(module_path: Path) -> ast.Module:
-    return ast.parse(module_path.read_text(encoding="utf-8"), filename=str(module_path))
+    return ast.parse(module_path.read_text(encoding="utf-8-sig"), filename=str(module_path))
 
 
 def module_import_roots(tree: ast.Module) -> list[str]:
     """Return the top-level import roots (e.g. 'domains', 'rbac') used by a module."""
     roots: list[str] = []
-    for node in ast.walk(tree):
+    for node in tree.body:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 roots.append(alias.name.split(".")[0])

@@ -1,5 +1,5 @@
 /**
- * Voice-to-Catalog Pipeline — End-to-End Playwright Test
+ * Voice-to-Catalog Pipeline â€” End-to-End Playwright Test
  * =========================================================
  *
  * Tests that the complete pipeline completes in under 30 seconds:
@@ -16,7 +16,7 @@
 
 import { test, expect } from "@playwright/test";
 import path from "path";
-import { API_BASE } from "../../src/api";
+import { API_BASE } from "../../../src/api";
 
 const SUPPLIER_EMAIL = "supplier@zozi.com";
 const SUPPLIER_PASSWORD = "supplier123";
@@ -56,7 +56,7 @@ test.describe("Voice-to-Catalog Pipeline", () => {
     await micButton.click();
 
     // 6. Wait for VoiceToCatalogPipeline modal to appear
-    await page.waitForSelector("text=Voice → Catalog Pipeline", { timeout: 5_000 });
+    await page.waitForSelector("text=Voice â†’ Catalog Pipeline", { timeout: 5_000 });
 
     // 7. Click "Start Voice-to-Catalog"
     const startButton = page.locator("button", { hasText: "Start Voice-to-Catalog" });
@@ -106,15 +106,15 @@ test.describe("Voice-to-Catalog Pipeline", () => {
     // Click voice button
     const micButton = page.locator("button").filter({ has: page.locator(".lucide-mic") }).first();
     await micButton.click();
-    await page.waitForSelector("text=Voice → Catalog Pipeline", { timeout: 5_000 });
+    await page.waitForSelector("text=Voice â†’ Catalog Pipeline", { timeout: 5_000 });
 
-    // Click start — without mic permission it should show error
+    // Click start â€” without mic permission it should show error
     const startButton = page.locator("button", { hasText: "Start Voice-to-Catalog" });
     await startButton.click();
 
     // Should show error state since Playwright doesn't have mic
     await page.waitForSelector("text=Pipeline Failed", { timeout: 10_000 }).catch(() => {
-      // Mic might be granted in headless mode — that's OK
+      // Mic might be granted in headless mode â€” that's OK
     });
   });
 

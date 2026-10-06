@@ -118,6 +118,7 @@ def _acquire_redemption_lock(user_id: int) -> bool:
         lock_key = f"coin:redemption:lock:{user_id}"
         return bool(valkey_client.set(lock_key, "1", nx=True, ex=_LOCK_TTL))
     except Exception:
+        logger.warning("Failed to acquire coin redemption lock for user %s", user_id, exc_info=True)
         return True
 
 
@@ -128,7 +129,7 @@ def _release_redemption_lock(user_id: int) -> None:
     try:
         valkey_client.delete(f"coin:redemption:lock:{user_id}")
     except Exception:
-        pass
+        logger.warning("Failed to release coin redemption lock for user %s", user_id, exc_info=True)
 
 
 def _check_idempotency_key(idempotency_key: str) -> Optional[Dict[str, Any]]:
@@ -144,6 +145,7 @@ def _check_idempotency_key(idempotency_key: str) -> Optional[Dict[str, Any]]:
             raw = raw.decode("utf-8")
         return json.loads(raw)
     except Exception:
+        logger.warning("Failed to check coin idempotency key", exc_info=True)
         return None
 
 
@@ -158,7 +160,7 @@ def _store_idempotency_result(idempotency_key: str, result: Dict[str, Any]) -> N
             json.dumps(result, default=str),
         )
     except Exception:
-        pass
+        logger.warning("Failed to store coin idempotency result", exc_info=True)
 
 
 def redeem_coins(

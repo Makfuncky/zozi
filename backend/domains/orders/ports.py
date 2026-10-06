@@ -43,6 +43,8 @@ from domains.orders.services.tracking.service import (  # noqa: E402, F401
     logistics_deliver_order,
     logistics_scan_and_receive,
     logistics_update_transit_status,
+    shipment_scan_codes,
+    shipment_event_label,
 )
 from domains.orders.models.order_entities import OrderNotification
 from infrastructure.utils.pagination import (
@@ -1561,7 +1563,7 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "delete_coupon_by_id": ("domains.orders.services.coupons_write_service", "delete_coupon_by_id"),
     "list_coupons_paginated": ("domains.orders.services.coupons_write_service", "list_coupons_paginated"),
     "validate_coupon": ("domains.orders.services.coupons_write_service", "validate_coupon"),
-    "_get_or_create_config": ("domains.orders.services.promotion_service", "_get_or_create_config"),
+    "_get_or_create_config": ("domains.promotions.services.engine.promotion_service", "_get_or_create_config"),
     "order_status_label": ("domains.orders.services.tracking.service", "order_status_label"),
     "shipment_status_label": ("domains.orders.services.tracking.service", "shipment_status_label"),
     "canonical_scan_code": ("domains.orders.services.tracking.service", "canonical_scan_code"),

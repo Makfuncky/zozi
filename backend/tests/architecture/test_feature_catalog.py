@@ -21,6 +21,7 @@ import ast
 import glob
 import importlib
 import os
+import re
 
 BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOMAINS_DIR = os.path.join(BACKEND, "domains")
@@ -95,8 +96,6 @@ class TestCatalogAggregation:
         )
 
     def test_require_feature_literals_resolve_to_catalog(self):
-        # Any require_feature("...") string literal in the module routers must
-        # exist in the catalog. (None today is fine; this guards future drift.)
         catalog = _load_catalog()
         unknown = []
         if os.path.isdir(MODULES_DIR):
@@ -120,4 +119,21 @@ class TestCatalogAggregation:
         assert not unknown, (
             "Law 4: require_feature literal(s) not present in rbac.catalog:\n  "
             + "\n  ".join(unknown)
+        )
+
+
+class TestFeatureSlugCatalogGuard:
+    """Guard: every feature slug in the catalog must follow the canonical
+    ``domain[.subdomain[.action]]`` lowercase-dot form and must not contain
+    uppercase letters, spaces, or consecutive dots.
+    """
+
+    _SLUG_RE = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)*$")
+
+    def test_all_catalog_slugs_are_well_formed(self):
+        catalog = _load_catalog()
+        bad = [slug for slug in catalog.FEATURE_CATALOG if not self._SLUG_RE.match(slug)]
+        assert not bad, (
+            "Law 4: malformed feature slug(s) in catalog (must be lowercase-dot):\n  "
+            + "\n  ".join(sorted(bad))
         )

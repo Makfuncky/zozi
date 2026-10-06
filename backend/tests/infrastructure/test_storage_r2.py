@@ -201,29 +201,13 @@ class TestStorageBackendSelection:
         assert isinstance(get_storage(), R2Storage)
 
 
-class TestBackupManagerR2Naming:
-    def test_r2_client_method_exists(self):
+class TestBackupManagerS3Naming:
+    def test_s3_client_method_exists(self):
         from infrastructure.storage.backup import BackupManager
 
-        assert hasattr(BackupManager, "_r2_client")
-        # Backward-compat alias intentionally NOT preserved (private method).
+        assert hasattr(BackupManager, "_s3_client")
 
-    def test_r2_attributes_present_on_instance(self):
-        from infrastructure.storage.backup import BackupManager
-
-        # Private attributes are assigned in __init__, so check an instance.
-        b = BackupManager()
-        for attr in (
-            "_r2_bucket",
-            "_r2_prefix",
-            "_r2_region",
-            "_r2_endpoint_url",
-            "_r2_access_key_id",
-            "_r2_secret_access_key",
-        ):
-            assert hasattr(b, attr), f"BackupManager instance missing {attr}"
-
-    def test_no_legacy_s3_attributes(self):
+    def test_s3_attributes_present_on_instance(self):
         from infrastructure.storage.backup import BackupManager
 
         b = BackupManager()
@@ -234,5 +218,19 @@ class TestBackupManagerR2Naming:
             "_s3_endpoint_url",
             "_s3_access_key_id",
             "_s3_secret_access_key",
+        ):
+            assert hasattr(b, attr), f"BackupManager instance missing {attr}"
+
+    def test_no_legacy_r2_attributes(self):
+        from infrastructure.storage.backup import BackupManager
+
+        b = BackupManager()
+        for attr in (
+            "_r2_bucket",
+            "_r2_prefix",
+            "_r2_region",
+            "_r2_endpoint_url",
+            "_r2_access_key_id",
+            "_r2_secret_access_key",
         ):
             assert not hasattr(b, attr), f"Legacy attribute still present: {attr}"

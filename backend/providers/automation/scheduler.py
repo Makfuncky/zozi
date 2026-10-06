@@ -19,10 +19,13 @@ except ImportError:
     IntervalTrigger = None  # type: ignore[assignment]
 
 
-def create_scheduler(timezone: str = "UTC") -> AsyncIOScheduler:
-    """Create the application background scheduler."""
+def create_scheduler(timezone: str = "UTC") -> Optional[Any]:
+    """Create the application background scheduler.
+
+    Returns None when APScheduler is unavailable (Law 125: graceful degradation).
+    """
     if not HAS_APSCHEDULER:
-        raise RuntimeError("APScheduler is not installed")
+        return None
     return AsyncIOScheduler(timezone=timezone)
 
 

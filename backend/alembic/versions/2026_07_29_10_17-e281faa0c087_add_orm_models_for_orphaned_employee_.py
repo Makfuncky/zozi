@@ -14,6 +14,8 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.exc import NoInspectionAvailable
 
 # revision identifiers, used by Alembic.
 revision: str = "e281faa0c087"
@@ -22,32 +24,43 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def _index_exists(conn, table_name: str, index_name: str) -> bool:
-    """Check if an index already exists in SQLite."""
-    result = conn.execute(
-        sa.text("SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name=:name AND tbl_name=:tbl"),
-        {"name": index_name, "tbl": table_name},
-    )
-    return result.scalar() > 0
+def _is_offline_connection(conn) -> bool:
+    """Return True when running in alembic --sql offline mode."""
+    if conn is None:
+        return True
+    try:
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
 
 
-def _fk_exists(conn, table_name: str, from_col: str, to_table: str, to_col: str) -> bool:
-    """Check if a FK already exists on a table in SQLite."""
-    if not table_name.replace("_", "").isalnum():
-        raise ValueError(f"Invalid table name: {table_name}")
-    fks = conn.execute(sa.text(f"PRAGMA foreign_key_list({table_name})")).fetchall()
-    for fk in fks:
-        # fk[3] = from_column, fk[2] = to_table, fk[4] = to_col
-        if fk[3] == from_col and fk[2] == to_table and fk[4] == to_col:
+def _index_exists(conn, table_name: str, index_name: str, schema: str | None = None) -> bool:
+    """Return True when ``index_name`` already exists on ``table_name``."""
+    if conn is None:
+        raise RuntimeError("Cannot check index existence offline (--sql)")
+    inspector = sa_inspect(conn)
+    existing = {i["name"] for i in inspector.get_indexes(table_name, schema=schema)}
+    return index_name in existing
+
+
+def _fk_exists(conn, table_name: str, from_col: str, to_table: str, to_col: str, schema: str | None = None) -> bool:
+    """Return True when a matching FK already exists on ``table_name``."""
+    if conn is None:
+        raise RuntimeError("Cannot check FK existence offline (--sql)")
+    inspector = sa_inspect(conn)
+    for fk in inspector.get_foreign_keys(table_name, schema=schema):
+        if from_col in fk["constrained_columns"] and to_table == fk["referred_table"] and to_col in fk["referred_columns"]:
             return True
     return False
 
 
 def upgrade() -> None:
     bind = op.get_bind()
+    offline = _is_offline_connection(bind)
 
     # ── employee_active_tasks ────────────────────────────────────────
-    if not _index_exists(bind, "employee_active_tasks", "ix_employee_active_tasks_employee_id"):
+    if offline or not _index_exists(bind, "employee_active_tasks", "ix_employee_active_tasks_employee_id"):
         with op.batch_alter_table("employee_active_tasks") as batch_op:
             batch_op.create_index(
                 "ix_employee_active_tasks_employee_id",
@@ -56,7 +69,7 @@ def upgrade() -> None:
             )
 
     # ── employee_audit_timeline ──────────────────────────────────────
-    if not _index_exists(bind, "employee_audit_timeline", "ix_employee_audit_timeline_employee_id"):
+    if offline or not _index_exists(bind, "employee_audit_timeline", "ix_employee_audit_timeline_employee_id"):
         with op.batch_alter_table("employee_audit_timeline") as batch_op:
             batch_op.create_index(
                 "ix_employee_audit_timeline_employee_id",
@@ -64,8 +77,7 @@ def upgrade() -> None:
                 unique=False,
             )
 
-    # Align FK: ensure actor_id has SET NULL on delete
-    if not _fk_exists(bind, "employee_audit_timeline", "actor_id", "users", "id"):
+    if offline or not _fk_exists(bind, "employee_audit_timeline", "actor_id", "users", "id"):
         with op.batch_alter_table("employee_audit_timeline") as batch_op:
             batch_op.create_foreign_key(
                 "fk_audit_timeline_actor",
@@ -76,7 +88,7 @@ def upgrade() -> None:
             )
 
     # ── employee_risk_scores ─────────────────────────────────────────
-    if not _index_exists(bind, "employee_risk_scores", "ix_employee_risk_scores_employee_id"):
+    if offline or not _index_exists(bind, "employee_risk_scores", "ix_employee_risk_scores_employee_id"):
         with op.batch_alter_table("employee_risk_scores") as batch_op:
             batch_op.create_index(
                 "ix_employee_risk_scores_employee_id",
@@ -86,18 +98,20 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # ── employee_risk_scores ─────────────────────────────────────────
     bind = op.get_bind()
-    if _index_exists(bind, "employee_risk_scores", "ix_employee_risk_scores_employee_id"):
+    offline = _is_offline_connection(bind)
+
+    # ── employee_risk_scores ─────────────────────────────────────────
+    if offline or _index_exists(bind, "employee_risk_scores", "ix_employee_risk_scores_employee_id"):
         with op.batch_alter_table("employee_risk_scores") as batch_op:
             batch_op.drop_index("ix_employee_risk_scores_employee_id")
 
     # ── employee_audit_timeline ──────────────────────────────────────
-    if _index_exists(bind, "employee_audit_timeline", "ix_employee_audit_timeline_employee_id"):
+    if offline or _index_exists(bind, "employee_audit_timeline", "ix_employee_audit_timeline_employee_id"):
         with op.batch_alter_table("employee_audit_timeline") as batch_op:
             batch_op.drop_index("ix_employee_audit_timeline_employee_id")
 
     # ── employee_active_tasks ────────────────────────────────────────
-    if _index_exists(bind, "employee_active_tasks", "ix_employee_active_tasks_employee_id"):
+    if offline or _index_exists(bind, "employee_active_tasks", "ix_employee_active_tasks_employee_id"):
         with op.batch_alter_table("employee_active_tasks") as batch_op:
             batch_op.drop_index("ix_employee_active_tasks_employee_id")

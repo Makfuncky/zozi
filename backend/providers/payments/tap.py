@@ -16,6 +16,11 @@ import httpx
 
 from infrastructure.observability.circuit_breaker import (
     CircuitBreakerError,
+    # CircuitState is retained in the module namespace even though
+    # _call_with_breaker now delegates to CircuitBreaker.call (which consults
+    # CircuitState internally via _before_call). It stays importable because
+    # callers and tests reference `tap.CircuitState`, and removing a public
+    # name is out of scope for this block.
     CircuitState,
     get_circuit_breaker,
 )
@@ -34,6 +39,33 @@ HAS_TAP = True
 _TAP_DEFAULT_TIMEOUT = 30
 _TAP_BREAKER_FAILURE_THRESHOLD = 5
 
+# Status codes that mean the GATEWAY failed, not that our request was wrong.
+# These must count toward the breaker's failure threshold (Law 296).
+#
+# httpx treats an HTTP 500 as a SUCCESSFUL exchange - it returns a Response
+# rather than raising - so a breaker that only counts raised exceptions records
+# nothing when the gateway is hard-down, and keeps every call flowing. Measured:
+# 20 consecutive HTTP 500 responses produced failure_count == 0 and the breaker
+# stayed CLOSED. A dead gateway would therefore be hammered on every request,
+# which is the cascade Law 296 exists to prevent.
+#
+# 4xx (except 408/429) is deliberately NOT counted: those are caller errors -
+# a malformed payload or an unknown charge id - and tripping the breaker on them
+# would take the adapter offline for a bug in OUR request.
+_TAP_BREAKER_FAILURE_STATUSES: frozenset[int] = frozenset({408, 425, 429, 500, 502, 503, 504})
+
+
+def _is_gateway_failure(response: Any) -> bool:
+    """Return True when *response* indicates the Tap gateway itself failed."""
+    status = getattr(response, "status_code", None)
+    if not isinstance(status, int):
+        return False
+    if status in _TAP_BREAKER_FAILURE_STATUSES:
+        return True
+    # Any other 5xx is still a server-side failure.
+    return status >= 500
+
+
 _tap_breaker = get_circuit_breaker(
     "tap",
     failure_threshold=_TAP_BREAKER_FAILURE_THRESHOLD,
@@ -45,16 +77,80 @@ def _call_with_breaker(
     breaker: Any,
     func: Callable[[], Any],
 ) -> Any:
-    if breaker.state == CircuitState.OPEN:
-        raise TapError(f"Circuit breaker 'tap' is open")
+    """Invoke ``func`` through ``breaker`` so failures actually count.
+
+    Law 296 requires every external call to be wrapped in a circuit breaker.
+    Merely *reading* ``breaker.state`` does not satisfy that: a breaker only
+    opens once its failure counter reaches ``failure_threshold``, and the counter
+    is advanced by ``CircuitBreaker.call``. The previous implementation called
+    the closure directly, so nothing was ever recorded - proven by driving 8
+    consecutive real failures through ``create_charge`` and observing
+    ``failure_count == 0`` and ``state == closed`` throughout.
+
+    Two failure modes had to be handled, and both are proven by measurement:
+
+    1. TRANSPORT errors (connection refused, timeout, TLS). These raise, so
+       ``breaker.call`` records them via ``_on_failure``.
+
+    2. ERROR RESPONSES. httpx does NOT raise for a 4xx/5xx - it returns a
+       Response - so ``breaker.call`` would record a *success*. Measured against
+       a server answering 500 to everything: 20 responses produced
+       ``failure_count == 0`` and the breaker stayed CLOSED, so a hard-down
+       gateway would be hammered on every request. That is exactly the cascade
+       Law 296 exists to prevent.
+
+       The status is therefore raised *inside* the closure as ``_GatewayFailure``.
+       Letting the breaker itself account for it means there is exactly one
+       record per call - no ``_on_success`` that would cancel a manually added
+       failure, and no risk of the two counters drifting apart.
+
+    The response is returned UNCHANGED, including on the gateway-failure path,
+    so the caller keeps full ownership of status handling and of raising its
+    domain error. No request/response shape changes (contract section 3) and no
+    existing ``except`` clause changes meaning.
+
+    Error mapping (Law 130): the raw ``CircuitBreakerError`` is translated to
+    ``TapError`` so no framework exception type escapes this provider, while
+    exceptions from ``func`` itself still propagate untouched because ``call``
+    re-raises after recording.
+    """
+    captured: dict[str, Any] = {}
+
+    def _probe() -> Any:
+        response = func()
+        captured["response"] = response
+        if _is_gateway_failure(response):
+            raise _GatewayFailure(
+                f"Tap gateway returned HTTP {getattr(response, 'status_code', 'unknown')}"
+            )
+        return response
+
     try:
-        return func()
+        return breaker.call(_probe)
+    except _GatewayFailure as exc:
+        # Expected control flow: the gateway answered, but with a failing
+        # status. The breaker has already recorded the failure; hand the real
+        # response back so the caller can raise its normal domain error.
+        logger.warning("Tap gateway failure recorded by breaker: %s", exc)
+        return captured["response"]
     except CircuitBreakerError as exc:
+        logger.warning("Tap circuit breaker rejected call: %s", exc)
         raise TapError(f"Circuit breaker rejected call: {exc}") from exc
 
 
 class TapError(Exception):
     """Base exception for Tap provider operations."""
+
+
+class _GatewayFailure(Exception):
+    """Internal marker recording an HTTP error RESPONSE against the breaker.
+
+    httpx does not raise for a 4xx/5xx, so the breaker has no exception to count.
+    This type exists purely so ``_record_breaker_outcome`` can hand
+    ``_on_failure`` a real exception carrying the status; it never escapes this
+    module and is deliberately NOT a ``TapError`` so it cannot be confused with
+    a caller-visible domain error.
+    """
 
 
 class TapChargeNotFoundError(TapError):
@@ -164,6 +260,7 @@ def create_charge(
                     f"{api_base}/charges",
                     json=payload,
                     headers=_get_headers(),
+                    timeout=_TAP_DEFAULT_TIMEOUT,
                 ),
             )
     except httpx.HTTPError as exc:
@@ -211,6 +308,7 @@ def get_charge(charge_id: str) -> dict[str, Any]:
                 lambda: client.get(
                     f"{api_base}/charges/{charge_id}",
                     headers=_get_headers(),
+                    timeout=_TAP_DEFAULT_TIMEOUT,
                 ),
             )
     except httpx.HTTPError as exc:
@@ -282,6 +380,7 @@ def refund_charge(
                         f"{api_base}/charges/{charge_id}/refunds",
                         json=payload,
                         headers=_get_headers(),
+                        timeout=_TAP_DEFAULT_TIMEOUT,
                     ),
                 )
             break

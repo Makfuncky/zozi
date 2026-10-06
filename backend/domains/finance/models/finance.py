@@ -14,63 +14,13 @@ re-registering any table.
 from __future__ import annotations
 
 from domains.finance.models.general_ledger import *  # noqa: F401,F403
-from domains.finance.models.commission import *  # noqa: F401,F403
-from domains.finance.models.payments import *  # noqa: F401,F403
-
-from domains.finance.models.general_ledger import (
-    Accrual,
-    Account,
-    AccountBalance,
-    AccountGroup,
-    APBill,
-    APLedger,
-    ARInvoice,
-    ARLedgerEntry,
-    AutomationLog,
-    AutomationRule,
-    BankAccount,
-    BankMappingRule,
-    BankReconciliation,
-    BankStatementImport,
-    BankStatementLine,
-    BankTransaction,
-    Budget,
-    CashAccount,
-    CashFlowForecast,
-    CashPositionSnapshot,
-    CashTransaction,
-    CostCenter,
-    Customer,
-    FinanceAuditLog,
-    FinanceAutomationLog,
-    FinancialReport,
-    FiscalPeriod,
-    FixedAsset,
-    GatewaySettlementSchedule,
-    Invoice,
-    InvoiceItem,
-    JournalEntry,
-    JournalEntryLine,
-    PayoutBatch,
-    PayoutBatchItem,
-    PendingJournalEntry,
-    RecurringTemplate,
-    RefundLedger,
-    ScannedExpense,
-    SupplierSettlement,
-    TransactionLedger,
-    TreasuryAccount,
-    TreasuryTransaction,
-    VATRemittance,
-    Vendor,
-)
-from domains.finance.models.commission import (
+from domains.finance.models.commission import (  # noqa: F401,F403
     CommissionAgreement,
     CommissionCategoryRate,
     CommissionLedgerEntry,
     ProductCommissionOverride,
 )
-from domains.finance.models.payments import (
+from domains.finance.models.payments import (  # noqa: F401,F403
     LogisticsPartnerPayout,
     Payment,
     PaymentGatewayConnection,
@@ -101,4 +51,33 @@ __all__ = [
     "CommissionLedgerEntry", "ProductCommissionOverride",
     "LogisticsPartnerPayout",
 ]
+
+
+def __getattr__(name: str):
+    """Lazy re-export fallback for names not bound during re-entrant module load.
+
+    When ``general_ledger`` re-enters ``finance`` during its own initialisation,
+    only a subset of names are bound (the subset defined in ``general_ledger``
+    before it reaches its ``from domains.finance.models.finance import X`` lines).
+    This ``__getattr__`` binds the remaining names on first access after both
+    modules have finished loading.
+    """
+    import importlib
+
+    _gl = importlib.import_module("domains.finance.models.general_ledger")
+    _gl_names = set(_gl.__all__) if hasattr(_gl, "__all__") else set()
+    _finance_all = set(__all__)
+    _missing = _finance_all - _gl_names - {
+        "CommissionAgreement", "CommissionCategoryRate",
+        "CommissionLedgerEntry", "ProductCommissionOverride",
+        "LogisticsPartnerPayout", "Payment", "PaymentGatewayConnection",
+        "PaymentReconciliationRun", "Payout",
+    }
+
+    if name in _missing:
+        obj = getattr(_gl, name)
+        globals()[name] = obj
+        return obj
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

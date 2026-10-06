@@ -1,4 +1,26 @@
-﻿# PROMPT_FORENSIC_AUDIT.md — v5 (Project-Completion Enhanced)
+
+
+> ⚠️ **PIPELINE CORRECTION (read first).** The output path described
+> below — one file per dimension under `_audit/dimensions/` — was produced by
+> `_zozi_audit/zz_core/emit.py`. That module was unreachable and has been
+> removed. **Do not hand-write those files.** The audit is now implemented and
+> must be *run*:
+>
+> ```
+> python _zozi_audit/zozi_audit.py --full --no-tools   # -> _zozi_audit/zozi_forensic_audit.md
+> python _zozi_audit/zozi_verify.py                    # -> _zozi_audit/zozi_verification.md
+> python _zozi_audit/zozi_compile.py                   # -> _zozi_audit/zozi_remediation_plan.md
+> ```
+>
+> The specification below still governs **what counts as a finding** — the law
+> citations, the states, the evidence requirements, the no-dual-counting rule.
+> What changed is only the mechanism: the engine exists, so run it instead of
+> re-deriving it. See `_zozi_audit/AUDIT_SUITE_PLAN.md` for the engine.
+>
+> Anything this file asks you to write directly into `_audit/**` is superseded by
+> the pipeline above.
+
+# PROMPT_FORENSIC_AUDIT.md — v5 (Project-Completion Enhanced)
 
 ```markdown
 # PROMPT_FORENSIC_AUDIT.md — ZOZI Virtual Marketplace
@@ -2160,7 +2182,6 @@ Begin with Pass 0, Phase 0 (Boot smoke test), then Phase 0.5 (Pre-flight checks)
   - ❌ Omit `project_completion_blocker` from any finding.
   - ❌ Mark a completion blocker as `no` when it prevents the app from booting, building, or passing critical tests.
 -->
-
 
 
 

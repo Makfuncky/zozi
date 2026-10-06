@@ -182,7 +182,11 @@ def _build_list_page_payload(items: list[dict], total: int, *, offset: int = 0, 
 
 
 def _seed_defaults(db: Session) -> None:
-    """Insert default banners if the table is empty."""
+    """Insert default banners if the table is empty / missing a known title.
+
+    **Write path only** — called from the startup seed (``lifespan``), never from
+    a read endpoint (Law 90/14: a GET must not mutate the database).
+    """
     count = db.query(Banner).count()
     if count == 0:
         for d in _DEFAULT_BANNERS:
@@ -200,13 +204,35 @@ def _seed_defaults(db: Session) -> None:
         db.commit()
 
 
+def seed_default_banners(db: Session) -> bool:
+    """Idempotent bootstrap entry point for the default banner set.
+
+    Returns True when defaults were inserted. Failures are rolled back and
+    logged at WARNING (Law 59/75) so a seeding problem can never take down the
+    caller — the banners list simply stays empty.
+    """
+    try:
+        _seed_defaults(db)
+        return True
+    except Exception as exc:  # noqa: BLE001 — seed must never crash the app
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            logger.warning("Banner seed rollback failed", exc_info=True)
+        logger.warning("Default banner seeding skipped: %s", exc)
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Read operations
 # ---------------------------------------------------------------------------
 
 def get_banners(db: Session, banner_type: Optional[str] = None, active_only: bool = False, country_code: Optional[str] = None) -> list[dict]:
-    """Return banners, optionally filtered by type and/or active status."""
-    _seed_defaults(db)
+    """Return banners, optionally filtered by type and/or active status.
+
+    Read-only: default content is seeded on startup (Law 90 — no DB writes in
+    a request path).
+    """
     cache_key: Optional[str] = None
     if active_only:
         cache_key = build_versioned_cache_key("banners", "list", {"banner_type": banner_type, "active_only": active_only})
@@ -231,8 +257,7 @@ def get_banners(db: Session, banner_type: Optional[str] = None, active_only: boo
 
 
 def get_banners_page(db: Session, banner_type: Optional[str] = None, active_only: bool = False, limit: Optional[int] = None, offset: int = 0) -> dict:
-    """Return paginated banners for admin."""
-    _seed_defaults(db)
+    """Return paginated banners for admin (read-only — no seeding here)."""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     query = db.query(Banner)
     if banner_type:

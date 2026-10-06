@@ -1,0 +1,35 @@
+# Generated audit output — reproducible, not source.
+#
+# Everything below is overwritten by the next run:
+#   zozi_audit.py      -> zozi_forensic_audit.md, logs/*.jsonl, logs/facts.json
+#   zozi_compile.py    -> zozi_remediation_plan.md
+#   zozi_verify.py     -> zozi_verification.md, logs/verdicts.jsonl
+#   zz_core/summary.py -> AUDIT_RESULT.md
+#
+# Tracking them meant every audit run committed ~2.6 MB of markdown and ~1.9 MB of
+# JSONL that the following run immediately replaced. The files stay on disk for
+# reading; they just stop being versioned.
+#
+# NOT ignored, because these are source or a durable hand-off:
+#   AUDIT_RESULT.md      - the single file to read for the current result
+#   AUDIT_SUITE_PLAN.md  - the plan and the defect log behind each engine fix
+#   PLAN.md- engine input
+#   *.py, tests/         - the engine
+
+# Full per-finding evidence dumps (1.8 MB, 867 KB)
+zozi_forensic_audit.md
+zozi_remediation_plan.md
+zozi_verification.md
+
+# Machine-readable run output
+logs/
+!logs/.gitkeep
+
+# Byte-code
+__pycache__/
+*.py[cod]
+
+# Probe scratch
+_probe_*.jsonl
+*.tmp
+*.tmp.*

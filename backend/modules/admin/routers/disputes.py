@@ -32,7 +32,7 @@ def list_admin_disputes_route(
     page_size: int = Query(50, ge=1, le=100),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("moderation.suppliers")),
+    _rf_gate: None = Depends(require_feature("governance.moderation")),
 ):
     """List all supplier disputes (admin view, cross-supplier)."""
     from domains.suppliers.services.disputes_service import list_admin_disputes
@@ -61,7 +61,7 @@ def patch_admin_dispute_route(
     payload: dict = Body(...),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("moderation.suppliers")),
+    _rf_gate: None = Depends(require_feature("governance.moderation")),
 ):
     """Update a dispute (status, priority, resolution_notes, admin_notes)."""
     from domains.suppliers.services.disputes_service import update_admin_dispute
@@ -74,7 +74,7 @@ def bulk_update_admin_disputes_route(
     body: dict = Body(...),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("moderation.suppliers")),
+    _rf_gate: None = Depends(require_feature("governance.moderation")),
 ):
     """Bulk update dispute status or priority.
 

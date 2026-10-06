@@ -87,6 +87,9 @@ def _otp_rate_limit(request: Request, user_id: int, suffix: str, max_attempts: i
 
 
 router = APIRouter(tags=["admin", "security"])
+# Public surface: unauthenticated boot endpoints (Law 136 — ``public_routers``
+# carries the no-auth ingress pattern the middleware pipeline supports).
+public_router = APIRouter(tags=["public", "rbac"])
 
 
 class FraudScoreRequest(BaseModel):
@@ -298,9 +301,14 @@ def admin_audit_timeline_route(
 # ── RBAC catalog (moved from modules/admin/routers/rbac_catalog.py) ───────────
 
 
-@router.get("/api/v1/rbac/catalog")
-def get_rbac_catalog(    _rf_gate: None = Depends(require_feature("security.read"))):
-    """Return the full feature catalog for frontend permission sync."""
+@public_router.get("/api/v1/rbac/catalog")
+def get_rbac_catalog():
+    """Return the full feature catalog for frontend permission sync.
+
+    Served from ``public_routers`` with no auth/feature gate: the web and mobile
+    clients fetch it **once at boot** (ARCH §11, Law 167/197) before any session
+    exists, and it exposes only static feature *atoms* — never a user's grants.
+    """
     return {
         "features": FEATURE_CATALOG,
         "namespaces": list(FEATURE_NAMESPACES),

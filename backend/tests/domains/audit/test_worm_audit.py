@@ -49,7 +49,10 @@ class TestWORMAuditService:
 
         db_session.add.assert_called_once_with(mock_record)
         db_session.flush.assert_called()
-        db_session.execute.assert_called()
+        assert record.worm_hash is not None
+        assert record.worm_prev_hash is not None
+        assert "worm_hash" in (record.details or {})
+        assert "worm_prev_hash" in (record.details or {})
         assert record.id == 1
         assert record.action == "test.action"
         assert record.entity_type == "test_entity"

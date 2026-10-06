@@ -803,15 +803,18 @@ class FraudScoringEngine:
                             result["anomalies"].append("cross_border_login")
                             result["score"] += 40
             except Exception:
-                pass
+                logger.warning("Failed to check IP reputation for session anomaly", exc_info=True)
         
-        active_sessions = self.redis.smembers(f"active_sessions:{user_id}")
-        if session_id not in active_sessions and len(active_sessions) > 0:
-            result["anomalies"].append("concurrent_session")
-            result["score"] += 25
-        
-        self.redis.sadd(f"active_sessions:{user_id}", session_id)
-        self.redis.expire(f"active_sessions:{user_id}", 86400)
+        try:
+            active_sessions = self.redis.smembers(f"active_sessions:{user_id}")
+            if session_id not in active_sessions and len(active_sessions) > 0:
+                result["anomalies"].append("concurrent_session")
+                result["score"] += 25
+            
+            self.redis.sadd(f"active_sessions:{user_id}", session_id)
+            self.redis.expire(f"active_sessions:{user_id}", 86400)
+        except ConnectionError:
+            logger.warning("Failed to check active sessions for user %s", user_id, exc_info=True)
         
         return result
     

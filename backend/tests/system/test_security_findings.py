@@ -81,15 +81,44 @@ class TestNoHardcodedSecrets:
 
         assert not offenders, (
             "Law 32 violation: possible hardcoded secret(s):\n  "
-            + "\n  ".join(sorted(set(offenders)[:20]))
+            + "\n  ".join(sorted(set(offenders))[:20])
         )
 
 
 class TestJWTDecodersVerifyTypeClaim:
     """Law 33: all JWT decoders must verify the type claim."""
 
-    def test_jwt_decode_checks_type(self, layer):
-        ...
+    def test_jwt_decode_checks_type(self):
+        offenders: list[str] = []
+        scan_dirs = ["domains", "infrastructure", "kernel", "providers", "jobs", "middleware"]
+        for layer in scan_dirs:
+            source_dir = _BACKEND / layer
+            if not source_dir.exists():
+                continue
+            for path in _iter_py(source_dir):
+                try:
+                    source = path.read_text(encoding="utf-8")
+                    tree = ast.parse(source)
+                except (OSError, SyntaxError):
+                    continue
+                for node in ast.walk(tree):
+                    if not isinstance(node, ast.FunctionDef):
+                        continue
+                    func_name = node.name.lower()
+                    if "jwt" not in func_name and "token" not in func_name:
+                        continue
+                    has_type_check = any(
+                        isinstance(n, ast.Compare) or isinstance(n, ast.If)
+                        for n in ast.walk(node)
+                    )
+                    if not has_type_check:
+                        offenders.append(
+                            f"{path.relative_to(_BACKEND)}: {node.name} may not verify type claim"
+                        )
+        assert not offenders, (
+            "Law 33 violation: JWT/token decoders without type-claim verification:\n  "
+            + "\n  ".join(sorted(set(offenders))[:20])
+        )
 
 
 class TestNoFStringSQLInterpolation:
@@ -192,11 +221,12 @@ class TestPublicEndpointsUsePydanticSchemas:
                                 f"{path.relative_to(_BACKEND)}: {node.name} uses raw dict body"
                             )
 
-        # This is informational — report but don't fail for dict usage in endpoints
-        # that are clearly internal. We only flag as warning.
-        if offenders:
-            # Use pytest.warns-style reporting via stdout capture
-            pass  # We log but don't fail — Law 42 allows dicts for simple cases
+        # Law 42 requires Pydantic body schemas for public endpoints.
+        # A raw dict body is a clear violation, so we fail the gate.
+        assert not offenders, (
+            "Law 42 violation: public endpoint(s) use raw dict body instead of "
+            "Pydantic schema:\n  " + "\n  ".join(sorted(set(offenders))[:20])
+        )
 
 
 class TestJWTTypeVerification:
@@ -204,18 +234,22 @@ class TestJWTTypeVerification:
 
     def test_verify_token_checks_type(self):
         """verify_token must check type == 'access'."""
-        from infrastructure.utils.auth import verify_token
+        from infrastructure.security.auth import verify_token, _decode_and_validate
         import inspect
 
         source = inspect.getsource(verify_token)
-        assert 'type' in source.lower(), "verify_token must verify the type claim"
-        assert 'access' in source, "verify_token must check for 'access' type"
+        helper_source = inspect.getsource(_decode_and_validate)
+        combined = source + helper_source
+        assert 'type' in combined.lower(), "verify_token must verify the type claim"
+        assert 'access' in combined, "verify_token must check for 'access' type"
 
     def test_verify_refresh_token_checks_type(self):
         """verify_refresh_token must check type == 'refresh'."""
-        from infrastructure.utils.auth import verify_refresh_token
+        from infrastructure.security.auth import verify_refresh_token, _decode_and_validate
         import inspect
 
         source = inspect.getsource(verify_refresh_token)
-        assert 'type' in source.lower(), "verify_refresh_token must verify the type claim"
-        assert 'refresh' in source, "verify_refresh_token must check for 'refresh' type"
+        helper_source = inspect.getsource(_decode_and_validate)
+        combined = source + helper_source
+        assert 'type' in combined.lower(), "verify_refresh_token must verify the type claim"
+        assert 'refresh' in combined, "verify_refresh_token must check for 'refresh' type"

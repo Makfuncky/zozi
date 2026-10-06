@@ -23,6 +23,7 @@ W1 rules enforced here:
 from __future__ import annotations
 
 import ast
+import glob
 import os
 
 import pytest
@@ -305,13 +306,6 @@ class TestAppBoot:
     def test_app_loads_and_mounts_remediated_routes(self):
         import sys
 
-        # Boot ``main`` from a clean module state so this gate is
-        # order-independent. Other architecture tests (e.g. the supplier
-        # route-integrity guard) mutate ``sys.modules``; reusing a ``main``
-        # imported against that polluted state made this gate intermittently
-        # flaky. Purge ``main`` and the five actor router packages (the exact
-        # set ``main._load_routers`` purges internally) before importing,
-        # mirroring a fresh-process start.
         _ROUTER_PKGS = {
             "modules.customer.routers",
             "modules.supplier.routers",
@@ -330,19 +324,11 @@ class TestAppBoot:
         import main  # noqa: F401
         assert main.app is not None
 
-        # (1) The remediated country_versioning router must be mounted. Mounted
-        # routers surface as ``_IncludedRouter`` with an empty ``.path``, so the
-        # reliable source of truth is the generated OpenAPI path set.
         spec = main.app.openapi()
         mounted_paths = set(spec.get("paths", {}).keys())
         assert any("config-versions" in p for p in mounted_paths), \
             "Remediated router (country_versioning) is not mounted — check generated file."
 
-        # (2) No *new* router-load failures beyond the known legacy ones. Use the
-        # authoritative boot-health API (get_failed_imports /
-        # get_package_failures, re-exported by main) instead of scraping log
-        # strings — this is deterministic and independent of caplog capture
-        # ordering, which previously let real failures pass silently.
         failed_submodules = {
             sub
             for _fails in main.get_failed_imports().values()
@@ -352,3 +338,92 @@ class TestAppBoot:
         assert not unexpected, f"Unexpected router load failures: {sorted(unexpected)}"
         assert not main.get_package_failures(), \
             f"Whole-package router import failures: {dict(main.get_package_failures())}"
+
+
+class TestEveryNonPublicHandlerHasAuthDependency:
+    """Law 87 / Law 88: every non-PUBLIC endpoint must declare an auth dependency.
+
+    PUBLIC endpoints (login, register, health, public catalog, webhooks) are
+    exempt. All other handlers must carry at least one auth dependency such as
+    ``Depends(require_feature(...))``, ``Depends(require_admin)``,
+    ``Depends(get_current_user)``, or an ``Annotated`` type alias that wraps
+    one of those.
+    """
+
+    _PUBLIC_NAME_HINTS = {
+        "login", "refresh", "me", "logout", "register", "health", "ping",
+        "public", "webhook", "callback", "auth_register", "list_employees_public",
+    }
+    _AUTH_PATTERNS = {
+        "require_feature", "require_module", "require_roles", "require_admin",
+        "get_current_user", "get_current_user_optional",
+        "require_employee", "require_logistics", "require_supplier", "require_super_admin",
+    }
+
+    def _has_auth(self, node, source_lines):
+        for dec in node.decorator_list:
+            try:
+                dec_src = ast.unparse(dec)
+            except Exception:
+                dec_src = ""
+            for pat in self._AUTH_PATTERNS:
+                if pat in dec_src:
+                    return True
+        for arg in node.args.args + node.args.kwonlyargs:
+            if arg.annotation:
+                try:
+                    ann_src = ast.unparse(arg.annotation)
+                except Exception:
+                    ann_src = ""
+                for pat in self._AUTH_PATTERNS:
+                    if pat in ann_src:
+                        return True
+            args = node.args
+            idx = list(args.args).index(arg) if arg in args.args else len(args.args) + list(args.kwonlyargs).index(arg)
+            if idx < 0:
+                continue
+            defaults = list(args.defaults) + [None] * (len(args.args) - len(args.defaults))
+            kw_defaults = list(args.kw_defaults) + [None] * (len(args.kwonlyargs) - len(args.kw_defaults))
+            default = defaults[idx] if idx < len(defaults) else None
+            if default is None and idx >= len(args.args):
+                default = kw_defaults[idx - len(args.args)]
+            if default is not None:
+                try:
+                    default_src = ast.unparse(default)
+                except Exception:
+                    default_src = ""
+                for pat in self._AUTH_PATTERNS:
+                    if pat in default_src:
+                        return True
+        return False
+
+    def test_all_non_public_routes_have_auth_dependency(self):
+        violations = []
+        modules_dir = os.path.join(BACKEND, "modules")
+        for path in glob.glob(os.path.join(modules_dir, "**", "routers", "*.py"), recursive=True):
+            if os.path.basename(path) == "__init__.py":
+                continue
+            try:
+                tree = ast.parse(open(path, encoding="utf-8").read())
+            except SyntaxError:
+                continue
+            rel = os.path.relpath(path, BACKEND).replace(os.sep, "/")
+            for node in ast.walk(tree):
+                if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                is_route = False
+                for dec in node.decorator_list:
+                    if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute):
+                        if dec.func.attr in {"get", "post", "put", "patch", "delete", "head", "options"}:
+                            is_route = True
+                if not is_route:
+                    continue
+                if any(hint in node.name.lower() for hint in self._PUBLIC_NAME_HINTS):
+                    continue
+                if not self._has_auth(node, []):
+                    violations.append(f"{rel}:{node.lineno} {node.name}")
+
+        assert not violations, (
+            "Law 87/88: non-PUBLIC route handlers must declare an auth dependency. "
+            "Missing:\n  " + "\n  ".join(sorted(violations))
+        )

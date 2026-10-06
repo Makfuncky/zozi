@@ -89,6 +89,29 @@ def generate_code39(data: str) -> bytes:
     return _generate_barcode("code39", data)
 
 
+def generate_barcode(data: str, barcode_type: str = "code128") -> Optional[bytes]:
+    """Generic barcode generation wrapper.
+
+    Dispatches to the appropriate type-specific function. Returns None when the
+    barcode library is unavailable (Law 125: graceful degradation).
+    Falls back to code128 when ``barcode_type`` is not recognised.
+    """
+    if not HAS_BARCODE:
+        return None
+    _type = barcode_type.lower().replace("-", "").replace("_", "")
+    _map = {
+        "ean13": generate_ean13,
+        "upca": generate_upca,
+        "code128": generate_code128,
+        "code39": generate_code39,
+    }
+    fn = _map.get(_type)
+    if fn is None:
+        logger.warning("Unknown barcode type %r, falling back to code128", barcode_type)
+        fn = generate_code128
+    return fn(data)
+
+
 def validate_ean13(code: str) -> bool:
     code = code.strip().replace(" ", "").replace("-", "")
     if len(code) != 13 or not code.isdigit():
@@ -135,6 +158,7 @@ __all__ = [
     "generate_upca",
     "generate_code128",
     "generate_code39",
+    "generate_barcode",
     "validate_ean13",
     "validate_upca",
     "calculate_ean13_check_digit",

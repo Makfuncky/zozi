@@ -56,6 +56,10 @@ class RunLog:
     def write_jsonl(self, name: str, rows) -> int:
         path = self.path(name)
         count = 0
+        # Plain utf-8 on WRITE. `utf-8-sig` is only for reading: writing it
+        # prepends a BOM, which made every `json.loads(line)` on this file fail
+        # with "Unexpected UTF-8 BOM" -- the audit's own output became unreadable
+        # to its own next stage.
         with path.open("w", encoding="utf-8") as fh:
             for row in rows:
                 fh.write(json.dumps(row, default=str) + "\n")
@@ -84,7 +88,7 @@ class RunLog:
         if not path.exists():
             return {}
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            return json.loads(path.read_text(encoding="utf-8-sig"))
         except Exception:
             return {}
 

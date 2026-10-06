@@ -18,6 +18,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from domains.suppliers.models.suppliers import SupplierProfile
+from infrastructure.utils.pagination import keyset_offset_window
 
 
 def get_supplier_profile_by_user(db: Session, user_id: int) -> Optional[SupplierProfile]:
@@ -77,7 +78,12 @@ def list_public_suppliers(
     if country:
         query = query.filter(SupplierProfile.country_code == country.upper())
     total = query.count()
-    items = query.order_by(SupplierProfile.created_at.desc()).offset(offset).limit(limit).all()
+    items = keyset_offset_window(
+        query,
+        sort_keys=[(SupplierProfile.created_at, "desc"), (SupplierProfile.id, "desc")],
+        offset=offset,
+        limit=limit,
+    )
     return {
         "items": [
             {

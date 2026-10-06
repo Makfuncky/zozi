@@ -139,7 +139,12 @@ export async function bootstrapCustomerSession(page: Page) {
 }
 
 export async function bootstrapEmployeeSession(page: Page) {
-  return bootstrapSessionViaApi(page, ["employee@zozi.com", "employee"], "E2eEmployee#2026");
+  // There is no employee@zozi.com account. Employees are seeded per country as
+  // <cc>.manager@zozi.com / <cc>.finance@zozi.com / <cc>.support@zozi.com and
+  // all of them share the DevSeed123! password. Verified against the live API.
+  const email = process.env.SEED_EMPLOYEE_EMAIL || "ae.manager@zozi.com";
+  const password = process.env.SEED_EMPLOYEE_PASSWORD || "DevSeed123!";
+  return bootstrapSessionViaApi(page, [email, "employee"], password);
 }
 
 // ── Panel session helper ────────────────────────────────────────────

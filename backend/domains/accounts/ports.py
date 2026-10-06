@@ -220,9 +220,9 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "verify_otp": ("domains.accounts.services.auth.auth_service", "verify_otp"),
     "RBACService": ("domains.accounts.services.permissions.permission_service", "RBACService"),
     "get_hierarchy_permissions": ("domains.accounts.services.permissions.permission_service", "get_hierarchy_permissions"),
-    "get_staff_permission_catalog": ("domains.accounts.services.permissions.permission_service", "get_staff_permission_catalog"),
     "update_role_permissions": ("domains.accounts.services.permissions.permission_service", "update_role_permissions"),
     "force_reset_password_admin": ("domains.accounts.services.users.user_management_service", "force_reset_password_admin"),
+    "create_supplier_profile": ("domains.accounts.services.auth.auth_service", "create_supplier_profile"),
 }
 import importlib
 

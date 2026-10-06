@@ -9,8 +9,10 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from urllib import request as urllib_request
@@ -37,6 +39,34 @@ def which(cmd: str) -> str:
     return shutil.which(cmd) or ""
 
 
+def _ps1_shim(cmd: str) -> str:
+    """Resolve a PowerShell-only shim that :func:`shutil.which` cannot see.
+
+    On Windows the Node toolchain installs `npm`/`pnpm`/`npx` as `.ps1` wrappers,
+    and `PATHEXT` does not include `.PS1`, so `shutil.which("npm.ps1")` misses
+    them even though they are first on PATH. The ledger then recorded
+    `probe:npm executable-not-found` and every npm-dependent check degraded to
+    SKIPPED with a false reason.
+    """
+    if os.name != "nt":
+        return ""
+    for entry in (os.environ.get("PATH") or "").split(os.pathsep):
+        if not entry:
+            continue
+        cand = Path(entry) / f"{cmd}.ps1"
+        try:
+            if cand.is_file():
+                return str(cand)
+        except OSError:
+            continue
+    return ""
+
+
+def which_or_shim(cmd: str) -> str:
+    """`which`, falling back to a PATH scan for PowerShell-only shims."""
+    return which(cmd) or _ps1_shim(cmd)
+
+
 def run(
     cmd,
     cwd: Path | None = None,
@@ -58,38 +88,32 @@ def run(
     merged_env.setdefault("CI", "1")
     if env:
         merged_env.update({k: str(v) for k, v in env.items()})
+    # `subprocess.run(timeout=...)` kills only the *direct* child and then blocks
+    # in `communicate()` until stdout/stderr reach EOF. On Windows a test runner
+    # that spawns grandchildren leaves those handles open, so EOF never arrives
+    # and the timeout is never enforced: the audit hangs forever on a wedged
+    # `pytest` instead of recording a TIMEOUT. Measured on this repo:
+    # `pytest:architecture` declared `timeout=900` and blocked for ~1450s.
+    #
+    # The fix is to own the process group, kill the whole tree on timeout, and
+    # read the pipes from a bounded thread so EOF can never block the caller.
+    popen_kwargs: dict = {}
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        popen_kwargs["start_new_session"] = True
+
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             cmd if not shell else pretty,
             cwd=str(cwd) if cwd else None,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
             errors="replace",
-            timeout=timeout,
             shell=shell,
             env=merged_env,
-        )
-        return ToolResult(
-            name=name or pretty[:80],
-            cmd=pretty,
-            exit_code=proc.returncode,
-            duration_s=round(time.time() - started, 2),
-            stdout_tail=truncate(proc.stdout or "", 6000),
-            stderr_tail=truncate(proc.stderr or "", 3000),
-            available=True,
-            full_stdout=(proc.stdout or "")[:FULL_OUTPUT_CAP],
-        )
-    except subprocess.TimeoutExpired as exc:
-        return ToolResult(
-            name=name or pretty[:80],
-            cmd=pretty,
-            exit_code=None,
-            duration_s=round(time.time() - started, 2),
-            stdout_tail=truncate(getattr(exc, "stdout", "") or "", 3000),
-            stderr_tail=f"TIMEOUT after {timeout}s",
-            available=True,
-            skipped_reason=f"timeout>{timeout}s",
-            full_stdout=(getattr(exc, "stdout", "") or "")[:FULL_OUTPUT_CAP],
+            **popen_kwargs,
         )
     except FileNotFoundError:
         return ToolResult(
@@ -101,6 +125,73 @@ def run(
             name=name or pretty[:80], cmd=pretty, available=True,
             skipped_reason=f"{type(exc).__name__}: {exc}",
         )
+    captured: dict[str, str] = {}
+
+    def _drain() -> None:
+        out, err = proc.communicate()
+        captured["stdout"] = out or ""
+        captured["stderr"] = err or ""
+
+    reader = threading.Thread(target=_drain, daemon=True)
+    reader.start()
+    reader.join(timeout)
+
+    timed_out = reader.is_alive()
+    if timed_out:
+        _kill_tree(proc)
+        reader.join(10)
+    rc = proc.returncode
+    # `communicate()` owns (and closes) the pipes, so they must never be read
+    # again here — on the timeout path `captured` may legitimately be empty.
+    stdout = captured.get("stdout", "")
+    stderr = captured.get("stderr", "")
+    for stream in (proc.stdout, proc.stderr):
+        try:
+            if stream:
+                stream.close()
+        except Exception:
+            pass
+
+    if timed_out:
+        return ToolResult(
+            name=name or pretty[:80],
+            cmd=pretty,
+            exit_code=None,
+            duration_s=round(time.time() - started, 2),
+            stdout_tail=truncate(stdout, 3000),
+            stderr_tail=f"TIMEOUT after {timeout}s",
+            available=True,
+            skipped_reason=f"timeout>{timeout}s",
+            full_stdout=stdout[:FULL_OUTPUT_CAP],
+        )
+    return ToolResult(
+        name=name or pretty[:80],
+        cmd=pretty,
+        exit_code=rc,
+        duration_s=round(time.time() - started, 2),
+        stdout_tail=truncate(stdout, 6000),
+        stderr_tail=truncate(stderr, 3000),
+        available=True,
+        full_stdout=stdout[:FULL_OUTPUT_CAP],
+    )
+
+
+def _kill_tree(proc) -> None:
+    """Kill a child and everything it spawned, on both platforms."""
+    if proc.poll() is not None:
+        return
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           capture_output=True, timeout=30)
+        else:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+    except Exception:
+        pass
+    try:
+        proc.kill()
+    except Exception:
+        pass
 
 
 def capture(ctx: ScanContext, name: str, cmd, cwd: Path | None = None,
@@ -130,11 +221,20 @@ def probe_all(ctx: ScanContext) -> dict:
     }
     for name, cmd in probes.items():
         binary = cmd[0]
-        if binary == sys.executable or which(binary):
+        if binary == sys.executable:
             res = run(cmd, cwd=ctx.root, timeout=60, name=f"probe:{name}")
         else:
-            res = ToolResult(name=f"probe:{name}", cmd=" ".join(cmd),
-                             available=False, skipped_reason="not-installed")
+            resolved = which_or_shim(binary)
+            if not resolved:
+                res = ToolResult(name=f"probe:{name}", cmd=" ".join(cmd),
+                                 available=False, skipped_reason="not-installed")
+            else:
+                # Spawn the RESOLVED path, not the bare name. `shutil.which("npm")`
+                # returns `npm.CMD`, but `Popen(["npm", ...], shell=False)` on
+                # Windows does not apply PATHEXT, so it raised FileNotFoundError
+                # and the ledger claimed npm/pnpm/npx were not installed.
+                res = run([resolved] + list(cmd[1:]), cwd=ctx.root, timeout=60,
+                          name=f"probe:{name}")
         ctx.tools[f"probe:{name}"] = res
     # Ollama reachability (HTTP)
     url = ctx.options.get("ollama_url", "http://localhost:11434")

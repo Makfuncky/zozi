@@ -11,12 +11,13 @@ candidates for automation. Two streams are produced:
 """
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 
 from zz_core.model import CheckResult, Finding, Observation, Recommendation, ScanContext
 from zz_core.registry import check
-from zz_core.util import read_text
+from zz_core.util import parse_python, read_text
 
 # A Celery worker cannot run a beat schedule without the app object.
 CELERY_APP_CANDIDATES = ("celery_app.py", "celery.py", "worker.py")
@@ -53,6 +54,41 @@ def _py(ctx: ScanContext, *substrings: str) -> list[Path]:
         if any(s in rel for s in substrings):
             out.append(p)
     return out
+
+
+def module_level_bindings(tree: ast.AST) -> set[str]:
+    """Every name a module makes available at import time.
+
+    Functions, classes, module-level constants (plain and annotated), and
+    imported/re-exported names all count. Only then can "is `mod.SYMBOL`
+    defined?" be answered without lying about constants.
+    """
+    names: set[str] = set()
+    for node in getattr(tree, "body", []):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            for tgt in node.targets:
+                if isinstance(tgt, ast.Name):
+                    names.add(tgt.id)
+                elif isinstance(tgt, (ast.Tuple, ast.List)):
+                    names.update(e.id for e in tgt.elts if isinstance(e, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+        elif isinstance(node, ast.ImportFrom):
+            names.update(a.asname or a.name for a in node.names)
+        elif isinstance(node, ast.Import):
+            names.update((a.asname or a.name.split(".")[0]) for a in node.names)
+        elif isinstance(node, ast.If):
+            # Conditional re-exports (`if TYPE_CHECKING:`, platform switches).
+            for st in ast.walk(node):
+                if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    names.add(st.name)
+                elif isinstance(st, ast.Assign):
+                    names.update(t.id for t in st.targets if isinstance(t, ast.Name))
+                elif isinstance(st, ast.ImportFrom):
+                    names.update(a.asname or a.name for a in st.names)
+    return names
 
 
 def _strip_py_noise(text: str) -> str:
@@ -116,6 +152,15 @@ def workflow_runtime_bootstrap(ctx: ScanContext) -> CheckResult:
             if re.search(r"beat_schedule|add_periodic_task|crontab\(|schedule\s*=", line):
                 schedule_hits.append((ctx.rel(p), n))
     # Every symbol a scheduled task imports must exist somewhere.
+    # A task is "scheduled" when its NAME is referenced by the Celery app, which
+    # is where `beat_schedule` lives. The previous test asked whether the 900
+    # characters following the decorator mentioned "schedule" anywhere, so a task
+    # that merely sat near an unrelated comment counted as scheduled and a task
+    # registered in `beat_schedule` from another file did not. The probe judges
+    # this claim against `celery_app.py`, so the detector has to as well.
+    celery_src = ""
+    if celery_app is not None:
+        celery_src, _ = read_text(celery_app)
     task_files = sorted((backend / "jobs").glob("*.py")) if (backend / "jobs").exists() else []
     tasks: list[dict] = []
     for p in task_files:
@@ -124,12 +169,27 @@ def workflow_runtime_bootstrap(ctx: ScanContext) -> CheckResult:
             continue
         for m in re.finditer(r"@(?:shared_task|app\.task|celery_app\.task)\b", text):
             block = text[m.start():m.start() + 900]
-            name_m = re.search(r"\(\s*[\"']?([\w.]+)[\"']?", block)
-            sched = re.search(r"(beat_schedule|add_periodic_task|crontab|schedule)", block)
+            # Resolve the task's real name, in precedence order:
+            #   1. an explicit `name=` kwarg
+            #   2. the decorated `def`
+            # The previous regex grabbed the FIRST parenthesised token after the
+            # decorator, which for `@shared_task(bind=True, ...)` is the kwarg
+            # `bind` -- so 38 tasks collapsed to two names, `bind` and `name`,
+            # and "is `bind` in the beat schedule?" decided a real finding.
+            name_m = re.search(r"""\bname\s*=\s*["']([\w.]+)["']""", block)
+            if not name_m:
+                name_m = re.search(r"^\s*(?:async\s+)?def\s+(\w+)", block,
+                                   re.MULTILINE)
+            name = name_m.group(1) if name_m else "?"
+            scheduled = bool(
+                name != "?"
+                and celery_src
+                and re.search(rf"\b{re.escape(name.split('.')[-1])}\b", celery_src)
+            )
             tasks.append({
                 "file": ctx.rel(p), "line": text[:m.start()].count("\n") + 1,
-                "name": name_m.group(1) if name_m else "?",
-                "scheduled": bool(sched),
+                "name": name,
+                "scheduled": scheduled,
             })
 
     res.facts["workflow_runtime"] = {
@@ -202,12 +262,31 @@ def workflow_runtime_bootstrap(ctx: ScanContext) -> CheckResult:
             if m.group(1).startswith(("infrastructure", "domains", "modules", "kernel",
                                      "jobs", "providers", "rbac")):
                 symbols.setdefault(m.group(2), ctx.rel(p))
+    # Every module-level BINDING counts as defined, not just def/class.
+    #
+    # The old scan collected only functions and classes, so a module-level
+    # constant -- the normal way this codebase exports an event name
+    # (`EVENT_SHIPMENT_CREATED = "logistics.shipment.created"`) -- was invisible.
+    # It reported 10 exports as "not defined anywhere in the codebase" and marked
+    # every one of them P0 / completion_blocker=yes, while all 10 resolve:
+    # `backend/domains/logistics/events.py:20` defines the symbol the detector
+    # called missing, and `backend/jobs/event_workers.py:17` imports it. A false
+    # hard blocker is the most expensive defect this suite can produce, because
+    # it is the first thing a reader is told to fix.
     defined: set[str] = set()
     for p in ctx.py_files:
         text, _ = read_text(p)
-        if text:
+        if not text:
+            continue
+        tree = parse_python(p).tree
+        if tree is None:
+            # Unparsable file: fall back to the line scan so a syntax error in an
+            # unrelated file cannot manufacture a dangling import.
             defined.update(re.findall(r"^\s*(?:async\s+)?def\s+(\w+)", text, re.M))
             defined.update(re.findall(r"^\s*class\s+(\w+)", text, re.M))
+            defined.update(re.findall(r"^\s*(\w+)\s*(?::[^=]+)?=", text, re.M))
+            continue
+        defined |= module_level_bindings(tree)
     dangling: list[tuple[str, str, str]] = []
     for p in task_files:
         text, _ = read_text(p)
@@ -241,7 +320,9 @@ def workflow_runtime_bootstrap(ctx: ScanContext) -> CheckResult:
                 f"the task",
             effort="M", priority="P0", confidence=5, evidence_strength="multiple",
             truth_level="L0", claim_state="VERIFIED", completion_blocker="yes",
-            verify=f"cd backend && python -c \"import {mod.split('.')[0]}.jobs\"",
+            # The old verify command imported `domains.jobs`, which is not a
+            # module -- a verification step that cannot pass proves nothing.
+            verify="cd backend && python -c 'import " + mod + "; print(" + nm + ")'"
         ))
     if dangling:
         res.recommendations.append(Recommendation(

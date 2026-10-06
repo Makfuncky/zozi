@@ -81,4 +81,12 @@ def lookup_country_code(ip: str) -> Optional[str]:
     return None
 
 
-__all__ = ["lookup_coordinates", "lookup_country_code", "GEOIP_CITY_DB", "GEOIP_COUNTRY_DB"]
+def health_check() -> dict:
+    return {
+        "status": "ok",
+        "provider": "geoip",
+        "module": __name__,
+    }
+
+
+__all__ = ["lookup_coordinates", "lookup_country_code", "GEOIP_CITY_DB", "GEOIP_COUNTRY_DB", "health_check"]

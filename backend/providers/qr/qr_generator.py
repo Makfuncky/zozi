@@ -46,7 +46,7 @@ def generate_qr(
     error_correction: str = "M",
     fill_color: str = "black",
     back_color: str = "white",
-) -> bytes:
+) -> Optional[bytes]:
     """Generate a QR code as PNG bytes.
 
     Args:
@@ -58,14 +58,11 @@ def generate_qr(
         back_color: Background color. Default "white".
 
     Returns:
-        PNG-encoded bytes of the QR code image.
-
-    Raises:
-        RuntimeError: If the qrcode library is not installed.
-        ValueError: If data is empty or error_correction is invalid.
+        PNG-encoded bytes of the QR code image, or None if qrcode is unavailable.
+        None when the library is unavailable (Law 125: graceful degradation).
     """
     if not HAS_QRCODE:
-        raise RuntimeError("qrcode library is not installed. Install with: pip install qrcode[pil]")
+        return None
     if not data:
         raise ValueError("data must be a non-empty string")
 

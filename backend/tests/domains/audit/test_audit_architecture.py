@@ -174,7 +174,7 @@ class TestAuditWORM:
         import inspect
         from domains.audit.services.worm_audit import WORMAuditService
 
-        src = inspect.getsource(WORMAuditService._compute_chain_hash)
+        src = inspect.getsource(WORMAuditService._compute_chain_hash_for)
         assert "hmac" in src.lower(), "WORM chain hash must use HMAC"
 
 

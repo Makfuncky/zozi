@@ -60,7 +60,7 @@ def upload_review_photo(
     file: UploadFile = File(..., description="Review photo (JPEG/PNG/WebP, max 5 MB)"),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("catalog.review.create")),
+    _rf_gate: None = Depends(require_feature("customers.reviews.write")),
 ):
     """Upload a photo attachment for an existing review."""
     from domains.catalog.ports import Review

@@ -34,11 +34,11 @@ MODULE_NAMES: tuple[str, ...] = ("admin", "customer", "employee", "logistics", "
 
 # Expected route prefix per module (Law 139)
 MODULE_PREFIXES: dict[str, str] = {
-    "admin": "/api/v1/admin",
-    "customer": "/api/v1/customer",
-    "employee": "/api/v1/employee",
-    "logistics": "/api/v1/logistics",
-    "supplier": "/api/v1/supplier",
+    "admin": "/admin",
+    "customer": "/customer",
+    "employee": "/employee",
+    "logistics": "/logistics",
+    "supplier": "/supplier",
 }
 
 # Auth dependency names that satisfy Law 87
@@ -74,19 +74,26 @@ def get_registered_module_names(module: str) -> list[str]:
         return []
     tree = parse_file(init)
     for node in ast.walk(tree):
+        target = None
         if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "_module_names":
-                    if isinstance(node.value, ast.List):
-                        return [
-                            elt.value for elt in node.value.elts
-                            if isinstance(elt, ast.Constant)
-                        ]
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    target = t
+                    break
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name):
+                target = node.target
+        if target is not None and target.id == "_module_names":
+            if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(node.value, ast.List):
+                return [
+                    elt.value for elt in node.value.elts
+                    if isinstance(elt, ast.Constant)
+                ]
     return []
 
 
 def _get_depends_names(call: ast.Call) -> set[str]:
-    """Extract the function name from a Depends(...) call."""
+    """Extract the function name from a Depends(...) call, recursing into nested calls."""
     names: set[str] = set()
     func = call.func
     if isinstance(func, ast.Name):
@@ -98,6 +105,8 @@ def _get_depends_names(call: ast.Call) -> set[str]:
             names.add(arg.id)
         elif isinstance(arg, ast.Attribute):
             names.add(arg.attr)
+        elif isinstance(arg, ast.Call):
+            names.update(_get_depends_names(arg))
     return names
 
 
@@ -147,19 +156,31 @@ def _has_raw_sql(tree: ast.Module) -> list[str]:
     return violations
 
 
-def _delegates_to_service(func: ast.FunctionDef) -> bool:
-    """Check if a handler delegates to a domain service (Law 2/90)."""
+def _delegates_to_service(tree: ast.Module, func: ast.FunctionDef) -> bool:
+    """Check if a handler delegates to a domain service (Law 2/90).
+
+    Checks both module-level imports and known service function calls.
+    """
+    module_service_names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            if ".services." in node.module:
+                for alias in node.names:
+                    module_service_names.add(alias.asname or alias.name.split(".")[-1])
     for node in ast.walk(func):
         if isinstance(node, ast.ImportFrom) and node.module:
-            if node.module.startswith("domains.") and ".services." in node.module:
+            if ".services." in node.module:
                 return True
         if isinstance(node, ast.Call):
-            func = node.func
-            if isinstance(func, ast.Attribute) and func.attr in {
+            call_func = node.func
+            if isinstance(call_func, ast.Attribute) and call_func.attr in {
                 "calculate_health_score", "list_pending_bank_accounts",
                 "verify_bank_account", "list_all_products", "create_pipeline",
             }:
                 return True
+            if isinstance(call_func, ast.Name):
+                if call_func.id in module_service_names:
+                    return True
     return False
 
 

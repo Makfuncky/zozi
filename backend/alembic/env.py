@@ -1,8 +1,10 @@
 from logging.config import fileConfig
+import asyncio
 import os
 import sys
 
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -26,9 +28,6 @@ if config.config_file_name is not None:
 target_metadata = ModelsBase.metadata
 
 db_url = os.getenv("DATABASE_URL_DIRECT", os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url")))
-# Alembic runs synchronous DDL; convert asyncpg DSNs to sync for migrations.
-if db_url.startswith("postgresql+asyncpg://"):
-    db_url = db_url.replace("postgresql+asyncpg://", "postgresql://", 1)
 config.set_main_option("sqlalchemy.url", db_url)
 
 def run_migrations_offline() -> None:
@@ -46,20 +45,26 @@ def run_migrations_online() -> None:
     connect_args = {}
     if db_url.startswith("sqlite"):
         connect_args = {"check_same_thread": False}
-    
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-        connect_args=connect_args,
-    )
-    with connectable.connect() as connection:
+
+    def do_run_migrations(connection):
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
         )
         with context.begin_transaction():
             context.run_migrations()
+
+    async def async_run():
+        connectable = create_async_engine(
+            db_url,
+            poolclass=pool.NullPool,
+            connect_args=connect_args,
+        )
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+        await connectable.dispose()
+
+    asyncio.run(async_run())
 
 if context.is_offline_mode():
     run_migrations_offline()

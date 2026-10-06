@@ -50,7 +50,7 @@ class UserBrowsingHistory(Base):
     product_id = Column(Integer, ForeignKey("catalog.products.id", ondelete='CASCADE'), nullable=False, index=True)
     viewed_at = Column(DateTime, server_default=func.now(), nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -67,7 +67,7 @@ class SystemHealthEvent(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
 
 
 # Lazy re-export shims for models whose canonical home is another domain.

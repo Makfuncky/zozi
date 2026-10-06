@@ -31,10 +31,13 @@ try:
         def __init__(self, key_func=_get_remote_address, enabled: bool = True):
             self.key_func = key_func
             self.enabled = enabled
+            self._route_limits: dict[str, list] = {}
 
         def limit(self, limit_str: str):
             """Return a decorator that applies rate limiting when enabled."""
             def decorator(func):
+                route_key = f"{func.__module__}.{func.__name__}"
+                self._route_limits.setdefault(route_key, []).append(limit_str)
                 if not self.enabled:
                     return func
                 rl = _RateLimiter(times=1, seconds=60, key_func=self.key_func)
@@ -52,9 +55,12 @@ except Exception:  # pragma: no cover - valkey unavailable
 
         def __init__(self, *args, **kwargs):
             self.enabled = False
+            self._route_limits: dict[str, list] = {}
 
         def limit(self, limit_str: str):
             def decorator(func):
+                route_key = f"{func.__module__}.{func.__name__}"
+                self._route_limits.setdefault(route_key, []).append(limit_str)
                 return func
             return decorator
 

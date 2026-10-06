@@ -16,6 +16,7 @@ from __future__ import annotations
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, func
 from sqlalchemy.orm import relationship
 from . import Base
+from infrastructure.security.encryption import EncryptedString
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 __all__ = ["Payment", "Payout", "LogisticsPartnerPayout", "PaymentGatewayConnection", "PaymentReconciliationRun"]
@@ -95,8 +96,8 @@ class PaymentGatewayConnection(Base):
     supports_payouts = Column(Boolean, nullable=True, default=False)
     payment_mode = Column(String(20), nullable=False, default="test")
     public_key = Column(String(500), nullable=True)
-    secret_key = Column(String(1000), nullable=True)
-    webhook_secret = Column(String(1000), nullable=True)
+    secret_key = Column(EncryptedString(1000), nullable=True)
+    webhook_secret = Column(EncryptedString(1000), nullable=True)
     merchant_id = Column(String(255), nullable=True)
     api_base_url = Column(String(500), nullable=True)
     webhook_url = Column(String(500), nullable=True)

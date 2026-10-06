@@ -1,8 +1,12 @@
 # ========================== br_05: CLEAN EDGE REFINER ==========================
 import numpy as np
-
+import logging
 
 from typing import Optional
+
+from .__header__ import _HAS_CV2, cv2
+
+logger = logging.getLogger(__name__)
 
 
 class CleanEdgeRefiner:

@@ -28,5 +28,6 @@ class MeetingRecording(Base):
     ended_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
 
     starter = relationship("User")

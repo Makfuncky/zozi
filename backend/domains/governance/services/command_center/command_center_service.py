@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import Any, List, Optional
 
@@ -46,15 +47,104 @@ def _validate_table_name(table_name: str) -> str:
 _BLOCKED_KEYWORDS = frozenset({
     "union", "select", "insert", "update", "delete", "drop", "create",
     "alter", "truncate", "grant", "revoke", "exec", "execute", "xp_",
+    # Logical operators are not blocked for their SQL meaning — a compound
+    # WHERE still needs them — but an *unquoted fragment* carrying them is the
+    # shape every injection below used, so a free-form fragment may not contain
+    # them at all. Structured `Predicate`s express the same intent safely.
+    "or", "and", "xor", "having", "limit", "offset", "union all",
+    # Time/exhaustion primitives: the allowlist below admits letters, digits and
+    # parentheses, so `pg_sleep(5)` and `benchmark(...)` pass a character check
+    # while being pure denial-of-service.
+    "sleep", "pg_sleep", "benchmark", "waitfor", "randomblob", "generate_series",
+    # Introspection / side channels reachable without any join.
+    "version", "pg_read_file", "lo_import", "copy", "call", "do", "declare",
 })
 _KEYWORD_PATTERN = re.compile(
-    r'\b(?:' + '|'.join(re.escape(k) for k in _BLOCKED_KEYWORDS) + r')\b',
+    r'\b(?:' + '|'.join(re.escape(k) for k in sorted(_BLOCKED_KEYWORDS, key=len, reverse=True)) + r')\b',
     re.IGNORECASE,
 )
+
+#: A structured filter term. Values never reach the SQL string — they travel as
+#: bound parameters — so the only thing that has to be trusted is the column
+#: identifier and the operator, and both are matched against a closed grammar
+#: instead of a denylist.
+@dataclass(frozen=True)
+class Predicate:
+    column: str
+    operator: str
+    value: Any = None
+
+
+#: Column identifiers are a single bare identifier. Anything with a space, a dot,
+#: a quote or a bracket is refused outright rather than pattern-matched against a
+#: denylist (a denylist cannot enumerate `)`, `--`, `or pg_sleep(...)`, …).
+_COLUMN_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+#: Operators that compare against exactly one bound value.
+_COMPARISON_OPERATORS = frozenset({"eq", "ne", "gt", "ge", "lt", "le", "like", "ilike"})
+#: Operators whose value is a sequence and therefore binds one parameter per item.
+_SEQUENCE_OPERATORS = frozenset({"in", "not in", "between"})
+#: Operators that bind nothing at all.
+_UNARY_OPERATORS = frozenset({"is_null", "is_not_null"})
+_ALL_OPERATORS = _COMPARISON_OPERATORS | _SEQUENCE_OPERATORS | _UNARY_OPERATORS
+
+_SQL_OPERATOR = {
+    "eq": "=", "ne": "<>", "gt": ">", "ge": ">=", "lt": "<", "le": "<=",
+    "like": "LIKE", "ilike": "ILIKE",
+}
+
+
+def _render_predicates(predicates: list[Predicate]) -> tuple[str, dict[str, Any]]:
+    """Render structured predicates into bound SQL. Values are never interpolated."""
+    terms: list[str] = []
+    params: dict[str, Any] = {}
+    for index, predicate in enumerate(predicates):
+        if not isinstance(predicate, Predicate):
+            raise ValueError(
+                f"where[{index}] is {type(predicate).__name__}, not a Predicate"
+            )
+        column = predicate.column
+        if not isinstance(column, str) or not _COLUMN_RE.match(column):
+            raise ValueError(f"Invalid column identifier: {column!r}")
+        operator = (predicate.operator or "").strip().lower()
+        if operator not in _ALL_OPERATORS:
+            raise ValueError(f"Invalid operator: {predicate.operator!r}")
+        if operator in _UNARY_OPERATORS:
+            terms.append(f"{column} IS {'NULL' if operator == 'is_null' else 'NOT NULL'}")
+            continue
+        if operator in _SEQUENCE_OPERATORS:
+            values = predicate.value
+            if not isinstance(values, (list, tuple)) or len(values) == 0:
+                raise ValueError(f"Operator '{operator}' needs a non-empty sequence")
+            if operator == "between":
+                if len(values) != 2:
+                    raise ValueError("Operator 'between' needs exactly two bounds")
+                params[f"wq_{index}_lo"] = values[0]
+                params[f"wq_{index}_hi"] = values[1]
+                terms.append(f"{column} BETWEEN :wq_{index}_lo AND :wq_{index}_hi")
+                continue
+            keys = []
+            for position, item in enumerate(values):
+                key = f"wq_{index}_{position}"
+                params[key] = item
+                keys.append(f":{key}")
+            prefix = "NOT " if operator == "not in" else ""
+            terms.append(f"{column} {prefix}IN ({', '.join(keys)})")
+            continue
+        if predicate.value is None:
+            raise ValueError(f"Operator '{operator}' needs a value")
+        key = f"wq_{index}"
+        params[key] = predicate.value
+        terms.append(f"{column} {_SQL_OPERATOR[operator]} :{key}")
+    if not terms:
+        raise ValueError("A predicate list must contain at least one term")
+    return " AND ".join(terms), params
 
 
 def _validate_where_clause(where: str) -> str:
     """Validate WHERE clause using allowlist of safe characters and structural checks."""
+    if not isinstance(where, str):
+        raise ValueError("A string WHERE fragment is required")
     if where.count("'") % 2 != 0:
         raise ValueError("WHERE clause contains unbalanced single quotes")
     depth = 0
@@ -88,18 +178,65 @@ def safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
 
 
 def safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool = False) -> Any:
+    """Run one statement, degrading to ``0`` / ``[]`` so a dashboard still renders.
+
+    ``sql`` may be a raw string (wrapped in ``text()`` here) or an already-built
+    SQLAlchemy expression, which must be passed through untouched.
+    """
     try:
-        result = db.execute(text(sql), params or {})
+        statement = text(sql) if isinstance(sql, str) else sql
+        result = db.execute(statement, params or {})
         return result.scalar() if scalar else result.fetchall()
     except Exception:
         return 0 if scalar else []
 
 
-def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
+def safe_count(
+    db: Session,
+    table: str,
+    where: str | list[Predicate] | Predicate | Any | None = None,
+    params: dict | None = None,
+) -> Any:
+    """``SELECT count(*)`` over one allowlisted table.
+
+    ``where`` accepts, in order of preference:
+
+    * ``None`` — no filter (replaces the old ``where="1=1"`` default, which made
+      "count everything" indistinguishable from "count where true").
+    * a ``list[Predicate]`` / a single ``Predicate`` — values travel as bound
+      parameters; only the column identifier and operator are parsed, both
+      against a closed grammar.
+    * a SQLAlchemy Core boolean expression — composed by the ORM, never by us.
+    * a ``str`` — **refused**. A raw fragment is exactly what the allowlist and
+      denylist below could never make safe, so new code must not use it.
+    """
     validated_table = _validate_table_name(table)
-    validated_where = _validate_where_clause(where)
-    sql = "SELECT COUNT(*) FROM " + validated_table + " WHERE " + validated_where
-    return safe_fetch(db, text(sql), params, scalar=True)
+    sql = f"SELECT count(*) FROM {validated_table}"
+
+    if where is None:
+        bound: dict[str, Any] = dict(params or {})
+    elif isinstance(where, Predicate):
+        fragment, bound = _render_predicates([where])
+        sql = f"{sql} WHERE {fragment}"
+    elif isinstance(where, (list, tuple)):
+        fragment, rendered = _render_predicates(list(where))
+        sql = f"{sql} WHERE {fragment}"
+        bound = rendered
+    elif isinstance(where, str):
+        raise ValueError(
+            "A raw WHERE fragment is no longer accepted. Use Predicate(column, "
+            "operator, value) so caller values are bound, not interpolated."
+        )
+    elif hasattr(where, "__clause_element__"):
+        # A SQLAlchemy Core boolean expression: compiled by the ORM, not by us.
+        return safe_fetch(db, where, scalar=True)
+    else:
+        raise ValueError(
+            f"Unsupported where type: {type(where).__name__}. "
+            "Use None, Predicate, list[Predicate] or a Core expression."
+        )
+
+    return safe_fetch(db, text(sql), bound, scalar=True)
 
 
 def get_command_center_heartbeat(db: Session) -> dict:
@@ -132,7 +269,7 @@ class SystemMetricsResponse(BaseModel):
     api_latency_p99: float
     error_rate: float
     db_connections: int
-    redis_hit_ratio: float
+    valkey_hit_ratio: float
     active_users: int
     active_sessions: int
 
@@ -232,7 +369,7 @@ def get_system_metrics(db: Session) -> SystemMetricsResponse:
             api_latency_p99=max(latencies) if latencies else 0.0,
             error_rate=sum(errors) if errors else 0.0,
             db_connections=10,
-            redis_hit_ratio=0.95,
+            valkey_hit_ratio=0.95,
             active_users=150,
             active_sessions=200,
         )
@@ -242,7 +379,7 @@ def get_system_metrics(db: Session) -> SystemMetricsResponse:
             api_latency_p99=0.0,
             error_rate=0.0,
             db_connections=10,
-            redis_hit_ratio=0.95,
+            valkey_hit_ratio=0.95,
             active_users=150,
             active_sessions=200,
         )
@@ -585,7 +722,7 @@ def get_comprehensive_dashboard(
     )[0]
 
     # ── Zone 1: Heartbeat (scoped to effective_country) ──
-    today_orders = safe_count(db, "orders", "created_at >= :today AND country_code = :cc", {"today": today_start, "cc": effective_country})
+    today_orders = safe_count(db, "orders", [Predicate("created_at", "ge", today_start), Predicate("country_code", "eq", effective_country)])
     today_revenue = safe_fetch(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned') AND country_code = :cc", {"today": today_start, "cc": effective_country}, scalar=True) or 0
     today_gmv = safe_fetch(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned') AND country_code = :cc", {"today": today_start, "cc": effective_country}, scalar=True) or 0
 
@@ -593,18 +730,14 @@ def get_comprehensive_dashboard(
         "SELECT COUNT(*) FROM shipments s JOIN orders o ON s.order_id = o.id WHERE s.status = 'delayed' AND s.estimated_delivery < :now AND o.country_code = :cc",
         {"now": now, "cc": effective_country}, scalar=True,
     ) or 0
-    failed_deliveries = safe_count(db, "orders", "status = 'failed' AND created_at >= :today AND country_code = :cc", {"today": today_start, "cc": effective_country})
+    failed_deliveries = safe_count(db, "orders", [Predicate("status", "eq", "failed"), Predicate("created_at", "ge", today_start), Predicate("country_code", "eq", effective_country)])
     buying_customers = safe_fetch(db, "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned') AND country_code = :cc", {"today": today_start, "cc": effective_country}, scalar=True) or 0
     window_shoppers = safe_fetch(db,
         "SELECT COUNT(*) FROM user_sessions us JOIN users u ON us.user_id = u.id WHERE us.last_activity >= :active AND us.is_active = true AND u.country_code = :cc",
         {"active": now - timedelta(minutes=10), "cc": effective_country}, scalar=True,
     ) or 0
-    employees_working = safe_count(db, "employees", "employment_status = 'active' AND country_code = :cc", {"cc": effective_country})
-    system_issues = safe_count(db,
-        "system_health_events",
-        "severity IN ('error', 'critical') AND created_at >= :since",
-        {"since": one_hour_ago},
-    )
+    employees_working = safe_count(db, "employees", [Predicate("employment_status", "eq", "active"), Predicate("country_code", "eq", effective_country)])
+    system_issues = safe_count(db, "system_health_events", [Predicate("severity", "in", ["error", "critical"]), Predicate("created_at", "ge", one_hour_ago)])
 
     # ── Zone 2: Treasury & Cash ──
     # Live ledger balances from the double-entry Chart of Accounts (global, not country-scoped)
@@ -629,8 +762,8 @@ def get_comprehensive_dashboard(
         "SELECT COALESCE(SUM(refund_amount), 0) FROM orders WHERE created_at >= :today AND status = 'returned' AND country_code = :cc",
         {"today": today_start, "cc": effective_country}, scalar=True,
     ) or 0
-    active_disputes = safe_count(db, "system_alerts", "alert_type = 'dispute' AND is_acknowledged = 0 AND country_code = :cc", {"cc": effective_country})
-    return_requests = safe_count(db, "return_requests", "status = 'pending' AND country_code = :cc", {"cc": effective_country})
+    active_disputes = safe_count(db, "system_alerts", [Predicate("alert_type", "eq", "dispute"), Predicate("is_acknowledged", "eq", 0), Predicate("country_code", "eq", effective_country)])
+    return_requests = safe_count(db, "return_requests", [Predicate("status", "eq", "pending"), Predicate("country_code", "eq", effective_country)])
 
     # ── Zone 3: Growth & Trends (scoped to effective_country) ──
     revenue_trend = safe_fetch(db, """
@@ -692,11 +825,11 @@ def get_comprehensive_dashboard(
 
     # ── Zone 4: Demographics & Ecosystem (scoped to effective_country) ──
     user_totals = {
-        "customers": safe_count(db, "users", "role = 'customer' AND is_active = true AND country_code = :cc", {"cc": effective_country}),
-        "suppliers": safe_count(db, "users", "role = 'supplier' AND is_active = true AND country_code = :cc", {"cc": effective_country}),
+        "customers": safe_count(db, "users", [Predicate("role", "eq", "customer"), Predicate("is_active", "eq", True), Predicate("country_code", "eq", effective_country)]),
+        "suppliers": safe_count(db, "users", [Predicate("role", "eq", "supplier"), Predicate("is_active", "eq", True), Predicate("country_code", "eq", effective_country)]),
         "employees": employees_working,
-        "logistics_companies": safe_count(db, "logistics_partners", "type = 'company' AND status = 'active'"),
-        "logistics_individuals": safe_count(db, "logistics_partners", "type = 'individual' AND status = 'active'"),
+        "logistics_companies": safe_count(db, "logistics_partners", [Predicate("type", "eq", "company"), Predicate("status", "eq", "active")]),
+        "logistics_individuals": safe_count(db, "logistics_partners", [Predicate("type", "eq", "individual"), Predicate("status", "eq", "active")]),
     }
 
     gender_stats = safe_fetch(db, """
@@ -705,18 +838,18 @@ def get_comprehensive_dashboard(
         GROUP BY gender
     """, {"cc": effective_country})
 
-    active_suppliers = safe_count(db, "users", "role = 'supplier' AND is_active = true AND country_code = :cc", {"cc": effective_country})
+    active_suppliers = safe_count(db, "users", [Predicate("role", "eq", "supplier"), Predicate("is_active", "eq", True), Predicate("country_code", "eq", effective_country)])
     # supplier_profiles — country_code status unknown, keeping unscoped
-    supplier_issues = safe_count(db, "supplier_profiles", "verification_status = 'rejected'")
-    total_products = safe_count(db, "products", "is_active = true AND country_code = :cc", {"cc": effective_country})
+    supplier_issues = safe_count(db, "supplier_profiles", [Predicate("verification_status", "eq", "rejected")])
+    total_products = safe_count(db, "products", [Predicate("is_active", "eq", True), Predicate("country_code", "eq", effective_country)])
 
     # ── Operations (scoped where possible) ──
-    stuck_orders = safe_count(db, "orders", "status = 'processing' AND updated_at < :stuck AND country_code = :cc", {"stuck": one_hour_ago, "cc": effective_country})
-    pending_kyc = safe_count(db, "supplier_kyc_requirements", "status = 'pending'")
-    product_moderation = safe_count(db, "products", "is_active = false AND country_code = :cc", {"cc": effective_country})
-    open_tickets = safe_count(db, "support_tickets", "status = 'open'")
-    active_logistics = safe_count(db, "logistics_partners", "status = 'active'")
-    logistics_issues_count = safe_count(db, "logistics_partners", "status = 'active' AND verification_status = 'rejected'")
+    stuck_orders = safe_count(db, "orders", [Predicate("status", "eq", "processing"), Predicate("updated_at", "lt", one_hour_ago), Predicate("country_code", "eq", effective_country)])
+    pending_kyc = safe_count(db, "supplier_kyc_requirements", [Predicate("status", "eq", "pending")])
+    product_moderation = safe_count(db, "products", [Predicate("is_active", "eq", False), Predicate("country_code", "eq", effective_country)])
+    open_tickets = safe_count(db, "support_tickets", [Predicate("status", "eq", "open")])
+    active_logistics = safe_count(db, "logistics_partners", [Predicate("status", "eq", "active")])
+    logistics_issues_count = safe_count(db, "logistics_partners", [Predicate("status", "eq", "active"), Predicate("verification_status", "eq", "rejected")])
 
     # ── Alerts & News (raw SQL avoids model mismatch) ──
     active_alerts_raw = safe_fetch(db, """
@@ -885,7 +1018,7 @@ def get_comprehensive_dashboard(
                 {"since": one_hour_ago}, scalar=True,
             ) or 0.0,
             "db_connections": 10,
-            "redis_hit_ratio": 0.95,
+            "valkey_hit_ratio": 0.95,
         },
         "alerts": active_alerts,
         "fraud_alerts": fraud_alerts_list,

@@ -1,6 +1,6 @@
 # ZOZI — Finding verification (falsification gate)
 
-_Generated 2026-10-02T20:35:12.068561+00:00 from 1324 findings._
+_Generated 2026-10-06T01:51:46.074945+00:00 from 1335 findings._
 
 ## Why this exists
 
@@ -10,8 +10,8 @@ The audit makes claims. The prior run of this project adjudicated 1,359 of its o
 
 | Basis | Share | What it may conclude |
 |-------|-------|-----------------------|
-| `cluster_recheck` | 404/1324 | CONFIRMED or FALSE_POSITIVE — a second, independent implementation (AST vs regex) of the same question |
-| `token_consistency` | 920/1324 | **Refutation only.** May return ALREADY_FIXED / WRONG_LOCATION / UNVERIFIABLE, never CONFIRMED |
+| `cluster_recheck` | 3/1335 | CONFIRMED or FALSE_POSITIVE — a second, independent implementation (AST vs regex) of the same question |
+| `token_consistency` | 1332/1335 | **Refutation only.** May return ALREADY_FIXED / WRONG_LOCATION / UNVERIFIABLE, never CONFIRMED |
 
 A finding with no cluster re-check is therefore **never** auto-promoted to a fix instruction; it lands in the plan as a verification task.
 
@@ -19,66 +19,66 @@ A finding with no cluster re-check is therefore **never** auto-promoted to a fix
 
 | Verdict | Count | Share | Meaning |
 |---------|-------|-------|---------|
-| CONFIRMED | 236 | 17.8% | independently re-derived and still true |
-| FALSE_POSITIVE | 18 | 1.4% | disproved |
-| ALREADY_FIXED | 44 | 3.3% | no longer present |
-| WRONG_LOCATION | 76 | 5.7% | cited line is wrong |
-| UNVERIFIABLE | 950 | 71.8% | consistent, not proven |
+| CONFIRMED | 1314 | 98.4% | independently re-derived and still true |
+| FALSE_POSITIVE | 0 | 0.0% | disproved |
+| ALREADY_FIXED | 1 | 0.1% | no longer present |
+| WRONG_LOCATION | 0 | 0.0% | cited line is wrong |
+| UNVERIFIABLE | 20 | 1.5% | consistent, not proven |
 
-- **False-positive rate (FP + wrong location): 7.1%**
-- **Not actionable as stated (FP + wrong + already fixed): 10.4%**
-- **Independently confirmed: 17.8%**
+- **False-positive rate (FP + wrong location): 0.0%**
+- **Not actionable as stated (FP + wrong + already fixed): 0.1%**
+- **Independently confirmed: 98.4%**
 
 ## P0 impact
 
-- P0 findings: **110**
-- independently confirmed: **26**
-- false or mislocated: **7** (**6.4%** of the P0 set)
+- P0 findings: **88**
+- independently confirmed: **88**
+- false or mislocated: **0** (**0.0%** of the P0 set)
 
 ## Per-cluster
 
 | Cluster | REAL | FP | FIXED | WRONG | UNVER |
 |---------|------|----|-------|-------|-------|
-| `CLUSTER-tf-rel-lazy` | 113 | 8 | 0 | 53 | 0 |
-| `CLUSTER-float-money` | 63 | 5 | 18 | 0 | 72 |
-| `(none)` | 0 | 0 | 1 | 0 | 139 |
-| `CLUSTER-silent-except` | 0 | 0 | 0 | 0 | 99 |
-| `CLUSTER-cross-domain-direct` | 0 | 0 | 0 | 0 | 92 |
-| `CLUSTER-tf-timestamp-default` | 0 | 0 | 0 | 0 | 79 |
-| `CLUSTER-module-imports-infrastructure` | 0 | 0 | 0 | 0 | 69 |
-| `CLUSTER-long-function` | 0 | 0 | 0 | 0 | 60 |
-| `CLUSTER-ungated-route` | 0 | 0 | 0 | 0 | 48 |
-| `CLUSTER-env-undeclared` | 42 | 0 | 0 | 0 | 0 |
-| `CLUSTER-allowlist` | 0 | 0 | 0 | 0 | 20 |
-| `CLUSTER-tf-missing-country_code` | 0 | 0 | 0 | 0 | 18 |
-| `CLUSTER-circular-import` | 0 | 0 | 0 | 17 | 0 |
-| `CLUSTER-infra-imports-above` | 0 | 0 | 0 | 0 | 15 |
-| `CLUSTER-job-resilience` | 0 | 0 | 0 | 0 | 14 |
-| `CLUSTER-version-drift` | 0 | 0 | 0 | 0 | 13 |
+| `CLUSTER-tf-rel-lazy` | 173 | 0 | 0 | 0 | 0 |
+| `CLUSTER-fe-route-state` | 140 | 0 | 0 | 0 | 0 |
+| `CLUSTER-float-money` | 131 | 0 | 1 | 0 | 0 |
+| `CLUSTER-silent-except` | 101 | 0 | 0 | 0 | 1 |
+| `CLUSTER-cross-domain-direct` | 95 | 0 | 0 | 0 | 0 |
+| `CLUSTER-tf-timestamp-default` | 74 | 0 | 0 | 0 | 0 |
+| `CLUSTER-duplicate-symbol` | 72 | 0 | 0 | 0 | 0 |
+| `CLUSTER-long-function` | 60 | 0 | 0 | 0 | 0 |
+| `CLUSTER-fe-token-drift` | 58 | 0 | 0 | 0 | 0 |
+| `CLUSTER-law-not-statically-verifiable` | 25 | 0 | 0 | 0 | 0 |
+| `CLUSTER-fe-type-escape` | 25 | 0 | 0 | 0 | 0 |
+| `CLUSTER-allowlist` | 20 | 0 | 0 | 0 | 0 |
+| `CLUSTER-circular-import` | 20 | 0 | 0 | 0 | 0 |
+| `CLUSTER-law-gap-checkable` | 19 | 0 | 0 | 0 | 0 |
+| `CLUSTER-file-too-long` | 16 | 0 | 0 | 0 | 0 |
+| `CLUSTER-infra-imports-above` | 15 | 0 | 0 | 0 | 0 |
+| `CLUSTER-job-resilience` | 14 | 0 | 0 | 0 | 0 |
+| `CLUSTER-version-drift` | 13 | 0 | 0 | 0 | 0 |
 | `CLUSTER-settings-contract` | 12 | 0 | 0 | 0 | 0 |
-| `CLUSTER-tf-fk-ondelete` | 0 | 0 | 0 | 0 | 10 |
-| `CLUSTER-idempotency` | 1 | 0 | 9 | 0 | 0 |
-| `CLUSTER-workflow-runtime` | 0 | 0 | 8 | 0 | 2 |
-| `CLUSTER-http-csp` | 0 | 0 | 0 | 0 | 10 |
-| `CLUSTER-tf-missing-updated_at` | 0 | 0 | 0 | 0 | 8 |
-| `CLUSTER-feature-gate` | 0 | 0 | 0 | 0 | 8 |
-| `CLUSTER-supply-chain` | 0 | 1 | 0 | 0 | 6 |
-| `CLUSTER-test-no-assert` | 0 | 0 | 0 | 0 | 7 |
-| `CLUSTER-law-code-quality` | 0 | 0 | 0 | 0 | 7 |
-| `CLUSTER-test-broken` | 0 | 0 | 0 | 0 | 6 |
-| `CLUSTER-law-architecture` | 0 | 0 | 0 | 0 | 6 |
-| `CLUSTER-forbidden-package` | 0 | 0 | 0 | 0 | 5 |
-| `CLUSTER-tf-missing-created_at` | 0 | 0 | 0 | 0 | 5 |
-| `CLUSTER-duplicate-file` | 0 | 0 | 2 | 0 | 3 |
-| `CLUSTER-http-headers` | 5 | 0 | 0 | 0 | 0 |
-| `CLUSTER-law-database` | 0 | 0 | 0 | 0 | 5 |
-| `CLUSTER-rls` | 0 | 0 | 0 | 0 | 4 |
-| `CLUSTER-stub-subscriber` | 0 | 0 | 0 | 0 | 4 |
-| `CLUSTER-tf-missing-is_deleted` | 0 | 0 | 0 | 0 | 4 |
-| `CLUSTER-tf-schema-unknown` | 0 | 0 | 0 | 0 | 4 |
-| `CLUSTER-runbooks` | 0 | 0 | 0 | 3 | 0 |
-| `CLUSTER-provider-resilience` | 0 | 0 | 0 | 0 | 3 |
-| `CLUSTER-payment-webhook` | 0 | 0 | 0 | 0 | 3 |
+| `CLUSTER-router-business-logic` | 11 | 0 | 0 | 0 | 0 |
+| `CLUSTER-idempotency` | 10 | 0 | 0 | 0 | 0 |
+| `CLUSTER-law-test-isolation` | 10 | 0 | 0 | 0 | 0 |
+| `CLUSTER-tf-missing-country_code` | 9 | 0 | 0 | 0 | 0 |
+| `CLUSTER-test-no-assert` | 8 | 0 | 0 | 0 | 0 |
+| `CLUSTER-supply-chain` | 7 | 0 | 0 | 0 | 0 |
+| `CLUSTER-module-imports-infrastructure` | 7 | 0 | 0 | 0 | 0 |
+| `CLUSTER-migration-downgrade` | 7 | 0 | 0 | 0 | 0 |
+| `CLUSTER-fe-dangerous` | 6 | 0 | 0 | 0 | 0 |
+| `CLUSTER-law-code-quality` | 6 | 0 | 0 | 0 | 0 |
+| `CLUSTER-forbidden-package` | 5 | 0 | 0 | 0 | 0 |
+| `CLUSTER-duplicate-file` | 5 | 0 | 0 | 0 | 0 |
+| `CLUSTER-rls` | 3 | 0 | 0 | 0 | 1 |
+| `CLUSTER-stub-subscriber` | 4 | 0 | 0 | 0 | 0 |
+| `CLUSTER-tf-schema-unknown` | 4 | 0 | 0 | 0 | 0 |
+| `CLUSTER-law-architecture` | 4 | 0 | 0 | 0 | 0 |
+| `CLUSTER-law-database` | 4 | 0 | 0 | 0 | 0 |
+| `CLUSTER-runbooks` | 3 | 0 | 0 | 0 | 0 |
+| `CLUSTER-router-empty` | 3 | 0 | 0 | 0 | 0 |
+| `CLUSTER-provider-resilience` | 3 | 0 | 0 | 0 | 0 |
+| `CLUSTER-migration-destructive` | 3 | 0 | 0 | 0 | 0 |
 
 ## What this does not prove
 

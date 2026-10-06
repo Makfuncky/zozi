@@ -67,7 +67,7 @@ def run_probe(ctx, specs: str = "all") -> dict:
     data = None
     if report.exists():
         try:
-            data = json.loads(report.read_text(encoding="utf-8"))
+            data = json.loads(report.read_text(encoding="utf-8-sig"))
         except Exception:
             data = None
     steps = []

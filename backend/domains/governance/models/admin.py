@@ -49,6 +49,8 @@ class AdminAnalyticsSnapshot(Base):
     expires_at = Column(DateTime, nullable=False, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
 
 class RolePermissionSetting(Base):

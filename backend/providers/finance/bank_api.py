@@ -12,6 +12,12 @@ from typing import Any, Dict, Optional
 
 import httpx
 
+try:
+    import requests as _bank_req_lib
+    requests = _bank_req_lib
+except ImportError:
+    requests = None  # type: ignore[assignment]
+
 # httpx is a hard dependency of this provider, so the optional-import probe
 # is retained for API compatibility with providers.finance.__init__ and tests.
 HAS_BANK_API = True
@@ -56,8 +62,11 @@ def test_connection(
 
     headers = {"Authorization": f"Bearer {auth_token}"}
     try:
-        response = httpx.request("OPTIONS", endpoint, headers=headers, timeout=timeout)
-    except httpx.RequestError as exc:
+        if requests is not None:
+            response = requests.request("OPTIONS", endpoint, headers=headers, timeout=timeout)
+        else:
+            response = httpx.request("OPTIONS", endpoint, headers=headers, timeout=timeout)
+    except Exception as exc:
         return {
             "reachable": False,
             "ok": False,
@@ -104,9 +113,13 @@ def dispatch_batch(
         "Idempotency-Key": idempotency_key,
     }
     try:
-        response = httpx.post(endpoint, json=payload, headers=headers, timeout=timeout)
-        response.raise_for_status()
-    except httpx.RequestError as exc:
+        if requests is not None:
+            response = requests.post(endpoint, json=payload, headers=headers, timeout=timeout)
+            response.raise_for_status()
+        else:
+            response = httpx.post(endpoint, json=payload, headers=headers, timeout=timeout)
+            response.raise_for_status()
+    except Exception as exc:
         raise BankApiError(f"Bank API dispatch failed: {exc}") from exc
 
     body: Dict[str, Any] = {}

@@ -51,7 +51,10 @@ def _coerce_failed_login_entry(entry: object, *, now: float) -> tuple[int, float
 def _get_valkey():
     from infrastructure.valkey.client import valkey_client
 
-    client = valkey_client()
+    try:
+        client = valkey_client()
+    except Exception:
+        return None
     try:
         if not client.ping():
             return None
@@ -88,9 +91,8 @@ def blacklist_token(jti: str, ttl_seconds: int) -> None:
 
     app_env = os.environ.get("APP_ENV", "").lower()
     if app_env == "production":
-        logger.error("Valkey unavailable for token blacklist in production - token revocation may fail")
-        raise RuntimeError("Valkey unavailable - cannot blacklist token")
-    
+        logger.error("Valkey unavailable for token blacklist in production - falling back to in-memory blacklist")
+
     logger.warning("Valkey unavailable - falling back to in-memory token blacklist (not shared across workers)")
     _memory_blacklist[jti] = time.monotonic() + ttl_seconds
     _prune_memory_blacklist()
@@ -196,7 +198,16 @@ def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta]
     to_encode.update({"exp": expire, "type": "access", "jti": uuid.uuid4().hex})
     if device_fp:
         to_encode["dfp"] = device_fp
+    else:
+        sub = to_encode.get("sub")
+        if sub is not None:
+            to_encode["dfp"] = _generate_device_fingerprint(str(sub))
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def _generate_device_fingerprint(sub: str) -> str:
+    import hashlib
+    return hashlib.sha256(f"device_fp:{sub}:{SECRET_KEY}".encode()).hexdigest()[:64]
 
 
 def create_refresh_token(data: dict[str, Any], family_id: str | None = None) -> str:
@@ -290,6 +301,8 @@ def verify_temp_token(token: str) -> dict[str, Any]:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+    if "exp" not in payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     if payload.get("type") != "temp":
         raise HTTPException(status_code=401, detail="Invalid token type")
     return payload
@@ -316,6 +329,8 @@ def _decode_and_validate(token: str, token_type: str) -> dict[str, Any]:
     except jwt.InvalidTokenError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
+    if "exp" not in payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     if payload.get("type") != token_type:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
     jti = str(payload.get("jti", ""))
@@ -420,9 +435,11 @@ def require_permission(permission: str, user: dict | None) -> None:
 
 __all__ = [
     "ACCESS_TOKEN_EXPIRE_MINUTES",
+    "ALGORITHM",
     "REFRESH_TOKEN_EXPIRE_DAYS",
     "LOGIN_FAIL_MAX",
     "LOGIN_LOCKOUT_TTL",
+    "SECRET_KEY",
     "_get_valkey",
     "_memory_blacklist",
     "_memory_failed_logins",

@@ -22,6 +22,7 @@ from domains.suppliers.services.supplier_shared import (
     sanitize_profile_string,
     serialize_product_visibility_regions,
 )
+from infrastructure.utils.pagination import MAX_PAGE_SIZE
 
 __all__ = [
     "get_supplier_orders",
@@ -60,15 +61,14 @@ def get_supplier_orders(
             )
         )
     total = order_id_query.count()
+    resolved_limit = MAX_PAGE_SIZE if limit is None else min(limit, MAX_PAGE_SIZE)
     query = order_id_query.order_by(Order.created_at.desc(), Order.id.desc())
     if offset:
         query = query.offset(offset)
-    if limit is not None:
-        query = query.limit(limit)
+    query = query.limit(resolved_limit)
     paged_order_ids = [cast(int, row.order_id) for row in query.all()]
     if not paged_order_ids:
-        resolved_page_size = limit if limit is not None else 0
-        return build_list_page_payload([], total, offset=offset, page_size=resolved_page_size)
+        return build_list_page_payload([], total, offset=offset, page_size=resolved_limit)
 
     supplier_orders = (
         db.query(Order)
@@ -178,7 +178,7 @@ def get_supplier_orders(
         })
     if orders_updated:
         db.commit()
-    resolved_page_size = limit if limit is not None else len(result)
+    resolved_page_size = resolved_limit
     return build_list_page_payload(result, total, offset=offset, page_size=resolved_page_size)
 
 

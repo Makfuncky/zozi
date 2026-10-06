@@ -2,9 +2,12 @@
 
 from typing import Dict, Optional, List
 
+from .__header__ import settings, _HEAVY_MODELS
+from .enums___constants import ProcessingStrategy
+
 
 def _filter_heavy_models(models: List[str]) -> List[str]:
-    if settings.skip_heavy_models:
+    if getattr(settings, "bg_skip_heavy_models", False):
         return [m for m in models if m not in _HEAVY_MODELS]
     return models
 

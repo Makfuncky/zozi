@@ -6,6 +6,7 @@ from PIL import Image
 import io
 
 from .memory_management__br_08_ import MemoryManager
+from .core_i_o import _safe_remove
 
 
 

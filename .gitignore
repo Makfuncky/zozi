@@ -16,6 +16,14 @@ venv/
 .env.local
 .env.production
 
+# Wrangler / Cloudflare worker credentials.
+# .env.wrangler held a live CLOUDFLARE_API_TOKEN and was committed in
+# bf6d0eb2; it is untracked going forward. The token itself must still be
+# revoked/rotated in the Cloudflare dashboard, and history rewritten, since
+# ignore rules do not protect already-committed secrets.
+.env.wrangler
+.wrangler/
+
 # OS files
 Thumbs.db
 .DS_Store
@@ -58,3 +66,10 @@ backend/tests/playwright/test-results/
 backend/tests/playwright/auth-*.png
 # Browser-test secrets (local only; copy from stack.env.ps1.example)
 config/stack.env.ps1
+
+# Law 27 — backend scratch/debug scripts must never enter the repository
+backend/_*.py
+backend/test_*.py
+backend/debug_*.py
+backend/check_*.py
+backend/fix_*.py

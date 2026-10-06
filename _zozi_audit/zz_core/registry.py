@@ -67,6 +67,11 @@ def _defect_result(chk: Check, msg: str, notes: str = "") -> CheckResult:
         effort="S", priority="P3", confidence=5, evidence_strength="triangulated",
         truth_level="L0", claim_state="VERIFIED",
         completion_blocker="no", notes=notes[:1000], origin="static",
+        # A crashed check is an auditor defect, not a project finding, so it gets
+        # its own cluster. Without one these carried no cluster and were
+        # invisible to cluster-level triage -- which is how a check that produced
+        # NOTHING for months could look like a clean dimension.
+        cluster="CLUSTER-auditor-defect",
     ))
     return res
 

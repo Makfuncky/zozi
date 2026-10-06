@@ -1,8 +1,5 @@
 """Routers for the supplier module — domain routers."""
-import importlib
-import logging
-
-logger = logging.getLogger(__name__)
+from infrastructure.utils.router_loader import load_router_submodules
 
 routers = []
 public_routers = []
@@ -25,15 +22,10 @@ _module_names = [
     "suppliers",
 ]
 
-for _n in _module_names:
-    try:
-        _m = importlib.import_module(f"modules.supplier.routers.{_n}")
-    except Exception as _e:
-        logger.error("Skipping router %s: %s", _n, _e)
-        continue
-    _r = getattr(_m, "router", None)
-    if _r is not None:
-        routers.append(_r)
-    _pr = getattr(_m, "public_router", None)
-    if _pr is not None:
-        public_routers.append(_pr)
+# Routed through load_router_submodules so a submodule whose import raises is
+# recorded with a full traceback and surfaced via boot_summary() /
+# get_failed_imports(), instead of vanishing behind a single log line while the
+# app booted healthy and its routes 404'd.
+load_router_submodules(
+    "modules.supplier.routers", _module_names, routers, public_routers
+)

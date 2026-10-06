@@ -131,7 +131,7 @@ def list_flash_sales_route(
     country_code: str | None = Query(None, description="ISO country code or '*' for all"),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("promotions.flash_sales.read")),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.read")),
 ):
     items = list_flash_sales(db, include_deleted=include_deleted, country=country_code)
     return [
@@ -157,7 +157,7 @@ def create_flash_sale_route(
     payload: dict = Body(...),
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("promotions.flash_sales.write")),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write")),
 ):
     sale = create_flash_sale(
         db,
@@ -190,7 +190,7 @@ def update_flash_sale_route(
     payload: dict = Body(...),
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("promotions.flash_sales.write")),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write")),
 ):
     sale = update_flash_sale(
         db,
@@ -223,7 +223,7 @@ def archive_flash_sale_route(
     sale_id: int = Path(...),
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("promotions.flash_sales.write")),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write")),
 ):
     result = archive_flash_sale_controller("flash_sale", sale_id, admin, db)
     return result
@@ -234,7 +234,7 @@ def restore_flash_sale_route(
     sale_id: int = Path(...),
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("promotions.flash_sales.write")),
+    _rf_gate: None = Depends(require_feature("promotions.promotions.write")),
 ):
     result = restore_flash_sale_controller("flash_sale", sale_id, admin, db)
     return result

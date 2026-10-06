@@ -81,11 +81,49 @@ celery_app.conf.update(
     # Task execution
     task_always_eager=settings.celery_task_always_eager,
     task_eager_propagates=True,
-    
+
+    # Hard and soft task time limits (Law 226 / Law 296 - PERF2-025).
+    # Without these a hung task holds its worker slot forever: a dead DB socket
+    # or an unbounded provider call never returns, so the slot is never
+    # reclaimed and the queue silently backs up.
+    #
+    # These are the WORKER-WIDE BACKSTOP, not a per-task override. Resolution
+    # order (verified against the installed celery 5.6 / billiard 4.2.4):
+    #   worker/request.py:363-364   soft_timeout=soft_time_limit or task.soft_time_limit
+    #   billiard/pool.py:1495-1496  soft_timeout = soft_timeout or self.soft_timeout
+    # The pool default comes from worker/worker.py:393-397, which reads these
+    # two keys via app.either(). A per-task annotation (jobs.ai_tasks.*) is
+    # passed explicitly and therefore wins via the `or` short-circuit, so the
+    # tighter 300/240, 180/120 and 600/540 limits below are all preserved.
+    #
+    # Law 267 caps request time at 30s; these are worker slots, not requests,
+    # so the budget is sized for the longest legitimate job in the include list
+    # (payroll batch, reconciliation, FX revaluation) with headroom. The soft
+    # limit fires first so the task can raise SoftTimeLimitExceeded and commit
+    # or clean up; the hard limit is the backstop that guarantees the slot comes
+    # back if the soft limit is ignored.
+    task_soft_time_limit=1800,
+    task_time_limit=1860,
+
     # Retry configuration with exponential backoff
+    #
+    # NOTE (OBS2-022 / WIRE-006): in Celery 5.6 `retry_backoff`,
+    # `retry_backoff_max` and `retry_jitter` are NOT app-level configuration
+    # keys. Verified: app.conf['retry_backoff'] raises KeyError, and setting
+    # them via conf.update() does not reach any task attribute (celery/app/
+    # task.py:325-336 `from_config` has no such mapping). They are honoured
+    # ONLY per-task or through task_annotations, which is applied by
+    # Task.annotate() (celery/app/task.py:390-395). So the real backoff
+    # behaviour for this app is the task_annotations block below.
+    #
+    # The values are kept here as documentation of intent, and the effective
+    # jitter is declared explicitly in the annotations so it does not depend on
+    # Celery's `getattr(task, 'retry_jitter', True)` default (celery/app/
+    # autoretry.py:29-30) remaining True in a future release.
     retry_backoff=True,
     retry_backoff_max=300,
-    
+
+
     # Dead-letter queue behavior
     task_acks_on_failure_or_timeout=False,
     task_reject_on_worker_lost=True,
@@ -164,6 +202,19 @@ celery_app.conf.update(
     },
     
     # Task annotations for specific tasks
+    #
+    # `retry_jitter=True` is declared EXPLICITLY on every retry-configured task
+    # (OBS2-022, Law 297 "Retry + backoff | 1-2-4-8s. Jitter. Max 5"). Celery
+    # applies full jitter in celery/utils/time.py:450-466
+    # (get_exponential_backoff_interval(..., full_jitter=True) ->
+    #  random.randrange(countdown + 1)), so retries from many workers that
+    # failed at the same instant no longer re-fire in lockstep.
+    #
+    # These are the ONLY keys that actually change behaviour. `time_limit` and
+    # `soft_time_limit` are left exactly as they were: a task_annotations '*'
+    # entry would be applied last (celery/app/annotations.py:50-52 resolve_all)
+    # and would RELAX these tighter limits. A '*' entry is therefore deliberately
+    # NOT used; the app-level limits above are the backstop for unannotated tasks.
     task_annotations={
         "jobs.ai_tasks.remove_background": {
             "rate_limit": "10/m",
@@ -171,6 +222,7 @@ celery_app.conf.update(
             "soft_time_limit": 240,
             "retry_backoff": True,
             "retry_backoff_max": 300,
+            "retry_jitter": True,
         },
         "jobs.ai_tasks.analyze_product_image": {
             "rate_limit": "20/m",
@@ -178,6 +230,7 @@ celery_app.conf.update(
             "soft_time_limit": 120,
             "retry_backoff": True,
             "retry_backoff_max": 300,
+            "retry_jitter": True,
         },
         "jobs.ai_tasks.generate_angles": {
             "rate_limit": "5/m",
@@ -185,6 +238,7 @@ celery_app.conf.update(
             "soft_time_limit": 540,
             "retry_backoff": True,
             "retry_backoff_max": 300,
+            "retry_jitter": True,
         },
     },
 )

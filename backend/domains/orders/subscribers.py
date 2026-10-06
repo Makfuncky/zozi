@@ -10,6 +10,7 @@ run at import time), or call ``register_orders_subscribers()`` explicitly.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from infrastructure.messaging.events.event_bus import subscribe
@@ -25,17 +26,22 @@ from domains.orders.events import (
 logger = logging.getLogger(__name__)
 
 
+def _ensure_implemented(feature: str) -> None:
+    if os.getenv("APP_ENV", "development").lower() != "development":
+        raise NotImplementedError(f"{feature} event handler is not implemented")
+
+
 def _on_order_created(event: Any) -> None:
     """React to an order being created.
 
     Triggers notification dispatch, fraud evaluation, and inventory reservation.
     """
+    _ensure_implemented("orders.created")
     logger.info(
         "order created: order_id=%s user_id=%s — dispatch notifications, evaluate fraud",
         getattr(event, "order_id", "?"),
         getattr(event, "user_id", "?"),
     )
-    # Future: reserve inventory, enqueue fraud check, send confirmation notification.
 
 
 def _on_order_confirmed(event: Any) -> None:
@@ -43,11 +49,11 @@ def _on_order_confirmed(event: Any) -> None:
 
     Triggers supplier notification and payout hold creation.
     """
+    _ensure_implemented("orders.confirmed")
     logger.info(
         "order confirmed: order_id=%s — notify suppliers, create payout hold",
         getattr(event, "order_id", "?"),
     )
-    # Future: notify suppliers, create payout hold, start SLA timer.
 
 
 def _on_order_shipped(event: Any) -> None:
@@ -55,12 +61,12 @@ def _on_order_shipped(event: Any) -> None:
 
     Triggers shipment tracking initialization and customer notification.
     """
+    _ensure_implemented("orders.shipped")
     logger.info(
         "order shipped: order_id=%s tracking=%s — init tracking, notify customer",
         getattr(event, "order_id", "?"),
         getattr(event, "tracking_number", "?"),
     )
-    # Future: init shipment tracking, send shipping notification.
 
 
 def _on_order_delivered(event: Any) -> None:
@@ -68,11 +74,11 @@ def _on_order_delivered(event: Any) -> None:
 
     Triggers payout release and review request.
     """
+    _ensure_implemented("orders.delivered")
     logger.info(
         "order delivered: order_id=%s — release payout, request review",
         getattr(event, "order_id", "?"),
     )
-    # Future: release supplier payout, request customer review.
 
 
 def _on_order_cancelled(event: Any) -> None:
@@ -80,12 +86,12 @@ def _on_order_cancelled(event: Any) -> None:
 
     Triggers inventory release, refund initiation, and supplier notification.
     """
+    _ensure_implemented("orders.cancelled")
     logger.info(
         "order cancelled: order_id=%s reason=%s — release inventory, initiate refund",
         getattr(event, "order_id", "?"),
         getattr(event, "reason", "?"),
     )
-    # Future: release reserved inventory, initiate refund, notify suppliers.
 
 
 def register_orders_subscribers() -> None:

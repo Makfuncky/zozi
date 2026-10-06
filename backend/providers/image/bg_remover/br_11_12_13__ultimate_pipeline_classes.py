@@ -1,4 +1,6 @@
 from typing import List, Tuple, Optional, Dict, Any
+import io
+import logging
 import threading
 # ========================== br_11/12/13: ULTIMATE PIPELINE CLASSES ==========================
 from .configuration import ProcessingConfig
@@ -6,6 +8,12 @@ from .configuration import ProcessingConfig
 from PIL import Image
 
 import numpy as np
+
+from .__header__ import _HAS_CV2, cv2
+from .core_i_o import _bytes_to_image, _image_to_bytes
+from .rembg_lazy_load import _ensure_rembg, remove, new_session
+
+logger = logging.getLogger(__name__)
 
 
 class AISegmenter:

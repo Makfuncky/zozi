@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bootstrapAdminSessionViaApi } from "../../../src/auth.ts";
+import { bootstrapAdminSessionViaApi } from "../../../src/auth";
 
 test.describe.configure({ timeout: 240_000 });
 

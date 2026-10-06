@@ -29,7 +29,10 @@ async function getCsrfToken(page: Page): Promise<string> {
     .catch(() => null);
   if (metaToken) return metaToken;
 
-  return page.evaluate(() => (window as unknown as Record<string, unknown>).__csrfToken || "").catch(() => "");
+  return page
+    .evaluate(() => (window as unknown as Record<string, unknown>).__csrfToken)
+    .then((token) => (typeof token === "string" ? token : ""))
+    .catch(() => "");
 }
 
 test.describe("CSRF protection", () => {
@@ -43,7 +46,7 @@ test.describe("CSRF protection", () => {
 
     const res = await page.request.post("/api/v1/admin/finance/test-endpoint", {
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "test" }),
+      data: JSON.stringify({ action: "test" }),
       failOnStatusCode: false,
     });
 
@@ -66,7 +69,7 @@ test.describe("CSRF protection", () => {
         "Content-Type": "application/json",
         "X-CSRF-Token": csrfToken,
       },
-      body: JSON.stringify({ action: "test" }),
+      data: JSON.stringify({ action: "test" }),
       failOnStatusCode: false,
     });
 

@@ -21,7 +21,7 @@ async function mockExternalProviders(page: Page) {
 async function createProductWithXssName(page: Page): Promise<number> {
   const res = await page.request.post("/api/v1/admin/catalog/products", {
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+    data: JSON.stringify({
       name: '<script>alert("xss")</script>Product',
       price: 100,
       currency: "USD",
@@ -65,8 +65,10 @@ test.describe("XSS protection", () => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120_000 });
 
     const response = await page.goto("/products", { waitUntil: "domcontentloaded", timeout: 120_000 });
-    const cspHeader = response?.headers()["content-security-policy"] || response?.headers()["Content-Security-Policy"];
-    expect(typeof cspHeader).toBe("string");
-    expect(cspHeader.length).toBeGreaterThan(0);
+    expect(response, "navigation to /products must return a response").not.toBeNull();
+    const headers = response?.headers() ?? {};
+    const cspHeader = headers["content-security-policy"] ?? "";
+    expect(cspHeader, "CSP header must be present on production responses").not.toBe("");
+    expect(cspHeader).toContain("script-src");
   });
 });

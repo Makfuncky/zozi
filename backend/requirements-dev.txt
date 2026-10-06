@@ -1,8 +1,0 @@
-# ZOZI backend development dependencies
-# Install with: pip install -r requirements-dev.txt
-
-pytest==9.2.0
-pytest-asyncio==1.4.0
-pytest-timeout==2.4.0
-hypothesis
-faker

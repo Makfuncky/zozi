@@ -93,6 +93,21 @@ def get_taxonomy_source(source: str) -> Optional[Dict[str, Any]]:
     if not filename:
         return None
 
+    # Primary: load from the canonical Python constants module.
+    try:
+        from infrastructure.database.seed import _seed_constants
+        data = getattr(_seed_constants, "CATEGORIES", None)
+        if data:
+            return {
+                "name": source.lower(),
+                "version": "1.0.0",
+                "total_categories": _count_categories(data),
+                "categories": data,
+            }
+    except ImportError:
+        pass
+
+    # Fallback: load from the legacy JSON file (may not exist).
     filepath = os.path.join(_TAXONOMY_DIR, filename)
     if not os.path.exists(filepath):
         logger.warning("Taxonomy file not found: %s", filepath)
@@ -117,15 +132,14 @@ def list_taxonomy_sources() -> List[Dict[str, str]]:
     """List available taxonomy sources."""
     sources: List[Dict[str, str]] = []
 
-    for name, filename in [("full", "categories_full.json")]:
-        filepath = os.path.join(_TAXONOMY_DIR, filename)
-        if os.path.exists(filepath):
-            sources.append({
-                "name": name,
-                "type": "bundled",
-                "file": filename,
-                "status": "available",
-            })
+    # The canonical source is the Python constants module, which is always
+    # available. The legacy JSON file is optional.
+    sources.append({
+        "name": "full",
+        "type": "bundled",
+        "file": "categories_full.json",
+        "status": "available",
+    })
 
     return sources
 

@@ -42,6 +42,9 @@ HAS_PARCEL_VERIFY = True
 
 from ..ai.text import _ollama_vision_chat, _extract_json
 
+# Module-level sentinels so tests can patch absent SDKs without importing them.
+cv2 = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 # ── Engine weights for the combined score ─────────────────────────────────
@@ -157,8 +160,8 @@ def _engine_feature_match(
     ``estimated_packages``.
     """
     try:
-        import cv2
-
+        if cv2 is None:
+            raise ImportError("cv2 is not available")
         img_arr = np.frombuffer(image_bytes, dtype=np.uint8)
         img = cv2.imdecode(img_arr, cv2.IMREAD_GRAYSCALE)
         if img is None:
@@ -263,8 +266,8 @@ def _engine_feature_match_homography(
     - ``has_content``: derived boolean
     """
     try:
-        import cv2
-        import numpy as np
+        if cv2 is None:
+            raise ImportError("cv2 is not available")
 
         # ── Decode both images ───────────────────────────────────────────
         parcel_arr = np.frombuffer(parcel_bytes, dtype=np.uint8)

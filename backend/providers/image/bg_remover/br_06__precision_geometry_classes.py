@@ -1,11 +1,17 @@
 from typing import Any
+import logging
 # ========================== br_06: PRECISION GEOMETRY CLASSES ==========================
 from PIL import Image
 
 import numpy as np
 
-
 from typing import Optional, Dict
+
+from .__header__ import _HAS_CV2, cv2
+from .enums___constants import ProcessingStrategy
+from .core_i_o import _bytes_to_image, _image_to_bytes
+
+logger = logging.getLogger(__name__)
 
 
 class SceneAnalyzer:
@@ -46,7 +52,7 @@ class SceneAnalyzer:
     @staticmethod
     def is_human_photo(alpha: np.ndarray) -> bool:
         """If there is foreground in the top 25% of the image, it's a human (head)."""
-        if not _HAS_CV2:
+        if not _HAS_CV2 or cv2 is None:
             return False
         h, w = alpha.shape
         top_region = alpha[: int(h * 0.25), :]
@@ -123,7 +129,8 @@ class HoleFiller:
         padded = np.zeros((h + 2, w + 2), dtype=np.uint8)
         padded[1 : h + 1, 1 : w + 1] = binary_mask
         ff_mask = np.zeros((h + 4, w + 4), dtype=np.uint8)
-        cv2.floodFill(padded, ff_mask, (0, 0), 128)
+        if _HAS_CV2 and cv2 is not None:
+            cv2.floodFill(padded, ff_mask, (0, 0), 128)
         internal_holes = padded[1 : h + 1, 1 : w + 1] == 0
         filled_count = int(np.sum(internal_holes))
         if filled_count > 50:
@@ -194,6 +201,7 @@ class HumanPreserver:
 
     @staticmethod
     def preserve(image_bytes: bytes) -> bytes:
+        from .public_api import remove_background
         return remove_background(image_bytes, model="birefnet-portrait")
 
     @staticmethod

@@ -20,6 +20,19 @@ except ImportError:
     np = None  # type: ignore[assignment]
     Image = None  # type: ignore[assignment]
 
+try:
+    import cv2 as _cv2
+    from cv2 import ximgproc as _ximgproc
+    HAS_CV2 = True
+    HAS_GUIDED_FILTER = True
+    cv2 = _cv2
+    ximgproc = _ximgproc
+except Exception:
+    HAS_CV2 = False
+    HAS_GUIDED_FILTER = False
+    cv2 = None  # type: ignore[assignment]
+    ximgproc = None  # type: ignore[assignment]
+
 from .bg_remover import remove_background as _bg_remover_remove_background, ProcessingConfig, _resize_image, _bytes_to_image, _image_to_bytes
 from infrastructure.utils.config import settings
 

@@ -11,6 +11,7 @@ import enum
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Index, Integer, String, func
 from sqlalchemy.types import JSON
 
+from infrastructure.security.encryption import EncryptedString
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
@@ -42,7 +43,7 @@ class MfaFactor(Base):
         Enum(MfaFactorType, name="mfa_factor_type", schema="accounts"),
         nullable=False,
     )
-    secret = Column(String(512), nullable=False)  # field-encrypted via infrastructure.security
+    secret = Column(EncryptedString(512), nullable=False)
     enabled = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_used_at = Column(DateTime(timezone=True), nullable=True)

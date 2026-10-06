@@ -12,13 +12,14 @@ from zz_core.util import read_text
 
 
 def _f(dimension, phase, file, current, target, fix, *, priority="P1",
-       blocker="partial", cluster="", truth="L1", claim="INFERRED") -> Finding:
+       blocker="partial", cluster="", truth="L1", claim="INFERRED",
+       notes="") -> Finding:
     return Finding(
         id="", dimension=dimension, phase=phase, cluster=cluster, file=file,
         line=0, current=current, target=target, delta=current[:180], fix=fix,
         effort="L", priority=priority, confidence=3, evidence_strength="multiple",
         truth_level=truth, claim_state=claim, completion_blocker=blocker,
-        origin="static",
+        origin="static", notes=notes,
     )
 
 
@@ -121,6 +122,10 @@ def cross_chains(ctx: ScanContext) -> CheckResult:
                 priority="P0" if cid in ("CHAIN-001", "CHAIN-005") else "P1",
                 blocker="yes" if cid in ("CHAIN-001", "CHAIN-005") else "partial",
                 cluster="CLUSTER-chain-" + cid.lower(),
+                # The probe needs the event name to re-derive independently;
+                # without it the finding is an unadjudicable "events 0/1".
+                notes=f"chain={cid}; events={','.join(event_names)}; "
+                      f"actors={','.join(actors)}",
             ))
     res.facts["chains"] = chain_rows
     return res
@@ -185,7 +190,7 @@ def cross_contradictions(ctx: ScanContext) -> CheckResult:
     emp = ctx.backend / "modules" / "employee" / "routers"
     if (emp / "hr.py").exists() and (emp / "hr").is_dir():
         add("CONTRAD-034", "doc_vs_code", "one router per module",
-            "every router file registered", "modules/employee/routers/",
+            "every router file registered", ctx.rel(emp),
             "hr.py file and hr/ package coexist",
             "shadowed router file is unreachable", "guaranteed dead route", "yes",
             "no")
@@ -312,7 +317,7 @@ def cross_browser_bridge(ctx: ScanContext) -> CheckResult:
     for c in candidates:
         if c.exists():
             try:
-                data = json.loads(c.read_text(encoding="utf-8"))
+                data = json.loads(c.read_text(encoding="utf-8-sig"))
                 source = ctx.rel(c)
                 break
             except Exception:
@@ -371,7 +376,7 @@ def cross_browser_bridge(ctx: ScanContext) -> CheckResult:
     historical = browser_root / "test-results" / ".last-run.json"
     if historical.exists():
         try:
-            hist = json.loads(historical.read_text(encoding="utf-8"))
+            hist = json.loads(historical.read_text(encoding="utf-8-sig"))
         except Exception:
             hist = {}
         failed_ids = hist.get("failedTests") or []
@@ -400,16 +405,53 @@ def cross_browser_bridge(ctx: ScanContext) -> CheckResult:
             ))
 
     # -- 4. per-step failures ------------------------------------------------ #
-    for s in steps:
-        if s["status"] != "PASS":
-            res.findings.append(_f(
-                "24_browser_behavior", "frontend", source,
-                f"browser step failed: {s['step']} ({s['observed']})",
-                "every critical browser journey passes",
-                "Fix the failing step or update the spec",
-                priority="P1", blocker="partial",
-                cluster="CLUSTER-browser-failure",
-            ))
+    #
+    # These come from a results.json on disk, which is evidence about whatever
+    # code was running WHEN IT WAS WRITTEN -- not necessarily the current tree.
+    # The run that produced this output may have executed zero browser steps
+    # (`--no-tools`, no Playwright, or a preflight failure), and then one P1 per
+    # recorded step is 71 findings asserting product failures on the strength of
+    # a stale file. That is the same class of defect as a probe that could not
+    # run being reported as a clean pass: an absent measurement must never be
+    # laundered into a measurement.
+    probe_ran = False
+    probe_note = ""
+    probe_tool = ctx.tools.get("browser:playwright")
+    if probe_tool is not None:
+        probe_ran = bool(getattr(probe_tool, "ok", False)) and \
+            int(getattr(probe_tool, "exit_code", 1) or 1) == 0
+        probe_note = (f"exit={getattr(probe_tool, 'exit_code', '?')} "
+                      f"reason={getattr(probe_tool, 'skipped_reason', '') or '-'}")
+    else:
+        probe_note = "no browser probe was executed in this run"
+
+    stale = bool(steps) and not probe_ran
+
+    if stale:
+        res.facts["browser_evidence_stale"] = True
+        res.findings.append(_f(
+            "24_browser_behavior", "frontend", source,
+            f"browser evidence is STALE: {len(steps)} recorded step(s) in {source} are "
+            f"from an earlier run, and this run executed none ({probe_note}); "
+            f"{failures} of them recorded non-PASS",
+            "browser evidence must describe the code under audit",
+            "Run the browser probe (`zozi_audit.py --full --browser`) so the steps "
+            "reflect the current tree, then re-run the audit; do NOT fix the "
+            "reported steps on the strength of this file",
+            priority="P2", blocker="no",
+            cluster="CLUSTER-browser-evidence-stale",
+        ))
+    else:
+        for s in steps:
+            if s["status"] != "PASS":
+                res.findings.append(_f(
+                    "24_browser_behavior", "frontend", source,
+                    f"browser step failed: {s['step']} ({s['observed']})",
+                    "every critical browser journey passes",
+                    "Fix the failing step or update the spec",
+                    priority="P1", blocker="partial",
+                    cluster="CLUSTER-browser-failure",
+                ))
 
     # -- 5. no evidence at all -> explicit precondition, never a clean PASS --- #
     if data is None and not failed_ids:

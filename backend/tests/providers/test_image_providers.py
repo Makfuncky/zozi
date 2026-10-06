@@ -511,14 +511,14 @@ class TestPublicAPI:
 
     def test_remove_background_model_not_in_available_warns(self):
         from providers.image import bg_remover
-        with patch.object(bg_remover, "remove_background", return_value=b"result") as mock_rb:
+        with patch("providers.image.bg_remover.public_api.remove_background", return_value=b"result") as mock_rb:
             result = bg_remover.remove_background_model(_FAKE_IMAGE_BYTES, "unknown-model-xyz")
             mock_rb.assert_called_once()
             assert result == b"result"
 
     def test_remove_background_strategy_calls_remove(self):
         from providers.image import bg_remover
-        with patch.object(bg_remover, "remove_background", return_value=b"result") as mock_rb:
+        with patch("providers.image.bg_remover.public_api.remove_background", return_value=b"result") as mock_rb:
             result = bg_remover.remove_background_strategy(_FAKE_IMAGE_BYTES, "general")
             mock_rb.assert_called_once()
             assert result == b"result"
@@ -599,16 +599,18 @@ class TestCleanEdgeRefiner:
             result = CleanEdgeRefiner.refine(image_np, alpha)
             np.testing.assert_array_equal(result, alpha)
 
-    @patch("providers.image.bg_remover._HAS_CV2", True)
     def test_refine_with_cv2_runs(self):
         import numpy as np
         from providers.image.bg_remover import CleanEdgeRefiner
         alpha = np.ones((50, 50), dtype=np.float32) * 0.5
         image_np = np.random.randint(0, 255, (50, 50, 3), dtype=np.uint8)
-        with patch("cv2.getStructuringElement", return_value=np.ones((3, 3))), \
-             patch("cv2.dilate", return_value=np.ones((50, 50), dtype=np.uint8) * 255), \
-             patch("cv2.cvtColor", return_value=np.zeros((50, 50, 3))), \
-             patch("cv2.ximgproc.guidedFilter", return_value=alpha):
+        mock_cv2 = MagicMock()
+        mock_cv2.getStructuringElement.return_value = np.ones((3, 3))
+        mock_cv2.dilate.return_value = np.ones((50, 50), dtype=np.uint8) * 255
+        mock_cv2.cvtColor.return_value = np.zeros((50, 50, 3))
+        mock_cv2.ximgproc.guidedFilter.return_value = alpha
+        with patch("providers.image.bg_remover.br_05__clean_edge_refiner._HAS_CV2", True), \
+             patch("providers.image.bg_remover.br_05__clean_edge_refiner.cv2", mock_cv2):
             result = CleanEdgeRefiner.refine(image_np, alpha)
             assert result.shape == (50, 50)
 
@@ -638,13 +640,15 @@ class TestSceneAnalyzer:
         with patch("providers.image.bg_remover._HAS_CV2", False):
             assert SceneAnalyzer.is_human_photo(alpha) is False
 
-    @patch("providers.image.bg_remover._HAS_CV2", True)
     def test_is_human_photo_detects_foreground_in_top(self):
         import numpy as np
         from providers.image.bg_remover import SceneAnalyzer
         alpha = np.zeros((100, 100), dtype=np.float32)
         alpha[:25, :] = 0.8
-        assert SceneAnalyzer.is_human_photo(alpha) is True
+        mock_cv2 = MagicMock()
+        with patch("providers.image.bg_remover.br_06__precision_geometry_classes._HAS_CV2", True), \
+             patch("providers.image.bg_remover.br_06__precision_geometry_classes.cv2", mock_cv2):
+            assert SceneAnalyzer.is_human_photo(alpha) is True
 
     @patch("providers.image.bg_remover._HAS_CV2", True)
     def test_is_human_photo_no_foreground_in_top(self):
@@ -733,7 +737,7 @@ class TestHumanPreserver:
 
     def test_preserve_calls_remove_background(self):
         from providers.image.bg_remover import HumanPreserver
-        with patch("providers.image.bg_remover.remove_background", return_value=b"result") as mock_rb:
+        with patch("providers.image.bg_remover.public_api.remove_background", return_value=b"result") as mock_rb:
             result = HumanPreserver.preserve(_FAKE_IMAGE_BYTES)
             mock_rb.assert_called_once_with(_FAKE_IMAGE_BYTES, model="birefnet-portrait")
             assert result == b"result"
@@ -824,8 +828,11 @@ class TestQualityAnalyzer:
         import numpy as np
         from providers.image.bg_remover import QualityAnalyzer
         image_np = np.random.randint(0, 255, (50, 50, 3), dtype=np.uint8)
-        with patch("providers.image.bg_remover._HAS_CV2", True), \
-             patch("cv2.Laplacian", return_value=np.ones((50, 50))):
+        mock_cv2 = MagicMock()
+        mock_cv2.Laplacian.return_value = np.ones((50, 50))
+        mock_cv2.cvtColor.return_value = np.ones((50, 50), dtype=np.uint8) * 128
+        with patch("providers.image.bg_remover.br_08__production_pipeline_classes._HAS_CV2", True), \
+             patch("providers.image.bg_remover.br_08__production_pipeline_classes.cv2", mock_cv2):
             result = QualityAnalyzer.analyze(image_np)
             assert "texture_complexity" in result
             assert "brightness" in result
@@ -903,14 +910,13 @@ class TestAISegmenter:
             with pytest.raises(RuntimeError, match="rembg is not available"):
                 AISegmenter.generate_alpha(_FAKE_IMAGE_BYTES, (10, 10), ProcessingConfig())
 
-    @patch("providers.image.bg_remover._ensure_rembg")
-    def test_generate_alpha_returns_alpha_map(self, mock_ensure):
+    def test_generate_alpha_returns_alpha_map(self):
         import numpy as np
         from providers.image.bg_remover import AISegmenter, ProcessingConfig
         mock_session = MagicMock()
         mock_output = _make_mock_png_bytes(10, 10)
-        with patch("providers.image.bg_remover.remove", MagicMock(return_value=mock_output)), \
-             patch("providers.image.bg_remover.new_session", return_value=mock_session):
+        with patch.object(AISegmenter, "_get_session", return_value=mock_session), \
+             patch("providers.image.bg_remover.br_11_12_13__ultimate_pipeline_classes.remove", MagicMock(return_value=mock_output)):
             result = AISegmenter.generate_alpha(
                 _make_mock_png_bytes(10, 10), (10, 10), ProcessingConfig(),
                 models_to_try=["u2net"],
@@ -1077,26 +1083,6 @@ class TestExporter:
         result_bytes, fmt = Exporter.encode(mock_canvas, "JPEG", config)
         assert isinstance(result_bytes, bytes)
         assert fmt == "JPEG"
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# bg_remover.py — BackgroundRemover (legacy)
-# ─────────────────────────────────────────────────────────────────────────────
-
-class TestBackgroundRemover:
-
-    def test_init_default_stats(self):
-        from providers.image.bg_remover import BackgroundRemover
-        br = BackgroundRemover()
-        assert br.stats["total_processed"] == 0
-        assert br.stats["total_time"] == 0
-        assert br.stats["errors"] == 0
-
-    def test_process_file_no_session_returns_failure(self):
-        from providers.image.bg_remover import BackgroundRemover
-        br = BackgroundRemover()
-        result = br.process_file("/nonexistent/input.png", "/tmp/output.png")
-        assert result["success"] is False
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1324,14 +1310,18 @@ class TestFeatureMatchEngine:
 
     def test_feature_match_import_error(self):
         from providers.image.parcel_verification import _engine_feature_match
-        with patch("cv2.imdecode", side_effect=ImportError("no cv2")):
+        mock_cv2 = MagicMock()
+        mock_cv2.imdecode.side_effect = ImportError("no cv2")
+        with patch("providers.image.parcel_verification.cv2", mock_cv2):
             result = _engine_feature_match(_FAKE_IMAGE_BYTES)
             assert "error" in result
             assert result["score"] == 0.0
 
     def test_feature_match_decode_failure(self):
         from providers.image.parcel_verification import _engine_feature_match
-        with patch("cv2.imdecode", return_value=None):
+        mock_cv2 = MagicMock()
+        mock_cv2.imdecode.return_value = None
+        with patch("providers.image.parcel_verification.cv2", mock_cv2):
             result = _engine_feature_match(_FAKE_IMAGE_BYTES)
             assert "error" in result
             assert "Could not decode" in result["error"]
@@ -1345,14 +1335,18 @@ class TestHomographyEngine:
 
     def test_homography_import_error(self):
         from providers.image.parcel_verification import _engine_feature_match_homography
-        with patch("cv2.imdecode", side_effect=ImportError("no cv2")):
+        mock_cv2 = MagicMock()
+        mock_cv2.imdecode.side_effect = ImportError("no cv2")
+        with patch("providers.image.parcel_verification.cv2", mock_cv2):
             result = _engine_feature_match_homography(_FAKE_IMAGE_BYTES, _FAKE_IMAGE_BYTES)
             assert "error" in result
             assert result["score"] == 0.0
 
     def test_homography_decode_parcel_fails(self):
         from providers.image.parcel_verification import _engine_feature_match_homography
-        with patch("cv2.imdecode", return_value=None):
+        mock_cv2 = MagicMock()
+        mock_cv2.imdecode.return_value = None
+        with patch("providers.image.parcel_verification.cv2", mock_cv2):
             result = _engine_feature_match_homography(_FAKE_IMAGE_BYTES, _FAKE_IMAGE_BYTES)
             assert "error" in result
             assert "Could not decode parcel" in result["error"]
@@ -1360,7 +1354,9 @@ class TestHomographyEngine:
     def test_homography_decode_reference_fails(self):
         from providers.image.parcel_verification import _engine_feature_match_homography
         import numpy as np
-        with patch("cv2.imdecode", side_effect=[np.zeros((10, 10), dtype=np.uint8), None]):
+        mock_cv2 = MagicMock()
+        mock_cv2.imdecode.side_effect = [np.zeros((10, 10), dtype=np.uint8), None]
+        with patch("providers.image.parcel_verification.cv2", mock_cv2):
             result = _engine_feature_match_homography(_FAKE_IMAGE_BYTES, _FAKE_IMAGE_BYTES)
             assert "error" in result
             assert "Could not decode reference" in result["error"]
@@ -1583,20 +1579,35 @@ class TestEnsureRembg:
 
     def test_ensure_rembg_sets_available(self):
         from providers.image import bg_remover
-        old_has = bg_remover._HAS_REMBG
-        old_remove = bg_remover.remove
-        old_session = bg_remover.new_session
+        from providers.image.bg_remover import rembg_lazy_load
+        import sys
+        import types
+
+        fake_rembg = types.ModuleType("rembg")
+        fake_rembg.remove = MagicMock(return_value=b"x")
+        fake_rembg.new_session = MagicMock(return_value=MagicMock())
+
+        old_has = rembg_lazy_load._HAS_REMBG
+        old_remove = rembg_lazy_load.remove
+        old_session = rembg_lazy_load.new_session
+        old_rembg_mod = sys.modules.get("rembg")
         try:
-            bg_remover._HAS_REMBG = False
-            bg_remover.remove = None
-            bg_remover.new_session = None
-            with patch("rembg.remove", create=True, return_value=b"x"), \
-                 patch("rembg.new_session", create=True, return_value=MagicMock()):
-                bg_remover._ensure_rembg()
+            rembg_lazy_load._HAS_REMBG = False
+            rembg_lazy_load.remove = None
+            rembg_lazy_load.new_session = None
+            sys.modules["rembg"] = fake_rembg
+            bg_remover._ensure_rembg()
+            assert rembg_lazy_load._HAS_REMBG is True
+            assert rembg_lazy_load.remove is fake_rembg.remove
+            assert rembg_lazy_load.new_session is fake_rembg.new_session
         finally:
-            bg_remover._HAS_REMBG = old_has
-            bg_remover.remove = old_remove
-            bg_remover.new_session = old_session
+            rembg_lazy_load._HAS_REMBG = old_has
+            rembg_lazy_load.remove = old_remove
+            rembg_lazy_load.new_session = old_session
+            if old_rembg_mod is None:
+                sys.modules.pop("rembg", None)
+            else:
+                sys.modules["rembg"] = old_rembg_mod
 
     def test_ensure_rembg_handles_import_error(self):
         from providers.image import bg_remover
@@ -1622,20 +1633,42 @@ class TestFrugalSession:
 
     def test_frugal_session_fallback(self):
         from providers.image import bg_remover
-        with patch("onnxruntime.SessionOptions", side_effect=ImportError("no onnx")):
-            with patch.object(bg_remover, "create_rembg_session", return_value=MagicMock()) as mock_default:
+        import sys
+
+        fake_ort = MagicMock()
+        fake_ort.SessionOptions.side_effect = ImportError("no onnx")
+        old_ort = sys.modules.get("onnxruntime")
+        try:
+            sys.modules["onnxruntime"] = fake_ort
+            with patch("providers.image.bg_remover.core_i_o.create_rembg_session", return_value=MagicMock()) as mock_default:
                 result = bg_remover.create_frugal_rembg_session("u2net")
                 mock_default.assert_called_once_with("u2net")
                 assert result is not None
+        finally:
+            if old_ort is None:
+                sys.modules.pop("onnxruntime", None)
+            else:
+                sys.modules["onnxruntime"] = old_ort
 
     def test_frugal_session_with_alias(self):
         from providers.image import bg_remover
-        with patch("onnxruntime.SessionOptions", side_effect=ImportError("no onnx")):
-            with patch.object(bg_remover, "create_rembg_session", return_value=MagicMock()) as mock_default:
+        import sys
+
+        fake_ort = MagicMock()
+        fake_ort.SessionOptions.side_effect = ImportError("no onnx")
+        old_ort = sys.modules.get("onnxruntime")
+        try:
+            sys.modules["onnxruntime"] = fake_ort
+            with patch("providers.image.bg_remover.core_i_o.create_rembg_session", return_value=MagicMock()) as mock_default:
                 result = bg_remover.create_frugal_rembg_session(
                     "u2net", aliases={"u2net": "u2net_custom"}
                 )
                 mock_default.assert_called_once_with("u2net_custom")
+        finally:
+            if old_ort is None:
+                sys.modules.pop("onnxruntime", None)
+            else:
+                sys.modules["onnxruntime"] = old_ort
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1646,16 +1679,16 @@ class TestFilterHeavyModels:
 
     def test_filter_heavy_models_when_skipped(self):
         from providers.image.bg_remover import _filter_heavy_models
-        with patch("providers.image.bg_remover.settings") as mock_settings:
-            mock_settings.skip_heavy_models = True
+        with patch("providers.image.bg_remover.strategy_config.settings") as mock_settings:
+            mock_settings.bg_skip_heavy_models = True
             result = _filter_heavy_models(["birefnet-massive", "u2net", "birefnet-hrsod"])
             assert "birefnet-massive" not in result
             assert "u2net" in result
 
     def test_filter_heavy_models_when_not_skipped(self):
         from providers.image.bg_remover import _filter_heavy_models
-        with patch("providers.image.bg_remover.settings") as mock_settings:
-            mock_settings.skip_heavy_models = False
+        with patch("providers.image.bg_remover.strategy_config.settings") as mock_settings:
+            mock_settings.bg_skip_heavy_models = False
             models = ["birefnet-massive", "u2net"]
             result = _filter_heavy_models(models)
             assert result == models
@@ -1669,13 +1702,13 @@ class TestRunStrategy:
 
     def test_run_strategy_dispatches_to_clean_commercial(self):
         from providers.image.bg_remover import _run_strategy, ProcessingStrategy
-        with patch("providers.image.bg_remover._run_clean_commercial", return_value=b"result"):
+        with patch("providers.image.bg_remover.removal_strategy_runners._run_clean_commercial", return_value=b"result"):
             result = _run_strategy(b"img", ProcessingStrategy.CLEAN_COMMERCIAL.value, MagicMock(), MagicMock(), MagicMock())
             assert result == b"result"
 
     def test_run_strategy_dispatches_to_general(self):
         from providers.image.bg_remover import _run_strategy, ProcessingStrategy
-        with patch("providers.image.bg_remover._run_general", return_value=b"result"):
+        with patch("providers.image.bg_remover.removal_strategy_runners._run_general", return_value=b"result"):
             result = _run_strategy(b"img", ProcessingStrategy.GENERAL.value, MagicMock(), MagicMock(), MagicMock())
             assert result == b"result"
 

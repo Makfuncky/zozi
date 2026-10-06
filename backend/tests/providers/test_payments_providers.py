@@ -768,7 +768,7 @@ class TestPayTabsConfig:
         from providers.payments.config import resolve_paytabs_server_key
         assert resolve_paytabs_server_key() == "server_key_123"
 
-    @patch.dict(os.environ, {}, clear=False)
+    @patch.dict(os.environ, {"PAYTABS_SERVER_KEY": ""}, clear=False)
     def test_resolve_paytabs_server_key_empty(self):
         from providers.payments.config import resolve_paytabs_server_key
         assert resolve_paytabs_server_key() == ""
@@ -783,7 +783,7 @@ class TestPayTabsConfig:
         from providers.payments.config import resolve_paytabs_profile_id
         assert resolve_paytabs_profile_id() == "prof_42"
 
-    @patch.dict(os.environ, {}, clear=False)
+    @patch.dict(os.environ, {}, clear=True)
     def test_resolve_paytabs_api_base_url_default(self):
         from providers.payments.config import resolve_paytabs_api_base_url
         assert resolve_paytabs_api_base_url() == "https://secure.paytabs.com"
@@ -803,12 +803,12 @@ class TestPayTabsConfig:
         from providers.payments.config import is_paytabs_configured
         assert is_paytabs_configured() is True
 
-    @patch.dict(os.environ, {"PAYTABS_SERVER_KEY": "srv"}, clear=False)
+    @patch.dict(os.environ, {"PAYTABS_SERVER_KEY": "srv"}, clear=True)
     def test_is_paytabs_configured_missing_profile(self):
         from providers.payments.config import is_paytabs_configured
         assert is_paytabs_configured() is False
 
-    @patch.dict(os.environ, {}, clear=False)
+    @patch.dict(os.environ, {}, clear=True)
     def test_is_paytabs_configured_empty(self):
         from providers.payments.config import is_paytabs_configured
         assert is_paytabs_configured() is False

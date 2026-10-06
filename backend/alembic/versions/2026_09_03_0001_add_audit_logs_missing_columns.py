@@ -13,6 +13,8 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.exc import NoInspectionAvailable
 
 revision: str = "2026_09_03_0001"
 down_revision: Union[str, None] = "2026_09_03_0000"
@@ -20,9 +22,50 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _is_offline(conn) -> bool:
+    """Return True when running in alembic --sql offline mode."""
+    if conn is None:
+        return True
+    try:
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 def upgrade() -> None:
     bind = op.get_bind()
-    inspector = sa.inspect(bind)
+    offline = _is_offline(bind)
+    if offline:
+        columns_to_add = [
+            ("uuid", sa.String(length=36), None),
+            ("resource_type", sa.String(length=255), None),
+            ("resource_id", sa.String(length=255), None),
+            ("user_agent", sa.String(length=255), None),
+            ("status", sa.String(length=50), sa.text("'success'")),
+            ("is_deleted", sa.Boolean(), sa.text("false")),
+            ("country_code", sa.String(length=2), None),
+            ("updated_at", sa.DateTime(), None),
+        ]
+        for col_name, col_type, default in columns_to_add:
+            col = sa.Column(col_name, col_type, server_default=default)
+            op.add_column("audit_logs", col, schema="audit")
+        indexes_to_create = [
+            ("ix_audit_logs_action_created", ["action", "created_at"]),
+            ("ix_audit_logs_user_created", ["user_id", "created_at"]),
+            ("ix_audit_logs_country_action", ["country_code", "action"]),
+        ]
+        for idx_name, columns in indexes_to_create:
+            op.create_index(
+                idx_name,
+                "audit_logs",
+                columns,
+                schema="audit",
+                if_not_exists=True,
+            )
+        return
+
+    inspector = sa_inspect(bind)
     if "audit_logs" not in inspector.get_table_names(schema="audit"):
         return
 
@@ -33,8 +76,8 @@ def upgrade() -> None:
         ("resource_type", sa.String(length=255), None),
         ("resource_id", sa.String(length=255), None),
         ("user_agent", sa.String(length=255), None),
-        ("status", sa.String(length=50), "success"),
-        ("is_deleted", sa.Boolean(), False),
+        ("status", sa.String(length=50), sa.text("'success'")),
+        ("is_deleted", sa.Boolean(), sa.text("false")),
         ("country_code", sa.String(length=2), None),
         ("updated_at", sa.DateTime(), None),
     ]

@@ -10,6 +10,7 @@ Wire it at app startup by importing this module, or call
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict
 
 from infrastructure.messaging.events.event_bus import subscribe
@@ -27,18 +28,23 @@ from domains.orders.events import (
 logger = logging.getLogger(__name__)
 
 
+def _ensure_implemented(feature: str) -> None:
+    if os.getenv("APP_ENV", "development").lower() != "development":
+        raise NotImplementedError(f"{feature} event handler is not implemented")
+
+
 def _on_shipment_created(payload: Dict[str, Any]) -> None:
     """React to a shipment being created.
 
     Triggers tracking initialization and customer notification.
     """
+    _ensure_implemented("shipment.created")
     logger.info(
         "shipment created: shipment_id=%s order_id=%s carrier=%s — init tracking",
         payload.get("shipment_id", "?"),
         payload.get("order_id", "?"),
         payload.get("carrier", "?"),
     )
-    # Future: init tracking record, notify customer of shipment creation.
 
 
 def _on_shipment_in_transit(payload: Dict[str, Any]) -> None:
@@ -46,13 +52,13 @@ def _on_shipment_in_transit(payload: Dict[str, Any]) -> None:
 
     Triggers status update and ETA recalculation.
     """
+    _ensure_implemented("shipment.in_transit")
     logger.info(
         "shipment in transit: shipment_id=%s order_id=%s location=%s — update status",
         payload.get("shipment_id", "?"),
         payload.get("order_id", "?"),
         payload.get("current_location", "?"),
     )
-    # Future: update tracking status, recalculate ETA, notify customer.
 
 
 def _on_shipment_delivered(payload: Dict[str, Any]) -> None:
@@ -60,12 +66,12 @@ def _on_shipment_delivered(payload: Dict[str, Any]) -> None:
 
     Triggers delivery confirmation and order completion check.
     """
+    _ensure_implemented("shipment.delivered")
     logger.info(
         "shipment delivered: shipment_id=%s order_id=%s — confirm delivery",
         payload.get("shipment_id", "?"),
         payload.get("order_id", "?"),
     )
-    # Future: confirm delivery, trigger order completion flow.
 
 
 def _on_order_created(payload: Dict[str, Any]) -> None:
@@ -73,12 +79,12 @@ def _on_order_created(payload: Dict[str, Any]) -> None:
 
     Triggers shipment pre-allocation for the order's country.
     """
+    _ensure_implemented("orders.created")
     logger.info(
         "order created: order_id=%s country=%s — pre-allocate shipment",
         payload.get("order_id", "?"),
         payload.get("country_code", "?"),
     )
-    # Future: pre-allocate shipment slot, assign default carrier by country.
 
 
 def _on_order_cancelled(payload: Dict[str, Any]) -> None:
@@ -86,12 +92,12 @@ def _on_order_cancelled(payload: Dict[str, Any]) -> None:
 
     Triggers shipment cancellation and carrier release.
     """
+    _ensure_implemented("orders.cancelled")
     logger.info(
         "order cancelled: order_id=%s reason=%s — cancel shipment",
         payload.get("order_id", "?"),
         payload.get("reason", "?"),
     )
-    # Future: cancel pending shipments, release carrier allocation.
 
 
 def register_logistics_subscribers() -> None:

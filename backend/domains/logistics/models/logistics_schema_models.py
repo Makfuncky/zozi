@@ -36,7 +36,7 @@ class CityDistanceMatrix(Base):
     created_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True, index=True)
     updated_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=True)
 

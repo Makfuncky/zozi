@@ -10,13 +10,7 @@ Functional tests for all newly built provider tools:
 - Shipping Rate Calculator
 """
 import io
-import os
-import sys
-from typing import Dict, List
-
 import pytest
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 # ============================================================================
@@ -134,17 +128,6 @@ class TestScanner:
     def test_has_scanner_flag(self):
         from providers.scanner import HAS_SCANNER
         assert isinstance(HAS_SCANNER, bool)
-
-    def test_scan_qr_flag_check(self):
-        from providers.scanner import scan_qr, HAS_SCANNER
-        if not HAS_SCANNER:
-            pytest.skip("pyzbar not installed")
-        # Would need a real QR image to test decoding
-
-    def test_scan_barcode_flag_check(self):
-        from providers.scanner import scan_barcode, HAS_SCANNER
-        if not HAS_SCANNER:
-            pytest.skip("pyzbar not installed")
 
 
 # ============================================================================

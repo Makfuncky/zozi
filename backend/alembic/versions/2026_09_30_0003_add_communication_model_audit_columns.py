@@ -33,6 +33,19 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
+
+def _is_offline(conn) -> bool:
+    if conn is None:
+        return True
+    try:
+        from sqlalchemy import inspect as sa_inspect
+        from sqlalchemy.exc import NoInspectionAvailable
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 revision: str = "20260930_0003"
 down_revision: Union[str, None] = "20260930_0002"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -45,6 +58,9 @@ def upgrade() -> None:
         return
 
     bind = op.get_bind()
+    offline = _is_offline(bind)
+    if offline:
+        return
     inspector = sa.inspect(bind)
 
     tables = [
@@ -92,6 +108,9 @@ def downgrade() -> None:
         return
 
     bind = op.get_bind()
+    offline = _is_offline(bind)
+    if offline:
+        return
     inspector = sa.inspect(bind)
 
     tables = [

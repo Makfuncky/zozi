@@ -57,7 +57,31 @@ def parse_args(argv=None):
     p.add_argument("--quiet", action="store_true")
     p.add_argument("--check-timeout", type=float, default=900.0,
                    help="max wall-clock seconds for the check sweep (default 900)")
+    p.add_argument("--self-test", action="store_true",
+                   help="run the detector/probe regression suite and exit "
+                        "(delegates to tests/run_tests.py)")
     return p.parse_args(argv)
+
+
+def run_self_test() -> int:
+    """Entry point for `--self-test`.
+
+    `AUDIT_SUITE_PLAN.md` documents `zozi_audit.py --self-test` as the
+    regression gate, but the flag was never implemented, so the documented
+    command failed with "unrecognized arguments". It delegates to the suite
+    that already exists rather than reimplementing it.
+    """
+    runner = HERE / "tests" / "run_tests.py"
+    if not runner.exists():
+        print(f"self-test runner missing: {runner}", file=sys.stderr)
+        return 2
+    print(f"[audit] self-test -> {runner}")
+    import runpy
+    try:
+        runpy.run_path(str(runner), run_name="__main__")
+    except SystemExit as exc:
+        return int(exc.code or 0)
+    return 0
 
 
 def resolve_root(arg_root: str) -> Path:
@@ -109,16 +133,57 @@ def merge_extra_results(base: list, extra: list) -> list:
     return base
 
 
+def reset_generated_logs(out_dir: Path) -> list[str]:
+    """Delete the previous run's per-dimension and recommendation dumps.
+
+    `save_logs()` only writes dimensions that produced a finding, so a dimension
+    that goes quiet silently keeps the file from an EARLIER run: `25_ai_drift.jsonl`
+    was still dated Oct 4 beside Oct 5 findings, and `23_law_coverage.jsonl`
+    survived the renumber to 29 while `29_law_coverage.jsonl` was written next to
+    it. Nothing reported this, because the stale files look exactly like current
+    output. `findings.jsonl` had a guard for the same class of bug; the dimension
+    dumps did not.
+
+    Returns the names removed, for the console line and the run metadata.
+    """
+    logs = out_dir / "logs"
+    if not logs.is_dir():
+        return []
+    removed: list[str] = []
+    for path in sorted(logs.iterdir()):
+        if not path.is_file():
+            continue
+        name = path.name
+        if (name[:2].isdigit() and name.endswith(".jsonl")) or \
+                (name.startswith("rec_") and name.endswith(".jsonl")):
+            try:
+                path.unlink()
+                removed.append(name)
+            except OSError as exc:
+                print(f"[audit] could not clear stale {name}: {exc}", file=sys.stderr)
+    return removed
+
+
 def save_logs(run_log: RunLog, ctx: ScanContext, grouped: dict, results) -> None:
     run_log.write_jsonl("findings.jsonl", [f.to_row() for f in grouped["findings"]])
     run_log.write_jsonl("observations.jsonl", [o.to_row() for o in grouped["observations"]])
     run_log.write_jsonl("recommendations.jsonl",
                         [r.to_row() for r in grouped.get("recommendations", [])])
+    # Every dimension gets a file, including the ones with no findings. An
+    # empty file and a missing file must not be able to mean the same thing: the
+    # first says "this dimension ran and found nothing", the second used to say
+    # "this dimension ran and found nothing" OR "this dimension was never run
+    # this time" -- with last run's file still on disk underneath.
     by_dim: dict[str, list] = {}
     for f in grouped["findings"]:
         by_dim.setdefault(f.dimension, []).append(f.to_row())
+    from zz_core.constants import DIMENSIONS
+    known = [f"{num}_{name}" for num, name in DIMENSIONS]
+    for dim in known:
+        run_log.write_jsonl(f"{dim}.jsonl", by_dim.get(dim, []))
     for dim, rows in by_dim.items():
-        run_log.write_jsonl(f"{dim}.jsonl", rows)
+        if dim not in known:
+            run_log.write_jsonl(f"{dim}.jsonl", rows)
     rec_by_area: dict[str, list] = {}
     for r in grouped.get("recommendations", []):
         rec_by_area.setdefault(r.area, []).append(r.to_row())
@@ -134,6 +199,8 @@ def save_logs(run_log: RunLog, ctx: ScanContext, grouped: dict, results) -> None
 def main(argv=None) -> int:
     args = parse_args(argv)
     started = time.time()
+    if args.self_test:
+        return run_self_test()
     root = resolve_root(args.root)
     if not (root / "_most_imp_docx").exists():
         print("FATAL: `_most_imp_docx/` not found — run from the repository root or pass --root.",
@@ -146,6 +213,9 @@ def main(argv=None) -> int:
     stale = out_dir / "logs" / "check_errors.json"
     if stale.exists():
         stale.unlink()
+    removed_stale = reset_generated_logs(out_dir)
+    if removed_stale:
+        print(f"[audit] cleared {len(removed_stale)} log file(s) from the previous run")
     report_path = Path(args.out) if args.out else out_dir / "zozi_forensic_audit.md"
     run_log = RunLog(out_dir, run_id="pending")
     ctx = build_context(args, root, out_dir)
@@ -160,6 +230,7 @@ def main(argv=None) -> int:
     dirty = tools.run(["git", "status", "--porcelain"], cwd=ctx.root, timeout=30, name="git:status")
     ctx.tools["git:status"] = dirty
     meta_extra["dirty_files"] = len([l for l in (dirty.stdout_tail or "").splitlines() if l.strip()])
+    meta_extra["stale_logs_cleared"] = len(removed_stale)
     if not (ctx.fast or args.no_tools):
         tools.probe_all(ctx)
 
@@ -184,6 +255,32 @@ def main(argv=None) -> int:
     results = merge_extra_results(preflight_results, results)
     grouped = registry.group(results)
     grouped["facts"]["preflight"] = preflight_rows
+
+    # ---- attach machine-checkable probes ------------------------------------
+    # Without this, 0 findings carry a probe: `probes.attach()` had no caller in
+    # the entry point, so every "probe coverage" number the suite published was
+    # describing code that never ran.
+    probe_report = None
+    try:
+        from zz_core.probes import attach as attach_probes
+        probe_report = attach_probes(grouped["findings"], ctx.root)
+        grouped["facts"]["probe_coverage"] = probe_report.to_dict()
+        attached = probe_report.already + probe_report.attached
+        print(f"[audit] probes attached {attached}/{probe_report.total} findings "
+              f"({probe_report.no_rule} clusters have no rule, "
+              f"{probe_report.unreadable} files unreadable, "
+              f"{probe_report.zero_match} patterns matched nowhere)")
+        if probe_report.builder_errors:
+            # Loud on purpose. A builder exception used to abort the whole pass
+            # silently: the run printed a success line while hundreds of findings
+            # had no probe, and the only trace was a field nothing read.
+            print(f"[audit] PROBE BUILDER ERRORS: {len(probe_report.builder_errors)} "
+                  f"(probe attachment is incomplete)", file=sys.stderr)
+            for msg in probe_report.builder_errors[:5]:
+                print(f"[audit]   {msg}", file=sys.stderr)
+    except Exception as exc:
+        print(f"[audit] probe attach unavailable: {exc}", file=sys.stderr)
+        grouped["facts"]["probe_coverage"] = {"error": str(exc)}
 
     # ---- optional integrations -------------------------------------------------
     browser_facts = llm_facts = db_facts = load_facts = None
@@ -231,6 +328,9 @@ def main(argv=None) -> int:
     blockers = sum(1 for f in grouped["findings"] if f.completion_blocker == "yes")
     print(f"[audit] DONE in {elapsed:.0f}s — {len(grouped['findings'])} findings "
           f"({blockers} yes-blockers) — report: {report_path}")
+    print("[audit] authoritative outputs: zozi_forensic_audit.md (findings) · "
+          "logs/findings.jsonl (machine-readable) · logs/facts.json (probe coverage)")
+    print("[audit] then: zozi_verify.py  ->  zozi_compile.py")
     sys.stdout.flush()
     sys.stderr.flush()
     # A timed-out check may leave a worker thread running; exit hard so the CLI

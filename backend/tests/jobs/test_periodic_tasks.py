@@ -18,7 +18,6 @@ PERIODIC_TASK_NAMES = [
     "tasks.periodic_tasks.cleanup_old_jobs",
     "tasks.periodic_tasks.cleanup_expired_tokens",
     "tasks.periodic_tasks.health_check",
-    "tasks.periodic_tasks.check_key_rotation",
 ]
 
 RETRY_BACKOFF_TASK_NAMES = [
@@ -26,7 +25,6 @@ RETRY_BACKOFF_TASK_NAMES = [
     if name not in (
         "tasks.periodic_tasks.health_check",
         "tasks.periodic_tasks.cleanup_expired_tokens",
-        "tasks.periodic_tasks.check_key_rotation",
     )
 ]
 

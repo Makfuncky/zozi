@@ -162,8 +162,12 @@ def upgrade() -> None:
                 text(
                     "INSERT INTO hr.role_definitions (role_id, role_name, department, description, is_active) "
                     "VALUES (:role_id, :role_name, :department, :description, true)"
+                ).bindparams(
+                    role_id=role_id,
+                    role_name=role_name,
+                    department=department,
+                    description=description,
                 ),
-                {"role_id": role_id, "role_name": role_name, "department": department, "description": description},
             )
 
 

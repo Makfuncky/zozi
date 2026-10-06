@@ -11,10 +11,12 @@ import json
 import logging
 import os
 import time
-import urllib.error
-import urllib.request
 
 from datetime import datetime, timezone
+
+import httpx
+
+from infrastructure.security.url_security import require_safe_url
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,18 @@ _CIRCUIT = {"failures": 0, "last_failure_ts": 0.0, "open": False}
 _CIRCUIT_FAILURE_THRESHOLD = 3
 _CIRCUIT_COOLDOWN_SECONDS = 30
 
+_REQUEST_TIMEOUT_SECONDS = 15.0
+
 
 class WatchlistProviderError(Exception):
     """Raised when the external screening API cannot be reached or returns garbage."""
+
+
+def _allowed_hosts() -> tuple[str, ...] | None:
+    raw = os.environ.get("WATCHLIST_API_ALLOWED_HOSTS", "").strip()
+    if not raw:
+        return None
+    return tuple(h.strip().lower() for h in raw.split(",") if h.strip())
 
 
 def screen_watchlist(
@@ -46,6 +57,24 @@ def screen_watchlist(
     if not base:
         raise WatchlistProviderError("WATCHLIST_API_URL is not configured")
 
+    if not HAS_WATCHLIST:
+        return {
+            "status": "skipped",
+            "score": 0.0,
+            "details": "Watchlist provider is disabled",
+            "flagged_categories": [],
+            "check_id": None,
+        }
+
+    try:
+        url = require_safe_url(
+            f"{base}/v1/screen",
+            allowed_schemes=("https",),
+            allowed_hosts=_allowed_hosts(),
+        )
+    except ValueError as exc:
+        raise WatchlistProviderError(str(exc)) from exc
+
     if _CIRCUIT["open"]:
         if time.time() - _CIRCUIT["last_failure_ts"] < _CIRCUIT_COOLDOWN_SECONDS:
             raise WatchlistProviderError("Circuit breaker open: watchlist API unavailable")
@@ -62,15 +91,15 @@ def screen_watchlist(
     last_exc = None
     for attempt in range(3):
         try:
-            req = urllib.request.Request(
-                f"{base}/v1/screen",
-                data=payload,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                body = json.loads(resp.read().decode())
-        except (urllib.error.URLError, json.JSONDecodeError, KeyError) as exc:
+            with httpx.Client(timeout=_REQUEST_TIMEOUT_SECONDS) as client:
+                response = client.post(
+                    url,
+                    content=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                response.raise_for_status()
+                body = response.json()
+        except (httpx.HTTPError, ValueError, KeyError) as exc:
             last_exc = exc
             _CIRCUIT["failures"] += 1
             _CIRCUIT["last_failure_ts"] = time.time()
@@ -89,4 +118,3 @@ def screen_watchlist(
         }
 
     raise WatchlistProviderError(str(last_exc)) from last_exc
-

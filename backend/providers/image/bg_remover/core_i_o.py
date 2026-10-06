@@ -13,6 +13,9 @@ import providers.image.bg_remover as _pkg
 
 logger = logging.getLogger(__name__)
 
+# Module-level sentinel so tests can patch onnxruntime without importing it.
+onnxruntime = None  # type: ignore[assignment]
+
 
 def _get_remove():
     """Get the current remove function (allows mocking in tests)."""

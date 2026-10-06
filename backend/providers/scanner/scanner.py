@@ -50,6 +50,8 @@ def _load_image(image_bytes: bytes):
 
 
 def scan_qr(image_bytes: bytes) -> List[str]:
+    if not HAS_PYZBAR:
+        return []
     _require_scanner()
     img = _load_image(image_bytes)
 
@@ -67,6 +69,8 @@ def scan_qr(image_bytes: bytes) -> List[str]:
 
 
 def scan_barcode(image_bytes: bytes) -> List[Dict[str, Any]]:
+    if not HAS_PYZBAR:
+        return []
     _require_scanner()
     img = _load_image(image_bytes)
 
@@ -110,6 +114,8 @@ def scan_barcode(image_bytes: bytes) -> List[Dict[str, Any]]:
 
 
 def scan_image(image_bytes: bytes) -> Dict[str, List]:
+    if not HAS_PYZBAR:
+        return {"qr_codes": [], "barcodes": []}
     _require_scanner()
     img = _load_image(image_bytes)
 

@@ -18,23 +18,27 @@ _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(_BACKEND_ROOT))
 
-# Patch missing ReferralPointEvent that breaks rbac.catalog import
+# Patch missing ReferralPointEvent that breaks rbac.catalog import.
+# Guard against duplicate registration: the real ReferralPointEvent may already
+# be in Base.metadata (imported via the customers domain by tests/conftest.py),
+# or the conftest may have already registered a stub.
+from infrastructure.database.base import Base
 try:
     from domains.accounts.models import user as _user_mod
     if not hasattr(_user_mod, "ReferralPointEvent"):
-        from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-        from infrastructure.database.base import Base
+        if not any(t.name == "referral_point_events" for t in Base.metadata.tables.values()):
+            from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 
-        class ReferralPointEvent(Base):
-            __tablename__ = "referral_point_events"
-            __table_args__ = {"schema": "accounts"}
-            id = Column(Integer, primary_key=True)
-            user_id = Column(Integer, ForeignKey("accounts.users.id"))
-            points = Column(Integer, default=0)
-            event_type = Column(String(50))
-            created_at = Column(DateTime)
+            class ReferralPointEvent(Base):
+                __tablename__ = "referral_point_events"
+                __table_args__ = {"schema": "accounts"}
+                id = Column(Integer, primary_key=True)
+                user_id = Column(Integer, ForeignKey("accounts.users.id"))
+                points = Column(Integer, default=0)
+                event_type = Column(String(50))
+                created_at = Column(DateTime)
 
-        _user_mod.ReferralPointEvent = ReferralPointEvent
+            _user_mod.ReferralPointEvent = ReferralPointEvent
 except Exception:
     pass
 
@@ -325,6 +329,61 @@ class TestRBACModule:
         from rbac.service import RBACService
         service = RBACService(db_session)
         assert service.check_permission("customer", "admin.only.feature") is False
+
+
+class TestRequireFeatureCatalogDriftGuard:
+    """Durable guard: every require_feature/require_any_feature slug in the entire
+    codebase must exist in the catalog. This catches drift automatically and would
+    have caught all ~24 mismatches fixed in I-04."""
+
+    def test_all_require_feature_slugs_in_catalog(self) -> None:
+        """Scan the whole codebase for require_feature/require_any_feature calls."""
+        import ast
+
+        backend_root = _BACKEND_ROOT
+        catalog = load_feature_catalog()
+        unknown: list[str] = []
+
+        for py_file in backend_root.rglob("*.py"):
+            rel = py_file.relative_to(backend_root)
+            skip = any(
+                part in ("tests", "pytest-of-user", "_audit", "__pycache__", ".venv", "venv")
+                for part in rel.parts
+            )
+            if skip:
+                continue
+            # Skip pytest artifact dirs
+            if any(part.startswith(".pytest") or part.startswith("test_") for part in rel.parts):
+                continue
+            try:
+                source = py_file.read_text(encoding="utf-8", errors="replace")
+                tree = ast.parse(source)
+            except (OSError, SyntaxError):
+                continue
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                func = node.func
+                name = ""
+                if isinstance(func, ast.Name):
+                    name = func.id
+                elif isinstance(func, ast.Attribute):
+                    name = func.attr
+                if name not in ("require_feature", "require_any_feature"):
+                    continue
+                if not node.args:
+                    continue
+                arg = node.args[0]
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    slug = arg.value
+                    if slug not in catalog:
+                        unknown.append(f"{rel}: {name}({slug!r})")
+
+        assert not unknown, (
+            "Catalog drift detected: require_feature/require_any_feature slug(s) "
+            "not in rbac/catalog.py:\n  "
+            + "\n  ".join(sorted(set(unknown)))
+        )
 
 
 class TestFrontendPermissionsGeneration:

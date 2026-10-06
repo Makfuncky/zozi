@@ -20,6 +20,12 @@ except ImportError:
     HAS_OAUTH = False
     httpx = None  # type: ignore[assignment]
 
+try:
+    import requests as _oauth_req_lib
+    requests = _oauth_req_lib
+except ImportError:
+    requests = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -39,18 +45,26 @@ class OAuthProviderError(Exception):
 
 def _get_json(url: str, **kwargs: Any) -> Dict[str, Any]:
     try:
-        resp = httpx.get(url, timeout=_TIMEOUT, **kwargs)
-        resp.raise_for_status()
-    except httpx.HTTPError as exc:
+        if requests is not None:
+            resp = requests.get(url, timeout=_TIMEOUT, **kwargs)
+            resp.raise_for_status()
+        else:
+            resp = httpx.get(url, timeout=_TIMEOUT, **kwargs)
+            resp.raise_for_status()
+    except Exception as exc:
         raise OAuthProviderError(f"GET {url} failed: {exc}") from exc
     return resp.json()
 
 
 def _post_json(url: str, **kwargs: Any) -> Dict[str, Any]:
     try:
-        resp = httpx.post(url, timeout=_TIMEOUT, **kwargs)
-        resp.raise_for_status()
-    except httpx.HTTPError as exc:
+        if requests is not None:
+            resp = requests.post(url, timeout=_TIMEOUT, **kwargs)
+            resp.raise_for_status()
+        else:
+            resp = httpx.post(url, timeout=_TIMEOUT, **kwargs)
+            resp.raise_for_status()
+    except Exception as exc:
         raise OAuthProviderError(f"POST {url} failed: {exc}") from exc
     return resp.json()
 

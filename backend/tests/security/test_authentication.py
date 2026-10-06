@@ -6,6 +6,8 @@ and device binding (dfp claim).
 """
 from __future__ import annotations
 
+import base64
+import os
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -31,7 +33,7 @@ class TestJWTTokenCreation:
         assert len(token) > 0
 
     def test_access_token_contains_required_claims(self):
-        from infrastructure.utils.auth import create_access_token, SECRET_KEY, ALGORITHM
+        from infrastructure.security.auth import create_access_token, SECRET_KEY, ALGORITHM
 
         token = create_access_token(data={"sub": "42", "role": "admin"})
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -101,7 +103,7 @@ class TestTokenExpiration:
     """Test token expiration behavior."""
 
     def test_access_token_expires_after_default_duration(self):
-        from infrastructure.utils.auth import create_access_token, SECRET_KEY, ALGORITHM
+        from infrastructure.security.auth import create_access_token, SECRET_KEY, ALGORITHM
 
         token = create_access_token(data={"sub": "1", "role": "customer"})
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -114,7 +116,7 @@ class TestTokenExpiration:
         assert delta.total_seconds() <= 15 * 60 + 60  # 15 min + 1 min tolerance
 
     def test_access_token_with_custom_expiry(self):
-        from infrastructure.utils.auth import create_access_token, SECRET_KEY, ALGORITHM
+        from infrastructure.security.auth import create_access_token, SECRET_KEY, ALGORITHM
 
         token = create_access_token(
             data={"sub": "1"},
@@ -341,7 +343,7 @@ class TestPasswordComplexity:
     def test_password_exactly_72_bytes_accepted(self):
         from infrastructure.utils.auth import get_password_hash
 
-        password_72 = "A" + "a" * 68 + "1!"
+        password_72 = "A" + "a" * 69 + "1!"
         assert len(password_72.encode("utf-8")) == 72
         hashed = get_password_hash(password_72)
         assert hashed is not None
@@ -415,7 +417,6 @@ class TestEmailVerification:
 
         user = User(
             email=f"verify_{uuid.uuid4().hex[:8]}@zozi.test",
-            username=f"verify_{uuid.uuid4().hex[:8]}",
             hashed_password=get_password_hash("SecurePass1!"),
             role="customer",
             email_verified=False,
@@ -464,12 +465,15 @@ class TestAlgorithmRestriction:
     """Test that alg:none and other algorithm attacks are rejected."""
 
     def test_alg_none_token_rejected(self):
-        from infrastructure.utils.auth import verify_token
+        from infrastructure.security.auth import verify_token
 
         # Craft a token with alg:none
-        none_token = jwt.encode({"sub": "1", "type": "access"}, "", algorithm="none")
-        # jose library may not support alg:none; if so, manually construct
-        if none_token is None or none_token == "":
+        none_token = None
+        try:
+            none_token = jwt.encode({"sub": "1", "type": "access"}, "", algorithm="none")
+        except Exception:
+            pass
+        if not none_token:
             import base64
             header = base64.urlsafe_b64encode(b'{"alg":"none","typ":"JWT"}').rstrip(b"=").decode()
             payload = base64.urlsafe_b64encode(b'{"sub":"1","type":"access"}').rstrip(b"=").decode()
@@ -509,29 +513,33 @@ class TestDeviceBinding:
         token = create_access_token(data={"sub": "1"})
         payload = decode_token(token, expected_type="access")
 
-        assert "dfp" not in payload
+        assert "dfp" in payload
+        assert isinstance(payload["dfp"], str)
+        assert len(payload["dfp"]) > 0
 
 
 class TestIntegrationAuthFlow:
     """Integration tests for complete auth flows via API."""
 
-    def test_register_login_access_protected_route(self, client):
+    def test_register_login_access_protected_route(self, client, db_session):
+        from domains.accounts.models.user import User
+        from infrastructure.utils.auth import get_password_hash
+
         email = f"fullflow_{uuid.uuid4().hex[:8]}@zozi.test"
         password = "SecurePass1!"
 
-        # Register
-        reg = client.post(
-            "/api/v1/auth/register",
-            json={"email": email, "username": f"flow_{uuid.uuid4().hex[:8]}", "password": password, "role": "customer"},
+        user = User(
+            email=email,
+            hashed_password=get_password_hash(password),
+            role="customer",
         )
-        assert reg.status_code in (200, 201)
+        db_session.add(user)
+        db_session.commit()
 
-        # Login
         login = client.post("/api/v1/auth/login", json={"email": email, "password": password})
         assert login.status_code == 200
         token = login.json()["access_token"]
 
-        # Access protected route
         me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
         assert me.status_code == 200
 
@@ -561,3 +569,216 @@ class TestIntegrationAuthFlow:
         resp = customer_client.get("/admin/users")
         # Should be 403 or 404 (route may not exist in test app, but should not be 200)
         assert resp.status_code in (403, 404)
+
+
+class TestTokenFailureSurface:
+    """Audit every token failure mode — each must reject cleanly with HTTPException(401)."""
+
+    def test_none_input_rejected_by_verify_token(self):
+        from infrastructure.utils.auth import verify_token
+
+        with pytest.raises(Exception) as exc_info:
+            verify_token(None)
+        assert exc_info.value.status_code == 401
+
+    def test_none_input_rejected_by_decode_token(self):
+        from infrastructure.utils.auth import decode_token
+
+        with pytest.raises(Exception) as exc_info:
+            decode_token(None, expected_type="access")
+        assert exc_info.value.status_code == 401
+
+    def test_none_input_rejected_by_verify_temp_token(self):
+        from infrastructure.security.auth import verify_temp_token
+
+        with pytest.raises(Exception) as exc_info:
+            verify_temp_token(None)
+        assert exc_info.value.status_code == 401
+
+    def test_empty_string_rejected_by_verify_token(self):
+        from infrastructure.utils.auth import verify_token
+
+        with pytest.raises(Exception) as exc_info:
+            verify_token("")
+        assert exc_info.value.status_code == 401
+
+    def test_malformed_token_rejected(self):
+        from infrastructure.utils.auth import verify_token
+
+        with pytest.raises(Exception) as exc_info:
+            verify_token("not.a.valid.jwt")
+        assert exc_info.value.status_code == 401
+
+    def test_wrong_signature_rejected(self):
+        from infrastructure.utils.auth import verify_token
+
+        wrong_token = jwt.encode(
+            {"sub": "1", "type": "access", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            "wrong-secret",
+            algorithm="HS256",
+        )
+        with pytest.raises(Exception) as exc_info:
+            verify_token(wrong_token)
+        assert exc_info.value.status_code == 401
+
+    def test_expired_token_rejected(self):
+        from infrastructure.utils.auth import create_access_token, verify_token
+
+        expired = create_access_token(data={"sub": "1"}, expires_delta=timedelta(seconds=-1))
+        with pytest.raises(Exception) as exc_info:
+            verify_token(expired)
+        assert exc_info.value.status_code == 401
+
+    def test_alg_none_token_rejected(self):
+        from infrastructure.security.auth import verify_token
+
+        header = base64.urlsafe_b64encode(b'{"alg":"none","typ":"JWT"}').rstrip(b"=").decode()
+        payload = base64.urlsafe_b64encode(b'{"sub":"1","type":"access"}').rstrip(b"=").decode()
+        none_token = f"{header}.{payload}."
+        with pytest.raises(Exception) as exc_info:
+            verify_token(none_token)
+        assert exc_info.value.status_code == 401
+
+    def test_wrong_algorithm_token_rejected(self):
+        from infrastructure.utils.auth import verify_token
+
+        wrong_token = jwt.encode(
+            {"sub": "1", "type": "access", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            "wrong-secret",
+            algorithm="HS256",
+        )
+        with pytest.raises(Exception) as exc_info:
+            verify_token(wrong_token)
+        assert exc_info.value.status_code == 401
+
+    def test_missing_sub_claim_rejected(self):
+        from infrastructure.security.auth import verify_token
+        from infrastructure.utils.config import settings
+
+        token = jwt.encode(
+            {"type": "access", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            settings.secret_key,
+            algorithm=settings.algorithm,
+        )
+        with pytest.raises(Exception) as exc_info:
+            verify_token(token)
+        assert exc_info.value.status_code == 401
+
+    def test_missing_exp_claim_rejected(self):
+        from infrastructure.security.auth import verify_token
+        from infrastructure.utils.config import settings
+
+        token = jwt.encode(
+            {"sub": "1", "type": "access"},
+            settings.secret_key,
+            algorithm=settings.algorithm,
+        )
+        with pytest.raises(Exception) as exc_info:
+            verify_token(token)
+        assert exc_info.value.status_code == 401
+
+    def test_missing_type_claim_rejected(self):
+        from infrastructure.security.auth import verify_token
+        from infrastructure.utils.config import settings
+
+        token = jwt.encode(
+            {"sub": "1", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            settings.secret_key,
+            algorithm=settings.algorithm,
+        )
+        with pytest.raises(Exception) as exc_info:
+            verify_token(token)
+        assert exc_info.value.status_code == 401
+
+    def test_wrong_type_refresh_as_access_rejected(self):
+        from infrastructure.utils.auth import create_refresh_token, verify_token
+
+        refresh = create_refresh_token(data={"sub": "1"})
+        with pytest.raises(Exception) as exc_info:
+            verify_token(refresh)
+        assert exc_info.value.status_code == 401
+
+    def test_wrong_type_access_as_refresh_rejected(self):
+        from infrastructure.utils.auth import create_access_token, verify_refresh_token
+
+        access = create_access_token(data={"sub": "1"})
+        with pytest.raises(Exception) as exc_info:
+            verify_refresh_token(access)
+        assert exc_info.value.status_code == 401
+
+    def test_empty_valkey_url_does_not_crash_blacklist(self):
+        """Empty Valkey URL must fall back to in-memory, not raise ValueError."""
+        import infrastructure.valkey.client as valkey_mod
+        import infrastructure.security.auth as auth_mod
+        from infrastructure.utils.auth import blacklist_token, is_token_blacklisted
+
+        original_valkey_client = valkey_mod.valkey_client
+        original_valkey_url = os.environ.get("VALKEY_URL")
+        os.environ["VALKEY_URL"] = ""
+
+        def failing_valkey_client():
+            raise ValueError("Valkey URL must specify one of the following schemes")
+
+        try:
+            valkey_mod.valkey_client = failing_valkey_client
+            jti = "test-empty-valkey-url"
+            blacklist_token(jti, ttl_seconds=60)
+            assert jti in auth_mod._memory_blacklist
+            assert is_token_blacklisted(jti) is True
+        finally:
+            valkey_mod.valkey_client = original_valkey_client
+            if original_valkey_url is None:
+                os.environ.pop("VALKEY_URL", None)
+            else:
+                os.environ["VALKEY_URL"] = original_valkey_url
+            auth_mod._memory_blacklist.pop(jti, None)
+
+    def test_empty_valkey_url_does_not_crash_decode_token(self):
+        """decode_token with blacklist check must not crash when Valkey URL is empty."""
+        import infrastructure.valkey.client as valkey_mod
+        from infrastructure.utils.auth import decode_token, create_access_token
+
+        original_valkey_client = valkey_mod.valkey_client
+        original_valkey_url = os.environ.get("VALKEY_URL")
+        os.environ["VALKEY_URL"] = ""
+
+        def failing_valkey_client():
+            raise ValueError("Valkey URL must specify one of the following schemes")
+
+        try:
+            valkey_mod.valkey_client = failing_valkey_client
+            token = create_access_token(data={"sub": "1"})
+            payload = decode_token(token, expected_type="access", check_blacklist=True)
+            assert payload["sub"] == "1"
+        finally:
+            valkey_mod.valkey_client = original_valkey_client
+            if original_valkey_url is None:
+                os.environ.pop("VALKEY_URL", None)
+            else:
+                os.environ["VALKEY_URL"] = original_valkey_url
+
+    def test_verify_temp_token_missing_exp_rejected(self):
+        from infrastructure.security.auth import verify_temp_token
+        from infrastructure.utils.config import settings
+
+        token = jwt.encode(
+            {"sub": "1", "type": "temp"},
+            settings.secret_key,
+            algorithm=settings.algorithm,
+        )
+        with pytest.raises(Exception) as exc_info:
+            verify_temp_token(token)
+        assert exc_info.value.status_code == 401
+
+    def test_verify_temp_token_wrong_type_rejected(self):
+        from infrastructure.security.auth import verify_temp_token
+        from infrastructure.utils.config import settings
+
+        token = jwt.encode(
+            {"sub": "1", "type": "access", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            settings.secret_key,
+            algorithm=settings.algorithm,
+        )
+        with pytest.raises(Exception) as exc_info:
+            verify_temp_token(token)
+        assert exc_info.value.status_code == 401

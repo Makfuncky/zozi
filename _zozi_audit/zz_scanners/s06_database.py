@@ -274,6 +274,70 @@ DESTRUCTIVE_OPS = ("drop_table", "drop_column", "drop_constraint",
                     "drop_index", "execute")
 
 
+def _sql_literal(call: ast.Call, tree: ast.AST) -> str:
+    """Best-effort SQL text for an `op.execute(...)` call.
+
+    Resolves an inline string, a `sa.text("...")`, and a module-level constant
+    assigned a string. Returns "" when the statement is only knowable at
+    runtime, which is treated as "not demonstrably destructive" -- an auditor
+    cannot call an invisible statement destructive.
+    """
+    if not call.args:
+        return ""
+    first = call.args[0]
+    if isinstance(first, ast.Constant) and isinstance(first.value, str):
+        return first.value
+    if isinstance(first, ast.Call) and getattr(first.func, "attr", "") == "text" \
+            and first.args:
+        inner = first.args[0]
+        if isinstance(inner, ast.Constant) and isinstance(inner.value, str):
+            return inner.value
+        if isinstance(inner, ast.Name):
+            first = inner
+        else:
+            return ""
+    if isinstance(first, ast.Name):
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign) and len(node.targets) == 1 \
+                    and isinstance(node.targets[0], ast.Name) \
+                    and node.targets[0].id == first.id:
+                try:
+                    val = ast.literal_eval(node.value)
+                    if isinstance(val, str):
+                        return val
+                except Exception:
+                    # An f-string or a concatenation: the verb is still readable
+                    # from the static fragments.
+                    frag = " ".join(
+                        s.value for s in ast.walk(node.value)
+                        if isinstance(s, ast.Constant) and isinstance(s.value, str))
+                    return frag
+                return ""
+    return ""
+
+
+def _sql_is_destructive(call: ast.Call, tree: ast.AST) -> bool:
+    """Does this `execute` issue a statement that destroys data or locks a table?
+
+    Destructive: DROP, TRUNCATE, DELETE without a WHERE, `ALTER ... DROP`, and
+    `ALTER COLUMN ... TYPE` (a full table rewrite). Not destructive: ADD COLUMN,
+    CREATE INDEX/FUNCTION/VIEW/MATERIALIZED VIEW, UPDATE ... SET, and INSERT.
+    """
+    sql = _sql_literal(call, tree)
+    if not sql:
+        return False
+    s = sql.upper()
+    if re.search(r"\b(DROP|TRUNCATE)\b", s):
+        return True
+    if re.search(r"\bDELETE\s+FROM\b", s) and not re.search(r"\bWHERE\b", s):
+        return True
+    if re.search(r"\bALTER\b[^;]*\bDROP\b", s):
+        return True
+    if re.search(r"\bALTER\s+(COLUMN\s+)?\S+\s+(?:SET\s+DATA\s+)?TYPE\b", s):
+        return True
+    return False
+
+
 def _destructive_in_upgrade(parsed, text: str) -> tuple[bool, int]:
     """Find a genuinely destructive op inside ``upgrade()`` only.
 
@@ -299,6 +363,13 @@ def _destructive_in_upgrade(parsed, text: str) -> tuple[bool, int]:
                 continue
             fn = getattr(sub.func, "attr", "")
             if fn not in DESTRUCTIVE_OPS:
+                continue
+            # `execute` is not itself a destructive verb -- it is the escape
+            # hatch through which every kind of statement is issued. Treating
+            # the call as destructive flagged four benign migrations:
+            # ADD COLUMN via raw SQL, a materialized-view CREATE, a trigger
+            # FUNCTION create, and a backfill UPDATE. Classify the SQL instead.
+            if fn == "execute" and not _sql_is_destructive(sub, tree):
                 continue
             ln = sub.lineno
             # A guarded or reversible-only drop is not "destructive without

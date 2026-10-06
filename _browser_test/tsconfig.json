@@ -1,25 +1,24 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "isolatedModules": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
   },
   "include": [
-    "**/*.ts",
-    "**/*.js"
+    "global-setup.ts",
+    "global-teardown.ts",
+    "playwright.config.ts",
+    "src/**/*.ts",
+    "tests/**/*.ts"
   ],
-  "paths": {
-    "@fixtures": ["tests/fixtures"],
-    "@api": ["src/api"],
-    "@auth": ["src/auth"],
-    "@actions": ["src/actions"],
-    "@workflows": ["src/workflows"],
-    "@monitor": ["src/monitor"]
-  }
+  "exclude": ["node_modules", "reports", "test-results", "test-assets", "evidence"]
 }

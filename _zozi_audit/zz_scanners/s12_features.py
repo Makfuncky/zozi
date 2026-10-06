@@ -6,7 +6,7 @@ from pathlib import Path
 
 from zz_core.model import CheckResult, Finding, Observation, ScanContext
 from zz_core.registry import check
-from zz_core.util import parse_python, read_text
+from zz_core.util import feature_gate_literals, parse_python, read_text
 
 
 def _f(dimension, phase, file, line, current, target, fix, *, priority="P2",
@@ -42,14 +42,14 @@ def feat_catalog(ctx: ScanContext) -> CheckResult:
             if m:
                 features[m.group(1)] = rel
                 feature_line[m.group(1)] = (rel, idx)
-    gated: dict[str, int] = {}
-    for p in ctx.py_files:
-        rel = ctx.rel(p)
-        if "/modules/" not in rel:
-            continue
-        text, _ = read_text(p)
-        for m in re.finditer(r'require_feature\(\s*["\']([^"\']+)["\']', text or ""):
-            gated[m.group(1)] = gated.get(m.group(1), 0) + 1
+    # AST extraction, not a regex. The old pattern `[^"']+` spans newlines, so
+    # an assertion or docstring that merely names `require_feature()` captured a
+    # "literal" made of the following lines (FEAT-004 reported `)` + `assert
+    # require_feature_count >= len(endpoints)` as an undefined atom). The same
+    # helper now feeds `measurements.m_dead_feature_gate`, so detector and
+    # measurement cannot disagree about what a gate literal is.
+    gated: dict[str, int] = dict(feature_gate_literals(
+        [p for p in ctx.py_files if "/modules/" in ctx.rel(p)]))
     orphans = sorted(set(features) - set(gated))
     ghosts = sorted(set(gated) - set(features))
     tests_text = ""

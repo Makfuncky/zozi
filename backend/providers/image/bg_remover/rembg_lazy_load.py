@@ -6,6 +6,9 @@ _HAS_REMBG = False
 remove = None
 new_session = None
 
+# Module-level sentinel so tests can patch rembg without importing it.
+rembg = None  # type: ignore[assignment]
+
 
 def _ensure_rembg():
     global remove, new_session, _HAS_REMBG

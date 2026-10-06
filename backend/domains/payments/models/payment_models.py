@@ -123,8 +123,8 @@ class Refund(Base):
     provider = Column(String(40), nullable=False)
     provider_refund_id = Column(String(120), nullable=True)
     notes = Column(Text, nullable=True)
-    requested_by_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=True, index=True)
-    approved_by_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=True, index=True)
+    requested_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="RESTRICT"), nullable=True, index=True)
+    approved_by_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="RESTRICT"), nullable=True, index=True)
     requested_at = Column(DateTime, server_default=func.now(), nullable=False)
     completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
@@ -145,7 +145,6 @@ class PaymentIntent(Base):
     """
     __tablename__ = "payment_intents"
     __table_args__ = (
-        {"schema": "payments"},
         UniqueConstraint("provider", "provider_intent_id", name="uq_payment_intents_provider_intent"),
         Index("ix_payment_intents_order", "order_id"),
         Index("ix_payment_intents_user", "user_id"),
@@ -155,6 +154,7 @@ class PaymentIntent(Base):
             name="chk_payment_intent_status_valid",
         ),
         CheckConstraint("amount > 0", name="chk_payment_intent_amount_positive"),
+        {"schema": "payments"},
     )
 
     id = Column(Integer, primary_key=True, index=True)

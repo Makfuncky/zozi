@@ -1,5 +1,5 @@
-﻿import { expect, test, type Page, type Route } from "@playwright/test";
-import { API_BASE } from "../../src/api";
+import { expect, test, type Page, type Route } from "@playwright/test";
+import { API_BASE } from "../../../src/api";
 
 async function fulfillJson(route: Route, body: unknown, status = 200) {
   await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });

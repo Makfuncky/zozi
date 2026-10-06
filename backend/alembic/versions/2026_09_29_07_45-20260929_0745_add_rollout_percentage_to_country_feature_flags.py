@@ -14,6 +14,19 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
+
+def _is_offline(conn) -> bool:
+    if conn is None:
+        return True
+    try:
+        from sqlalchemy import inspect as sa_inspect
+        from sqlalchemy.exc import NoInspectionAvailable
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 revision: str = "20260929_0745"
 down_revision: Union[str, None] = "f88d0dc00ece"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -27,6 +40,9 @@ _SCHEMAS = (None, "country", "configuration")
 
 
 def _target_schema(bind) -> Union[str, None]:
+    offline = _is_offline(bind)
+    if offline:
+        return
     inspector = sa.inspect(bind)
     for schema in _SCHEMAS:
         if _TABLE in inspector.get_table_names(schema=schema):
@@ -39,6 +55,9 @@ def upgrade() -> None:
     schema = _target_schema(bind)
     if schema is None:
         # Table not present in this database - nothing to alter (additive no-op).
+        return
+    offline = _is_offline(bind)
+    if offline:
         return
     inspector = sa.inspect(bind)
     existing = {c["name"] for c in inspector.get_columns(_TABLE, schema=schema)}
@@ -54,6 +73,9 @@ def downgrade() -> None:
     bind = op.get_bind()
     schema = _target_schema(bind)
     if schema is None:
+        return
+    offline = _is_offline(bind)
+    if offline:
         return
     inspector = sa.inspect(bind)
     existing = {c["name"] for c in inspector.get_columns(_TABLE, schema=schema)}

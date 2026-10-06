@@ -38,11 +38,7 @@ def _is_non_placeholder_secret(secret: str, prefixes: tuple[str, ...]) -> bool:
 
 
 def resolve_stripe_secret_key() -> str:
-    return str(
-        os.getenv("STRIPE_SECRET_KEY")
-        or (stripe.api_key if stripe else "")
-        or ""
-    ).strip()
+    return str(os.getenv("STRIPE_SECRET_KEY") or "").strip()
 
 
 def resolve_stripe_webhook_secret() -> str:
@@ -52,7 +48,10 @@ def resolve_stripe_webhook_secret() -> str:
 def apply_stripe_runtime_key() -> str:
     resolved = resolve_stripe_secret_key()
     if stripe:
-        stripe.api_key = resolved
+        if resolved:
+            stripe.api_key = resolved
+        else:
+            stripe.api_key = None
     return resolved
 
 

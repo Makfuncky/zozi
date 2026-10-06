@@ -1,4 +1,4 @@
-﻿# ZOZI -- Production Readiness Checklist
+# ZOZI -- Production Readiness Checklist
 
 > **Purpose.** This is the single authoritative checklist for declaring ZOZI production-ready.
 > After each forensic audit pass, update the `Status` and `Last verified` columns in the tables below,
@@ -29,6 +29,8 @@
 | 8 | 2026-10-02 | `wave0_sample_remediation_and_reverification` | Fixed 3 real defects (1 line each) and re-verified with a reverted-state baseline. Pre-flight gates 4 FAIL → 2 FAIL: **test collection PASS** (4,728 tests, 0 errors) and **alembic heads PASS** (single head `20261001_0001`). Architecture suite now *executes* (was aborted at collection) exposing **50 failing law tests across 25 files** that were previously invisible. 0 crashed checks; 1,660 findings. |
 | 9 | 2026-10-02 | `http_layer_and_settings_contract_added` | Closed two coverage gaps the audit could not see: **no HTTP dimension existed** (nothing ever inspected a real response) and **no settings-contract check** (undefined `settings.*` reads only fail when that path executes). Registered checks 79 → 82. Live probe boots the app (378 s) and issues 12 real HTTP exchanges. 1,695 findings, 92 blockers. |
 | 10 | 2026-10-02 | `falsification_gate_added` | Added `zozi_verify.py`: every finding is adjudicated CONFIRMED / FALSE_POSITIVE / ALREADY_FIXED / WRONG_LOCATION / UNVERIFIABLE, and `zozi_compile.py` now gates on it — 63 findings dropped, only 235 independently-confirmed findings become fix steps, 1,390 demoted to verification tasks. Measured FP+wrong = 6.1%, P0 noise = 6.3%. `PLAN.md` §11 records the outstanding gate: `confirmed_pct` 13.9% must reach 60% before waves 2–3 are safe for autonomous execution. |
+| 11 | 2026-10-06 | `falsification_gate_repaired` (20261006T010459Z-3d5d44) | Audit-of-the-audit found the gate itself was wrong in one direction: a cited line past EOF was returned as `WRONG_LOCATION`, which deleted a real Law 59 finding (`LOGIC-041`) on the strength of a line number on a tree that is edited while it is audited. The verifier now re-locates the construct instead of refuting on drift. 1335 findings, 72 `completion_blocker=yes`, 1303 CONFIRMED, 0 FALSE_POSITIVE, 0 WRONG_LOCATION, 1322 compiled steps. |
+| 12 | 2026-10-06 | `falsification_gate_repaired` (20261006T014348Z-6f76c8) | Audit-of-the-audit found the gate itself was wrong in one direction: a cited line past EOF was returned as `WRONG_LOCATION`, which deleted a real Law 59 finding (`LOGIC-041`) on the strength of a line number on a tree that is edited while it is audited. The verifier now re-locates the construct instead of refuting on drift. 1335 findings, 72 `completion_blocker=yes`, 1314 CONFIRMED, 0 FALSE_POSITIVE, 0 WRONG_LOCATION, 1333 compiled steps. |
 
 ---
 
@@ -218,42 +220,49 @@ it restores the ability to measure it.)
 
 Update this section after each forensic audit pass. The goal is to make remaining work visible at a glance.
 
-| Section | Total | PASS | FAIL | DEFERRED | UNVERIFIABLE | Remaining |
-|---------|-------|------|------|----------|--------------|-----------|
-| Canonical Document Alignment | 6 | 3 | 2 | 0 | 1 | 0 |
-|Technology Stack| 27 | 17 | 4 | 0 | 6 | 0 |
-|Architecture| 24 | 5 | 14 | 0 | 5 | 0 |
-| Feature Completeness| 10 | 0 | 5 | 0 | 5 | 0 |
-|Backend Runtime| 13 | 0 | 7 | 0 | 6 | 0 |
-|Frontend Build & Runtime| 9 | 2 | 3 | 0 | 4 | 0 |
-|Mobile Build| 7 | 0 | 0 | 0 | 7 | 0 |
-|Tests -- Backend| 15 | 2 | 6 | 0 | 7 | 0 |
-|Security| 38 | 7 | 16 | 0 | 15 | 0 |
-|Database| 27 | 0 | 9 | 0 | 18 | 0 |
-|Frontend UI| 18 | 0 | 0 | 0 | 18 | 0 |
-|Frontend Workflows| 20 | 0 | 0 | 0 | 20 | 0 |
-|Browser Behavioral Tests| 5 | 0 | 4 | 0 | 1 | 0 |
-|Performance & Fast Loading| 15 | 1 | 5 | 0 | 9 | 0 |
-|Observability & Health| 17 | 0 | 6 | 0 | 11 | 0 |
-|Provider Resilience| 15 | 0 | 0 | 0 | 15 | 0 |
-|Operations| 19 | 0 | 1 | 0 | 18 | 0 |
-|Country Management| 15 | 0 | 1 | 0 | 14 | 0 |
-|Tax & Calculations| 14 | 0 | 2 | 0 | 12 | 0 |
-|Location / Geography| 8 | 0 | 0 | 0 | 8 | 0 |
-|Catalog Management| 18 | 0 | 0 | 0 | 18 | 0 |
-|Photo / Video / Media Management| 13 | 0 | 0 | 0 | 13 | 0 |
-|Supply Chain Security| 10 | 0 | 2 | 0 | 8 | 0 |
-| **Total** | **1764** | **96** | **764** | **691** | **213** | **90** |
+<!-- zozi-audit:begin dashboard -->
+| Dimension | Findings | P0 | Hard blockers | CONFIRMED | UNVERIFIABLE |
+|---|---|---|---|---|---|
+| 01_architectural | 178 | 0 | 1 | 176 | 2 |
+| 02_technological | 21 | 0 | 0 | 20 | 1 |
+| 03_logical | 306 | 42 | 42 | 303 | 2 |
+| 04_operational | 22 | 2 | 2 | 22 | 0 |
+| 05_wiring | 12 | 7 | 7 | 11 | 1 |
+| 06_database | 9 | 0 | 0 | 8 | 1 |
+| 07_tables_fields | 266 | 1 | 1 | 265 | 1 |
+| 08_providers | 8 | 3 | 3 | 8 | 0 |
+| 09_laws | 24 | 6 | 0 | 24 | 0 |
+| 10_migrations | 11 | 1 | 1 | 11 | 0 |
+| 11_environmental | 16 | 12 | 0 | 16 | 0 |
+| 12_tests | 36 | 0 | 0 | 36 | 0 |
+| 13_dev_to_prod | 8 | 0 | 0 | 6 | 2 |
+| 14_frontend_web | 216 | 1 | 0 | 212 | 4 |
+| 15_frontend_mobile | 1 | 0 | 0 | 0 | 1 |
+| 16_features | 4 | 0 | 0 | 3 | 1 |
+| 17_code_file_management | 94 | 0 | 0 | 94 | 0 |
+| 18_security | 11 | 8 | 8 | 11 | 0 |
+| 19_performance | 3 | 0 | 0 | 2 | 1 |
+| 20_observability_resilience | 5 | 0 | 0 | 5 | 0 |
+| 21_contradictions | 5 | 4 | 4 | 5 | 0 |
+| 22_anti_patterns | 5 | 0 | 2 | 5 | 0 |
+| 23_code_intent | 3 | 0 | 0 | 3 | 0 |
+| 24_browser_behavior | 1 | 0 | 0 | 0 | 1 |
+| 27_project_completion_blockers | 4 | 1 | 1 | 4 | 0 |
+| 28_supply_chain_security | 7 | 0 | 0 | 7 | 0 |
+| 29_law_coverage | 45 | 0 | 0 | 45 | 0 |
+| 30_declared_laws | 14 | 0 | 0 | 12 | 2 |
+| **Total** | **1335** | **88** | **72** | **1314** | **20** |
 
-> **Run 6 note on this table.** The per-section PASS/FAIL/UNVERIFIABLE split above is still
-> carried from Run 5 and was **not** recomputed in Run 6; only the **Total** row was
-> refreshed from `_zozi_audit/zozi_forensic_audit.md`. The four columns map to
-> P0 / P1 / P2 / P3, and `Remaining` is `completion_blocker = yes`. Recomputing the
-> per-section split is outstanding work for the next pass.
+> **How to read this table.** `CONFIRMED` is the only column that may drive a code change: it means an instrument independent of the detector re-derived the claim. `UNVERIFIABLE` is not a soft pass -- it means no instrument could settle the claim either way, so the finding is parked as a verification task. `CONFIRMED` + `UNVERIFIABLE` is 1334 of 1335 findings; the other 1 were refuted and are listed in the Rejected appendix of `_zozi_audit/zozi_remediation_plan.md`.
+
+**Independently confirmed: 1314/1335 (98.4%)** · **Hard blockers: 72** · **Adjudicated FP + wrong-location: 0.0%**
 
 **Production Ready:** NO
 
-**Date of last full assessment:** 2026-10-02
+**Date of last full assessment:** 2026-10-06
+
+> The prose below this table narrates Run 6 and is left as written; the table above is the current run. Only the fenced blocks are generated.
+<!-- zozi-audit:end dashboard -->
 
 **Run 6 forensic audit (machine, evidence-based).** The audit suite at `_zozi_audit/` was
 rebuilt to the point where it runs end-to-end in `--full` mode (0 crashed checks across 59
@@ -370,7 +379,9 @@ collection is broken.
 These are findings marked `project_completion_blocker = yes` in dimension files.
 They MUST be resolved before production exposure.
 
-**Total completion blockers: 139** (134 yes + 5 partial blockers from law/provider dimensions)
+<!-- zozi-audit:begin blocker-count -->
+**Total completion blockers: 72** (72 independently CONFIRMED, 0 UNVERIFIABLE; `completion_blocker = yes`, adjudicated per row in the register below)
+<!-- zozi-audit:end blocker-count -->
 
 Detailed blocker registers are maintained in:
 - `_audit/dimensions/27_project_completion_blockers.md`
@@ -930,25 +941,30 @@ These three documents must be present, current, and internally consistent. If an
 > **Rule:** Production is declared ready only when every check above is PASS or DEFERRED (with documented acceptance).
 > A single FAIL blocks production exposure until resolved or formally accepted via waiver.
 
+<!-- zozi-audit:begin gate -->
 | Gate | Requirement | Result |
-|------|-------------|--------|
-| All P0 security findings resolved | Zero open CRITICAL findings | FAIL — SEC-AUTH-001, SEC-ENC-001, SEC-ENC-002, SEC-DEVBIND-001, SEC-WEB-002, SEC-WEB-003, SEC-WEB-004, SEC-WEB-005, SEC-WEB-006 |
-| Frontend builds clean | next build exits 0 | FAIL — PERF-007: missing Timer export from src/lib/icons.ts |
-| Backend boots with full route set | App boots to ready state | FAIL — 15 module routers fail to import with ImportError get_current_user from infrastructure.utils.dependencies; 0 routes mounted |
-| Browser behavioral tests pass | All Playwright specs green | FAIL — BROWSER-001: 23 failed tests in last run |
-| Test suite collection clean | pytest exits 0 with zero collection errors | FAIL — 4509 collected, 17 collection errors (ImportError get_current_user, ModuleNotFoundError domains.finance.services.payments, fastapi_limiter_valkey Limiter) |
-| All 28 dimensions audited | Dimension files present and current | PASS |
-| Single indicator file updated | This checklist is current | PASS |
-| Waivers documented | Any DEFERRED item has signed waiver | UNVERIFIABLE |
-| Float money math eliminated | No float used for monetary values in cart, orders, tax | FAIL — FEAT-001, FEAT-002, FEAT-003, FEAT-009, FEAT-010 |
-| Payment credentials encrypted | All payment gateway credentials encrypted at rest | FAIL — FEAT-005, FEAT-022 |
-| Inventory claim/release wired | Inventory claimed on confirm, released on cancel/refund | FAIL — FEAT-004, FEAT-025 |
+|---|---|---|
+| Every dimension audited | One dimension log per declared dimension | PASS — 30/30 declared dimensions have a log under `logs/`; 28 carry findings, 2 are clean (25_ai_drift, 26_code_alignment) |
+| Every finding adjudicated | `verdicts.jsonl` covers the findings | PASS — 1335/1335 adjudicated |
+| Falsification gate is clean | Refuted findings are the exception | PASS — FP + wrong-location 0.0%, P0 noise 0.0%, 9 probe/re-check disagreements recorded |
+| Money maths uses Decimal | No float for monetary values | FAIL — 32 confirmed blocker(s) naming float-for-money assignments/annotations; first: `1 float-for-money signal(s); first: `CATEGORY_TAX_PROFILES: dict[str, dict[str, float \| N...` |
+| Event spine is wired | Subscribers implement their handlers | FAIL — 1 confirmed blocker(s) naming event handlers that log and return |
+| Payment webhooks are verified | Signature check on every adapter | FAIL — 3 confirmed blocker(s) naming webhook adapters without signature verification; first: `payment adapter references webhooks but shows no signature verification` |
+| RLS context is consistent | Middleware sets what policies read | FAIL — 2 confirmed blocker(s) naming policies read `app.current_country_code`; the interceptor sets ContextVars only; first: `canonical `set_rls_context()` sets ContextVars only; no `SET LOCAL` executed` |
+| Migrations are linear | One Alembic head | FAIL — 1 confirmed blocker(s) naming divergent Alembic heads |
+| Schema matches the ORM | Migrations map to declared models | FAIL — 1 confirmed blocker(s) naming model/column and relationship mismatches |
+| Code matches the architecture docs | 5 modules / 15 domains | FAIL — 4 confirmed blocker(s) naming doc/code contradictions; first: `_most_imp_docx/ARCHITECTURE_STACK.md (Law 13): fixed 5 modules \| backend/modules/finance/...` |
+| No dangling imports | Every imported symbol is defined | FAIL — 1 confirmed blocker(s) naming imports of names nothing defines |
+| Runtime behaviour proven | Live browser/DB/LLM evidence | UNVERIFIABLE — the run used `--no-tools`; no backend, Valkey, database or built frontend was available, so the runtime dimensions report no evidence |
+| Waivers documented | Every DEFERRED item signed off | UNVERIFIABLE — no waiver register exists in the repository |
+| Every blocker is falsifiable | Each blocker has an independent probe | PASS — every blocker carries a probe |
 
 **Production Ready:** NO
 
-**Overall Production Readiness: 10.1% (37 PASS / 366 total checks)**
+**Overall Production Readiness: 4 of 14 gates PASS — NOT PRODUCTION READY**
 
-**Assessment Date:** 2026-10-01
+**Assessment Date:** 2026-10-06
+<!-- zozi-audit:end gate -->
 
 **Next Review Date:** After all FAIL / UNVERIFIABLE items are retested
 
@@ -959,37 +975,82 @@ These three documents must be present, current, and internally consistent. If an
 > These are findings marked `project_completion_blocker = yes` in dimension files.
 > They MUST be resolved before production exposure.
 
-| ID | Finding | Dimension | File:Line | Status |
-|----|---------|-----------|-----------|--------|
-| PB-01 | python-jose in auth code (CVE-2025-61152, CVE-2026-85394) | 21_contradictions / 18_security | backend/infrastructure/security/auth.py:14; backend/providers/auth/jwt.py:9; backend/middleware/authentication_middleware.py:18 | FAIL |
-| PB-02 | requests (sync HTTP) used in 8 production files | 21_contradictions | backend/domains/accounts/services/auth/auth_service.py:33,958; backend/providers/auth/oauth.py:17; backend/providers/auth/apple.py:21 | FAIL |
-| PB-03 | TOTP secrets stored in plaintext (SEC-ENC-001) | 18_security | backend/domains/accounts/models/mfa_factor.py:45 | FAIL |
-| PB-04 | Payment gateway credentials plaintext (SEC-ENC-002) | 18_security | backend/domains/finance/models/payments.py:94-126; backend/domains/finance/services/payments/payment_engine.py:3188-3196 | FAIL |
-| PB-05 | Device binding not verified (SEC-DEVBIND-001) | 18_security | backend/middleware/device_binding_middleware.py:13-28 | FAIL |
-| PB-06 | Tap webhook fail-open (SEC-WEB-002) | 18_security | backend/domains/finance/services/payments/gateway_tap.py:971-1003 | FAIL |
-| PB-07 | PayPal webhook fail-open (SEC-WEB-003) | 18_security | backend/domains/finance/services/payments/gateway_paypal.py:388-490 | FAIL |
-| PB-08 | PayTabs callback fail-open (SEC-WEB-004) | 18_security | backend/domains/finance/services/payments/gateway_tap.py:1083-1193 | FAIL |
-| PB-09 | Thawani webhook fail-open (SEC-WEB-005) | 18_security | backend/domains/finance/services/payments/gateway_tap.py:1367-1423 | FAIL |
-| PB-10 | Generic gateway webhook fail-open (SEC-WEB-006) | 18_security | backend/domains/finance/services/payments/payment_orchestrator.py:793-833 | FAIL |
-| PB-11 | Prometheus metrics duplicate on import (BOOT-009) | 00_boot_smoke_test | backend/middleware/logging_middleware.py:17 | FAIL |
-| PB-12 | Frontend build broken (BOOT-003, BOOT-007, PERF-007) | 00_boot_smoke_test / 19_performance | frontend/web_app/src/app/admin/analytics/page.tsx:12 | FAIL |
-| PB-13 | Alembic script_location missing (BOOT-005, PF-003) | 00_boot_smoke_test / 27_project_completion_blockers | backend/alembic.ini:1 | FAIL |
-| PB-14 | POSTGRES_PASSWORD empty / missing (BOOT-010, PF-004) | 00_boot_smoke_test / 27_project_completion_blockers | .env:1 | FAIL |
-| PB-15 | pnpm-lock.yaml absent (PF-005) | 27_project_completion_blockers | frontend/web_app | FAIL |
-| PB-16 | tests/architecture/ directory missing (PF-006) | 27_project_completion_blockers | tests/architecture/ | FAIL |
-| PB-17 | Production cache is no-op shim (PERF-005) | 19_performance | backend/infrastructure/utils/cache.py:19-70 | FAIL |
-| PB-18 | Browser tests last run failed (BROWSER-001) | 24_browser_behavior | _browser_test/reports/artifacts/.last-run.json:2 | FAIL |
-| PB-19 | Float arithmetic in cart totals (FEAT-001) | 16_features | backend/domains/orders/services/orders_service.py:142 | FAIL |
-| PB-20 | Float rounding in order serialization (FEAT-002) | 16_features | backend/domains/orders/services/orders_service.py:309 | FAIL |
-| PB-21 | Float serialization of product prices (FEAT-003) | 16_features | backend/domains/catalog/services/products/products_service.py:132 | FAIL |
-| PB-22 | Missing inventory claim/release on order transitions (FEAT-004) | 16_features | backend/domains/orders/services/core/order_engine.py | FAIL |
-| PB-23 | Payment gateway credentials plaintext (FEAT-005) | 16_features | backend/domains/finance/models/payments.py:34 | FAIL |
-| PB-24 | Float math in cart totals endpoint (FEAT-009) | 16_features | backend/modules/customer/routers/orders.py:142 | FAIL |
-| PB-25 | Float input to tax calculation (FEAT-010) | 16_features | backend/modules/customer/routers/orders.py:175 | FAIL |
-| PB-26 | Plaintext payment gateway credentials JSON (FEAT-022) | 16_features | backend/domains/finance/models/payments.py:88 | FAIL |
-| PB-27 | Missing inventory claim/release in order engine (FEAT-025) | 16_features | backend/domains/orders/services/orders_service.py:259 | FAIL |
-| PB-28 | Float in tax calculation via ledger (FEAT-040) | 16_features | backend/domains/finance/services/ledger/general_ledger.py | FAIL |
-
+<!-- zozi-audit:begin blocker-register -->
+| ID | Finding | Dimension | File:Line | Laws | Adjudication |
+|---|---|---|---|---|---|
+| BLOCK-003 | CHAIN-005 (Admin ledger posting and reconciliation) is PARTIAL: 2/2 steps located; events 0/1; tests=yes | 27_project_completion_blockers | backend/domains/finance/ | — | CONFIRMED |
+| CONTRAD-001 | _most_imp_docx/ARCHITECTURE_STACK.md (Law 13): fixed 5 modules \| backend/modules/finance/: a 6th module directory exists | 21_contradictions | backend/modules/finance/ | — | CONFIRMED |
+| CONTRAD-002 | _most_imp_docx/ARCHITECTURE_STACK.md (Law 12): fixed 15 domains \| backend/domains/payments/: domain package `payments` exists | 21_contradictions | backend/domains/payments/ | — | CONFIRMED |
+| CONTRAD-029 | Law 13 (5 modules): no standalone hr module \| frontend/web_app/next.config.ts: /hr/* rewrite exists | 21_contradictions | frontend/web_app/next.config.ts | — | CONFIRMED |
+| CONTRAD-034 | one router per module: every router file registered \| backend/modules/employee/routers: hr.py file and hr/ package coexist | 21_contradictions | backend/modules/employee/routers | — | CONFIRMED |
+| DB-schema-drift | migrations reference schemas no ORM model declares: customer(5), commerce(1) | 07_tables_fields | backend/alembic/versions | — | CONFIRMED |
+| LOGIC-117 | 1 float-for-money signal(s); first: `CATEGORY_TAX_PROFILES: dict[str, dict[str, float \| None]]` | 03_logical | backend/domains/country/services/tax/country_tax_service.py:68 | 19 | CONFIRMED |
+| LOGIC-122 | 4 float-for-money signal(s); first: `amount: float` | 03_logical | backend/domains/finance/schemas/finance_schemas.py:11 | 19 | CONFIRMED |
+| LOGIC-123 | 18 float-for-money signal(s); first: `"total_amount": float(order.total or 0),` | 03_logical | backend/domains/finance/services/country/supplier_finance_service.py:160 | 19 | CONFIRMED |
+| LOGIC-124 | 1 float-for-money signal(s); first: `"unit_cost_fx": float(pl.unit_price),` | 03_logical | backend/domains/finance/services/data_import_service.py:124 | 19 | CONFIRMED |
+| LOGIC-125 | 2 float-for-money signal(s); first: `amount: float` | 03_logical | backend/domains/finance/services/finance_service.py:66 | 19 | CONFIRMED |
+| LOGIC-126 | 1 float-for-money signal(s); first: `amount: float` | 03_logical | backend/domains/finance/services/ledger/accounting_controller.py:24 | 19 | CONFIRMED |
+| LOGIC-127 | 73 float-for-money signal(s); first: `amount: float` | 03_logical | backend/domains/finance/services/ledger/general_ledger.py:5179 | 19 | CONFIRMED |
+| LOGIC-128 | 1 float-for-money signal(s); first: `"display_amount": float(converted_total),` | 03_logical | backend/domains/finance/services/payments/gateway_paypal.py:189 | 19 | CONFIRMED |
+| LOGIC-129 | 1 float-for-money signal(s); first: `"display_amount": float(converted_total),` | 03_logical | backend/domains/finance/services/payments/gateway_stripe.py:167 | 19 | CONFIRMED |
+| LOGIC-130 | 7 float-for-money signal(s); first: `"amount": float(converted_total),` | 03_logical | backend/domains/finance/services/payments/gateway_tap.py:131 | 19 | CONFIRMED |
+| LOGIC-131 | 3 float-for-money signal(s); first: `"amount": float(p.amount),` | 03_logical | backend/domains/finance/services/payments/payment_engine.py:4700 | 19 | CONFIRMED |
+| LOGIC-132 | 5 float-for-money signal(s); first: `"gateway_amount": float(gateway_amount),` | 03_logical | backend/domains/finance/services/payments/payment_orchestrator.py:1392 | 19 | CONFIRMED |
+| LOGIC-133 | 36 float-for-money signal(s); first: `amount: Decimal \| float` | 03_logical | backend/domains/finance/services/payouts/payout_batch_service.py:1779 | 19 | CONFIRMED |
+| LOGIC-134 | 4 float-for-money signal(s); first: `line_total = float(line.get("quantity_ordered", 0)) * float(line.get("unit_price", 0))` | 03_logical | backend/domains/finance/services/trading_service.py:134 | 19 | CONFIRMED |
+| LOGIC-135 | 4 float-for-money signal(s); first: `shipping_amount = float(getattr(allocation, "shipping_amount", 0) or 0)` | 03_logical | backend/domains/finance/services/treasury/cash_management_service.py:269 | 19 | CONFIRMED |
+| LOGIC-163 | 3 float-for-money signal(s); first: `subtotal = float(sum(i["price"] * i["quantity"] for i in normalized))` | 03_logical | backend/domains/orders/services/cart/cart_service__orders.py:166 | 19 | CONFIRMED |
+| LOGIC-164 | 7 float-for-money signal(s); first: `subtotal: float` | 03_logical | backend/domains/orders/services/cart/service.py:50 | 19 | CONFIRMED |
+| LOGIC-165 | 30 float-for-money signal(s); first: `shipping_amount = float(getattr(order, "shipping_amount", 0) or 0)` | 03_logical | backend/domains/orders/services/core/logistics.py:1892 | 19 | CONFIRMED |
+| LOGIC-166 | 3 float-for-money signal(s); first: `total=float(total_amount),` | 03_logical | backend/domains/orders/services/core/order_engine.py:906 | 19 | CONFIRMED |
+| LOGIC-167 | 3 float-for-money signal(s); first: `min_amount: Optional[float]` | 03_logical | backend/domains/orders/services/orders_service.py:213 | 19 | CONFIRMED |
+| LOGIC-168 | 1 float-for-money signal(s); first: `total = round(after_discount + shipping + vat, 2)` | 03_logical | backend/domains/orders/services/tracking/service.py:348 | 19 | CONFIRMED |
+| LOGIC-185 | 3 float-for-money signal(s); first: `unit_price = float(item.price or 0)` | 03_logical | backend/domains/suppliers/services/orders/supplier_orders.py:337 | 19 | CONFIRMED |
+| LOGIC-186 | 6 float-for-money signal(s); first: `subtotal = float(sum((item.price or 0) * item.quantity for item in items))` | 03_logical | backend/domains/suppliers/services/orders/supplier_orders_service.py:80 | 19 | CONFIRMED |
+| LOGIC-191 | 5 float-for-money signal(s); first: `amount: float` | 03_logical | backend/domains/suppliers/services/profile/supplier_payouts_service.py:73 | 19 | CONFIRMED |
+| LOGIC-202 | 2 float-for-money signal(s); first: `price: float` | 03_logical | backend/modules/customer/routers/orders.py:124 | 19 | CONFIRMED |
+| LOGIC-207 | 6 float-for-money signal(s); first: `amount: float` | 03_logical | backend/modules/employee/routers/finance.py:466 | 19 | CONFIRMED |
+| LOGIC-210 | 5 float-for-money signal(s); first: `unit_price: float` | 03_logical | backend/modules/employee/routers/orders.py:53 | 19 | CONFIRMED |
+| LOGIC-215 | 2 float-for-money signal(s); first: `min_payout_amount: float` | 03_logical | backend/modules/supplier/routers/finance.py:45 | 19 | CONFIRMED |
+| LOGIC-219 | 1 float-for-money signal(s); first: `entry["amount"] = float(match.group(1).replace(",", ""))` | 03_logical | backend/providers/ai/finance_ai.py:87 | 19 | CONFIRMED |
+| LOGIC-229 | 2 float-for-money signal(s); first: `amount: float` | 03_logical | backend/providers/payments/base.py:99 | 19 | CONFIRMED |
+| LOGIC-230 | 2 float-for-money signal(s); first: `amount: Optional[float]` | 03_logical | backend/providers/payments/base_models.py:31 | 19 | CONFIRMED |
+| LOGIC-231 | 2 float-for-money signal(s); first: `gross_amount: Optional[float]` | 03_logical | backend/providers/payments/webhook_models.py:42 | 19 | CONFIRMED |
+| LOGIC-297 | idempotency_key: Optional[str] = None, | 03_logical | backend/domains/customers/services/coins/zozi_coins_service.py:171 | 239 | CONFIRMED |
+| LOGIC-298 | idempotency_key: Optional unique key for deduplication. | 03_logical | backend/domains/customers/services/coins/zozi_coins_service.py:184 | 239 | CONFIRMED |
+| LOGIC-299 | idempotency_key: Optional[str] = None | 03_logical | backend/domains/finance/services/payments/payment_engine.py:367 | 239 | CONFIRMED |
+| LOGIC-300 | idempotency_key: Optional[str] = None, | 03_logical | backend/domains/promotions/services/coupons/coupon_service.py:538 | 239 | CONFIRMED |
+| LOGIC-301 | idempotency_key: Optional unique key for deduplication (24h TTL). | 03_logical | backend/domains/promotions/services/coupons/coupon_service.py:554 | 239 | CONFIRMED |
+| LOGIC-302 | def _idempotency_key(idempotency_key: Optional[str] = Header(None, alias=_IDEMPOTENCY_KEY_HEADER)) -> Optional[str]: | 03_logical | backend/domains/security/services/detection/public_security_detection_service.py:25 | 239 | CONFIRMED |
+| LOGIC-303 | def remove_from_blacklist(entry_id: int, _: User=Depends(require_admin), db: Session=Depends(get_db), idempotency_key: Optional[str] = Depends(_idempo... | 03_logical | backend/domains/security/services/detection/public_security_detection_service.py:83 | 239 | CONFIRMED |
+| LOGIC-304 | def create_rule(payload: FraudRuleCreate, _: User=Depends(require_admin), db: Session=Depends(get_db), idempotency_key: Optional[str] = Depends(_idemp... | 03_logical | backend/domains/security/services/detection/public_security_detection_service.py:104 | 239 | CONFIRMED |
+| LOGIC-305 | def assign_review(review_id: int, assignee_id: int, _: User=Depends(require_admin), db: Session=Depends(get_db), idempotency_key: Optional[str] = Depe... | 03_logical | backend/domains/security/services/detection/public_security_detection_service.py:127 | 239 | CONFIRMED |
+| LOGIC-306 | def resolve_review(review_id: int, payload: ManualReviewResolve, current_user: User=Depends(require_admin), db: Session=Depends(get_db), idempotency_k... | 03_logical | backend/domains/security/services/detection/public_security_detection_service.py:144 | 239 | CONFIRMED |
+| MIG-001 | 4 divergent migration heads: 20261002_0001, 20261003_0001, 20261003_0009, 20261004_0021_fix_products_fk_and_defaults | 10_migrations | backend/alembic/versions/ | 49 | CONFIRMED |
+| PROV-001 | payment adapter references webhooks but shows no signature verification | 08_providers | backend/providers/payments/config.py:1 | 313 | CONFIRMED |
+| PROV-002 | payment adapter references webhooks but shows no signature verification | 08_providers | backend/providers/payments/registry.py:1 | 313 | CONFIRMED |
+| PROV-003 | payment adapter references webhooks but shows no signature verification | 08_providers | backend/providers/payments/webhook_models.py:1 | 313 | CONFIRMED |
+| SEC-005 | 26 caller-influenced outbound URL call(s) without safe-URL guard; first: `response = httpx.get(url, headers={"Authorization": f"Bearer {secret_key}",... | 18_security | backend/domains/finance/services/payments/payment_engine.py:3326 | — | CONFIRMED |
+| SEC-006 | `dangerouslySetInnerHTML={{` executes or injects untrusted code in the browser bundle | 18_security | frontend/web_app/src/app/layout.tsx:54 | 310 | CONFIRMED |
+| SEC-007 | `dangerouslySetInnerHTML={{` executes or injects untrusted code in the browser bundle | 18_security | frontend/web_app/src/app/layout.tsx:60 | 310 | CONFIRMED |
+| SEC-008 | `dangerouslySetInnerHTML={{` executes or injects untrusted code in the browser bundle | 18_security | frontend/web_app/src/app/products/[id]/page.tsx:415 | 310 | CONFIRMED |
+| SEC-009 | `<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formData.html_content) }} />` executes or injects untrusted code in the browser bundle | 18_security | frontend/web_app/src/components/admin/CreateCampaignForm.tsx:267 | 310 | CONFIRMED |
+| SEC-010 | `<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(template.content) }} />` executes or injects untrusted code in the browser bundle | 18_security | frontend/web_app/src/components/admin/EmailTemplateManager.tsx:259 | 310 | CONFIRMED |
+| SEC-011 | `<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formData.content) }} />` executes or injects untrusted code in the browser bundle | 18_security | frontend/web_app/src/components/admin/EmailTemplateManager.tsx:463 | 310 | CONFIRMED |
+| SEC-cors-preflight-static | the security middleware handles OPTIONS by calling call_next() and then decorating the result, so the router has already answered the preflight | 18_security | backend/middleware/security_headers.py:78 | — | CONFIRMED |
+| WF-dangling-import | `backend/jobs/reconciliation_cron.py` imports `domains.finance.services.treasury.cash_management_service.run_scheduled_reconciliation_cycle`, which is... | 04_operational | backend/jobs/reconciliation_cron.py | — | CONFIRMED |
+| WF-stub-subscribers | 44 of 79 event handlers (44/79) log and return without performing the write they imply | 04_operational | backend/domains | — | CONFIRMED |
+| WIRE-002 | canonical `set_rls_context()` sets ContextVars only; no `SET LOCAL` executed | 05_wiring | backend/infrastructure/database/rls_interceptor.py:128 | 5, 227 | CONFIRMED |
+| WIRE-003 | RLS mismatch: policies read `app.current_country_code` while middleware sets `app.country_scope` | 05_wiring | backend/middleware/country_context.py | 5, 227 | CONFIRMED |
+| WIRE-005 | stub subscriber module: 3 handlers, 3 `# Future:` markers | 05_wiring | backend/domains/finance/subscribers.py:1 | 3 | CONFIRMED |
+| WIRE-006 | stub subscriber module: 5 handlers, 5 `# Future:` markers | 05_wiring | backend/domains/logistics/subscribers.py:1 | 3 | CONFIRMED |
+| WIRE-007 | stub subscriber module: 5 handlers, 5 `# Future:` markers | 05_wiring | backend/domains/orders/subscribers.py:1 | 3 | CONFIRMED |
+| WIRE-008 | stub subscriber module: 4 handlers, 4 `# Future:` markers | 05_wiring | backend/domains/payments/subscribers.py:1 | 3 | CONFIRMED |
+| WIRE-009 | 2 endpoint(s) across 2 router(s) have no visible auth/gate dependency (sample: backend/modules/employee/routers/hr.py:682 list_employees_public) | 05_wiring | backend/modules/employee/routers/hr.py:682 | 87, 88 | CONFIRMED |
+| AP-002 | Unimplemented placeholder: 257 occurrence(s); sample `backend/domains/accounts/services/identity/identity_admin_service.py:21` | 22_anti_patterns | backend/domains/accounts/services/identity/identity_admin_service.py:21 | — | CONFIRMED |
+| AP-003 | TODO-only implementation: 151 occurrence(s); sample `backend/domains/governance/services/admin/admin_service.py:1` | 22_anti_patterns | backend/domains/governance/services/admin/admin_service.py:1 | — | CONFIRMED |
+| ARCH-001 | top-level module `finance` exists | 01_architectural | backend/modules/finance:1 | 13 | CONFIRMED |
+<!-- zozi-audit:end blocker-register -->
 > **Note:** This table must be updated after each audit pass. Remove rows only when the finding is resolved and verified.
 
 ---
@@ -1005,10 +1066,13 @@ These three documents must be present, current, and internally consistent. If an
 | DevOps / SRE | | | | Pending |
 | Product Owner | | | | Pending |
 
-**Assessment Conducted By:** Kilo (Automated Forensic Auditor) + Live Verification Run 3 + Forensic Audit Run 5
-**Assessment Date:** 2026-10-01
-**Production Readiness: NOT PRODUCTION READY — 495 findings (55 P0, 154 P1, 233 P2, 22 P3), 139 completion blockers, 14 dimensions FAIL, launch gate 1 pass / 14 fail / 3 unverifiable**
+<!-- zozi-audit:begin sign-off -->
+**Assessment Conducted By:** Automated forensic audit (`_zozi_audit/`) — `zozi_audit.py` → `zozi_verify.py` → `zozi_compile.py`, plus a hand audit of the audit's own falsification gate.
+**Assessment Date:** 2026-10-06
+**Run:** `20261006T014348Z-6f76c8` @ `3e0d1d81`, 157 dirty paths, 3823 files.
+**Production Readiness: NOT PRODUCTION READY — 1335 findings (88 P0), 72 hard completion blockers of which 72 are independently CONFIRMED, 1333 compiled plan steps.**
 **Next Review Date:** After all FAIL / UNVERIFIABLE items are retested
+<!-- zozi-audit:end sign-off -->
 
 ---
 
@@ -1016,32 +1080,35 @@ These three documents must be present, current, and internally consistent. If an
 
 ### Appendix A · Dimension-to-Check Mapping
 
-| Section | Dimension File | Dimension Name |
-|---------|----------------|----------------|
-| Canonical Document Alignment | 01_EXECUTIVE_SUMMARY.md | Executive Summary |
-| Technology Stack | 18_security.md, 21_contradictions.md | Security, Contradictions |
-| Architecture | 21_contradictions.md, 09_ANTI_PATTERNS.md | Contradictions, Anti-Patterns |
-| Feature Completeness | 08_FEATURE_HEALTH.md | Feature Health |
-| Backend Runtime | 11_PRODUCTION_READINESS.md | Production Readiness |
-| Frontend Build & Runtime | 11_PRODUCTION_READINESS.md, 21_contradictions.md | Production Readiness, Contradictions |
-| Mobile Build | 15_frontend_mobile.md | Frontend Mobile |
-| Tests -- Backend | 12_tests.md, 11_PRODUCTION_READINESS.md | Tests, Production Readiness |
-| Security | 18_security.md | Security |
-| Database | 21_contradictions.md, 11_PRODUCTION_READINESS.md | Contradictions, Production Readiness |
-| Frontend UI | 24_browser_behavior.md | Browser Behavior |
-| Frontend Workflows | 24_browser_behavior.md | Browser Behavior |
-| Browser Behavioral Tests | 24_browser_behavior.md | Browser Behavior |
-| Performance & Fast Loading | 19_performance.md, 11_PRODUCTION_READINESS.md | Performance, Production Readiness |
-| Observability & Health | 11_PRODUCTION_READINESS.md, 20_observability_resilience.md | Production Readiness, Observability |
-| Provider Resilience | 11_PRODUCTION_READINESS.md, 08_providers.md | Production Readiness, Providers |
-| Operations | 11_PRODUCTION_READINESS.md, 10_migrations.md | Production Readiness, Migrations |
-| Country Management | 14_country_management.md | Country Management |
-| Tax & Calculations | 14_country_management.md | Country Management |
-| Location / Geography | 14_country_management.md | Country Management |
-| Catalog Management | 08_FEATURE_HEALTH.md | Feature Health |
-| Photo / Video / Media Management | 17_photo_video_media_management.md | Photo/Video/Media Management |
-| Supply Chain Security | 28_supply_chain_security.md | Supply Chain Security |
-
+<!-- zozi-audit:begin appendix-a -->
+| Section | Dimension log | Dimension name |
+|---|---|---|
+| Canonical Document Alignment | `logs/21_contradictions.jsonl`, `logs/30_declared_laws.jsonl` | Contradictions, Declared Laws |
+| Technology Stack | `logs/02_technological.jsonl` | Technological |
+| Architecture | `logs/01_architectural.jsonl`, `logs/21_contradictions.jsonl` | Architectural, Contradictions |
+| Feature Completeness | `logs/16_features.jsonl` | Features |
+| Backend Runtime | `logs/04_operational.jsonl`, `logs/05_wiring.jsonl` | Operational, Wiring |
+| Frontend Build & Runtime | `logs/14_frontend_web.jsonl` | Frontend Web |
+| Mobile Build | `logs/15_frontend_mobile.jsonl` | Frontend Mobile |
+| Tests -- Backend | `logs/12_tests.jsonl` | Tests |
+| Security | `logs/18_security.jsonl` | Security |
+| Database | `logs/06_database.jsonl`, `logs/07_tables_fields.jsonl`, `logs/10_migrations.jsonl` | Database, Tables & Fields, Migrations |
+| Frontend UI | `logs/14_frontend_web.jsonl` | Frontend Web |
+| Frontend Workflows | `logs/14_frontend_web.jsonl` | Frontend Web |
+| Browser Behavioral Tests | `logs/24_browser_behavior.jsonl` | Browser Behavior |
+| Performance & Fast Loading | `logs/19_performance.jsonl` | Performance |
+| Observability & Health | `logs/20_observability_resilience.jsonl` | Observability & Resilience |
+| Provider Resilience | `logs/08_providers.jsonl` | Providers |
+| Operations | `logs/13_dev_to_prod.jsonl` | Dev-to-Prod |
+| Country Management | `logs/11_environmental.jsonl` | Environmental |
+| Tax & Calculations | `logs/11_environmental.jsonl` | Environmental |
+| Location / Geography | `logs/11_environmental.jsonl` | Environmental |
+| Catalog Management | `logs/03_logical.jsonl` | Logical |
+| Photo / Video / Media Management | `logs/17_code_file_management.jsonl` | Code & File Management |
+| Supply Chain Security | `logs/28_supply_chain_security.jsonl` | Supply Chain Security |
+| Completion Blockers | `logs/27_project_completion_blockers.jsonl` | Project Completion Blockers |
+| Law coverage | `logs/29_law_coverage.jsonl`, `logs/09_laws.jsonl` | Law Coverage, Laws |
+<!-- zozi-audit:end appendix-a -->
 ### Appendix B · How to Update This Document After Each Audit Pass
 
 1. Open this file in an editor.

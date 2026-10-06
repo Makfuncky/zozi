@@ -2,8 +2,31 @@
   "name": "zozi-browser-test",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "description": "Playwright E2E browser test suite for the ZOZI multi-module commerce platform",
+  "scripts": {
+    "scan": "node scripts/preTestScan.mjs",
+    "preflight": "playwright test tests/preflight.spec.ts",
+    "test": "playwright test",
+    "test:list": "playwright test --list",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:auth": "playwright test tests/auth",
+    "test:admin": "playwright test tests/modules/admin",
+    "test:customer": "playwright test tests/modules/customer",
+    "test:supplier": "playwright test tests/modules/supplier",
+    "test:logistics": "playwright test tests/modules/logistics",
+    "test:employee": "playwright test tests/modules/employee",
+    "test:journeys": "playwright test tests/journeys",
+    "test:routes": "playwright test tests/00-route-walk.spec.ts",
+    "test:cross-cutting": "playwright test tests/cross-cutting",
+    "gallery": "node scripts/build-evidence-index.mjs",
+    "report": "playwright show-report reports/html",
+    "typecheck": "tsc --noEmit",
+    "postinstall:browsers": "playwright install chromium"
+  },
   "devDependencies": {
-    "@types/node": "^26.6.4"
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.6.4",
+    "typescript": "^5.9.3"
   }
 }

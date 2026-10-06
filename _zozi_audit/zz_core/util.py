@@ -38,11 +38,19 @@ def is_generated(path: Path) -> bool:
 
 
 def read_text(path: Path, max_bytes: int = 2_000_000) -> tuple[str, bool]:
-    """Tolerant UTF-8/UTF-16 read, returns (text, truncated)."""
+    """Tolerant UTF-8/UTF-16 read, returns (text, truncated).
+
+    `utf-8-sig`, not `utf-8`: 19 source files in this repo start with a UTF-8
+    BOM. CPython accepts those (and `compileall` exits 0), so they are valid
+    Python -- but decoding with plain `utf-8` leaves U+FEFF as the first
+    character and `ast.parse` then rejects it. Since every AST-based check skips
+    files whose parse fails, those 19 files were silently excluded from the whole
+    suite while appearing to pass.
+    """
     try:
         raw = path.read_bytes()[:max_bytes]
         try:
-            text = raw.decode("utf-8")
+            text = raw.decode("utf-8-sig")
         except UnicodeDecodeError:
             text = raw.decode("utf-16", errors="replace")
         return text, len(raw) >= max_bytes
@@ -203,6 +211,41 @@ def find_endpoints(paths: list[Path]) -> list[tuple[Path, str, str, int]]:
     return endpoints
 
 
+def feature_gate_literals(paths: list[Path]) -> dict[str, int]:
+    r"""`require_feature("...")` string constants, extracted from the AST.
+
+    Two regexes used to answer this question and they disagreed:
+    `s12_features` used `[^"']+`, which spans newlines, so a docstring or test
+    that merely *mentions* `require_feature()` produced a garbage "literal"
+    (the captured text began with `)` and ran into the next quoted string);
+    `measurements.m_dead_feature_gate` used `[^"'\s]+` and never matched it.
+    The detector therefore reported a ghost atom the measurement could not see,
+    and the verifier resolved the disagreement by *deleting* the aggregated
+    finding. A regex cannot distinguish code from prose; the AST can.
+
+    Only a `Call` whose function is named `require_feature` (or an attribute
+    ending in `.require_feature`) with a string-literal first argument counts.
+    Comments, docstrings, and assertions that merely name the helper are
+    invisible here, which is the point.
+    """
+    found: dict[str, int] = {}
+    for path in paths:
+        tree = parse_python(path).tree
+        if tree is None:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            fn = node.func
+            name = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
+            if name != "require_feature" or not node.args:
+                continue
+            arg = node.args[0]
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and arg.value:
+                found[arg.value] = found.get(arg.value, 0) + 1
+    return found
+
+
 def parse_requirements(path: Path) -> dict[str, str]:
     """PEP-508 tolerant requirement parser -> ``{package_name: pinned_version}``.
 
@@ -212,7 +255,7 @@ def parse_requirements(path: Path) -> dict[str, str]:
     """
     deps: dict[str, str] = {}
     try:
-        text = Path(path).read_text(encoding="utf-8", errors="replace")
+        text = Path(path).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return deps
     for raw in text.splitlines():
@@ -233,7 +276,7 @@ def parse_package_json(path: Path) -> dict[str, Any]:
     """Tolerant JSON/JSONC read."""
     try:
         import json
-        text = path.read_text(encoding="utf-8", errors="replace")
+        text = path.read_text(encoding="utf-8-sig", errors="replace")
         # Strip comments (JSONC)
         text = re.sub(r'//.*$', '', text, flags=re.MULTILINE)
         text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
@@ -246,7 +289,7 @@ def parse_yaml_lite(path: Path) -> dict[str, Any]:
     """Minimal YAML subset parser (workflows/docker-compose) — no PyYAML dependency."""
     result: dict[str, Any] = {}
     try:
-        text = path.read_text(encoding="utf-8", errors="replace")
+        text = path.read_text(encoding="utf-8-sig", errors="replace")
         current_list: list[str] = []
         current_key = ""
         for line in text.splitlines():
@@ -342,11 +385,22 @@ def fmt_bytes(n: int) -> str:
 
 #: Top-level trees the audit must never descend into (audit output, vendored,
 #: build artefacts). ``.kilo`` is an Agent Manager worktree, not project code.
+#:
+#: ``_audit`` and ``_browser_test`` are the *harness* trees. They are not project
+#: code, and leaving them in scope meant 614 files of audit output and Playwright
+#: specs were scanned as if they were the product: 3 findings this run, 2 of them
+#: P0, all of them artefacts of the previous audit rather than defects in ZOZI.
 EXCLUDED_DIRS: set[str] = {
     ".git", ".kilo", ".freebuff", "node_modules", "__pycache__", ".pytest_cache",
     ".hypothesis", ".next", "dist", "build", "venv", ".venv", "_extra_files",
     "_legacy.bak", "test-results", "playwright-report", "logs", "var",
-    "_zozi_audit", "egg-info", ".turbo", ".cache",
+    "_zozi_audit", "_audit", "_browser_test", "egg-info", ".turbo", ".cache",
+    # pytest's per-run temp trees. They are written *inside* the repo, contain
+    # deliberately-broken fixture files (`test_unparseable_file_is_repor0/
+    # kernel/broken.py`), and grew to four copies during this work. Scanned as
+    # project code they produced 4 bogus "invalid syntax" parse failures.
+    # Matched by exact name, so this must be the literal directory name.
+    "pytest-of-user",
 }
 
 AUDITED_SUFFIXES: set[str] = {
@@ -430,8 +484,12 @@ def parse_python(path: Path) -> ParsedPython:
     if hit is not None:
         return hit
     text, _ = read_text(p)
-    if not text:
-        result = ParsedPython(path=str(p), error="empty-or-unreadable")
+    if not text.strip():
+        # An empty file parses to an empty module and is perfectly legal -- most
+        # `__init__.py` in this repo are empty. Reporting it as
+        # "empty-or-unreadable" made 92 healthy files look broken to every
+        # scanner that skips on `error`, so their contents went unexamined.
+        result = ParsedPython(path=str(p), text=text, tree=ast.parse(""))
     else:
         try:
             result = ParsedPython(path=str(p), text=text, tree=ast.parse(text))

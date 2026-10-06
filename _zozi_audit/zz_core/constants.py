@@ -31,6 +31,30 @@ CANONICAL_DOMAINS: set[str] = {
     "suppliers",
 }
 
+# Law 1: `modules/` routers may import these `infrastructure/` subpackages.
+# A router may reach the RBAC gates (Laws 87/88), the SET-LOCAL RLS helpers
+# (Law 227), the pagination/config/currency plumbing and the Pydantic DTOs
+# (transport). Anything else from `infrastructure` in a router is a bypass.
+#
+# This lives here, not in the scanner, because the PROBE needs the identical
+# list. When the two had separate copies the probe omitted it and refuted every
+# genuine `module-imports-infrastructure` finding: the probe asked "is
+# `infrastructure` allowed for `modules`?" against the coarse layer table, which
+# says yes, while the detector asks the finer question "is THIS subpackage
+# allowed?", which is where the finding actually came from.
+ROUTER_OK_INFRA: tuple[str, ...] = (
+    "infrastructure.security",
+    "infrastructure.utils.country_rls",
+    "infrastructure.utils.auth",
+    "infrastructure.utils.config",
+    "infrastructure.utils.currency_service",
+    "infrastructure.utils.pagination",
+    "infrastructure.utils.invoice_html",
+    "infrastructure.utils.background_jobs",
+    "infrastructure.database.rls_interceptor",
+    "infrastructure.database.schemas",
+)
+
 # Approved extra schemas (ARCH §8)
 APPROVED_EXTRA_SCHEMAS: set[str] = {"media", "treasury", "ai", "configuration"}
 
@@ -192,6 +216,13 @@ DIMENSIONS: list[tuple[str, str]] = [
     ("26", "code_alignment"),
     ("27", "project_completion_blockers"),
     ("28", "supply_chain_security"),
+    # 29/30 were added with the law-coverage work. `23_law_coverage` and
+    # `24_declared_laws` are both about the AUDIT's own coverage rather than a
+    # product area, and numbering them 23/24 collided with existing dimensions --
+    # `--dimensions 24` silently selected `24_browser_behavior` and the new checks
+    # never ran.
+    ("29", "law_coverage"),
+    ("30", "declared_laws"),
 ]
 
 # 28-dimension prefix map
@@ -224,6 +255,8 @@ DIMENSION_PREFIXES: dict[str, str] = {
     "26": "ALIGN",
     "27": "BLOCK",
     "28": "SC",
+    "29": "LAWCOV",
+    "30": "DECLLAW",
 }
 
 # Human labels used in the report headings ("## Dimension 01 · Architectural")
@@ -256,6 +289,8 @@ DIMENSION_LABELS: dict[str, str] = {
     "26_code_alignment": "26 · Code Alignment",
     "27_project_completion_blockers": "27 · Project Completion Blockers",
     "28_supply_chain_security": "28 · Supply Chain Security",
+    "29_law_coverage": "29 · Law Coverage",
+    "30_declared_laws": "30 · Declared Laws",
 }
 
 # dimension key -> finding-ID prefix
@@ -282,7 +317,7 @@ def load_doc(name: str) -> str:
         return _DOC_CACHE[name]
     path = _DOC_DIR / name
     try:
-        text = path.read_text(encoding="utf-8", errors="replace")
+        text = path.read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         text = ""
     _DOC_CACHE[name] = text

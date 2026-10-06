@@ -266,6 +266,9 @@ def run_alert_engine(self) -> dict[str, Any]:
     bind=True,
     name="tasks.periodic_tasks.cleanup_old_jobs",
     max_retries=1,
+    retry_backoff=True,
+    retry_jitter=True,
+    retry_backoff_max=1800,
     time_limit=1800,
     soft_time_limit=1500,
 )

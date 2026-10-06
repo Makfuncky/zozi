@@ -30,7 +30,7 @@ test.describe("input validation", () => {
     const oversizedPassword = "A".repeat(100);
     const res = await page.request.post("/api/auth/register", {
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      data: JSON.stringify({
         email: `validation_${Date.now()}@zozi-test.com`,
         username: `validation_${Date.now()}`,
         password: oversizedPassword,
@@ -73,7 +73,7 @@ test.describe("input validation", () => {
     const xssStreet = '<script>alert("xss")</script>123 Main St';
     const res = await page.request.post("/api/v1/customer/addresses", {
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      data: JSON.stringify({
         street: xssStreet,
         city: "Dubai",
         country_code: "AE",
@@ -84,7 +84,8 @@ test.describe("input validation", () => {
 
     if (res.ok()) {
       const json = (await res.json()) as Record<string, unknown>;
-      const savedStreet = String(json.street || json.address?.street || "");
+      const address = (json.address ?? {}) as Record<string, unknown>;
+      const savedStreet = String(json.street ?? address.street ?? "");
       expect(savedStreet).not.toContain("<script>");
       expect(savedStreet).not.toContain("</script>");
     } else {

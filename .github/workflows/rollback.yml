@@ -71,7 +71,7 @@ jobs:
 
           railway run --environment "$ENV" -- alembic downgrade -1
           railway up --environment "$ENV" --detach
-          railway run --environment "$ENV" -- alembic upgrade head
+          railway run --environment "$ENV" -- alembic -c backend/alembic/alembic.ini upgrade head
 
           echo "::notice::🔙 Backend $ENV rolled back to $LAST_COMMIT"
           echo "::group::"

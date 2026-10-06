@@ -1,4 +1,0 @@
-ruff 0.15.12
-& ruff check backend/domains/analytics/services/aggregation/command_center_query_service.py backend/tests/domains/analytics/test_command_center_query_service.py
-All checks passed!
-exit=0

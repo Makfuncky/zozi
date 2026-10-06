@@ -33,18 +33,27 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import inspect
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.exc import NoInspectionAvailable
 
 from migration_helpers import safe_add_column
-
 
 revision: str = "2026_09_04_0001"
 down_revision: Union[str, None] = "2026_09_03_0007"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-
 TARGET_SCHEMAS = ("comms", "hr", "security", "country", "promotions")
+
+
+def _is_offline(conn) -> bool:
+    if conn is None:
+        return True
+    try:
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
 
 
 def _column_for(name: str) -> sa.Column:
@@ -81,8 +90,15 @@ def _iter_target_tables(conn):
     """Yield (schema, table) for every table in TARGET_SCHEMAS that
     currently exists in the database.
     """
-    import infrastructure.database.models as models  # noqa: F401
-    inspector = inspect(conn)
+    import infrastructure.database.base as models
+    if _is_offline(conn):
+        for table in models.Base.metadata.tables.values():
+            schema = (table.schema or "").lower()
+            if schema not in TARGET_SCHEMAS:
+                continue
+            yield table.schema, table
+        return
+    inspector = sa_inspect(conn)
     for table in models.Base.metadata.tables.values():
         schema = (table.schema or "").lower()
         if schema not in TARGET_SCHEMAS:
@@ -94,10 +110,10 @@ def _iter_target_tables(conn):
 
 def upgrade() -> None:
     conn = op.get_bind()
-    if conn.dialect.name == "sqlite":
-        return  # dev/test DBs rebuild from ORM metadata; no-op
+    if not _is_offline(conn) and conn.dialect.name == "sqlite":
+        return
     for schema, table in _iter_target_tables(conn):
-        existing = {c["name"] for c in inspect(conn).get_columns(table.name, schema=schema)}
+        existing = {c["name"] for c in sa_inspect(conn).get_columns(table.name, schema=schema)}
         for col_name in ("created_at", "updated_at", "is_deleted", "country_code", "version"):
             if col_name in existing:
                 continue
@@ -105,11 +121,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Best-effort: drop the columns we added. Safe to leave on existing
-    # databases that pre-date the mixin contract.
     from migration_helpers import safe_drop_column
     conn = op.get_bind()
-    if conn.dialect.name == "sqlite":
+    if not _is_offline(conn) and conn.dialect.name == "sqlite":
         return
     for schema, table in _iter_target_tables(conn):
         for col_name in ("version", "country_code", "is_deleted", "updated_at", "created_at"):

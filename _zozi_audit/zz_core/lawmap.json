@@ -1,0 +1,1071 @@
+{
+ "benchmark_laws_total": 325,
+ "enforced_by_check": {
+  "1": [
+   "s01_architecture"
+  ],
+  "2": [
+   "s01_architecture"
+  ],
+  "3": [
+   "s01_architecture",
+   "s05_wiring"
+  ],
+  "4": [
+   "s05_wiring",
+   "s12_features",
+   "s18_feature_matrix"
+  ],
+  "5": [
+   "s05_wiring",
+   "s06_database"
+  ],
+  "6": [
+   "s06_database"
+  ],
+  "7": [
+   "s01_architecture"
+  ],
+  "8": [
+   "s01_architecture"
+  ],
+  "9": [
+   "s07_providers"
+  ],
+  "10": [
+   "s24_declared_laws"
+  ],
+  "11": [
+   "s24_declared_laws"
+  ],
+  "12": [
+   "s01_architecture"
+  ],
+  "13": [
+   "s01_architecture",
+   "s11_frontend"
+  ],
+  "16": [
+   "s07_providers"
+  ],
+  "17": [
+   "s01_architecture"
+  ],
+  "18": [
+   "s01_architecture"
+  ],
+  "19": [
+   "s03_logic",
+   "s06_database"
+  ],
+  "20": [
+   "s06_database"
+  ],
+  "21": [
+   "s06_database"
+  ],
+  "22": [
+   "s06_database"
+  ],
+  "23": [
+   "s06_database"
+  ],
+  "26": [
+   "s24_declared_laws"
+  ],
+  "27": [
+   "s01_architecture"
+  ],
+  "30": [
+   "s07_providers"
+  ],
+  "32": [
+   "s13_security"
+  ],
+  "33": [
+   "s13_security"
+  ],
+  "34": [
+   "s13_security"
+  ],
+  "35": [
+   "s04_operations"
+  ],
+  "37": [
+   "s04_operations"
+  ],
+  "41": [
+   "s05_wiring",
+   "s13_security"
+  ],
+  "44": [
+   "s02_technology"
+  ],
+  "45": [
+   "s06_database"
+  ],
+  "46": [
+   "s06_database"
+  ],
+  "47": [
+   "s06_database"
+  ],
+  "48": [
+   "s06_database"
+  ],
+  "49": [
+   "s06_database"
+  ],
+  "51": [
+   "s06_database"
+  ],
+  "53": [
+   "s06_database"
+  ],
+  "55": [
+   "s06_database"
+  ],
+  "57": [
+   "s06_database"
+  ],
+  "58": [
+   "s05_wiring"
+  ],
+  "59": [
+   "s03_logic"
+  ],
+  "60": [
+   "s03_logic"
+  ],
+  "61": [
+   "s03_logic"
+  ],
+  "62": [
+   "s03_logic"
+  ],
+  "64": [
+   "s01_architecture",
+   "s03_logic"
+  ],
+  "65": [
+   "s01_architecture",
+   "s03_logic"
+  ],
+  "67": [
+   "s01_architecture"
+  ],
+  "69": [
+   "s10_tests",
+   "s12_features"
+  ],
+  "70": [
+   "s10_tests"
+  ],
+  "71": [
+   "s10_tests"
+  ],
+  "73": [
+   "s10_tests",
+   "s14_performance"
+  ],
+  "74": [
+   "s24_declared_laws"
+  ],
+  "75": [
+   "s07_providers"
+  ],
+  "78": [
+   "s05_wiring"
+  ],
+  "81": [
+   "preflight",
+   "s04_operations"
+  ],
+  "84": [
+   "s04_operations",
+   "s09_environment"
+  ],
+  "87": [
+   "s05_wiring"
+  ],
+  "88": [
+   "s05_wiring"
+  ],
+  "90": [
+   "s01_architecture"
+  ],
+  "92": [
+   "s05_wiring"
+  ],
+  "94": [
+   "s05_wiring"
+  ],
+  "95": [
+   "s05_wiring"
+  ],
+  "97": [
+   "s01_architecture"
+  ],
+  "98": [
+   "s01_architecture"
+  ],
+  "99": [
+   "s01_architecture"
+  ],
+  "100": [
+   "s01_architecture"
+  ],
+  "101": [
+   "s01_architecture"
+  ],
+  "102": [
+   "s01_architecture"
+  ],
+  "103": [
+   "s01_architecture"
+  ],
+  "104": [
+   "s01_architecture"
+  ],
+  "111": [
+   "s11_frontend"
+  ],
+  "115": [
+   "s04_operations"
+  ],
+  "124": [
+   "s07_providers"
+  ],
+  "127": [
+   "s07_providers"
+  ],
+  "129": [
+   "s07_providers"
+  ],
+  "132": [
+   "s01_architecture"
+  ],
+  "134": [
+   "s01_architecture"
+  ],
+  "135": [
+   "s01_architecture"
+  ],
+  "144": [
+   "s05_wiring"
+  ],
+  "150": [
+   "s01_architecture"
+  ],
+  "160": [
+   "s01_architecture"
+  ],
+  "161": [
+   "s05_wiring",
+   "s12_features"
+  ],
+  "168": [
+   "s24_declared_laws"
+  ],
+  "170": [
+   "s24_declared_laws"
+  ],
+  "171": [
+   "s02_technology"
+  ],
+  "172": [
+   "s11_frontend"
+  ],
+  "173": [
+   "s11_frontend"
+  ],
+  "177": [
+   "s11_frontend"
+  ],
+  "178": [
+   "s11_frontend"
+  ],
+  "191": [
+   "s22_frontend_contracts"
+  ],
+  "193": [
+   "s11_frontend",
+   "s22_frontend_contracts"
+  ],
+  "202": [
+   "s09_environment"
+  ],
+  "203": [
+   "s09_environment"
+  ],
+  "204": [
+   "s13_security"
+  ],
+  "205": [
+   "s13_security"
+  ],
+  "207": [
+   "s24_declared_laws"
+  ],
+  "208": [
+   "s24_declared_laws"
+  ],
+  "212": [
+   "s10_tests"
+  ],
+  "213": [
+   "s10_tests",
+   "s12_features"
+  ],
+  "214": [
+   "s24_declared_laws"
+  ],
+  "217": [
+   "s04_operations"
+  ],
+  "218": [
+   "s04_operations"
+  ],
+  "219": [
+   "s04_operations"
+  ],
+  "222": [
+   "s06_database",
+   "s14_performance"
+  ],
+  "227": [
+   "s05_wiring",
+   "s06_database"
+  ],
+  "237": [
+   "s14_performance"
+  ],
+  "239": [
+   "s03_logic"
+  ],
+  "240": [
+   "s24_declared_laws"
+  ],
+  "241": [
+   "s24_declared_laws"
+  ],
+  "243": [
+   "s24_declared_laws"
+  ],
+  "248": [
+   "s04_operations"
+  ],
+  "257": [
+   "s06_database"
+  ],
+  "260": [
+   "s06_database"
+  ],
+  "275": [
+   "s07_providers",
+   "s13_security"
+  ],
+  "278": [
+   "s13_security"
+  ],
+  "281": [
+   "s13_security"
+  ],
+  "282": [
+   "s05_wiring"
+  ],
+  "283": [
+   "s13_security"
+  ],
+  "290": [
+   "s02_technology"
+  ],
+  "291": [
+   "s02_technology"
+  ],
+  "296": [
+   "s05_wiring"
+  ],
+  "297": [
+   "s04_operations",
+   "s05_wiring"
+  ],
+  "298": [
+   "s04_operations"
+  ],
+  "310": [
+   "s22_frontend_contracts"
+  ],
+  "313": [
+   "s07_providers",
+   "s13_security",
+   "s22_frontend_contracts"
+  ]
+ },
+ "candidate_unattributed": {
+  "14": [
+   "arch_router_thinness",
+   "logic_money_type",
+   "logic_silent_excepts"
+  ],
+  "15": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "arch_dead_code"
+  ],
+  "24": [
+   "arch_extra_units",
+   "arch_root_discipline",
+   "arch_domain_structure"
+  ],
+  "28": [
+   "migration_and_schema_contracts"
+  ],
+  "29": [
+   "migration_and_schema_contracts"
+  ],
+  "31": [
+   "arch_extra_units",
+   "arch_import_direction",
+   "arch_domain_structure"
+  ],
+  "36": [
+   "ops_feature_flags",
+   "prov_payment_security",
+   "tests_inventory"
+  ],
+  "38": [
+   "logic_silent_excepts",
+   "mobile_app",
+   "sec_auth_hardening"
+  ],
+  "39": [
+   "arch_root_discipline",
+   "arch_domain_structure",
+   "arch_dead_code"
+  ],
+  "40": [
+   "arch_root_discipline",
+   "ops_jobs",
+   "web_api_alignment"
+  ],
+  "42": [
+   "sec_injection_and_ssrf",
+   "interaction_forms"
+  ],
+  "43": [
+   "arch_domain_structure",
+   "ops_feature_flags",
+   "wire_event_bus"
+  ],
+  "50": [
+   "db_pool_and_engine",
+   "test_harness_declaration"
+  ],
+  "54": [
+   "db_model_discipline"
+  ],
+  "56": [
+   "arch_extra_units",
+   "arch_root_discipline",
+   "arch_domain_structure"
+  ],
+  "63": [
+   "db_model_discipline",
+   "env_inventory"
+  ],
+  "66": [
+   "logic_quality"
+  ],
+  "68": [
+   "tests_inventory",
+   "interaction_toasts",
+   "http_response_contract"
+  ],
+  "72": [
+   "arch_extra_units",
+   "arch_import_direction",
+   "arch_domain_structure"
+  ],
+  "77": [
+   "logic_blocking_io",
+   "db_pool_and_engine",
+   "prov_inventory"
+  ],
+  "79": [
+   "logic_silent_excepts",
+   "logic_idempotency",
+   "logic_stubs_and_placeholders"
+  ],
+  "80": [
+   "wire_resilience"
+  ],
+  "82": [
+   "logic_silent_excepts",
+   "logic_stubs_and_placeholders",
+   "ops_feature_flags"
+  ],
+  "83": [
+   "sec_injection_and_ssrf",
+   "interaction_forms",
+   "test_harness_declaration"
+  ],
+  "85": [
+   "ops_ci_cd",
+   "prov_inventory",
+   "sec_secrets_and_encryption"
+  ],
+  "86": [
+   "env_country_config"
+  ],
+  "89": [
+   "intent_drift",
+   "sec_injection_and_ssrf",
+   "sec_access_control"
+  ],
+  "93": [
+   "wire_observability"
+  ],
+  "96": [
+   "arch_root_discipline",
+   "arch_allowlist",
+   "ops_ci_cd"
+  ],
+  "105": [
+   "tech_python_deps",
+   "tech_js_deps",
+   "tech_supply_chain"
+  ],
+  "106": [
+   "arch_root_discipline",
+   "ops_jobs",
+   "db_pool_and_engine"
+  ],
+  "107": [
+   "ops_feature_flags",
+   "env_inventory",
+   "category_hierarchy_depth"
+  ],
+  "109": [
+   "logic_quality",
+   "db_pool_and_engine",
+   "db_queries"
+  ],
+  "110": [
+   "logic_silent_excepts",
+   "logic_quality",
+   "db_pool_and_engine"
+  ],
+  "112": [
+   "db_model_discipline",
+   "ui_primitives",
+   "http_response_contract"
+  ],
+  "113": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "mobile_app"
+  ],
+  "114": [
+   "wire_websocket_auth"
+  ],
+  "118": [
+   "logic_idempotency",
+   "prov_payment_security",
+   "mobile_app"
+  ],
+  "120": [
+   "prov_payment_security",
+   "mobile_app",
+   "workflow_runtime_bootstrap"
+  ],
+  "121": [
+   "tech_runtime_images",
+   "tech_supply_chain",
+   "web_ui_quality"
+  ],
+  "123": [
+   "prov_inventory",
+   "layer_purity_declaration"
+  ],
+  "126": [
+   "arch_router_thinness",
+   "logic_money_type",
+   "logic_silent_excepts"
+  ],
+  "128": [
+   "logic_blocking_io",
+   "db_pool_and_engine",
+   "prov_inventory"
+  ],
+  "130": [
+   "logic_silent_excepts",
+   "logic_stubs_and_placeholders",
+   "wire_observability"
+  ],
+  "133": [
+   "arch_extra_units",
+   "arch_router_thinness",
+   "arch_domain_structure"
+  ],
+  "136": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "cross_anti_patterns"
+  ],
+  "137": [
+   "arch_domain_structure"
+  ],
+  "138": [
+   "arch_extra_units",
+   "arch_dead_code",
+   "fe_client_safety"
+  ],
+  "139": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "web_route_tree"
+  ],
+  "140": [
+   "layer_purity_declaration"
+  ],
+  "141": [
+   "layer_purity_declaration"
+  ],
+  "142": [
+   "logic_quality",
+   "db_pool_and_engine",
+   "perf_cache_and_pagination"
+  ],
+  "143": [
+   "prov_payment_security",
+   "mobile_app",
+   "layer_purity_declaration"
+  ],
+  "145": [
+   "wire_observability",
+   "layer_purity_declaration"
+  ],
+  "146": [
+   "ops_feature_flags",
+   "prov_payment_security",
+   "tests_inventory"
+  ],
+  "147": [
+   "layer_purity_declaration"
+  ],
+  "148": [
+   "arch_root_discipline",
+   "tech_js_deps",
+   "wire_middleware_order"
+  ],
+  "151": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "intent_drift"
+  ],
+  "152": [
+   "arch_domain_structure",
+   "db_model_discipline",
+   "db_rls_sql"
+  ],
+  "153": [
+   "arch_extra_units",
+   "arch_domain_structure",
+   "db_model_discipline"
+  ],
+  "154": [
+   "arch_domain_structure",
+   "wire_event_bus",
+   "cross_chains"
+  ],
+  "155": [
+   "arch_import_direction",
+   "arch_domain_structure",
+   "tech_python_deps"
+  ],
+  "156": [
+   "arch_domain_structure",
+   "wire_event_bus",
+   "cross_anti_patterns"
+  ],
+  "157": [
+   "arch_domain_structure",
+   "ops_feature_flags",
+   "wire_feature_gates"
+  ],
+  "158": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "ops_health_checks"
+  ],
+  "159": [
+   "tech_supply_chain",
+   "wire_rls",
+   "db_rls_sql"
+  ],
+  "162": [
+   "web_ui_quality",
+   "migration_and_schema_contracts"
+  ],
+  "165": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "intent_drift"
+  ],
+  "166": [
+   "arch_domain_structure",
+   "tech_supply_chain",
+   "web_api_alignment"
+  ],
+  "167": [
+   "tech_supply_chain",
+   "web_api_alignment",
+   "mobile_app"
+  ],
+  "169": [
+   "tech_runtime_images",
+   "web_ui_quality",
+   "perf_bundle_and_assets"
+  ],
+  "176": [
+   "logic_silent_excepts",
+   "logic_stubs_and_placeholders",
+   "wire_observability"
+  ],
+  "179": [
+   "arch_domain_structure",
+   "ui_primitives",
+   "layer_purity_declaration"
+  ],
+  "180": [
+   "logic_idempotency",
+   "prov_payment_security",
+   "sec_secrets_and_encryption"
+  ],
+  "181": [
+   "cross_anti_patterns"
+  ],
+  "182": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "intent_drift"
+  ],
+  "186": [
+   "arch_import_direction",
+   "perf_bundle_and_assets",
+   "frontend_declared_contracts"
+  ],
+  "188": [
+   "arch_router_thinness",
+   "arch_domain_structure",
+   "web_route_tree"
+  ],
+  "189": [
+   "ui_primitives"
+  ],
+  "190": [
+   "cross_anti_patterns"
+  ],
+  "194": [
+   "arch_import_direction",
+   "perf_bundle_and_assets",
+   "frontend_declared_contracts"
+  ],
+  "195": [
+   "arch_domain_structure",
+   "layer_purity_declaration"
+  ],
+  "196": [
+   "tech_python_deps",
+   "drift_static",
+   "db_migration_graph"
+  ],
+  "197": [
+   "tech_supply_chain",
+   "web_api_alignment",
+   "mobile_app"
+  ],
+  "198": [
+   "arch_import_direction",
+   "cross_chains",
+   "cross_contradictions"
+  ],
+  "199": [
+   "feat_catalog",
+   "quality_assurance_gaps"
+  ],
+  "200": [
+   "logic_money_type",
+   "logic_quality",
+   "db_model_discipline"
+  ],
+  "201": [
+   "category_hierarchy_depth"
+  ],
+  "206": [
+   "arch_allowlist",
+   "http_response_contract"
+  ],
+  "210": [
+   "test_harness_declaration"
+  ],
+  "211": [
+   "web_api_alignment",
+   "frontend_declared_contracts"
+  ],
+  "215": [
+   "tech_runtime_images",
+   "ops_deployment_assets"
+  ],
+  "216": [
+   "ops_deployment_assets",
+   "ops_feature_flags"
+  ],
+  "220": [
+   "ops_ci_cd"
+  ],
+  "221": [
+   "table_management_posture"
+  ],
+  "226": [
+   "logic_blocking_io",
+   "db_pool_and_engine",
+   "prov_inventory"
+  ],
+  "228": [
+   "db_model_discipline"
+  ],
+  "229": [
+   "arch_root_discipline",
+   "arch_allowlist",
+   "logic_money_type"
+  ],
+  "230": [
+   "arch_root_discipline",
+   "arch_allowlist",
+   "ops_ci_cd"
+  ],
+  "232": [
+   "fe_route_states"
+  ],
+  "233": [
+   "laws_all"
+  ],
+  "235": [
+   "tech_js_deps",
+   "perf_cache_and_pagination",
+   "git_hygiene_declaration"
+  ],
+  "236": [
+   "tests_inventory",
+   "interaction_toasts",
+   "http_response_contract"
+  ],
+  "242": [
+   "perf_cache_and_pagination",
+   "finance_automation_surface",
+   "fe_client_safety"
+  ],
+  "245": [
+   "drift_static",
+   "ops_deployment_assets",
+   "migration_and_schema_contracts"
+  ],
+  "246": [
+   "drift_static",
+   "ops_deployment_assets"
+  ],
+  "247": [
+   "drift_static",
+   "ops_deployment_assets"
+  ],
+  "252": [
+   "automation_candidates",
+   "finance_automation_surface"
+  ],
+  "255": [
+   "logic_quality",
+   "db_pool_and_engine",
+   "web_route_tree"
+  ],
+  "258": [
+   "tech_runtime_images",
+   "tech_supply_chain",
+   "wire_middleware_order"
+  ],
+  "261": [
+   "arch_router_thinness",
+   "ops_health_checks",
+   "db_pool_and_engine"
+  ],
+  "263": [
+   "web_route_tree",
+   "migration_and_schema_contracts"
+  ],
+  "264": [
+   "drift_static",
+   "ops_deployment_assets",
+   "laws_all"
+  ],
+  "267": [
+   "ops_jobs",
+   "ops_deployment_assets",
+   "wire_websocket_auth"
+  ],
+  "268": [
+   "web_route_tree",
+   "web_ui_quality",
+   "perf_cache_and_pagination"
+  ],
+  "271": [
+   "ops_feature_flags",
+   "prov_payment_security",
+   "tests_inventory"
+  ],
+  "273": [
+   "arch_domain_structure",
+   "db_model_discipline",
+   "db_rls_sql"
+  ],
+  "276": [
+   "sec_secrets_and_encryption"
+  ],
+  "280": [
+   "logic_idempotency",
+   "db_rls_sql",
+   "sec_auth_hardening"
+  ],
+  "287": [
+   "sec_auth_hardening",
+   "security_header_policy"
+  ],
+  "288": [
+   "perf_cache_and_pagination",
+   "finance_automation_surface",
+   "fe_client_safety"
+  ],
+  "293": [
+   "automation_candidates",
+   "finance_automation_surface"
+  ],
+  "295": [
+   "tech_supply_chain",
+   "cross_chains"
+  ],
+  "299": [
+   "arch_domain_structure",
+   "ops_health_checks",
+   "ops_ci_cd"
+  ],
+  "300": [
+   "arch_domain_structure",
+   "logic_silent_excepts",
+   "ops_feature_flags"
+  ],
+  "301": [
+   "logic_silent_excepts",
+   "logic_stubs_and_placeholders",
+   "wire_observability"
+  ],
+  "302": [
+   "arch_router_thinness",
+   "logic_blocking_io",
+   "wire_middleware_order"
+  ],
+  "303": [
+   "ops_deployment_assets"
+  ],
+  "306": [
+   "ops_deployment_assets"
+  ],
+  "307": [
+   "arch_domain_structure",
+   "ops_health_checks",
+   "wire_websocket_auth"
+  ],
+  "308": [
+   "drift_static",
+   "env_country_config",
+   "intent_drift"
+  ],
+  "311": [
+   "arch_domain_structure",
+   "ops_feature_flags",
+   "wire_feature_gates"
+  ],
+  "323": [
+   "arch_router_thinness",
+   "wire_websocket_auth",
+   "sec_access_control"
+  ]
+ },
+ "no_check": [
+  "25",
+  "52",
+  "76",
+  "91",
+  "108",
+  "116",
+  "117",
+  "119",
+  "122",
+  "125",
+  "131",
+  "149",
+  "163",
+  "164",
+  "174",
+  "175",
+  "183",
+  "184",
+  "185",
+  "187",
+  "192",
+  "209",
+  "223",
+  "224",
+  "225",
+  "231",
+  "234",
+  "238",
+  "244",
+  "249",
+  "250",
+  "251",
+  "253",
+  "254",
+  "256",
+  "259",
+  "262",
+  "265",
+  "266",
+  "269",
+  "270",
+  "272",
+  "274",
+  "277",
+  "279",
+  "284",
+  "285",
+  "286",
+  "289",
+  "292",
+  "294",
+  "304",
+  "305",
+  "309",
+  "312",
+  "314",
+  "315",
+  "316",
+  "317",
+  "318",
+  "319",
+  "320",
+  "321",
+  "322",
+  "324",
+  "325"
+ ]
+}

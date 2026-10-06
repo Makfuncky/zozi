@@ -1,7 +1,13 @@
 # ========================== SESSION MANAGEMENT ==========================
 
+import logging
 import threading
 from typing import Optional, Dict, Any, List
+
+from .memory_management__br_08_ import MemoryManager
+from .rembg_lazy_load import _ensure_rembg, new_session
+
+logger = logging.getLogger(__name__)
 
 
 class _SessionManager:

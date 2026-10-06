@@ -5,6 +5,7 @@ from typing import List
 from typing import List
 
 from .__header__ import *  # noqa: F401,F403
+from .__header__ import _HAS_CV2  # noqa: F401  (patchable flag)
 from .rembg_lazy_load import *  # noqa: F401,F403
 from .rembg_lazy_load import _HAS_REMBG, _ensure_rembg, remove, new_session  # noqa: F401
 from .core_i_o import *  # noqa: F401,F403
@@ -16,7 +17,9 @@ from .session_management import *  # noqa: F401,F403
 from .session_management import _SessionManager  # noqa: F401
 from .image_helpers import _resize_image, _adaptive_max_rembg_dimension, _get_model_max_dimension, _run_model_with_dimension, _apply_alpha_composite, _compose_pure_alpha, _create_canvas
 from .strategy_config import *  # noqa: F401,F403
+from .strategy_config import _get_strategy_config, _filter_heavy_models  # noqa: F401
 from .removal_strategy_runners import *  # noqa: F401,F403
+from .removal_strategy_runners import _run_strategy, _run_general, _run_clean_commercial  # noqa: F401
 from .public_api import *  # noqa: F401,F403
 from .br_05__clean_edge_refiner import *  # noqa: F401,F403
 from .br_06__precision_geometry_classes import *  # noqa: F401,F403

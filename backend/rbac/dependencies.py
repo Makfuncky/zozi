@@ -61,13 +61,21 @@ _ROLE_FEATURES: dict = {
     "super_admin": ["*"],
     "admin": ["*"],
     "employee": [
-        "analytics.read", "hr.read", "hr.write",
-        "governance.read", "governance.write",
-        "audit.read", "security.read",
+        "analytics.read", "hr.read", "audit.read", "security.read",
+        # Real hr atoms ("hr.write" was never an atom).
+        "hr.attendance.read", "hr.attendance.manage",
+        "hr.leave.read", "hr.leave.create", "hr.leave.manage",
+        "hr.performance.read", "hr.performance.manage",
+        "hr.payroll.read", "hr.payslip.read",
+        "hr.profile.read", "hr.profile.update",
+        "hr.training.read", "hr.org.read",
+        "hr.department.read", "hr.employee.read",
+        # Real governance atoms.
+        "governance.access.read", "governance.permissions.read",
     ],
     "staff": [
         "analytics.read", "hr.read",
-        "governance.read", "audit.read",
+        "governance.access.read", "audit.read",
     ],
     "supplier": [
         "catalog.list", "catalog.read", "catalog.write", "catalog.delete",
@@ -79,14 +87,25 @@ _ROLE_FEATURES: dict = {
         "suppliers.documents.read", "suppliers.documents.write",
         "suppliers.health.read", "suppliers.profile.read", "suppliers.profile.write",
     ],
-    "logistics_partner": [
-        "logistics.read", "logistics.write",
+"logistics_partner": [
+        # Real logistics atoms. "logistics.read"/"logistics.write" never existed,
+        # so every shipment/scan call returned 403
+        # "feature 'logistics.shipping.tracking' is not granted".
+        "logistics.shipping.tracking", "logistics.shipping.manage",
+        "logistics.delivery.estimates", "logistics.fulfillment.manage",
+        "logistics.profile.read", "logistics.profile.write",
+        "logistics.sla.manage",
         "orders.read", "orders.list",
     ],
-    "customer": [
-        "catalog.list", "catalog.read", "orders.read", "orders.list",
-        "customers.profile.read", "customers.profile.write",
-    ],
+"customer": [
+            "catalog.list", "catalog.read", "orders.read", "orders.list",
+            # Real customer atoms ("customers.profile.read"/"write" never existed).
+            "customers.profile.manage",
+            "customers.cart.manage", "customers.wishlist.manage",
+            "customers.address.manage", "customers.returns.request",
+            "customers.reviews.write", "customers.health.view",
+            "orders.create",
+        ],
     "sub_admin": [
         "accounts.user.read", "accounts.user.list", "accounts.user.update",
         "accounts.user.export", "accounts.role.assign", "accounts.role.revoke",
@@ -95,7 +114,7 @@ _ROLE_FEATURES: dict = {
         "catalog.list", "catalog.read",
         "audit.read",
         "analytics.read",
-        "governance.read", "security.read",
+        "governance.access.read", "governance.permissions.read", "security.read",
     ],
     "moderator": [
         "catalog.list", "catalog.read", "catalog.write", "catalog.delete",
@@ -137,7 +156,7 @@ _ROLE_FEATURES: dict = {
         "orders.list", "orders.read",
         "suppliers.onboarding.read", "suppliers.onboarding.write",
         "finance.commission.read", "finance.payout.read",
-        "analytics.read", "audit.read", "customers.profile.read",
+        "analytics.read", "audit.read", "customers.profile.manage",
     ],
     "auditor": [
         "audit.read", "audit.logs.read", "audit.logs.export",

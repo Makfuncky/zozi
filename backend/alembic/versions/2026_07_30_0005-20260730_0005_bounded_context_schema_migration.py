@@ -8,6 +8,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import quoted_name
 
 revision: str = "20260730_0005"
 down_revision: Union[str, None] = "20260730_0004"
@@ -329,8 +330,7 @@ def upgrade() -> None:
         ("wishlists", "customer"),
     ]:
         op.execute(
-            sa.text('ALTER TABLE IF EXISTS public."' + sa.sql.identifier(table_name) + '" SET SCHEMA :schema')
-            .bindparams(schema=sa.sql.identifier(schema_name))
+            sa.text('ALTER TABLE IF EXISTS public."' + quoted_name(table_name, False) + '" SET SCHEMA ' + quoted_name(schema_name, False))
         )
 
 
@@ -628,7 +628,7 @@ def downgrade() -> None:
         ("wishlists", "customer"),
     ]:
         op.execute(
-            sa.text('ALTER TABLE IF EXISTS "' + sa.sql.identifier(schema_name) + '"."' + sa.sql.identifier(table_name) + '" SET SCHEMA public')
+            sa.text('ALTER TABLE IF EXISTS "' + quoted_name(schema_name, False) + '"."' + quoted_name(table_name, False) + '" SET SCHEMA public')
         )
 
     for schema_name in [
@@ -649,4 +649,4 @@ def downgrade() -> None:
         "supplier",
         "treasury",
     ]:
-        op.execute(sa.text('DROP SCHEMA IF EXISTS :schema CASCADE').bindparams(schema=sa.sql.identifier(schema_name)))
+        op.execute(sa.text('DROP SCHEMA IF EXISTS ' + quoted_name(schema_name, False) + ' CASCADE'))

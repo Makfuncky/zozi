@@ -45,7 +45,7 @@ jobs:
     if: ${{ !github.event.inputs.skip_tests }}
     env:
       APP_ENV: test
-      SECRET_KEY: pre-deploy-validation-key
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
       TEST_ADMIN_PASSWORD: admin123
       TEST_SUPPLIER_PASSWORD: supplier123
       TEST_CUSTOMER_PASSWORD: customer123
@@ -76,6 +76,19 @@ jobs:
           uv run --no-sync pytest tests/architecture/test_import_laws.py \
                         tests/architecture/test_architecture_gates.py \
                         tests/architecture/test_laws_complete.py \
+                        tests/architecture/test_law2_router_no_db_writes.py \
+                        tests/architecture/test_law3_cross_domain.py \
+                        tests/architecture/test_law3_cross_domain_model_imports.py \
+                        tests/architecture/test_law5_country_scope.py \
+                        tests/architecture/test_law5_country_isolation.py \
+                        tests/architecture/test_law6_schema_discipline.py \
+                        tests/architecture/test_law7_allowlist_shrink.py \
+                        tests/architecture/test_law19_through_law31.py \
+                        tests/architecture/test_law32_through_law57.py \
+                        tests/architecture/test_law58_through_law74.py \
+                        tests/architecture/test_law102_infrastructure_ml_worker.py \
+                        tests/architecture/test_law271_through_law295.py \
+                        tests/architecture/test_law296_through_law325.py \
                         -v --timeout=60
 
       - name: Run critical path tests
@@ -118,7 +131,7 @@ jobs:
 
       - name: Run database migrations
         run: |
-          railway run --environment staging -- alembic upgrade head
+          railway run --environment staging -- alembic -c backend/alembic/alembic.ini upgrade head
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
 
@@ -126,6 +139,7 @@ jobs:
         run: |
           sleep 10
           curl -sf https://staging-api.zozi.com/health || exit 1
+          curl -sf https://staging-api.zozi.com/health/ready || exit 1
           echo "✅ Backend staging deployment healthy"
 
   # ═══════════════════════════════════════════════════════════════
@@ -202,7 +216,7 @@ jobs:
 
       - name: Run database migrations
         run: |
-          railway run --environment production -- alembic upgrade head
+          railway run --environment production -- alembic -c backend/alembic/alembic.ini upgrade head
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
 
@@ -210,6 +224,7 @@ jobs:
         run: |
           sleep 15
           curl -sf https://api.zozi.com/health || exit 1
+          curl -sf https://api.zozi.com/health/ready || exit 1
           echo "✅ Backend production deployment healthy"
 
       - name: Notify deployment success
@@ -280,10 +295,17 @@ jobs:
         run: |
           for i in 1 2 3 4 5; do
             if curl -sf https://api.zozi.com/health; then
-              echo "✅ Backend health check passed"
-              exit 0
+              # Law 218: readiness (blocking_dependencies) must gate the release,
+              # not liveness alone. A release that boots but cannot serve traffic
+              # must NOT be recorded as a successful post-rollout gate.
+              if curl -sf https://api.zozi.com/health/ready; then
+                echo "✅ Backend health check passed (liveness + readiness)"
+                exit 0
+              fi
+              echo "Attempt $i passed liveness but /health/ready is not ready, retrying in 10s..."
+            else
+              echo "Attempt $i failed, retrying in 10s..."
             fi
-            echo "Attempt $i failed, retrying in 10s..."
             sleep 10
           done
           echo "❌ Backend health check failed after 5 attempts"

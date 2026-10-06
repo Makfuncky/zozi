@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
-from infrastructure.utils.auth import JWTError, jwt
+from providers.auth.jwt import JWTError, jwt
 from infrastructure.database.database import get_db, get_db_session
 # TODO Law 3: This file mutates DirectChatRoom / GroupChatRoom /
 # EntityChatMessage / SupportTicket rows that live in the accounts

@@ -86,6 +86,25 @@ class User(Base):
     wishlist_items = relationship("WishlistItem", back_populates="user", lazy="selectin")
     wishlists = relationship("Wishlist", back_populates="user", lazy="selectin")
 
+    # Mapping-style access: get_current_user() returns a `User`, but ~327 call
+    # sites read it as a mapping (`current_user["id"]`, `current_user.get(...)`),
+    # which is also what the router signatures declare. Without this those
+    # endpoints 500 with: TypeError: 'User' object is not subscriptable.
+    def __getitem__(self, key: str):
+        try:
+            return getattr(self, key)
+        except AttributeError as exc:
+            raise KeyError(key) from exc
+
+    def get(self, key: str, default=None):
+        return getattr(self, key, default)
+
+    def __contains__(self, key: object) -> bool:
+        return isinstance(key, str) and hasattr(self, key)
+
+    def keys(self):
+        return (c.name for c in self.__table__.columns)
+
 
 class UserSession(Base):
     __tablename__ = "user_sessions"

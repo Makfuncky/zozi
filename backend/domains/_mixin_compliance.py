@@ -26,7 +26,10 @@ security, country, promotions.
 """
 from __future__ import annotations
 
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import (
     Boolean,
@@ -156,5 +159,5 @@ if __name__ == "__main__":  # pragma: no cover - manual debug
     import main  # noqa: F401  triggers model loading
     result = apply_to_five_domains()
     for k, v in sorted(result.items()):
-        print(f"{k}: +{v}")
-    print(f"Total: {len(result)} tables patched")
+        logger.info("%s: +%s", k, v)
+    logger.info("Total: %s tables patched", len(result))

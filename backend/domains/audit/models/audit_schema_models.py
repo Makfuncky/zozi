@@ -22,9 +22,11 @@ class AuditLog(Base):
     details = Column(JSON, nullable=True)
     ip_address = Column(String(255), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    worm_hash = Column(String(128), nullable=True)
+    worm_prev_hash = Column(String(128), nullable=True)
 
 
 class CommandCenterView(Base):
@@ -36,6 +38,6 @@ class CommandCenterView(Base):
     config = Column(JSON, nullable=True)
     is_default = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)

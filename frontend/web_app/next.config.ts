@@ -63,6 +63,16 @@ const nextConfig: NextConfig = {
         source: '/__api/products/suppliers',
         destination: `${apiUrl}/api/v1/customer/suppliers/products/suppliers`,
       },
+      // Module-scoped surfaces. resolveRequestUrl() in src/lib/api/client.ts sends
+      // every path that is not /api, /auth or /admin through /__api, so without
+      // these rules they all fall into the customer/catalog catch-all below and
+      // 404. Rewrites are first-match-wins, so these must stay above it.
+      //   backend namespaces: /supplier/*, /api/v1/logistics/logistics/*, /api/v1/employee/*
+      { source: '/__api/supplier/:path*', destination: `${apiUrl}/supplier/:path*` },
+      { source: '/__api/logistics-partner/:path*', destination: `${apiUrl}/api/v1/logistics/logistics/:path*` },
+      { source: '/__api/employee/:path*', destination: `${apiUrl}/api/v1/employee/:path*` },
+      { source: '/__api/employees/:path*', destination: `${apiUrl}/api/v1/employee/:path*` },
+      { source: '/__api/suppliers/:path*', destination: `${apiUrl}/api/v1/customer/suppliers/:path*` },
       {
         source: '/__api/:path*',
         destination: `${apiUrl}/api/v1/customer/catalog/:path*`,

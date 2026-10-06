@@ -23,7 +23,7 @@ async function mockExternalProviders(page: Page) {
 async function postLogin(page: Page, body: Record<string, unknown>) {
   return page.request.post("/api/auth/login", {
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    data: JSON.stringify(body),
     failOnStatusCode: false,
   });
 }

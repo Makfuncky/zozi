@@ -9,6 +9,7 @@ from ``lifespan.py``.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict
 
 from infrastructure.messaging.events.event_bus import subscribe
@@ -16,8 +17,14 @@ from infrastructure.messaging.events.event_bus import subscribe
 logger = logging.getLogger(__name__)
 
 
+def _ensure_implemented(feature: str) -> None:
+    if os.getenv("APP_ENV", "development").lower() != "development":
+        raise NotImplementedError(f"{feature} event handler is not implemented")
+
+
 def _on_payment_authorized(payload: Dict[str, Any]) -> None:
     """Order marked as authorized but pending capture."""
+    _ensure_implemented("payments.authorized")
     logger.info(
         "payment authorized: payment_id=%s order_id=%s country=%s amount=%s",
         payload.get("payment_id", "?"),
@@ -25,12 +32,11 @@ def _on_payment_authorized(payload: Dict[str, Any]) -> None:
         payload.get("country_code", "?"),
         payload.get("amount", "?"),
     )
-    # Future: mark order as authorized in orders domain (via ports or by
-    # raising OrderAuthorized event downstream).
 
 
 def _on_payment_captured(payload: Dict[str, Any]) -> None:
     """Funds settled — downstream effects: order confirmation, finance accrual."""
+    _ensure_implemented("payments.captured")
     logger.info(
         "payment captured: payment_id=%s order_id=%s country=%s amount=%s",
         payload.get("payment_id", "?"),
@@ -38,29 +44,28 @@ def _on_payment_captured(payload: Dict[str, Any]) -> None:
         payload.get("country_code", "?"),
         payload.get("amount", "?"),
     )
-    # Future: trigger OrderConfirmed and FinanceCommissionAccrued events.
 
 
 def _on_payment_failed(payload: Dict[str, Any]) -> None:
     """Payment failed — log + alert + cancel pending order."""
+    _ensure_implemented("payments.failed")
     logger.warning(
         "payment failed: payment_id=%s order_id=%s error=%s",
         payload.get("payment_id", "?"),
         payload.get("order_id", "?"),
         payload.get("error_code", "?"),
     )
-    # Future: cancel order in pending state, send notification via comms.
 
 
 def _on_payment_refunded(payload: Dict[str, Any]) -> None:
     """Refund processed — downstream: ledger reversal + customer comms."""
+    _ensure_implemented("payments.refunded")
     logger.info(
         "payment refunded: payment_id=%s refund_id=%s amount=%s",
         payload.get("payment_id", "?"),
         payload.get("refund_id", "?"),
         payload.get("amount", "?"),
     )
-    # Future: post refund ledger entry + send refund email/SMS.
 
 
 def register_payments_subscribers() -> None:

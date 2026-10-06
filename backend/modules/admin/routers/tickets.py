@@ -40,7 +40,7 @@ def admin_list_tickets(
     status_filter: Optional[str] = Query(None, alias="status"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
-    _rf_gate: None = Depends(require_feature("support.read")),
+    _rf_gate: None = Depends(require_feature("comms.ticket.manage")),
 ):
     items = list_tickets(db=db, status=status_filter, limit=page_size)
     out = []
@@ -64,7 +64,7 @@ def admin_get_ticket(
     ticket_id: int = Path(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("support.read")),
+    _rf_gate: None = Depends(require_feature("comms.ticket.manage")),
 ):
     ticket = get_ticket_with_details(db, ticket_id) or get_ticket_by_id(db, ticket_id)
     if not ticket:
@@ -79,7 +79,7 @@ def admin_reply_to_ticket(
     payload: dict = Body(...),
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("support.reply")),
+    _rf_gate: None = Depends(require_feature("comms.ticket.manage")),
 ):
     ticket = get_ticket_by_id(db, ticket_id)
     if not ticket:
@@ -106,7 +106,7 @@ def admin_update_ticket_status(
     payload: dict = Body(...),
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    _rf_gate: None = Depends(require_feature("support.update")),
+    _rf_gate: None = Depends(require_feature("comms.ticket.manage")),
 ):
     new_status = str(payload.get("status") or "").strip().lower()
     allowed = {"open", "pending", "in_progress", "resolved", "closed"}

@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 from pathlib import Path
 
 from zz_core.constants import (
     CANONICAL_DOMAINS, CANONICAL_MODULES, FORBIDDEN_ROOT_DIRS,
-    CANONICAL_BACKEND_ROOT_ENTRIES,
+    CANONICAL_BACKEND_ROOT_ENTRIES, ROUTER_OK_INFRA,
 )
 from zz_core.model import CheckResult, Finding, Observation, ScanContext
 from zz_core.registry import check
@@ -201,6 +202,28 @@ DTO_SUFFIXES = (
 RATE_LIMIT_SYMBOLS = {"limiter", "RL_SENSITIVE", "RL_STANDARD", "rate_limiter",
                       "rate_limit", "slowapi_limiter", "get_limiter"}
 
+#: Infrastructure subpackages a `modules/**/routers/` file may import. Law 1 bans
+#: skipping the domain layer; it does not ban the framework wiring a router needs
+#: in order to do its job. Matched as a prefix against `infrastructure.<...>`.
+#:
+#:   security.*              RBAC gates — Laws 87/88 require a router to inject one
+#:   utils.country_rls       country scoping guard used at the request boundary
+#:   utils.auth              token decode
+#:   utils.config            settings
+#:   utils.currency_service  per-request currency context
+#:   utils.pagination        response shaping, i.e. transport
+#:   utils.invoice_html      document rendering
+#:   utils.background_jobs   job status lookup
+#:   database.rls_interceptor  SET LOCAL RLS context (Law 227)
+#:   database.schemas        Pydantic DTOs
+#:
+#: Anything else from `infrastructure` in a router -- `messaging.ws_manager`,
+#: `storage.*`, `database.session`, `providers.*` -- is a genuine bypass and is
+#: still reported.
+#:
+#: The list itself now lives in `zz_core.constants.ROUTER_OK_INFRA` so the probe
+#: adjudicates these findings with the same allowlist the detector used.
+
 
 def _is_framework_symbol(symbol: str) -> bool:
     """True when an imported symbol is transport or framework plumbing."""
@@ -281,14 +304,31 @@ def arch_import_direction(ctx: ScanContext) -> CheckResult:
                 if top == "domains" or top == "rbac":
                     continue  # allowed
                 if top == "infrastructure":
-                    # Law 1 separates *business* layers. Framework wiring every
-                    # FastAPI router needs (session dependency, auth
-                    # dependency, HTTP primitives) is not the reverse-arrow
-                    # violation the law forbids — 12 of 14 adjudicated claims
-                    # here were exactly `get_db`, `get_current_user` or
-                    # `require_admin`. `ast_imports` yields one entry PER
-                    # SYMBOL, so the filter applies per symbol and the finding
-                    # names the business one that survived.
+                    # Law 1 separates *business* layers. A router may import
+                    # framework plumbing from infrastructure; what it must not do
+                    # is reach past its domain service into infrastructure
+                    # internals.
+                    #
+                    # This used to filter on the imported SYMBOL name, which is the
+                    # wrong axis, and produced 69 findings of which 67 were false:
+                    #   27  security.dependencies   require_supplier/require_logistics/
+                    #                              require_super_admin/verify_captcha
+                    #                              -- the RBAC gates Laws 87/88 REQUIRE
+                    #                              a router to use
+                    #   15  utils.country_rls       get_country_or_404/enforce_country_access
+                    #   12  database.rls_interceptor set_/clear_rls_context -- the SET LOCAL
+                    #                              pattern Law 227 mandates
+                    #    4  database.schemas       CreateStaffAccount/UpdateStaffAccount
+                    #                              -- Pydantic DTOs, i.e. transport
+                    #    2  utils.config           settings
+                    #    2  utils.invoice_html     document rendering
+                    #    4  utils.{auth,currency_service,pagination,background_jobs}
+                    # The class of import is a property of the SUBPACKAGE, not of
+                    # the symbol, so the test belongs here.
+                    subpkg = ".".join(module.split(".")[1:3])
+                    if subpkg.startswith(ROUTER_OK_INFRA) or module.startswith(
+                            ROUTER_OK_INFRA):
+                        continue
                     symbol = names if isinstance(names, str) else str(names or "")
                     if _is_framework_symbol(symbol):
                         continue
@@ -326,44 +366,74 @@ def arch_import_direction(ctx: ScanContext) -> CheckResult:
         res.facts["cross_domain_imports"] = sum(len(v) for v in by_pair.values())
 
     # cycles at package granularity
+    #
+    # The reported chain must be the traversal PATH, not the alphabetically
+    # sorted member set. `tuple(sorted(set(...)))` produced
+    #   domains.accounts -> domains.audit -> domains.catalog -> domains.comms
+    # for a cycle whose actual edges were something else entirely, so 15 of 16
+    # reported chains named imports that do not exist. The chain is the claim, so
+    # it has to be the thing that was observed.
     edges: dict[str, set[str]] = {}
+    edge_site: dict[tuple[str, str], str] = {}
     for rel, imports in graph.items():
         src = _layer_of(rel)
-        for module, _l, _n in imports:
+        for module, line, names in imports:
             top = module.split(".")[0]
             if top in CORE_DIRS:
                 dst = _layer_of(f"backend/{module.replace('.', '/')}")
                 if dst != src:
                     edges.setdefault(src, set()).add(dst)
-    # simple DFS cycle detection
-    seen_cycles: set[tuple] = set()
-    colors: dict[str, int] = {}
+                    edge_site.setdefault((src, dst), f"{rel}:{line}")
 
-    def dfs(node: str, stack: list[str]):
-        colors[node] = 1
-        stack.append(node)
+    def _canonical(path: list[str]) -> tuple[str, ...]:
+        """Rotation-independent identity, so A->B->A and B->A->B are one cycle."""
+        ring = path[:-1]
+        if not ring:
+            return ()
+        k = min(range(len(ring)), key=lambda i: ring[i:])
+        return tuple(ring[k:] + ring[:k]) + (ring[k],)
+
+    seen_cycles: dict[tuple[str, ...], list[str]] = {}
+    path: list[str] = []
+    on_path: set[str] = set()
+    done: set[str] = set()
+
+    def dfs(node: str) -> None:
+        path.append(node)
+        on_path.add(node)
         for nxt in sorted(edges.get(node, ())):
-            if colors.get(nxt, 0) == 1 and nxt in stack:
-                cyc = tuple(sorted(set(stack[stack.index(nxt):] + [nxt])))
-                if cyc not in seen_cycles and len(cyc) > 1:
-                    seen_cycles.add(cyc)
-            elif colors.get(nxt, 0) == 0:
-                dfs(nxt, stack)
-        stack.pop()
-        colors[node] = 2
+            if nxt in on_path:
+                cyc = path[path.index(nxt):] + [nxt]
+                key = _canonical(cyc)
+                # keep the first (shortest, lexicographically stable) rotation
+                if key and len(key) > 2 and key not in seen_cycles:
+                    seen_cycles[key] = cyc
+            elif nxt not in done:
+                dfs(nxt)
+        path.pop()
+        on_path.discard(node)
+        done.add(node)
 
-    for n in list(edges):
-        if colors.get(n, 0) == 0:
-            dfs(n, [])
-    for cyc in list(seen_cycles)[:20]:
+    for n in sorted(edges):
+        if n not in done:
+            dfs(n)
+
+    for cyc in list(seen_cycles.values())[:20]:
+        chain = " -> ".join(cyc)
+        evidence = "; ".join(
+            f"{a} -> {b} via {edge_site.get((a, b), '?')}"
+            for a, b in zip(cyc, cyc[1:]))
         res.findings.append(_f(
-            "01_architectural", "arch", f"{cyc[0]} ↔ {cyc[1]}", 0,
-            f"circular package dependency: {' -> '.join(cyc)}",
+            "01_architectural", "arch", cyc[0], 0,
+            f"circular package dependency: {chain}",
             "no circular imports between packages (Law 98)",
             "Break the cycle with a port/event boundary",
             priority="P1", laws=(98,), cluster="CLUSTER-circular-import",
             truth="L1", evidence_strength="multiple",
+            snippet=evidence,
+            verify=f"grep -rn 'from {cyc[1]}' backend/{cyc[0].split('.', 1)[-1]}",
         ))
+    res.facts["package_cycles"] = len(seen_cycles)
     return res
 
 
@@ -415,6 +485,7 @@ def arch_router_thinness(ctx: ScanContext) -> CheckResult:
                 "routers declare HTTP endpoints (anti-inference: verify content)",
                 "Delete or convert to a service module",
                 priority="P2", laws=(8, 134), claim="VERIFIED",
+                cluster="CLUSTER-router-empty",
             ))
         if db_access:
             res.findings.append(_f(
@@ -532,19 +603,33 @@ def arch_dead_code(ctx: ScanContext) -> CheckResult:
                 dups.append((ctx.rel(p), qualname, start, body_hashes[key][0]))
             else:
                 body_hashes[key] = (ctx.rel(p), qualname, start)
-    for rel, qualname, start, other in dups[:120]:
+    # One finding per duplication PAIR, not per function.
+    #
+    # 120 of the 142 cluster-less findings came from here: `dups` holds one entry
+    # per duplicated function, so a pair of files sharing six helpers produced six
+    # findings that could not be worked as a unit -- and none of them carried a
+    # cluster, so no cluster-level triage could see them at all. The actionable
+    # unit is the pair: "these two files share N functions" is one edit.
+    by_pair: dict[tuple[str, str], list[tuple[str, int]]] = defaultdict(list)
+    for rel, qualname, start, other in dups:
+        by_pair[(rel, other)].append((qualname, start))
+    for (rel, other), items in sorted(by_pair.items(), key=lambda kv: -len(kv[1]))[:120]:
+        names = ", ".join(f"`{q}`" for q, _s in items[:5])
+        more = f" (+{len(items) - 5} more)" if len(items) > 5 else ""
         res.findings.append(_f(
-            "17_code_file_management", "arch", rel, start,
-            f"function `{qualname}` duplicates `{other}` (normalized AST)",
+            "17_code_file_management", "arch", rel, items[0][1],
+            f"{len(items)} function(s) in this file duplicate `{other}` "
+            f"(normalized AST): {names}{more}",
             "duplicate logic >5 lines must be extracted (Law 67)",
-            "Extract the shared implementation",
+            f"Extract the shared implementation(s) into one module and import them "
+            f"from both `{rel}` and `{other}`",
             priority="P3", laws=(67,), truth="L2", evidence_strength="single",
-            claim="INFERRED",
+            claim="INFERRED", cluster="CLUSTER-duplicate-symbol",
         ))
     # oversized files
     for p in files:
         try:
-            n = sum(1 for _ in p.open("r", encoding="utf-8", errors="replace"))
+            n = sum(1 for _ in p.open("r", encoding="utf-8-sig", errors="replace"))
         except Exception:
             continue
         if n > 1500:
@@ -554,7 +639,7 @@ def arch_dead_code(ctx: ScanContext) -> CheckResult:
                 "files remain reviewable; large services split by capability (Law 64/65 spirit)",
                 "Split into capability-scoped modules",
                 priority="P3", effort="L", claim="VERIFIED", laws=(64, 65),
-                truth="L1",
+                truth="L1", cluster="CLUSTER-file-too-long",
             ))
     return res
 

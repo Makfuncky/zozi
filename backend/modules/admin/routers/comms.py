@@ -1,9 +1,19 @@
 from __future__ import annotations
 import json
 import logging
+import uuid
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, Path, Body, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Path,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.security.dependencies import require_admin
@@ -135,22 +145,72 @@ def export_communication_audit_for_ediscovery_route(
 logger = logging.getLogger(__name__)
 
 
-async def websocket_user(websocket: WebSocket):
-    """Handle a user realtime WebSocket connection."""
+async def websocket_user(websocket: WebSocket, token: str | None = None):
+    """Handle a user realtime WebSocket connection.
+
+    Law 41: the socket is authenticated with a JWT ``?token=`` query param
+    using ``expected_type="access"`` so a refresh token cannot open it. The
+    socket is bound to a per-user room rather than the shared ``USER_ROOM``
+    so one user can never receive another user's realtime traffic.
+    """
+    from infrastructure.utils.auth import decode_token
+
+    # Law 92/93: a WebSocket upgrade never traverses the HTTP middleware
+    # pipeline, so the correlation id is taken from the handshake header when
+    # the client sent one and minted here otherwise. Law 282: the token is a
+    # credential, so neither it nor the raw query string is ever logged.
+    peer = websocket.client
+    peer_info = f"{peer.host}:{peer.port}" if peer is not None else "unknown"
+    request_id = websocket.headers.get("x-request-id") or str(uuid.uuid4())
+    log_ctx = {"peer": peer_info, "request_id": request_id}
+
+    if not token:
+        logger.warning("websocket_user rejected: missing token", extra=log_ctx)
+        await websocket.close(code=4001, reason="Missing token")
+        return
+    try:
+        payload = decode_token(token, expected_type="access")
+    except HTTPException as exc:
+        # Law 33/43: a rejected credential is a security event -> WARNING+.
+        # Law 282: the reason is logged, never the token.
+        logger.warning(
+            "websocket_user rejected: token verification failed (%s)",
+            exc.detail,
+            extra=log_ctx,
+        )
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
+    user_id = payload.get("sub")
+    if not user_id:
+        logger.warning("websocket_user rejected: token has no subject", extra=log_ctx)
+        await websocket.close(code=4001, reason="Invalid token payload")
+        return
+
+    room = f"{USER_ROOM}:{user_id}"
+
     await websocket.accept()
-    manager.active_connections[USER_ROOM].append(websocket)
+    await manager.connect(websocket, room, user_id=int(user_id) if str(user_id).isdigit() else None)
     try:
         while True:
             data = await websocket.receive_text()
             try:
-                payload = json.loads(data)
+                payload_in = json.loads(data)
             except json.JSONDecodeError:
-                payload = {"raw": data}
-            await manager.broadcast_to_room(USER_ROOM, payload)
+                payload_in = {"raw": data}
+            # Echo back only to the authenticated user's own room.
+            await manager.broadcast_to_room(room, payload_in)
     except WebSocketDisconnect:
         pass
-    except Exception:
-        logger.debug("websocket_user connection closed unexpectedly")
+    except Exception as exc:
+        # Law 59: the exception is logged, not swallowed. Law 43: an aborted
+        # realtime session is a security-relevant event, so it is reported at
+        # WARNING+ with the peer and request_id rather than at DEBUG.
+        logger.warning(
+            "websocket_user connection aborted: %s",
+            type(exc).__name__,
+            exc_info=True,
+            extra=log_ctx,
+        )
     finally:
-        if websocket in manager.active_connections[USER_ROOM]:
-            manager.active_connections[USER_ROOM].remove(websocket)
+        manager.disconnect(websocket, room)

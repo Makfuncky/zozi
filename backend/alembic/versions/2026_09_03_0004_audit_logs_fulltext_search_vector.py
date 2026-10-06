@@ -13,6 +13,19 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
+
+def _is_offline(conn) -> bool:
+    if conn is None:
+        return True
+    try:
+        from sqlalchemy import inspect as sa_inspect
+        from sqlalchemy.exc import NoInspectionAvailable
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 revision: str = "2026_09_03_0004"
 down_revision: Union[str, None] = "2026_09_03_0003"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -48,6 +61,9 @@ def upgrade() -> None:
     bind = op.get_bind()
     # ADR-019 / ADR-028: tsvector + GIN + plpgsql trigger are PG-only.
     if bind.dialect.name != "postgresql":
+        return
+    offline = _is_offline(bind)
+    if offline:
         return
     inspector = sa.inspect(bind)
     if "audit_logs" not in inspector.get_table_names(schema="audit"):

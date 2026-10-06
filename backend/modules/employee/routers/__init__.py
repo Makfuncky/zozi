@@ -1,5 +1,5 @@
 """Routers for the employee module — domain routers."""
-import importlib
+from infrastructure.utils.router_loader import load_router_submodules
 
 routers = []
 public_routers = []
@@ -7,6 +7,7 @@ public_routers = []
 _module_names = [
     "accounts",
     "analytics",
+    "attendance",
     "audit",
     "catalog",
     "comms",
@@ -15,20 +16,19 @@ _module_names = [
     "finance",
     "governance",
     "hr",
+    "lms",
     "logistics",
+    "offices",
     "orders",
     "promotions",
     "security",
     "suppliers",
 ]
 
-for _n in _module_names:
-    try:
-        _m = importlib.import_module(f"modules.employee.routers.{_n}")
-    except Exception as _e:
-        import logging as _logging
-        _logging.getLogger(__name__).error("Skipping router %s: %s", _n, _e)
-        continue
-    _r = getattr(_m, "router", None)
-    if _r is not None:
-        routers.append(_r)
+# Routed through load_router_submodules so a submodule whose import raises is
+# recorded with a full traceback and surfaced via boot_summary() /
+# get_failed_imports(), instead of vanishing behind a single log line while the
+# app booted healthy and its routes 404'd.
+load_router_submodules(
+    "modules.employee.routers", _module_names, routers, public_routers
+)

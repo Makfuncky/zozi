@@ -72,7 +72,7 @@ def run_probe(ctx, limit: int | None = None) -> dict:
     cache = {}
     if cache_path.exists():
         try:
-            cache = json.loads(cache_path.read_text(encoding="utf-8"))
+            cache = json.loads(cache_path.read_text(encoding="utf-8-sig"))
         except Exception:
             cache = {}
     reviewed = 0

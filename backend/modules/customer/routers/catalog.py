@@ -15,7 +15,7 @@ from domains.catalog.services.products.products_service import (
     get_products,
     get_recommended_products,
 )
-from domains.catalog.services.search import search_products
+from domains.catalog.services.search_service import search_products
 from infrastructure.database.database import get_db
 from infrastructure.security.dependencies import get_current_user_optional
 from rbac.dependencies import require_feature
@@ -137,10 +137,13 @@ def search_products_route(
         "in_stock": in_stock,
     }
     filters = {k: v for k, v in filters.items() if v is not None}
-    result = search_products(query=q, filters=filters, limit=page_size)
+    result = search_products(query=q, filters=filters, limit=page_size) or {}
+    # The search engine serialises hits under "products"; older callers used
+    # "results"/"items". Accept all three so a key rename can never 500 the route.
+    items = result.get("products") or result.get("results") or result.get("items") or []
     return {
-        "items": result.get("results", result.get("items", [])),
-        "total": result.get("total", 0),
+        "items": items,
+        "total": result.get("total", len(items)),
         "query": q,
         "page": page,
         "size": page_size,

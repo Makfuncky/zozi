@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
+import sys
 import time
 from contextlib import asynccontextmanager
 from typing import Generator, AsyncGenerator
@@ -88,7 +90,107 @@ else:
 
 search_path = None
 if _IS_POSTGRES:
-    search_path = os.getenv("DB_SEARCH_PATH", "public,analytics,audit,commerce,configuration,country,customer,finance,hr,logistics,media,security,supplier")
+    search_path = os.getenv(
+        "DB_SEARCH_PATH",
+        "public,accounts,analytics,audit,catalog,comms,country,customers,"
+        "finance,governance,hr,logistics,media,orders,payments,promotions,"
+        "security,suppliers",
+    )
+
+# --- search_path validation (Law 34, Law 75) ---------------------------------
+# `DB_SEARCH_PATH` is environment-supplied, so it crosses a trust boundary and
+# must never reach DDL as raw text. Every element is validated against
+# `^[A-Za-z_][A-Za-z0-9_]*$` and then double-quoted with the same escaping rule
+# the canonical RLS enforcer already applies to identifiers
+# (`infrastructure/database/rls_interceptor.py:269-271`), so a value such as
+# `public"; DROP TABLE users; --` is rejected instead of concatenated. Rejected
+# elements are reported at WARNING (Law 75), never dropped silently.
+_SCHEMA_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _quote_ident(name: str) -> str:
+    """Return a safely quoted PostgreSQL identifier (double-quoted, escaped)."""
+    return '"' + name.replace('"', '""') + '"'
+
+
+def validate_search_path(raw: str | None) -> list[str]:
+    """Validate `DB_SEARCH_PATH` into an ordered list of plain schema identifiers.
+
+    Elements are stripped, validated against `_SCHEMA_IDENTIFIER_RE`, and kept in
+    the order they were configured (the default list ordering is frozen). Empty
+    elements are ignored; anything that is not a bare identifier is rejected and
+    logged at WARNING.
+    """
+    validated: list[str] = []
+    for element in (raw or "").split(","):
+        candidate = element.strip()
+        if not candidate:
+            continue
+        if not _SCHEMA_IDENTIFIER_RE.match(candidate):
+            logger.warning(
+                "DB_SEARCH_PATH element %r rejected: not a plain PostgreSQL schema "
+                "identifier (expected ^[A-Za-z_][A-Za-z0-9_]*$) and will not be applied "
+                "to any connection",
+                candidate,
+            )
+            continue
+        validated.append(candidate)
+    return validated
+
+
+search_path_schemas: list[str] = validate_search_path(search_path)
+search_path_value: str = ", ".join(
+    _quote_ident(schema) for schema in search_path_schemas
+)
+
+
+def _driver_paramstyle(dbapi_connection, fallback: str) -> str:  # noqa: ANN001
+    """Resolve the DBAPI paramstyle of the connection being configured.
+
+    PEP 249 requires every DBAPI module to publish `paramstyle`; SQLAlchemy
+    dialects use the same attribute. We read it from the driver's own module so
+    the listener binds correctly on *any* engine it is attached to rather than
+    assuming the module-level engine's driver.
+    """
+    module_name = type(dbapi_connection).__module__
+    while module_name:
+        module = sys.modules.get(module_name)
+        paramstyle = getattr(module, "paramstyle", None) if module is not None else None
+        if paramstyle:
+            return str(paramstyle)
+        module_name = module_name.rpartition(".")[0]
+    return fallback
+
+
+def _bind_search_path(statement: str, value: str, paramstyle: str):
+    """Bind `value` into `statement` using the DBAPI driver's own paramstyle.
+
+    `statement` carries exactly one `?` placeholder and the value travels as a
+    bind parameter, so environment text is never interpolated into SQL. This is
+    the same "let the driver bind, never format" rule the RLS enforcer follows
+    when it rewrites a clause and lets SQLAlchemy bind it
+    (`infrastructure/database/rls_interceptor.py:163-215`).
+
+    Returns `(sql, parameters)` in the shape `cursor.execute()` expects for the
+    given paramstyle.
+    """
+    if paramstyle == "qmark":
+        return statement, (value,)
+    if paramstyle == "numeric":
+        return statement.replace("?", ":1", 1), (value,)
+    if paramstyle == "numeric_dollar":
+        return statement.replace("?", "$1", 1), (value,)
+    if paramstyle == "format":
+        return statement.replace("?", "%s", 1), (value,)
+    if paramstyle == "pyformat":
+        return statement.replace("?", "%(search_path)s", 1), {"search_path": value}
+    if paramstyle == "named":
+        return statement.replace("?", ":search_path", 1), {"search_path": value}
+    raise RuntimeError(
+        f"Unsupported DBAPI paramstyle {paramstyle!r}: DB_SEARCH_PATH cannot be "
+        f"applied with bound parameters. Refusing to interpolate it into SQL."
+    )
+
 
 # On SQLite, Postgres per-domain schemas ("catalog", "orders", ...) are not
 # supported, so the Alembic migrations create flat, schema-less tables
@@ -117,6 +219,14 @@ if _IS_SQLITE:
         "suppliers": None,
     }
 
+_DATABASE_URL_SYNC = DATABASE_URL
+if DATABASE_URL.startswith("postgresql+asyncpg://"):
+    _DATABASE_URL_SYNC = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
+elif DATABASE_URL.startswith("postgres+asyncpg://"):
+    _DATABASE_URL_SYNC = DATABASE_URL.replace("postgres+asyncpg://", "postgres://", 1)
+elif DATABASE_URL.startswith("sqlite+aiosqlite://"):
+    _DATABASE_URL_SYNC = DATABASE_URL.replace("sqlite+aiosqlite://", "sqlite://", 1)
+
 _engine_kwargs = {
     "connect_args": connect_args,
     "poolclass": poolclass,
@@ -126,7 +236,98 @@ _engine_kwargs = {
 if _SCHEMA_TRANSLATE_MAP is not None:
     _engine_kwargs["execution_options"] = {"schema_translate_map": _SCHEMA_TRANSLATE_MAP}
 
-engine = create_engine(DATABASE_URL, **_engine_kwargs)
+# Sync fallback engine (kept for backward compatibility with 2412+ get_db() call sites)
+engine = create_engine(_DATABASE_URL_SYNC, **_engine_kwargs)
+
+# Primary async engine (eagerly created only for async-compatible URLs)
+_async_engine = None
+_AsyncSessionLocal = None
+_async_init_lock = asyncio.Lock()
+
+if _HAS_ASYNC_SA and DATABASE_URL.startswith(("postgresql+asyncpg://", "postgres+asyncpg://", "sqlite+aiosqlite://")):
+    _async_connect_args: dict = {}
+    if DATABASE_URL.startswith("sqlite"):
+        _async_connect_args["check_same_thread"] = False
+    elif DATABASE_URL.startswith("postgresql+asyncpg"):
+        ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
+        if ssl_mode and ssl_mode != "disable":
+            _async_connect_args["ssl"] = ssl_mode
+        if "pooler" not in DATABASE_URL:
+            _async_connect_args["server_settings"] = {"statement_timeout": str(settings.db_statement_timeout)}
+
+    _async_pool_kwargs: dict = {}
+    if not DATABASE_URL.startswith("sqlite"):
+        _async_pool_kwargs = {
+            "pool_size": settings.db_pool_size,
+            "max_overflow": settings.db_max_overflow,
+            "pool_recycle": settings.db_pool_recycle,
+            "pool_pre_ping": True,
+            "pool_timeout": settings.db_connect_timeout,
+        }
+
+    _async_engine = create_async_engine(
+        DATABASE_URL,
+        connect_args=_async_connect_args,
+        echo=getattr(settings, "debug", False),
+        **({"execution_options": {"schema_translate_map": _SCHEMA_TRANSLATE_MAP}}
+           if _SCHEMA_TRANSLATE_MAP is not None else {}),
+        **_async_pool_kwargs,
+    )
+    _AsyncSessionLocal = async_sessionmaker(
+        bind=_async_engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
+    )
+
+def _apply_search_path(dbapi_connection, connection_record):  # noqa: ANN001
+    """Apply the validated `DB_SEARCH_PATH` to a freshly opened DBAPI connection.
+
+    A `connect` event fires on the raw DBAPI connection — before SQLAlchemy has
+    built a `Connection` — so a `text()` clause cannot be used here. Law 34 says
+    `text()` is executed by an Engine/Connection and is *never* handed to a raw
+    DBAPI cursor; passing one raised
+    `TypeError: Boolean value of this clause is not defined`
+    (sqlalchemy/sql/elements.py:762) on every single checkout, which is why the
+    search path had never actually been applied on PostgreSQL.
+
+    The statement therefore keeps one bind placeholder and the value is bound
+    through the driver's own paramstyle. `set_config(..., false)` is used rather
+    than `SET search_path TO <value>` because PostgreSQL parses a *string
+    literal* in `SET search_path` as a single schema name, not a list: verified
+    on PostgreSQL 18, `SET search_path TO 'public, accounts'` yields
+    `SHOW search_path = "public, accounts"` with `current_schema() = NULL`,
+    whereas `set_config('search_path', 'public, accounts', false)` yields
+    `SHOW search_path = public, accounts` with `current_schema() = public` and
+    unqualified names resolving (e.g. `to_regclass('products')` -> `products`).
+    `is_local = false` keeps it session-level, exactly like `SET search_path`.
+
+    Both the value and the schema names are validated before they get here, so no
+    environment text is ever concatenated into the statement.
+    """
+    if not search_path_schemas:
+        # Law 75: degrade gracefully AND say so. Issuing an empty
+        # `SET search_path` would wipe the server default and break every
+        # unqualified query, so the default is left in place instead.
+        logger.warning(
+            "DB_SEARCH_PATH produced no valid PostgreSQL schema identifiers; the "
+            "server default search_path is left in place for every connection"
+        )
+        return
+
+    statement, parameters = _bind_search_path(
+        "SELECT set_config('search_path', ?, false)",
+        search_path_value,
+        _driver_paramstyle(dbapi_connection, engine.dialect.paramstyle),
+    )
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute(statement, parameters)
+    finally:
+        cursor.close()
+
+
+if search_path_schemas:
+    event.listen(engine, "connect", _apply_search_path)
 
 if _IS_SQLITE:
     @event.listens_for(engine, "connect")
@@ -300,7 +501,7 @@ def _get_replica_engine():
 
     replica_url = str(getattr(settings, "database_replica_url", "") or "").strip()
     if not replica_url:
-        replica_url = DATABASE_URL
+        replica_url = _DATABASE_URL_SYNC
 
     replica_connect_args: dict = {}
     replica_pool_kwargs: dict = {}

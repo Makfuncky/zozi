@@ -1,2 +1,1422 @@
-<testsuites id="" name="" tests="0" failures="0" skipped="0" errors="0" time="1.274971">
+<testsuites id="" name="" tests="314" failures="0" skipped="314" errors="0" time="12.736422999999998">
+<testsuite name="00-route-walk.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="route inventory is discovered from the app tree" classname="00-route-walk.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin: walk 57 routes and record evidence" classname="00-route-walk.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="customer: walk 13 routes and record evidence" classname="00-route-walk.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="employee: walk 14 routes and record evidence" classname="00-route-walk.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="logistics: walk 10 routes and record evidence" classname="00-route-walk.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="public: walk 27 routes and record evidence" classname="00-route-walk.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier: walk 34 routes and record evidence" classname="00-route-walk.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth\auth-rbac-gates.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="auth rbac gates › unauthorized feature access returns 403" classname="auth\auth-rbac-gates.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth rbac gates › authorized feature access returns 200" classname="auth\auth-rbac-gates.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth rbac gates › cross-tenant data isolation — country A cannot see country B data" classname="auth\auth-rbac-gates.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth\auth-registration-login.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Registration — all roles (API) › customer registration persists to database" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Registration — all roles (API) › supplier registration persists with business profile" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Registration — all roles (API) › logistics_partner registration persists with partner profile" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Registration — all roles (API) › duplicate email registration is rejected" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Registration — all roles (API) › weak password is rejected" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login — all roles (API) › admin login returns valid token with correct role" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login — all roles (API) › wrong password returns 400" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login — all roles (API) › nonexistent user returns 400" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Registration — UI flow › customer can register through the UI form" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login — UI flow › admin can login through the UI and reaches dashboard" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login — UI flow › customer can login through the UI and reaches products" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Database persistence verification › registered user survives server restart (token validity)" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Database persistence verification › product visibility — products endpoint returns seeded data" classname="auth\auth-registration-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth\auth-role-login.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="auth role login smoke › customer login reaches authenticated customer pages" classname="auth\auth-role-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth role login smoke › admin login reaches admin dashboard" classname="auth\auth-role-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth role login smoke › supplier login reaches supplier dashboard" classname="auth\auth-role-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth role login smoke › logistics partner login reaches logistics dashboard" classname="auth\auth-role-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="auth\auth-session-refresh.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="auth session refresh › access token expires — silent refresh via httpOnly cookie succeeds" classname="auth\auth-session-refresh.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth session refresh › refresh token rotation — old token invalidated after refresh" classname="auth\auth-session-refresh.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth session refresh › device binding — session invalidated on new device" classname="auth\auth-session-refresh.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="auth session refresh › logout clears session state" classname="auth\auth-session-refresh.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\amendment-verify.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="admin: /admin/dashboard renders with shared shell, StatCard, no duplicate h1, no overflow (mobile)" classname="cross-cutting\amendment-verify.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier: /supplier/dashboard renders with shared shell, StatCard, no duplicate h1, no overflow (mobile)" classname="cross-cutting\amendment-verify.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="logistics: /logistics-partner/dashboard renders with shared shell, StatCard, no duplicate h1, no overflow (mobile)" classname="cross-cutting\amendment-verify.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="logistics: /logistics-partner/routes renders with shared shell, StatCard, no duplicate h1, no overflow (mobile)" classname="cross-cutting\amendment-verify.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\bg-comparison-visual.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="BG Strategy Comparison Visual Regression › full report capture" classname="cross-cutting\bg-comparison-visual.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\chatbot-shopping-assistant.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="chatbot offers close-match fashion recommendations for realistic prompts" classname="cross-cutting\chatbot-shopping-assistant.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="chatbot keeps budget-aware apparel suggestions in the live widget" classname="cross-cutting\chatbot-shopping-assistant.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\collapse-poll.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="confirm admin sidebar collapses (reliable form login)" classname="cross-cutting\collapse-poll.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\command-center.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="Command Center › command center loads and renders all zones" classname="cross-cutting\command-center.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Command Center › command center data feed resolves (no telemetry-lost banner)" classname="cross-cutting\command-center.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\countries-search.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="Admin Countries — country search / auto-populate › country search panel is wired in the quick-create form" classname="cross-cutting\countries-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Countries — country search / auto-populate › searching a country populates the quick-create form" classname="cross-cutting\countries-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\country-auto-populate.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="Country Auto-Populate Feature › auto-populate search shows suggestions for valid country" classname="cross-cutting\country-auto-populate.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Auto-Populate Feature › auto-populate fills form fields with suggested data" classname="cross-cutting\country-auto-populate.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Auto-Populate Feature › auto-populate shows tax rate suggestions" classname="cross-cutting\country-auto-populate.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\country-integration-rls.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Ghost Row / Inline Form Tests › 1. Ghost row appears when creating a new country" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Ghost Row / Inline Form Tests › 2. Ghost row can be cancelled" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Draft-to-Publish Workflow Tests › 3. Create tax draft and approve it" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Draft-to-Publish Workflow Tests › 4. Publish a version" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Draft-to-Publish Workflow Tests › 5. Rollback to previous version" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="RLS (Row Level Security) Isolation Tests › 6. Country head can only see assigned countries" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="RLS (Row Level Security) Isolation Tests › 7. Staff assignment restricts access" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Cross-Country Session Tracking Tests › 8. Cross-border session is recorded" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Product Restriction Integration Tests › 9. Restricted products are hidden in checkout" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Payment Gateway Country Sync Tests › 10. Gateways are synced from country config" classname="cross-cutting\country-integration-rls.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\country-research-all-modules.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="Country Research — All 20 Modules (E2E) › 01 — Backend API returns all 20 modules with correct structure" classname="cross-cutting\country-research-all-modules.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Research — All 20 Modules (E2E) › 02 — Cross-module data consistency" classname="cross-cutting\country-research-all-modules.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Research — All 20 Modules (E2E) › 03 — DB values align with research response (tax fields)" classname="cross-cutting\country-research-all-modules.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Research — All 20 Modules (E2E) › 04 — Frontend renders Research tab with all 20 modules" classname="cross-cutting\country-research-all-modules.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Research — All 20 Modules (E2E) › 05 — Modules 1-3 open by default with visible field labels" classname="cross-cutting\country-research-all-modules.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Research — All 20 Modules (E2E) › 06 — Search filters modules correctly" classname="cross-cutting\country-research-all-modules.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Research — All 20 Modules (E2E) › 07 — Non-existent country returns 404" classname="cross-cutting\country-research-all-modules.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\design-system-comprehensive.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="18" failures="0" skipped="18" time="0" errors="0">
+<testcase name="Phase 0 — token wiring › tokens.css is imported and tokens resolve" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 0 — token wiring › glow.css is imported (glow page styles render)" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 1 — undefined class fixes › --color-background is defined" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 1 — undefined class fixes › --zozi-ext-* tokens are defined" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 1 — undefined class fixes › bcu-* keyframes exist in stylesheet" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 1 — undefined class fixes › theme-btn-danger class is defined" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 1 — undefined class fixes › hero-display class is defined" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 1 — undefined class fixes › focus-visible ring is applied on keyboard navigation" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 1 — undefined class fixes › reduced-motion media query exists" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 2 — token reconciliation › status colors are defined and theme-aware" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 2 — token reconciliation › --radius-card references token variable" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 2 — token reconciliation › motion tokens are defined" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 3 — component system › glass-panel class renders backdrop-filter" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 5 — modern look › entrance utility classes exist" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 5 — modern look › hero-gradient utility exists" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 5 — modern look › print styles exist" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="z-index named scale › z-index config has named scale entries" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="theme switching › toggle light/dark re-themes CSS variables" classname="cross-cutting\design-system-comprehensive.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\design-system-tokens.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="design-system tokens resolve at runtime › homepage exposes the wired design tokens" classname="cross-cutting\design-system-tokens.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\mobile-panel-audit.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="18" failures="0" skipped="18" time="0" errors="0">
+<testcase name="mobile panel audit › admin-dashboard stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-email stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-audit-logs stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-logistics stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-barcode stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-suppliers stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-users stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-orders stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › admin-commission stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › supplier-dashboard stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › supplier-orders stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › supplier-invoices stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › supplier-payouts stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › supplier-terms stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › logistics-dashboard stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › logistics-analytics stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › logistics-payouts stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="mobile panel audit › logistics-scan stays within the iPhone viewport" classname="cross-cutting\mobile-panel-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\panel-slider-audit.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="admin mobile drawer opens and closes" classname="cross-cutting\panel-slider-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin desktop sidebar collapses" classname="cross-cutting\panel-slider-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier mobile drawer opens and closes" classname="cross-cutting\panel-slider-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier desktop sidebar collapses" classname="cross-cutting\panel-slider-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="logistics mobile drawer opens and closes" classname="cross-cutting\panel-slider-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="logistics desktop sidebar collapses" classname="cross-cutting\panel-slider-audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\products-visual-shell.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="products visual shell › keeps background effects visible without reintroducing an opaque white shell" classname="cross-cutting\products-visual-shell.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\scaling_audit.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="21" failures="0" skipped="21" time="0" errors="0">
+<testcase name="API health check returns 200" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin login returns token" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier login returns token" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="customer login returns token" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="product search returns results" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PageParams enforces max page size" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="cursor pagination returns next_cursor if supported" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="uploads directory is accessible (local dev)" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="DB responds to health check" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="presigned upload endpoint is reachable" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Dockerfile.worker exists with correct CMD" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="docker-compose.prod.yml has worker and pgbouncer services" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="S3Storage.purge_cdn exists" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="pagination.py has CursorPage and cursor_paginate" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="rate_limit_middleware has presigned URL limits" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="pg_backup script exists" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="alembic merge migration exists with all heads" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="full user flow: login + browse + search" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="rate limit middleware responds with 429 under rapid failed logins" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="run_worker.py imports cleanly" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="storage.py has complete StorageBackend interface" classname="cross-cutting\scaling_audit.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="cross-cutting\verify-all-panels.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="panel admin: no global header + sidebar collapses" classname="cross-cutting\verify-all-panels.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="panel supplier: no global header + sidebar collapses" classname="cross-cutting\verify-all-panels.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="panel logistics: no global header + sidebar collapses" classname="cross-cutting\verify-all-panels.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="database.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Alembic heads are linear" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="all 15 domain schemas exist in database" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="no tables exist in forbidden schemas (core, platform, identity)" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="seed countries are loaded" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="seed admin user exists and can authenticate" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="seed products have variants and stock" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="foreign key constraints prevent orphan order_lines" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="unique constraints prevent duplicate emails" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="check constraints enforce valid enum values" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="RLS blocks cross-country reads" classname="database.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="journeys\10-customer-journey.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="customer: full commerce journey" classname="journeys\10-customer-journey.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="journeys\20-supplier-journey.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="supplier: catalogue, orders and payouts journey" classname="journeys\20-supplier-journey.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="journeys\30-logistics-journey.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="logistics: fulfilment and delivery journey" classname="journeys\30-logistics-journey.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="journeys\40-employee-journey.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="employee: HR operations journey" classname="journeys\40-employee-journey.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="journeys\50-admin-journey.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="admin: platform operations and finance journey" classname="journeys\50-admin-journey.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-audit-fixes.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="Admin audit fixes › audit-logs page is wrapped in AdminLayout chrome" classname="modules\admin\admin-audit-fixes.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin audit fixes › command-center renders after WebSocket client fix (no regression)" classname="modules\admin\admin-audit-fixes.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin audit fixes › promotions API uses the correct /admin/promotions prefix" classname="modules\admin\admin-audit-fixes.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-commission.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="Admin Commission Management › overview tab shows global config and summary cards" classname="modules\admin\admin-commission.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Commission Management › category rates tab lists rates and supports add" classname="modules\admin\admin-commission.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Commission Management › badge tiers tab lists tiers and supports add" classname="modules\admin\admin-commission.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-communication-hub.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="Admin Communication Hub › Video panel: displays rooms and supports create flow" classname="modules\admin\admin-communication-hub.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Communication Hub › Email panel: overview stats and campaign creation" classname="modules\admin\admin-communication-hub.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Communication Hub › Chat panel: displays threads and supports create flow" classname="modules\admin\admin-communication-hub.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-country-control-plane.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="14" failures="0" skipped="14" time="0" errors="0">
+<testcase name="Country Ledger &amp; Configuration Workspace › 1. ledger table renders with existing countries" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 2. create a new country via the compact form" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 3. select country from ledger and verify overview tab loads" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 4. tax preview and tax draft creation" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 5. internal logistics draft creation" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 6. delivery partners — add provider and create draft" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 7. payment gateways — add gateway and create draft" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 8. legal rules draft creation" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 9. regions — add region and create draft" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 10. supplier KYC draft creation" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 11. payout settings draft creation" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 12. value commissions — add tier and create draft" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 13. category commissions — add rate and create draft" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Country Ledger &amp; Configuration Workspace › 14. version history tab loads and shows entries" classname="modules\admin\admin-country-control-plane.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-country-enhanced.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="14" failures="0" skipped="14" time="0" errors="0">
+<testcase name="Enhanced Country Features › 1. open and close new country inline form" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 2. auto-populate search panel appears in inline form" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 3. ledger table renders with existing countries" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 4. expand country row shows detail workspace" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 5. commission coverage summary visible" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 6. payout rules tab has category and product sections" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 7. payout rules — add category rule" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 8. payout rules — add product rule" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 9. expand ledger row and navigate all tabs" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 10. bulk set commission overlay opens" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 11. admin country selector visible for correct role" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 12. version history tab loads" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 13. reload country workspace button works" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Enhanced Country Features › 14. auto-populate &apos;Saudi Arabia&apos; returns correct data" classname="modules\admin\admin-country-enhanced.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-data-ops.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="admin exports workspace supports data download and backup operations" classname="modules\admin\admin-data-ops.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-hr-permissions.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="Admin HR &amp; Permissions › staff directory lists staff and supports create" classname="modules\admin\admin-hr-permissions.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin HR &amp; Permissions › permissions categories tab lists categories and supports create" classname="modules\admin\admin-hr-permissions.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin HR &amp; Permissions › permissions roles tab shows role permission matrix" classname="modules\admin\admin-hr-permissions.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-logistics-workspace.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="admin logistics workspace › opens on coverage and route review" classname="modules\admin\admin-logistics-workspace.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin logistics workspace › uses the highest handling rule in the pricing workspace" classname="modules\admin\admin-logistics-workspace.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin logistics workspace › shows each workspace with the correct logistics data" classname="modules\admin\admin-logistics-workspace.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin logistics workspace › supports partner form access and service-area approval flow" classname="modules\admin\admin-logistics-workspace.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-modules-reconciliation.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="Admin - Permissions module › permissions page loads categories and grants" classname="modules\admin\admin-modules-reconciliation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin - Country control-plane (commission / IP / cities / flags) › country workspace loads and lists cities + feature flags" classname="modules\admin\admin-modules-reconciliation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin - Country control-plane (commission / IP / cities / flags) › feature-flag CRUD round-trip via country API" classname="modules\admin\admin-modules-reconciliation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin - Communication (email / chat / video) › communication hub loads email campaigns, chat threads and video rooms" classname="modules\admin\admin-modules-reconciliation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin - Treasury / Finance / Payment / Payout › treasury workspace loads metrics" classname="modules\admin\admin-modules-reconciliation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin - HR / Employees / Offices / Roles › employees workspace loads staff, offices and roles" classname="modules\admin\admin-modules-reconciliation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-payment-gateways.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="admin payment gateway management › payment page loads and shows all 6 built-in providers in the dropdown" classname="modules\admin\admin-payment-gateways.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin payment gateway management › selecting PayPal template pre-fills PayPal fields and marks it as template-only" classname="modules\admin\admin-payment-gateways.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin payment gateway management › saving a PayPal gateway sends PUT request with settlement_cycle" classname="modules\admin\admin-payment-gateways.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin payment gateway management › testing PayPal connection shows a test result" classname="modules\admin\admin-payment-gateways.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin payment gateway management › OmanNet and HyperPay are present in the provider list" classname="modules\admin\admin-payment-gateways.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin payment gateway management › settlement cycle dropdown shows correct options" classname="modules\admin\admin-payment-gateways.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-supplier-logistics-sanity.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="admin supplier and logistics sanity › admin supplier page supports bulk approval and badge recalculation" classname="modules\admin\admin-supplier-logistics-sanity.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="admin supplier and logistics sanity › logistics shipment page supports row confirm and bulk status advance" classname="modules\admin\admin-supplier-logistics-sanity.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\admin-treasury-payout.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="Admin Treasury &amp; Payout › treasury dashboard displays KPI cards and cash buckets" classname="modules\admin\admin-treasury-payout.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Treasury &amp; Payout › ledger tab shows journal entries with filter controls" classname="modules\admin\admin-treasury-payout.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Admin Treasury &amp; Payout › payout batches tab lists pending and completed payouts" classname="modules\admin\admin-treasury-payout.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\csrf-protection.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="CSRF protection › POST without CSRF token returns 403" classname="modules\admin\csrf-protection.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="CSRF protection › POST with valid CSRF token returns 200" classname="modules\admin\csrf-protection.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\finance-cod-proof-live.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="logistics uploads COD proof and admin verifies it against the live stack" classname="modules\admin\finance-cod-proof-live.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\finance-e2e.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="12" failures="0" skipped="12" time="0" errors="0">
+<testcase name="Finance Module — E2E Lifecycle › Finance page loads with all tabs" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › Chart of Accounts tab loads and shows accounts" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › COA: create a new account" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › FX Revaluation tab loads and save rate" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › Deferred Revenue tab loads" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › Email-to-Ledger tab loads and parse test email" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › Bank Mapping and Recon tab loads" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › AR / Receivables page loads" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › AP / Payables page loads" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › Journal browser loads" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › Audit Log loads" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Finance Module — E2E Lifecycle › Dashboard Finance tab loads with KPIs" classname="modules\admin\finance-e2e.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\input-validation.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="input validation › oversized password rejected" classname="modules\admin\input-validation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="input validation › SQL injection returns 422 or empty" classname="modules\admin\input-validation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="input validation › XSS in address field sanitized" classname="modules\admin\input-validation.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\rate-limiting.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="rate limiting › 15 rapid failed logins return 429" classname="modules\admin\rate-limiting.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="rate limiting › rate limit resets after window" classname="modules\admin\rate-limiting.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\rbac-enforcement.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="RBAC enforcement › customer cannot access admin routes" classname="modules\admin\rbac-enforcement.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="RBAC enforcement › supplier cannot access other supplier&apos;s data" classname="modules\admin\rbac-enforcement.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="RBAC enforcement › logistics cannot access admin finance" classname="modules\admin\rbac-enforcement.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="RBAC enforcement › feature gate blocks unassigned feature" classname="modules\admin\rbac-enforcement.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\rls-cross-tenant.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="RLS cross-tenant isolation › admin with country_code=AE cannot read SA data" classname="modules\admin\rls-cross-tenant.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="RLS cross-tenant isolation › customer sees only local-priced products" classname="modules\admin\rls-cross-tenant.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\admin\xss-protection.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="XSS protection › user-generated content is sanitized" classname="modules\admin\xss-protection.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="XSS protection › CSP header present" classname="modules\admin\xss-protection.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\customer\cross-border-checkout.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="Cross-Border Checkout › customer can view tax preview for different countries" classname="modules\customer\cross-border-checkout.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Cross-Border Checkout › can configure multiple payment gateways for cross-border" classname="modules\customer\cross-border-checkout.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Cross-Border Checkout › can configure logistics providers for delivery" classname="modules\customer\cross-border-checkout.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Cross-Border Checkout › can configure feature flags for country-specific features" classname="modules\customer\cross-border-checkout.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\customer\customer-cart.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="customer cart › cart persists across page reloads" classname="modules\customer\customer-cart.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="customer cart › cart total updates with quantity change" classname="modules\customer\customer-cart.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="customer cart › empty cart shows checkout CTA" classname="modules\customer\customer-cart.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="customer cart › cross-border tax shown in cart for AE destination" classname="modules\customer\customer-cart.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\customer\customer-core-flow.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="customer core browser flow › product page to order tracking flow" classname="modules\customer\customer-core-flow.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\customer\customer-search.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="16" failures="0" skipped="16" time="0" errors="0">
+<testcase name="Category Selection › category button exists and is clickable in the search bar" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Category Selection › category param is sent to /products endpoint" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Price Filter › min_price param is passed to /products endpoint" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Price Filter › price_asc sort param is passed to /products endpoint" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Rating Filter › min_rating param is passed to /products endpoint" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Search › supplier button exists in the search bar" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Search › supplier dropdown opens with search input" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Search › /products/suppliers endpoint is called on page load" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Voice Search Button › mic button is visible with title &apos;Voice search&apos;" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Image Search Button › camera button is visible and enabled with title &apos;Search by image&apos;" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Search Bar Rendering › glass-search bar is present in the sticky header" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Search Bar Rendering › search input accepts text and triggers autocomplete" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Search Bar Rendering › search button with text is visible" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Search Bar Rendering › quick filter pills (New Arrivals, Trending, Deals) are visible" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Edge Cases › autocomplete endpoint is called when user types" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Edge Cases › products page calls /products endpoint on initial load" classname="modules\customer\customer-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\customer\customer-wishlist.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="customer wishlist › add to wishlist from product page" classname="modules\customer\customer-wishlist.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="customer wishlist › wishlist persists across sessions" classname="modules\customer\customer-wishlist.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\employee\employee-customers.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="employee customers › employee can search customers" classname="modules\employee\employee-customers.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="employee customers › employee can view customer order history" classname="modules\employee\employee-customers.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\employee\employee-dashboard.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="employee dashboard › employee dashboard shows assigned orders and support tickets" classname="modules\employee\employee-dashboard.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\employee\employee-hr.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="employee HR › employee can view onboarding pipeline" classname="modules\employee\employee-hr.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="employee HR › HSE tab renders without crashing" classname="modules\employee\employee-hr.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\employee\employee-login.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="employee login › employee login via UI" classname="modules\employee\employee-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="employee login › employee login via API bootstrap" classname="modules\employee\employee-login.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\employee\employee-orders.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="employee orders › employee can view order detail" classname="modules\employee\employee-orders.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="employee orders › employee can add internal note to order" classname="modules\employee\employee-orders.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\logistics\fulfillment-role-flow.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="fulfillment browser smoke › supplier, partner, customer, and admin views stay aligned across one shipment" classname="modules\logistics\fulfillment-role-flow.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="fulfillment browser smoke › supplier parcel sheet flows into logistics scan and marks the shipment picked from supplier" classname="modules\logistics\fulfillment-role-flow.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="fulfillment browser smoke › web scan delivery captures signature and marks the order delivered" classname="modules\logistics\fulfillment-role-flow.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\logistics\logistics-country-switching.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="manual country switching updates logistics discovery segregation and request country header" classname="modules\logistics\logistics-country-switching.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\logistics\logistics-dashboard.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="logistics dashboard › logistics dashboard shows active shipments count" classname="modules\logistics\logistics-dashboard.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="logistics dashboard › logistics scan page loads with scanner input" classname="modules\logistics\logistics-dashboard.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="logistics dashboard › logistics can update shipment status to Distribution Checkpoint" classname="modules\logistics\logistics-dashboard.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\logistics\parcel-verification.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="parcel proof upload + verification returns valid match_score &gt; 0 and engines_used &gt;= 2" classname="modules\logistics\parcel-verification.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\logistics\shipping-quote.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="logistics partner pricing verified end-to-end" classname="modules\logistics\shipping-quote.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\supplier\supplier-bulk-upload.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="supplier bulk upload › ai assist accepts a real workspace image and normalizes the response into the card" classname="modules\supplier\supplier-bulk-upload.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier bulk upload › manual upload uses currency-aware payloads and variant table rows" classname="modules\supplier\supplier-bulk-upload.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier bulk upload › json import and draft duplication support repeat listing uploads" classname="modules\supplier\supplier-bulk-upload.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier bulk upload › invalid fashion upload focuses the first blocking field" classname="modules\supplier\supplier-bulk-upload.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\supplier\supplier-kyc.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="Supplier KYC Form › supplier KYC tab loads with document checklist" classname="modules\supplier\supplier-kyc.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier KYC Form › can toggle document requirements" classname="modules\supplier\supplier-kyc.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier KYC Form › can change KYC level" classname="modules\supplier\supplier-kyc.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier KYC Form › supplier KYC form validates required fields" classname="modules\supplier\supplier-kyc.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\supplier\supplier-orders-payouts.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="4" failures="0" skipped="4" time="0" errors="0">
+<testcase name="supplier orders and payouts › supplier orders list shows pending and fulfilled orders" classname="modules\supplier\supplier-orders-payouts.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier orders and payouts › supplier can print parcel sheet" classname="modules\supplier\supplier-orders-payouts.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier orders and payouts › supplier payouts tab shows balance and transaction history" classname="modules\supplier\supplier-orders-payouts.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier orders and payouts › supplier support tickets list and create" classname="modules\supplier\supplier-orders-payouts.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\supplier\supplier-product-upload.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="Supplier Product Upload — Complete › 1. Upload image -&gt; canvas renders -&gt; AI auto-fills" classname="modules\supplier\supplier-product-upload.spec.ts">
+<properties>
+<property name="slow" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Product Upload — Complete › 2. AI mock fill + background removal buttons" classname="modules\supplier\supplier-product-upload.spec.ts">
+<properties>
+<property name="slow" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Product Upload — Complete › 3. Image processing tools + canvas controls" classname="modules\supplier\supplier-product-upload.spec.ts">
+<properties>
+<property name="slow" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Product Upload — Complete › 4. Complete product submission with variants" classname="modules\supplier\supplier-product-upload.spec.ts">
+<properties>
+<property name="slow" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Product Upload — Complete › 5. Multiple image formats (JPEG, WebP, JPEG-alt)" classname="modules\supplier\supplier-product-upload.spec.ts">
+<properties>
+<property name="slow" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Supplier Product Upload — Complete › 6. Fast bg quality toggle and remove image" classname="modules\supplier\supplier-product-upload.spec.ts">
+<properties>
+<property name="slow" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\supplier\supplier-search.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testcase name="supplier search routing › redirects a direct supplier query URL to the storefront" classname="modules\supplier\supplier-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier search routing › opens the supplier storefront from products supplier suggestions" classname="modules\supplier\supplier-search.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\supplier\supplier-smoke.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="supplier browser smoke › supplier register completes the single-page flow" classname="modules\supplier\supplier-smoke.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier browser smoke › retired supplier routes land on the merged workspaces" classname="modules\supplier\supplier-smoke.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="supplier browser smoke › merged supplier profile action strip stays accessible on narrow screens" classname="modules\supplier\supplier-smoke.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="modules\supplier\supplier-voice-to-catalog.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="3" failures="0" skipped="3" time="0" errors="0">
+<testcase name="Voice-to-Catalog Pipeline › complete pipeline finishes in under 30 seconds" classname="modules\supplier\supplier-voice-to-catalog.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Voice-to-Catalog Pipeline › pipeline handles microphone denial gracefully" classname="modules\supplier\supplier-voice-to-catalog.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Voice-to-Catalog Pipeline › batch upload limits are returned correctly" classname="modules\supplier\supplier-voice-to-catalog.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="preflight.spec.ts" timestamp="2026-10-04T19:59:30.278Z" hostname="chromium" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testcase name="Playwright browsers are installed" classname="preflight.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Backend health endpoint returns 200" classname="preflight.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Backend /health/deps reports Valkey and DB as connected" classname="preflight.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Frontend is serving on configured port" classname="preflight.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Rbac catalog endpoint is reachable" classname="preflight.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Database responds to a simple query" classname="preflight.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Valkey is reachable" classname="preflight.spec.ts">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
 </testsuites>

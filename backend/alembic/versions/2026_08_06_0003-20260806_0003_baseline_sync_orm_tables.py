@@ -15,8 +15,14 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import inspect
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import NoInspectionAvailable
+
+try:
+    from infrastructure.security.encryption import EncryptedString
+except Exception:
+    EncryptedString = sa.String  # type: ignore[misc,assignment]
 
 revision = "20260806_0003"
 down_revision = "20260806_0002"
@@ -24,15 +30,31 @@ branch_labels = None
 depends_on = None
 
 
+def _is_offline(conn) -> bool:
+    """Return True when running in alembic --sql offline mode."""
+    if conn is None:
+        return True
+    try:
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 def _has_table(name: str, schema: str | None = None) -> bool:
-    return name in set(inspect(op.get_bind()).get_table_names(schema=schema))
+    bind = op.get_bind()
+    if _is_offline(bind):
+        raise RuntimeError("Catalog introspection unavailable in offline (--sql) mode")
+    return name in set(sa_inspect(bind).get_table_names(schema=schema))
 
 
 def upgrade() -> None:
-    if op.get_bind().dialect.name == "sqlite":
+    bind = op.get_bind()
+    force = _is_offline(bind)
+    if not force and bind.dialect.name == "sqlite":
         return
 
-    if not _has_table('account_balances', 'finance'):
+    if force or not _has_table('account_balances', 'finance'):
         op.create_table('account_balances',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('account_id', sa.Integer(), nullable=False),
@@ -49,7 +71,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('account_groups', 'finance'):
+    if force or not _has_table('account_groups', 'finance'):
         op.create_table('account_groups',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('code', sa.String(length=10), nullable=False, unique=True),
@@ -65,7 +87,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('accounts', 'finance'):
+    if force or not _has_table('accounts', 'finance'):
         op.create_table('accounts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('group_id', sa.Integer(), nullable=True),
@@ -80,7 +102,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('accruals', 'finance'):
+    if force or not _has_table('accruals', 'finance'):
         op.create_table('accruals',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('accrual_type', sa.String(length=20), nullable=False),
@@ -100,7 +122,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('activity_logs', 'hr'):
+    if force or not _has_table('activity_logs', 'hr'):
         op.create_table('activity_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -116,7 +138,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('addresses', 'customer'):
+    if force or not _has_table('addresses', 'customer'):
         op.create_table('addresses',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -137,7 +159,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('admin_activity_logs', 'audit'):
+    if force or not _has_table('admin_activity_logs', 'audit'):
         op.create_table('admin_activity_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('admin_id', sa.Integer(), nullable=False),
@@ -151,7 +173,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='audit',
     )
 
-    if not _has_table('admin_analytics_snapshots', 'audit'):
+    if force or not _has_table('admin_analytics_snapshots', 'audit'):
         op.create_table('admin_analytics_snapshots',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('snapshot_key', sa.String(length=120), nullable=False),
@@ -171,7 +193,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='audit',
     )
 
-    if not _has_table('admin_change_audit_logs', 'audit'):
+    if force or not _has_table('admin_change_audit_logs', 'audit'):
         op.create_table('admin_change_audit_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('admin_id', sa.Integer(), nullable=False),
@@ -188,7 +210,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='audit',
     )
 
-    if not _has_table('ai_audit_log', 'ai'):
+    if force or not _has_table('ai_audit_log', 'ai'):
         op.create_table('ai_audit_log',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('job_id', sa.Integer(), nullable=True),
@@ -210,7 +232,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_embeddings', 'ai'):
+    if force or not _has_table('ai_embeddings', 'ai'):
         op.create_table('ai_embeddings',
                     sa.Column('id', sa.String(length=36), primary_key=True, nullable=False),
             sa.Column('source_type', sa.String(length=50), nullable=False),
@@ -221,7 +243,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_generation_logs', 'ai'):
+    if force or not _has_table('ai_generation_logs', 'ai'):
         op.create_table('ai_generation_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('job_id', sa.Integer(), nullable=False),
@@ -237,7 +259,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_requests', 'ai'):
+    if force or not _has_table('ai_requests', 'ai'):
         op.create_table('ai_requests',
                     sa.Column('id', sa.String(length=36), primary_key=True, nullable=False),
             sa.Column('provider', sa.String(length=50), nullable=False),
@@ -252,7 +274,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_results', 'ai'):
+    if force or not _has_table('ai_results', 'ai'):
         op.create_table('ai_results',
                     sa.Column('id', sa.String(length=36), primary_key=True, nullable=False),
             sa.Column('request_id', sa.String(length=36), nullable=False),
@@ -269,7 +291,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_staging_images', 'ai'):
+    if force or not _has_table('ai_staging_images', 'ai'):
         op.create_table('ai_staging_images',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('job_id', sa.Integer(), nullable=False),
@@ -290,7 +312,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_staging_products', 'ai'):
+    if force or not _has_table('ai_staging_products', 'ai'):
         op.create_table('ai_staging_products',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('job_id', sa.Integer(), nullable=False),
@@ -319,7 +341,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_staging_variants', 'ai'):
+    if force or not _has_table('ai_staging_variants', 'ai'):
         op.create_table('ai_staging_variants',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('job_id', sa.Integer(), nullable=False),
@@ -344,7 +366,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('ai_upload_jobs', 'ai'):
+    if force or not _has_table('ai_upload_jobs', 'ai'):
         op.create_table('ai_upload_jobs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -362,7 +384,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='ai',
     )
 
-    if not _has_table('alert_escalation_rules', 'security'):
+    if force or not _has_table('alert_escalation_rules', 'security'):
         op.create_table('alert_escalation_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('alert_type', sa.String(length=50), nullable=False),
@@ -371,7 +393,7 @@ def upgrade() -> None:
             sa.Column('current_tier', sa.Integer(), nullable=True), schema='security',
     )
 
-    if not _has_table('alumni_network', 'hr'):
+    if force or not _has_table('alumni_network', 'hr'):
         op.create_table('alumni_network',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False, unique=True),
@@ -386,7 +408,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('announcements', 'communication'):
+    if force or not _has_table('announcements', 'communication'):
         op.create_table('announcements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('title', sa.String(), nullable=False),
@@ -398,7 +420,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('ap_bills', 'finance'):
+    if force or not _has_table('ap_bills', 'finance'):
         op.create_table('ap_bills',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('vendor_id', sa.Integer(), nullable=False),
@@ -420,7 +442,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('ap_ledger_entries', 'finance'):
+    if force or not _has_table('ap_ledger_entries', 'finance'):
         op.create_table('ap_ledger_entries',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -446,7 +468,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('api_keys', 'security'):
+    if force or not _has_table('api_keys', 'security'):
         op.create_table('api_keys',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(), nullable=False),
@@ -460,7 +482,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('approval_requests', 'hr'):
+    if force or not _has_table('approval_requests', 'hr'):
         op.create_table('approval_requests',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('assignee_id', sa.Integer(), nullable=False),
@@ -477,7 +499,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('ar_invoices', 'finance'):
+    if force or not _has_table('ar_invoices', 'finance'):
         op.create_table('ar_invoices',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('customer_id', sa.Integer(), nullable=False),
@@ -501,7 +523,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('ar_ledger_entries', 'finance'):
+    if force or not _has_table('ar_ledger_entries', 'finance'):
         op.create_table('ar_ledger_entries',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('customer_id', sa.Integer(), nullable=False),
@@ -526,7 +548,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('audit_logs', 'audit'):
+    if force or not _has_table('audit_logs', 'audit'):
         op.create_table('audit_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('action', sa.String(), nullable=False),
@@ -540,7 +562,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='audit',
     )
 
-    if not _has_table('automation_logs', 'finance'):
+    if force or not _has_table('automation_logs', 'finance'):
         op.create_table('automation_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('rule_id', sa.Integer(), nullable=False),
@@ -553,7 +575,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('automation_rules', 'finance'):
+    if force or not _has_table('automation_rules', 'finance'):
         op.create_table('automation_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=120), nullable=False),
@@ -568,7 +590,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('badge_billing_records', 'commerce'):
+    if force or not _has_table('badge_billing_records', 'commerce'):
         op.create_table('badge_billing_records',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -598,7 +620,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('badge_tiers', 'commerce'):
+    if force or not _has_table('badge_tiers', 'commerce'):
         op.create_table('badge_tiers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(), nullable=False),
@@ -611,7 +633,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('badge_transactions', 'commerce'):
+    if force or not _has_table('badge_transactions', 'commerce'):
         op.create_table('badge_transactions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -625,7 +647,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('bank_accounts', 'finance'):
+    if force or not _has_table('bank_accounts', 'finance'):
         op.create_table('bank_accounts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('bank_name', sa.String(length=160), nullable=False),
@@ -643,7 +665,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('bank_mapping_rules', 'finance'):
+    if force or not _has_table('bank_mapping_rules', 'finance'):
         op.create_table('bank_mapping_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('match_pattern', sa.String(length=300), nullable=False),
@@ -660,7 +682,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('bank_reconciliations', 'finance'):
+    if force or not _has_table('bank_reconciliations', 'finance'):
         op.create_table('bank_reconciliations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('statement_line_id', sa.Integer(), nullable=False),
@@ -676,7 +698,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('bank_statement_imports', 'finance'):
+    if force or not _has_table('bank_statement_imports', 'finance'):
         op.create_table('bank_statement_imports',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('bank_name', sa.String(length=120), nullable=True),
@@ -695,7 +717,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('bank_statement_lines', 'finance'):
+    if force or not _has_table('bank_statement_lines', 'finance'):
         op.create_table('bank_statement_lines',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('import_id', sa.Integer(), nullable=False),
@@ -715,7 +737,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('bank_transactions', 'finance'):
+    if force or not _has_table('bank_transactions', 'finance'):
         op.create_table('bank_transactions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('transaction_ref', sa.String(), nullable=True),
@@ -743,7 +765,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('banners', 'commerce'):
+    if force or not _has_table('banners', 'commerce'):
         op.create_table('banners',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('title', sa.String(), nullable=False),
@@ -777,7 +799,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('budgets', 'finance'):
+    if force or not _has_table('budgets', 'finance'):
         op.create_table('budgets',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('account_code', sa.String(length=20), nullable=False),
@@ -793,7 +815,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('campaign_recipients', 'communication'):
+    if force or not _has_table('campaign_recipients', 'communication'):
         op.create_table('campaign_recipients',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('campaign_id', sa.Integer(), nullable=False),
@@ -808,7 +830,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('cart_items', 'commerce'):
+    if force or not _has_table('cart_items', 'commerce'):
         op.create_table('cart_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -824,7 +846,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('carts', 'commerce'):
+    if force or not _has_table('carts', 'commerce'):
         op.create_table('carts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -836,7 +858,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('cash_accounts', 'treasury'):
+    if force or not _has_table('cash_accounts', 'treasury'):
         op.create_table('cash_accounts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(), nullable=False),
@@ -852,7 +874,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('cash_flow_forecasts', 'treasury'):
+    if force or not _has_table('cash_flow_forecasts', 'treasury'):
         op.create_table('cash_flow_forecasts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('forecast_date', sa.DateTime(), nullable=False),
@@ -867,7 +889,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('cash_position_snapshots', 'treasury'):
+    if force or not _has_table('cash_position_snapshots', 'treasury'):
         op.create_table('cash_position_snapshots',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('snapshot_time', sa.DateTime(), nullable=False),
@@ -880,7 +902,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('cash_transactions', 'treasury'):
+    if force or not _has_table('cash_transactions', 'treasury'):
         op.create_table('cash_transactions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('account_id', sa.Integer(), nullable=False),
@@ -898,7 +920,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('categories', 'commerce'):
+    if force or not _has_table('categories', 'commerce'):
         op.create_table('categories',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(), nullable=False),
@@ -923,7 +945,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('chat_attachments', 'communication'):
+    if force or not _has_table('chat_attachments', 'communication'):
         op.create_table('chat_attachments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('message_id', sa.Integer(), nullable=False),
@@ -939,7 +961,7 @@ def upgrade() -> None:
             sa.Column('is_processed', sa.Boolean(), nullable=True), schema='communication',
     )
 
-    if not _has_table('chat_read_receipts', 'communication'):
+    if force or not _has_table('chat_read_receipts', 'communication'):
         op.create_table('chat_read_receipts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('message_id', sa.Integer(), nullable=False),
@@ -948,7 +970,7 @@ def upgrade() -> None:
             sa.Column('read_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('chatbot_query_events', 'audit'):
+    if force or not _has_table('chatbot_query_events', 'audit'):
         op.create_table('chatbot_query_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -968,7 +990,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='audit',
     )
 
-    if not _has_table('city_distance_matrix', 'logistics'):
+    if force or not _has_table('city_distance_matrix', 'logistics'):
         op.create_table('city_distance_matrix',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('origin_country_code', sa.String(length=3), nullable=False),
@@ -982,7 +1004,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='logistics',
     )
 
-    if not _has_table('coi_reports', 'hr'):
+    if force or not _has_table('coi_reports', 'hr'):
         op.create_table('coi_reports',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -1001,7 +1023,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('command_center_views', 'audit'):
+    if force or not _has_table('command_center_views', 'audit'):
         op.create_table('command_center_views',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -1012,7 +1034,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='audit',
     )
 
-    if not _has_table('commission_agreements', 'commerce'):
+    if force or not _has_table('commission_agreements', 'commerce'):
         op.create_table('commission_agreements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -1027,7 +1049,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('commission_badge_tiers', 'commerce'):
+    if force or not _has_table('commission_badge_tiers', 'commerce'):
         op.create_table('commission_badge_tiers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=100), nullable=False),
@@ -1048,7 +1070,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('commission_category_rates', 'commerce'):
+    if force or not _has_table('commission_category_rates', 'commerce'):
         op.create_table('commission_category_rates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('category_id', sa.Integer(), nullable=True),
@@ -1060,7 +1082,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('commission_global_configs', 'commerce'):
+    if force or not _has_table('commission_global_configs', 'commerce'):
         op.create_table('commission_global_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('default_rate', sa.Numeric(precision=5, scale=4), nullable=True),
@@ -1078,7 +1100,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('commission_ledger_entries', 'commerce'):
+    if force or not _has_table('commission_ledger_entries', 'commerce'):
         op.create_table('commission_ledger_entries',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -1113,7 +1135,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('commission_rules', 'commerce'):
+    if force or not _has_table('commission_rules', 'commerce'):
         op.create_table('commission_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('rule_name', sa.String(length=255), nullable=False),
@@ -1129,7 +1151,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('communication_audit_trail', 'communication'):
+    if force or not _has_table('communication_audit_trail', 'communication'):
         op.create_table('communication_audit_trail',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entity_type', sa.String(length=50), nullable=False),
@@ -1142,7 +1164,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('cost_centers', 'finance'):
+    if force or not _has_table('cost_centers', 'finance'):
         op.create_table('cost_centers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('code', sa.String(length=30), nullable=False),
@@ -1155,7 +1177,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('country_basics', 'country'):
+    if force or not _has_table('country_basics', 'country'):
         op.create_table('country_basics',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('code', sa.String(length=3), nullable=False, unique=True),
@@ -1191,7 +1213,7 @@ def upgrade() -> None:
             sa.Column('macro_indicators_json', sa.Text(), nullable=True), schema='country',
     )
 
-    if not _has_table('country_category_tax_rates', 'configuration'):
+    if force or not _has_table('country_category_tax_rates', 'configuration'):
         op.create_table('country_category_tax_rates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1208,7 +1230,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_cities', 'country'):
+    if force or not _has_table('country_cities', 'country'):
         op.create_table('country_cities',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1228,7 +1250,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('country_commission_rate_history', 'configuration'):
+    if force or not _has_table('country_commission_rate_history', 'configuration'):
         op.create_table('country_commission_rate_history',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1242,7 +1264,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_commission_rates', 'configuration'):
+    if force or not _has_table('country_commission_rates', 'configuration'):
         op.create_table('country_commission_rates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1254,7 +1276,7 @@ def upgrade() -> None:
             sa.Column('effective_to', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_communication_threads', 'configuration'):
+    if force or not _has_table('country_communication_threads', 'configuration'):
         op.create_table('country_communication_threads',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1266,7 +1288,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_communications', 'country'):
+    if force or not _has_table('country_communications', 'country'):
         op.create_table('country_communications',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1284,7 +1306,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('country_config_versions', 'configuration'):
+    if force or not _has_table('country_config_versions', 'configuration'):
         op.create_table('country_config_versions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1300,7 +1322,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_configs', 'country'):
+    if force or not _has_table('country_configs', 'country'):
         op.create_table('country_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('basics_id', sa.Integer(), nullable=True),
@@ -1391,7 +1413,7 @@ def upgrade() -> None:
             sa.Column('country_code', sa.String(length=3), nullable=True, unique=True), schema='country',
     )
 
-    if not _has_table('country_economics', 'country'):
+    if force or not _has_table('country_economics', 'country'):
         op.create_table('country_economics',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('uuid', sa.String(length=36), nullable=True, unique=True),
@@ -1434,7 +1456,7 @@ def upgrade() -> None:
             sa.Column('logistics_zones_json', sa.Text(), nullable=True), schema='country',
     )
 
-    if not _has_table('country_feature_flags', 'configuration'):
+    if force or not _has_table('country_feature_flags', 'configuration'):
         op.create_table('country_feature_flags',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1448,7 +1470,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_gateway_configs', 'configuration'):
+    if force or not _has_table('country_gateway_configs', 'configuration'):
         op.create_table('country_gateway_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1465,7 +1487,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_gateway_credentials', 'country'):
+    if force or not _has_table('country_gateway_credentials', 'country'):
         op.create_table('country_gateway_credentials',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1476,7 +1498,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('country_holiday_calendars', 'configuration'):
+    if force or not _has_table('country_holiday_calendars', 'configuration'):
         op.create_table('country_holiday_calendars',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1487,7 +1509,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_legal', 'country'):
+    if force or not _has_table('country_legal', 'country'):
         op.create_table('country_legal',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('uuid', sa.String(length=36), nullable=True, unique=True),
@@ -1510,7 +1532,7 @@ def upgrade() -> None:
             sa.Column('regulatory_bodies_json', sa.Text(), nullable=True), schema='country',
     )
 
-    if not _has_table('country_legal_contracts', 'configuration'):
+    if force or not _has_table('country_legal_contracts', 'configuration'):
         op.create_table('country_legal_contracts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1522,7 +1544,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_localization', 'configuration'):
+    if force or not _has_table('country_localization', 'configuration'):
         op.create_table('country_localization',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False, unique=True),
@@ -1534,7 +1556,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_logistics_zones', 'configuration'):
+    if force or not _has_table('country_logistics_zones', 'configuration'):
         op.create_table('country_logistics_zones',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1547,7 +1569,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_map_configs', 'hr'):
+    if force or not _has_table('country_map_configs', 'hr'):
         op.create_table('country_map_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('api_key_ref', sa.String(length=100), nullable=True),
@@ -1562,7 +1584,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('country_payment_aliases', 'configuration'):
+    if force or not _has_table('country_payment_aliases', 'configuration'):
         op.create_table('country_payment_aliases',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1572,7 +1594,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_payout_rules', 'configuration'):
+    if force or not _has_table('country_payout_rules', 'configuration'):
         op.create_table('country_payout_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -1586,7 +1608,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_staff_assignments', 'configuration'):
+    if force or not _has_table('country_staff_assignments', 'configuration'):
         op.create_table('country_staff_assignments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -1599,7 +1621,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('country_tax', 'country'):
+    if force or not _has_table('country_tax', 'country'):
         op.create_table('country_tax',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('uuid', sa.String(length=36), nullable=False, unique=True),
@@ -1620,7 +1642,7 @@ def upgrade() -> None:
     )
 
     op.execute('DROP TABLE IF EXISTS "commerce"."coupon_usages"')
-    if not _has_table('coupon_usage', 'commerce'):
+    if force or not _has_table('coupon_usage', 'commerce'):
         op.create_table('coupon_usage',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('coupon_id', sa.Integer(), nullable=False),
@@ -1630,7 +1652,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='commerce',
         )
 
-    if not _has_table('coupons', 'commerce'):
+    if force or not _has_table('coupons', 'commerce'):
         op.create_table('coupons',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('code', sa.String(), nullable=False, unique=True),
@@ -1659,7 +1681,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('credit_card_bins', 'security'):
+    if force or not _has_table('credit_card_bins', 'security'):
         op.create_table('credit_card_bins',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('bin', sa.String(length=10), nullable=False, unique=True),
@@ -1670,7 +1692,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('cross_country_customer_sessions', 'configuration'):
+    if force or not _has_table('cross_country_customer_sessions', 'configuration'):
         op.create_table('cross_country_customer_sessions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -1684,7 +1706,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('customers', 'finance'):
+    if force or not _has_table('customers', 'finance'):
         op.create_table('customers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=200), nullable=False),
@@ -1701,7 +1723,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('customs_entries', 'logistics'):
+    if force or not _has_table('customs_entries', 'logistics'):
         op.create_table('customs_entries',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('shipment_id', sa.Integer(), nullable=False),
@@ -1729,7 +1751,7 @@ def upgrade() -> None:
             sa.Column('is_active', sa.Boolean(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('data_residency_records', 'hr'):
+    if force or not _has_table('data_residency_records', 'hr'):
         op.create_table('data_residency_records',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('data_type', sa.String(length=50), nullable=False),
@@ -1746,7 +1768,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('device_fingerprints', 'security'):
+    if force or not _has_table('device_fingerprints', 'security'):
         op.create_table('device_fingerprints',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -1762,7 +1784,7 @@ def upgrade() -> None:
             sa.Column('last_seen_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('direct_chat_messages', 'communication'):
+    if force or not _has_table('direct_chat_messages', 'communication'):
         op.create_table('direct_chat_messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.Integer(), nullable=False),
@@ -1773,7 +1795,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('direct_chat_rooms', 'customer'):
+    if force or not _has_table('direct_chat_rooms', 'customer'):
         op.create_table('direct_chat_rooms',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('chat_id', sa.String(length=64), nullable=False, unique=True),
@@ -1786,7 +1808,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('disciplinary_cases', 'hr'):
+    if force or not _has_table('disciplinary_cases', 'hr'):
         op.create_table('disciplinary_cases',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -1802,7 +1824,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('dlp_violations', 'security'):
+    if force or not _has_table('dlp_violations', 'security'):
         op.create_table('dlp_violations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('violation_type', sa.String(length=50), nullable=False),
@@ -1817,7 +1839,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('document_verifications', 'security'):
+    if force or not _has_table('document_verifications', 'security'):
         op.create_table('document_verifications',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('pipeline_id', sa.Integer(), nullable=False),
@@ -1828,7 +1850,7 @@ def upgrade() -> None:
             sa.Column('verifier_id', sa.Integer(), nullable=True), schema='security',
     )
 
-    if not _has_table('dynamic_qr_sessions', 'hr'):
+    if force or not _has_table('dynamic_qr_sessions', 'hr'):
         op.create_table('dynamic_qr_sessions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -1845,7 +1867,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('email_campaign_logs', 'communication'):
+    if force or not _has_table('email_campaign_logs', 'communication'):
         op.create_table('email_campaign_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('campaign_id', sa.Integer(), nullable=False),
@@ -1857,7 +1879,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('email_campaigns', 'communication'):
+    if force or not _has_table('email_campaigns', 'communication'):
         op.create_table('email_campaigns',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(), nullable=False),
@@ -1880,7 +1902,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('email_delivery_events', 'communication'):
+    if force or not _has_table('email_delivery_events', 'communication'):
         op.create_table('email_delivery_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('event_type', sa.String(), nullable=False),
@@ -1891,7 +1913,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('email_folders', 'communication'):
+    if force or not _has_table('email_folders', 'communication'):
         op.create_table('email_folders',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -1902,7 +1924,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('email_provider_configs', 'configuration'):
+    if force or not _has_table('email_provider_configs', 'configuration'):
         op.create_table('email_provider_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('provider', sa.String(), nullable=True),
@@ -1932,7 +1954,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='configuration',
     )
 
-    if not _has_table('email_runtime_config', 'configuration'):
+    if force or not _has_table('email_runtime_config', 'configuration'):
         op.create_table('email_runtime_config',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('provider', sa.String(length=50), nullable=True),
@@ -1956,7 +1978,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('email_suppressions', 'communication'):
+    if force or not _has_table('email_suppressions', 'communication'):
         op.create_table('email_suppressions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('email', sa.String(), nullable=False),
@@ -1970,7 +1992,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('email_templates', 'communication'):
+    if force or not _has_table('email_templates', 'communication'):
         op.create_table('email_templates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=200), nullable=False, unique=True),
@@ -1983,7 +2005,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('email_verification_tokens', 'security'):
+    if force or not _has_table('email_verification_tokens', 'security'):
         op.create_table('email_verification_tokens',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -1997,7 +2019,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('employee_addresses', 'hr'):
+    if force or not _has_table('employee_addresses', 'hr'):
         op.create_table('employee_addresses',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2014,7 +2036,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_assets', 'hr'):
+    if force or not _has_table('employee_assets', 'hr'):
         op.create_table('employee_assets',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2032,7 +2054,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_attendance', 'hr'):
+    if force or not _has_table('employee_attendance', 'hr'):
         op.create_table('employee_attendance',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2053,7 +2075,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_biometrics', 'hr'):
+    if force or not _has_table('employee_biometrics', 'hr'):
         op.create_table('employee_biometrics',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False, unique=True),
@@ -2067,7 +2089,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_certifications', 'hr'):
+    if force or not _has_table('employee_certifications', 'hr'):
         op.create_table('employee_certifications',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2084,7 +2106,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_communication_threads', 'communication'):
+    if force or not _has_table('employee_communication_threads', 'communication'):
         op.create_table('employee_communication_threads',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entity_id', sa.Integer(), nullable=False),
@@ -2097,7 +2119,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('employee_dependents', 'hr'):
+    if force or not _has_table('employee_dependents', 'hr'):
         op.create_table('employee_dependents',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2113,7 +2135,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_documents', 'hr'):
+    if force or not _has_table('employee_documents', 'hr'):
         op.create_table('employee_documents',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2130,7 +2152,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_expenses', 'hr'):
+    if force or not _has_table('employee_expenses', 'hr'):
         op.create_table('employee_expenses',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2149,7 +2171,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_leave_ledgers', 'hr'):
+    if force or not _has_table('employee_leave_ledgers', 'hr'):
         op.create_table('employee_leave_ledgers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2166,7 +2188,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_leave_requests', 'hr'):
+    if force or not _has_table('employee_leave_requests', 'hr'):
         op.create_table('employee_leave_requests',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2186,7 +2208,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_relations', 'hr'):
+    if force or not _has_table('employee_relations', 'hr'):
         op.create_table('employee_relations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2202,7 +2224,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_roles', 'hr'):
+    if force or not _has_table('employee_roles', 'hr'):
         op.create_table('employee_roles',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('role_name', sa.String(length=100), nullable=True, unique=True),
@@ -2217,7 +2239,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_shift_rosters', 'hr'):
+    if force or not _has_table('employee_shift_rosters', 'hr'):
         op.create_table('employee_shift_rosters',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2234,7 +2256,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_trainings', 'hr'):
+    if force or not _has_table('employee_trainings', 'hr'):
         op.create_table('employee_trainings',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2249,7 +2271,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_travel_requests', 'hr'):
+    if force or not _has_table('employee_travel_requests', 'hr'):
         op.create_table('employee_travel_requests',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2269,7 +2291,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employee_work_logs', 'hr'):
+    if force or not _has_table('employee_work_logs', 'hr'):
         op.create_table('employee_work_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2286,7 +2308,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('employees', 'hr'):
+    if force or not _has_table('employees', 'hr'):
         op.create_table('employees',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True, unique=True),
@@ -2318,7 +2340,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('entity_chat_messages', 'communication'):
+    if force or not _has_table('entity_chat_messages', 'communication'):
         op.create_table('entity_chat_messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('thread_id', sa.Integer(), nullable=False),
@@ -2329,7 +2351,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('entity_chat_threads', 'customer'):
+    if force or not _has_table('entity_chat_threads', 'customer'):
         op.create_table('entity_chat_threads',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entity_type', sa.String(), nullable=False),
@@ -2338,7 +2360,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='customer',
     )
 
-    if not _has_table('erp_transactions', 'finance'):
+    if force or not _has_table('erp_transactions', 'finance'):
         op.create_table('erp_transactions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('type', sa.String(length=40), nullable=False),
@@ -2355,7 +2377,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('escalation_sla_logs', 'customer'):
+    if force or not _has_table('escalation_sla_logs', 'customer'):
         op.create_table('escalation_sla_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('message_id', sa.Integer(), nullable=False),
@@ -2371,7 +2393,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='customer',
     )
 
-    if not _has_table('escalation_sla_rules', 'communication'):
+    if force or not _has_table('escalation_sla_rules', 'communication'):
         op.create_table('escalation_sla_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('escalate_after_minutes', sa.Integer(), nullable=False),
@@ -2383,7 +2405,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('event_dead_letter', 'configuration'):
+    if force or not _has_table('event_dead_letter', 'configuration'):
         op.create_table('event_dead_letter',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('uuid', sa.String(length=36), nullable=False, unique=True),
@@ -2404,7 +2426,7 @@ def upgrade() -> None:
             sa.Column('updated_by_id', sa.Integer(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('event_retry_queue', 'configuration'):
+    if force or not _has_table('event_retry_queue', 'configuration'):
         op.create_table('event_retry_queue',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('uuid', sa.String(length=36), nullable=False, unique=True),
@@ -2424,7 +2446,7 @@ def upgrade() -> None:
             sa.Column('updated_by_id', sa.Integer(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('executive_news', 'analytics'):
+    if force or not _has_table('executive_news', 'analytics'):
         op.create_table('executive_news',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('title', sa.String(length=200), nullable=False),
@@ -2442,7 +2464,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('external_contact_masking', 'communication'):
+    if force or not _has_table('external_contact_masking', 'communication'):
         op.create_table('external_contact_masking',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -2452,7 +2474,7 @@ def upgrade() -> None:
             sa.Column('masked_email', sa.String(length=255), nullable=True), schema='communication',
     )
 
-    if not _has_table('faqs', 'communication'):
+    if force or not _has_table('faqs', 'communication'):
         op.create_table('faqs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('question', sa.Text(), nullable=False),
@@ -2465,7 +2487,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('feature_flags', 'configuration'):
+    if force or not _has_table('feature_flags', 'configuration'):
         op.create_table('feature_flags',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('flag_key', sa.String(length=100), nullable=False, unique=True),
@@ -2481,7 +2503,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='configuration',
     )
 
-    if not _has_table('finance_audit_logs', 'finance'):
+    if force or not _has_table('finance_audit_logs', 'finance'):
         op.create_table('finance_audit_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('action', sa.String(length=60), nullable=False),
@@ -2496,7 +2518,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('finance_automation_logs', 'finance'):
+    if force or not _has_table('finance_automation_logs', 'finance'):
         op.create_table('finance_automation_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('kind', sa.String(length=40), nullable=False),
@@ -2510,7 +2532,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('finance_bank_accounts', 'treasury'):
+    if force or not _has_table('finance_bank_accounts', 'treasury'):
         op.create_table('finance_bank_accounts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('account_name', sa.String(), nullable=True),
@@ -2536,7 +2558,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('finance_dashboard_metrics', 'finance'):
+    if force or not _has_table('finance_dashboard_metrics', 'finance'):
         op.create_table('finance_dashboard_metrics',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('metric_key', sa.String(length=100), nullable=False),
@@ -2550,7 +2572,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('finance_reports', 'finance'):
+    if force or not _has_table('finance_reports', 'finance'):
         op.create_table('finance_reports',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('report_type', sa.String(length=100), nullable=False),
@@ -2568,7 +2590,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('financial_reports', 'analytics'):
+    if force or not _has_table('financial_reports', 'analytics'):
         op.create_table('financial_reports',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('report_type', sa.String(), nullable=False),
@@ -2583,7 +2605,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('fiscal_periods', 'finance'):
+    if force or not _has_table('fiscal_periods', 'finance'):
         op.create_table('fiscal_periods',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('period_year', sa.Integer(), nullable=False),
@@ -2602,7 +2624,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('fixed_assets', 'finance'):
+    if force or not _has_table('fixed_assets', 'finance'):
         op.create_table('fixed_assets',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=200), nullable=False),
@@ -2626,7 +2648,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('flash_sale_items', 'commerce'):
+    if force or not _has_table('flash_sale_items', 'commerce'):
         op.create_table('flash_sale_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('flash_sale_id', sa.Integer(), nullable=False),
@@ -2640,7 +2662,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('flash_sales', 'commerce'):
+    if force or not _has_table('flash_sales', 'commerce'):
         op.create_table('flash_sales',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('title', sa.String(), nullable=False),
@@ -2657,7 +2679,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('fraud_alerts', 'security'):
+    if force or not _has_table('fraud_alerts', 'security'):
         op.create_table('fraud_alerts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('alert_type', sa.String(length=50), nullable=False),
@@ -2676,7 +2698,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('fraud_blacklist', 'security'):
+    if force or not _has_table('fraud_blacklist', 'security'):
         op.create_table('fraud_blacklist',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('identifier_type', sa.String(), nullable=False),
@@ -2689,7 +2711,7 @@ def upgrade() -> None:
             sa.Column('expires_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('fraud_case_assignments', 'security'):
+    if force or not _has_table('fraud_case_assignments', 'security'):
         op.create_table('fraud_case_assignments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('case_id', sa.Integer(), nullable=False),
@@ -2699,7 +2721,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('fraud_cases', 'security'):
+    if force or not _has_table('fraud_cases', 'security'):
         op.create_table('fraud_cases',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('case_number', sa.String(length=50), nullable=False, unique=True),
@@ -2722,7 +2744,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('fraud_events', 'security'):
+    if force or not _has_table('fraud_events', 'security'):
         op.create_table('fraud_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -2745,7 +2767,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('fraud_rules', 'security'):
+    if force or not _has_table('fraud_rules', 'security'):
         op.create_table('fraud_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('rule_key', sa.String(length=100), nullable=False, unique=True),
@@ -2760,7 +2782,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('fraud_scoring_logs', 'security'):
+    if force or not _has_table('fraud_scoring_logs', 'security'):
         op.create_table('fraud_scoring_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('event_type', sa.String(length=50), nullable=False),
@@ -2780,7 +2802,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('fraud_velocity_counters', 'security'):
+    if force or not _has_table('fraud_velocity_counters', 'security'):
         op.create_table('fraud_velocity_counters',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('key', sa.String(length=255), nullable=False),
@@ -2792,7 +2814,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('gateway_settlement_schedules', 'treasury'):
+    if force or not _has_table('gateway_settlement_schedules', 'treasury'):
         op.create_table('gateway_settlement_schedules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('gateway_id', sa.Integer(), nullable=False),
@@ -2806,7 +2828,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('geo_fence_logs', 'hr'):
+    if force or not _has_table('geo_fence_logs', 'hr'):
         op.create_table('geo_fence_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -2821,7 +2843,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('goods_receipt_lines', 'trading'):
+    if force or not _has_table('goods_receipt_lines', 'trading'):
         op.create_table('goods_receipt_lines',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('grn_id', sa.Integer(), nullable=False),
@@ -2842,7 +2864,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='trading',
     )
 
-    if not _has_table('goods_receipt_notes', 'trading'):
+    if force or not _has_table('goods_receipt_notes', 'trading'):
         op.create_table('goods_receipt_notes',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('grn_number', sa.String(length=80), nullable=True, unique=True),
@@ -2860,7 +2882,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='trading',
     )
 
-    if not _has_table('group_chat_members', 'customer'):
+    if force or not _has_table('group_chat_members', 'customer'):
         op.create_table('group_chat_members',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.Integer(), nullable=False),
@@ -2869,7 +2891,7 @@ def upgrade() -> None:
             sa.Column('joined_at', sa.DateTime(), nullable=True), schema='customer',
     )
 
-    if not _has_table('group_chat_messages', 'communication'):
+    if force or not _has_table('group_chat_messages', 'communication'):
         op.create_table('group_chat_messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.Integer(), nullable=False),
@@ -2880,7 +2902,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('group_chat_rooms', 'communication'):
+    if force or not _has_table('group_chat_rooms', 'communication'):
         op.create_table('group_chat_rooms',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('chat_id', sa.String(length=64), nullable=False, unique=True),
@@ -2893,7 +2915,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('help_categories', 'communication'):
+    if force or not _has_table('help_categories', 'communication'):
         op.create_table('help_categories',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(), nullable=False),
@@ -2901,7 +2923,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('import_cost_templates', 'logistics'):
+    if force or not _has_table('import_cost_templates', 'logistics'):
         op.create_table('import_cost_templates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=100), nullable=False),
@@ -2925,7 +2947,7 @@ def upgrade() -> None:
             sa.Column('is_active', sa.Boolean(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('import_shipment_lines', 'logistics'):
+    if force or not _has_table('import_shipment_lines', 'logistics'):
         op.create_table('import_shipment_lines',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('shipment_id', sa.Integer(), nullable=False),
@@ -2959,7 +2981,7 @@ def upgrade() -> None:
             sa.Column('is_active', sa.Boolean(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('import_shipments', 'logistics'):
+    if force or not _has_table('import_shipments', 'logistics'):
         op.create_table('import_shipments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('shipment_ref', sa.String(length=30), nullable=False, unique=True),
@@ -3002,7 +3024,7 @@ def upgrade() -> None:
             sa.Column('is_active', sa.Boolean(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('inbox_events', 'configuration'):
+    if force or not _has_table('inbox_events', 'configuration'):
         op.create_table('inbox_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('uuid', sa.String(length=36), nullable=False, unique=True),
@@ -3022,7 +3044,7 @@ def upgrade() -> None:
             sa.Column('updated_by_id', sa.Integer(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('incident_action_items', 'communication'):
+    if force or not _has_table('incident_action_items', 'communication'):
         op.create_table('incident_action_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('war_room_id', sa.Integer(), nullable=False),
@@ -3036,7 +3058,7 @@ def upgrade() -> None:
             sa.Column('completed_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('incident_threads', 'communication'):
+    if force or not _has_table('incident_threads', 'communication'):
         op.create_table('incident_threads',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('war_room_id', sa.Integer(), nullable=False),
@@ -3045,7 +3067,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('incident_war_rooms', 'communication'):
+    if force or not _has_table('incident_war_rooms', 'communication'):
         op.create_table('incident_war_rooms',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('incident_id', sa.String(), nullable=False, unique=True),
@@ -3059,7 +3081,7 @@ def upgrade() -> None:
             sa.Column('context_data', sa.JSON(), nullable=True), schema='communication',
     )
 
-    if not _has_table('internal_channel_members', 'communication'):
+    if force or not _has_table('internal_channel_members', 'communication'):
         op.create_table('internal_channel_members',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -3068,7 +3090,7 @@ def upgrade() -> None:
             sa.Column('joined_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('internal_channels', 'communication'):
+    if force or not _has_table('internal_channels', 'communication'):
         op.create_table('internal_channels',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entity_type', sa.String(length=50), nullable=False),
@@ -3085,7 +3107,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('internal_emails', 'communication'):
+    if force or not _has_table('internal_emails', 'communication'):
         op.create_table('internal_emails',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('sender_id', sa.Integer(), nullable=False),
@@ -3106,7 +3128,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('internal_messages', 'communication'):
+    if force or not _has_table('internal_messages', 'communication'):
         op.create_table('internal_messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -3118,7 +3140,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('internal_notices', 'communication'):
+    if force or not _has_table('internal_notices', 'communication'):
         op.create_table('internal_notices',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('title', sa.String(length=200), nullable=False),
@@ -3128,7 +3150,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('invoice_items', 'finance'):
+    if force or not _has_table('invoice_items', 'finance'):
         op.create_table('invoice_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('invoice_id', sa.Integer(), nullable=False),
@@ -3146,7 +3168,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('invoices', 'finance'):
+    if force or not _has_table('invoices', 'finance'):
         op.create_table('invoices',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_id', sa.Integer(), nullable=False),
@@ -3178,7 +3200,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('ip_account_linkages', 'security'):
+    if force or not _has_table('ip_account_linkages', 'security'):
         op.create_table('ip_account_linkages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('ip_address', sa.String(), nullable=False),
@@ -3190,7 +3212,7 @@ def upgrade() -> None:
             sa.Column('last_seen', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('ip_reputations', 'security'):
+    if force or not _has_table('ip_reputations', 'security'):
         op.create_table('ip_reputations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('ip_address', sa.String(), nullable=False),
@@ -3209,7 +3231,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('journal_entries', 'finance'):
+    if force or not _has_table('journal_entries', 'finance'):
         op.create_table('journal_entries',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entry_date', sa.DateTime(), nullable=False),
@@ -3232,7 +3254,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('journal_entry_lines', 'finance'):
+    if force or not _has_table('journal_entry_lines', 'finance'):
         op.create_table('journal_entry_lines',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entry_id', sa.Integer(), nullable=False),
@@ -3250,7 +3272,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('kpi_conversion', 'analytics'):
+    if force or not _has_table('kpi_conversion', 'analytics'):
         op.create_table('kpi_conversion',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('kpi_date', sa.Date(), nullable=False),
@@ -3270,7 +3292,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('kpi_country', 'analytics'):
+    if force or not _has_table('kpi_country', 'analytics'):
         op.create_table('kpi_country',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('kpi_date', sa.Date(), nullable=False),
@@ -3291,7 +3313,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('kpi_customer', 'analytics'):
+    if force or not _has_table('kpi_customer', 'analytics'):
         op.create_table('kpi_customer',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('kpi_date', sa.Date(), nullable=False),
@@ -3312,7 +3334,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('kpi_orders', 'analytics'):
+    if force or not _has_table('kpi_orders', 'analytics'):
         op.create_table('kpi_orders',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('kpi_date', sa.Date(), nullable=False),
@@ -3333,7 +3355,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('kpi_retention', 'analytics'):
+    if force or not _has_table('kpi_retention', 'analytics'):
         op.create_table('kpi_retention',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('cohort_month', sa.String(length=7), nullable=False),
@@ -3352,7 +3374,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('kpi_revenue', 'analytics'):
+    if force or not _has_table('kpi_revenue', 'analytics'):
         op.create_table('kpi_revenue',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('kpi_date', sa.Date(), nullable=False),
@@ -3373,7 +3395,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('kpi_supplier', 'analytics'):
+    if force or not _has_table('kpi_supplier', 'analytics'):
         op.create_table('kpi_supplier',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('kpi_date', sa.Date(), nullable=False),
@@ -3393,7 +3415,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('kyc_verifications', 'security'):
+    if force or not _has_table('kyc_verifications', 'security'):
         op.create_table('kyc_verifications',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -3406,7 +3428,7 @@ def upgrade() -> None:
             sa.Column('reviewer_id', sa.Integer(), nullable=True), schema='security',
     )
 
-    if not _has_table('landed_cost_allocations', 'logistics'):
+    if force or not _has_table('landed_cost_allocations', 'logistics'):
         op.create_table('landed_cost_allocations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('shipment_id', sa.Integer(), nullable=False),
@@ -3430,7 +3452,7 @@ def upgrade() -> None:
             sa.Column('is_active', sa.Boolean(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('legal_contract_templates', 'hr'):
+    if force or not _has_table('legal_contract_templates', 'hr'):
         op.create_table('legal_contract_templates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('template_type', sa.String(length=50), nullable=False),
@@ -3443,7 +3465,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('logistics_category_pricing_rules', 'logistics'):
+    if force or not _has_table('logistics_category_pricing_rules', 'logistics'):
         op.create_table('logistics_category_pricing_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3464,7 +3486,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_cod_remittance_receipts', 'logistics'):
+    if force or not _has_table('logistics_cod_remittance_receipts', 'logistics'):
         op.create_table('logistics_cod_remittance_receipts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=True),
@@ -3485,7 +3507,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_fraud_indicators', 'logistics'):
+    if force or not _has_table('logistics_fraud_indicators', 'logistics'):
         op.create_table('logistics_fraud_indicators',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3497,7 +3519,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_partner_bank_accounts', 'logistics'):
+    if force or not _has_table('logistics_partner_bank_accounts', 'logistics'):
         op.create_table('logistics_partner_bank_accounts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3525,7 +3547,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_partner_documents', 'logistics'):
+    if force or not _has_table('logistics_partner_documents', 'logistics'):
         op.create_table('logistics_partner_documents',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3541,7 +3563,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_partner_kyc_requirements', 'country'):
+    if force or not _has_table('logistics_partner_kyc_requirements', 'country'):
         op.create_table('logistics_partner_kyc_requirements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False, unique=True),
@@ -3555,7 +3577,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('logistics_partner_locations', 'hr'):
+    if force or not _has_table('logistics_partner_locations', 'hr'):
         op.create_table('logistics_partner_locations',
                     sa.Column('country_code', sa.String(length=3), nullable=True),
             sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
@@ -3568,7 +3590,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('logistics_partner_payouts', 'logistics'):
+    if force or not _has_table('logistics_partner_payouts', 'logistics'):
         op.create_table('logistics_partner_payouts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3587,7 +3609,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_partner_profiles', 'logistics'):
+    if force or not _has_table('logistics_partner_profiles', 'logistics'):
         op.create_table('logistics_partner_profiles',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False, unique=True),
@@ -3606,7 +3628,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_partner_service_areas', 'logistics'):
+    if force or not _has_table('logistics_partner_service_areas', 'logistics'):
         op.create_table('logistics_partner_service_areas',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3635,7 +3657,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_partners', 'logistics'):
+    if force or not _has_table('logistics_partners', 'logistics'):
         op.create_table('logistics_partners',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -3675,7 +3697,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_pricing_profiles', 'logistics'):
+    if force or not _has_table('logistics_pricing_profiles', 'logistics'):
         op.create_table('logistics_pricing_profiles',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3703,7 +3725,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_pricing_rules', 'logistics'):
+    if force or not _has_table('logistics_pricing_rules', 'logistics'):
         op.create_table('logistics_pricing_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('zone_id', sa.Integer(), nullable=False),
@@ -3720,7 +3742,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='logistics',
     )
 
-    if not _has_table('logistics_rates', 'logistics'):
+    if force or not _has_table('logistics_rates', 'logistics'):
         op.create_table('logistics_rates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('zone_id', sa.Integer(), nullable=False),
@@ -3738,7 +3760,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_settlements', 'logistics'):
+    if force or not _has_table('logistics_settlements', 'logistics'):
         op.create_table('logistics_settlements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3765,7 +3787,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_vehicle_rules', 'logistics'):
+    if force or not _has_table('logistics_vehicle_rules', 'logistics'):
         op.create_table('logistics_vehicle_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('partner_id', sa.Integer(), nullable=False),
@@ -3788,7 +3810,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('logistics_zones', 'logistics'):
+    if force or not _has_table('logistics_zones', 'logistics'):
         op.create_table('logistics_zones',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('zone_name', sa.String(length=255), nullable=False),
@@ -3797,7 +3819,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='logistics',
     )
 
-    if not _has_table('manual_review_queue', 'security'):
+    if force or not _has_table('manual_review_queue', 'security'):
         op.create_table('manual_review_queue',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entity_type', sa.String(length=50), nullable=False),
@@ -3813,7 +3835,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('masked_messages', 'communication'):
+    if force or not _has_table('masked_messages', 'communication'):
         op.create_table('masked_messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('sender_id', sa.Integer(), nullable=False),
@@ -3827,7 +3849,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('media_assets', 'media'):
+    if force or not _has_table('media_assets', 'media'):
         op.create_table('media_assets',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=True),
@@ -3860,7 +3882,7 @@ def upgrade() -> None:
             sa.Column('delete_reason', sa.Text(), nullable=True), schema='media',
     )
 
-    if not _has_table('media_upload_sessions', 'media'):
+    if force or not _has_table('media_upload_sessions', 'media'):
         op.create_table('media_upload_sessions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('session_id', sa.String(length=64), nullable=False, unique=True),
@@ -3888,7 +3910,7 @@ def upgrade() -> None:
             sa.Column('delete_reason', sa.Text(), nullable=True), schema='media',
     )
 
-    if not _has_table('meeting_action_items', 'security'):
+    if force or not _has_table('meeting_action_items', 'security'):
         op.create_table('meeting_action_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('meeting_id', sa.Integer(), nullable=False),
@@ -3902,7 +3924,7 @@ def upgrade() -> None:
             sa.Column('due_date', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('meeting_recordings', 'communication'):
+    if force or not _has_table('meeting_recordings', 'communication'):
         op.create_table('meeting_recordings',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.String(length=64), nullable=False),
@@ -3915,7 +3937,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('meeting_transcripts', 'security'):
+    if force or not _has_table('meeting_transcripts', 'security'):
         op.create_table('meeting_transcripts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.String(length=64), nullable=False),
@@ -3928,7 +3950,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('messages', 'country'):
+    if force or not _has_table('messages', 'country'):
         op.create_table('messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=True),
@@ -3945,7 +3967,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('mv_cash_position', 'analytics'):
+    if force or not _has_table('mv_cash_position', 'analytics'):
         op.create_table('mv_cash_position',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('snapshot_date', sa.Date(), nullable=False),
@@ -3967,7 +3989,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('mv_daily_sales', 'analytics'):
+    if force or not _has_table('mv_daily_sales', 'analytics'):
         op.create_table('mv_daily_sales',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('snapshot_date', sa.Date(), nullable=False),
@@ -3988,7 +4010,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('mv_facet_counts', 'analytics'):
+    if force or not _has_table('mv_facet_counts', 'analytics'):
         op.create_table('mv_facet_counts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('snapshot_date', sa.Date(), nullable=False),
@@ -4006,7 +4028,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('mv_monthly_sales', 'analytics'):
+    if force or not _has_table('mv_monthly_sales', 'analytics'):
         op.create_table('mv_monthly_sales',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('period_month', sa.Integer(), nullable=False),
@@ -4028,7 +4050,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('news_articles', 'customer'):
+    if force or not _has_table('news_articles', 'customer'):
         op.create_table('news_articles',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('source_id', sa.Integer(), nullable=True),
@@ -4049,7 +4071,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('news_sources', 'communication'):
+    if force or not _has_table('news_sources', 'communication'):
         op.create_table('news_sources',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=100), nullable=False),
@@ -4059,7 +4081,7 @@ def upgrade() -> None:
             sa.Column('category', sa.String(length=50), nullable=True), schema='communication',
     )
 
-    if not _has_table('newsletter_subscribers', 'communication'):
+    if force or not _has_table('newsletter_subscribers', 'communication'):
         op.create_table('newsletter_subscribers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('email', sa.String(), nullable=False, unique=True),
@@ -4067,7 +4089,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('normalized_webhook_events', 'analytics'):
+    if force or not _has_table('normalized_webhook_events', 'analytics'):
         op.create_table('normalized_webhook_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('provider_code', sa.String(), nullable=False),
@@ -4094,7 +4116,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('notifications', 'communication'):
+    if force or not _has_table('notifications', 'communication'):
         op.create_table('notifications',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -4117,7 +4139,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('ocr_results', 'media'):
+    if force or not _has_table('ocr_results', 'media'):
         op.create_table('ocr_results',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('document_verification_id', sa.Integer(), nullable=False, unique=True),
@@ -4127,7 +4149,7 @@ def upgrade() -> None:
             sa.Column('processed_at', sa.DateTime(), nullable=True), schema='media',
     )
 
-    if not _has_table('offboarding_cases', 'hr'):
+    if force or not _has_table('offboarding_cases', 'hr'):
         op.create_table('offboarding_cases',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -4144,7 +4166,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('offices', 'hr'):
+    if force or not _has_table('offices', 'hr'):
         op.create_table('offices',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=200), nullable=False),
@@ -4161,7 +4183,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('oman_delivery_zones', 'configuration'):
+    if force or not _has_table('oman_delivery_zones', 'configuration'):
         op.create_table('oman_delivery_zones',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('zone_code', sa.String(length=20), nullable=False, unique=True),
@@ -4178,7 +4200,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('onboarding_pipelines', 'hr'):
+    if force or not _has_table('onboarding_pipelines', 'hr'):
         op.create_table('onboarding_pipelines',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -4190,7 +4212,7 @@ def upgrade() -> None:
             sa.Column('completed_at', sa.DateTime(), nullable=True), schema='hr',
     )
 
-    if not _has_table('onboarding_steps', 'hr'):
+    if force or not _has_table('onboarding_steps', 'hr'):
         op.create_table('onboarding_steps',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('pipeline_id', sa.Integer(), nullable=False),
@@ -4201,7 +4223,7 @@ def upgrade() -> None:
             sa.Column('completed_at', sa.DateTime(), nullable=True), schema='hr',
     )
 
-    if not _has_table('order_items', 'commerce'):
+    if force or not _has_table('order_items', 'commerce'):
         op.create_table('order_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_id', sa.Integer(), nullable=False),
@@ -4223,7 +4245,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('order_logistics_allocations', 'commerce'):
+    if force or not _has_table('order_logistics_allocations', 'commerce'):
         op.create_table('order_logistics_allocations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_id', sa.Integer(), nullable=False),
@@ -4258,7 +4280,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('order_notifications', 'commerce'):
+    if force or not _has_table('order_notifications', 'commerce'):
         op.create_table('order_notifications',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -4269,7 +4291,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='commerce',
     )
 
-    if not _has_table('orders', 'commerce'):
+    if force or not _has_table('orders', 'commerce'):
         op.create_table('orders',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_number', sa.String(), nullable=True, unique=True),
@@ -4322,7 +4344,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('org_units', 'hr'):
+    if force or not _has_table('org_units', 'hr'):
         op.create_table('org_units',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=200), nullable=False),
@@ -4333,7 +4355,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('outbox_events', 'configuration'):
+    if force or not _has_table('outbox_events', 'configuration'):
         op.create_table('outbox_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('uuid', sa.String(length=36), nullable=False, unique=True),
@@ -4355,7 +4377,7 @@ def upgrade() -> None:
             sa.Column('updated_by_id', sa.Integer(), nullable=True), schema='configuration',
     )
 
-    if not _has_table('parcel_location_trackers', 'hr'):
+    if force or not _has_table('parcel_location_trackers', 'hr'):
         op.create_table('parcel_location_trackers',
                     sa.Column('country_code', sa.String(length=3), nullable=True),
             sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
@@ -4369,7 +4391,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('password_reset_tokens', 'security'):
+    if force or not _has_table('password_reset_tokens', 'security'):
         op.create_table('password_reset_tokens',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -4383,7 +4405,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('payment_gateway_connections', 'treasury'):
+    if force or not _has_table('payment_gateway_connections', 'treasury'):
         op.create_table('payment_gateway_connections',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('provider_code', sa.String(length=100), nullable=False),
@@ -4427,7 +4449,7 @@ def upgrade() -> None:
     )
 
     op.execute('DROP TABLE IF EXISTS "hr"."payment_orchestrator_syncs"')
-    if not _has_table('payment_orchestrator_sync', 'hr'):
+    if force or not _has_table('payment_orchestrator_sync', 'hr'):
         op.create_table('payment_orchestrator_sync',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=10), nullable=False),
@@ -4446,7 +4468,7 @@ def upgrade() -> None:
         op.create_index('ix_pos_status', 'payment_orchestrator_sync', ['status'], schema='hr')
         op.create_unique_constraint('uq_pos_country_gateway', 'payment_orchestrator_sync', ['country_code', 'gateway_id'], schema='hr')
 
-    if not _has_table('payment_provider_configs', 'treasury'):
+    if force or not _has_table('payment_provider_configs', 'treasury'):
         op.create_table('payment_provider_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('provider_name', sa.String(), nullable=False),
@@ -4460,7 +4482,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('payment_reconciliation_runs', 'treasury'):
+    if force or not _has_table('payment_reconciliation_runs', 'treasury'):
         op.create_table('payment_reconciliation_runs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('run_date', sa.DateTime(), nullable=False),
@@ -4480,7 +4502,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('payments', 'finance'):
+    if force or not _has_table('payments', 'finance'):
         op.create_table('payments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_id', sa.Integer(), nullable=False),
@@ -4497,7 +4519,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('payout_batch_items', 'treasury'):
+    if force or not _has_table('payout_batch_items', 'treasury'):
         op.create_table('payout_batch_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('batch_id', sa.Integer(), nullable=False),
@@ -4513,7 +4535,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('payout_batches', 'treasury'):
+    if force or not _has_table('payout_batches', 'treasury'):
         op.create_table('payout_batches',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('batch_number', sa.String(length=50), nullable=False, unique=True),
@@ -4533,7 +4555,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('payout_rule_categories', 'country'):
+    if force or not _has_table('payout_rule_categories', 'country'):
         op.create_table('payout_rule_categories',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -4545,7 +4567,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('payout_rule_products', 'country'):
+    if force or not _has_table('payout_rule_products', 'country'):
         op.create_table('payout_rule_products',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -4557,7 +4579,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('payout_rules', 'treasury'):
+    if force or not _has_table('payout_rules', 'treasury'):
         op.create_table('payout_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -4569,7 +4591,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='treasury',
     )
 
-    if not _has_table('payouts', 'treasury'):
+    if force or not _has_table('payouts', 'treasury'):
         op.create_table('payouts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('batch_number', sa.String(length=50), nullable=True),
@@ -4594,7 +4616,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('payroll_records', 'finance'):
+    if force or not _has_table('payroll_records', 'finance'):
         op.create_table('payroll_records',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -4611,7 +4633,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('pending_journal_entries', 'finance'):
+    if force or not _has_table('pending_journal_entries', 'finance'):
         op.create_table('pending_journal_entries',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('lines_json', sa.Text(), nullable=False),
@@ -4632,7 +4654,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('permission_audit_log', 'security'):
+    if force or not _has_table('permission_audit_log', 'security'):
         op.create_table('permission_audit_log',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('actor_id', sa.Integer(), nullable=False),
@@ -4647,7 +4669,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('permission_categories', 'security'):
+    if force or not _has_table('permission_categories', 'security'):
         op.create_table('permission_categories',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=100), nullable=False, unique=True),
@@ -4663,7 +4685,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('permissions', 'security'):
+    if force or not _has_table('permissions', 'security'):
         op.create_table('permissions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('category_id', sa.Integer(), nullable=False),
@@ -4678,7 +4700,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('physical_id_cards', 'hr'):
+    if force or not _has_table('physical_id_cards', 'hr'):
         op.create_table('physical_id_cards',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=False, unique=True),
@@ -4694,7 +4716,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('predictive_simulations', 'ai'):
+    if force or not _has_table('predictive_simulations', 'ai'):
         op.create_table('predictive_simulations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('simulation_type', sa.String(length=50), nullable=False),
@@ -4703,7 +4725,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='ai',
     )
 
-    if not _has_table('processed_webhook_events', 'analytics'):
+    if force or not _has_table('processed_webhook_events', 'analytics'):
         op.create_table('processed_webhook_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('processor', sa.String(), nullable=False),
@@ -4717,7 +4739,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='analytics',
     )
 
-    if not _has_table('product_commission_overrides', 'commerce'):
+    if force or not _has_table('product_commission_overrides', 'commerce'):
         op.create_table('product_commission_overrides',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=False),
@@ -4730,7 +4752,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('product_filter_metadata', 'commerce'):
+    if force or not _has_table('product_filter_metadata', 'commerce'):
         op.create_table('product_filter_metadata',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('category_id', sa.Integer(), nullable=True),
@@ -4743,7 +4765,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('product_filter_options', 'commerce'):
+    if force or not _has_table('product_filter_options', 'commerce'):
         op.create_table('product_filter_options',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('filter_metadata_id', sa.Integer(), nullable=False),
@@ -4757,7 +4779,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('product_images', 'commerce'):
+    if force or not _has_table('product_images', 'commerce'):
         op.create_table('product_images',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=False),
@@ -4768,7 +4790,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='commerce',
     )
 
-    if not _has_table('product_variants', 'commerce'):
+    if force or not _has_table('product_variants', 'commerce'):
         op.create_table('product_variants',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=False),
@@ -4794,7 +4816,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('product_verifications', 'commerce'):
+    if force or not _has_table('product_verifications', 'commerce'):
         op.create_table('product_verifications',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=False),
@@ -4817,7 +4839,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('product_videos', 'media'):
+    if force or not _has_table('product_videos', 'media'):
         op.create_table('product_videos',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=False),
@@ -4838,7 +4860,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='media',
     )
 
-    if not _has_table('products', 'commerce'):
+    if force or not _has_table('products', 'commerce'):
         op.create_table('products',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(), nullable=False),
@@ -4896,7 +4918,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('promotion_engine_configs', 'commerce'):
+    if force or not _has_table('promotion_engine_configs', 'commerce'):
         op.create_table('promotion_engine_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('is_engine_enabled', sa.Boolean(), nullable=True),
@@ -4928,7 +4950,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('promotion_ledger_entries', 'commerce'):
+    if force or not _has_table('promotion_ledger_entries', 'commerce'):
         op.create_table('promotion_ledger_entries',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('promotion_id', sa.Integer(), nullable=True),
@@ -4942,7 +4964,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('promotion_order_tiers', 'commerce'):
+    if force or not _has_table('promotion_order_tiers', 'commerce'):
         op.create_table('promotion_order_tiers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('promotion_id', sa.Integer(), nullable=True),
@@ -4961,7 +4983,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('proxy_call_logs', 'communication'):
+    if force or not _has_table('proxy_call_logs', 'communication'):
         op.create_table('proxy_call_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -4975,7 +4997,7 @@ def upgrade() -> None:
             sa.Column('ended_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('proxy_channels', 'communication'):
+    if force or not _has_table('proxy_channels', 'communication'):
         op.create_table('proxy_channels',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entity_type', sa.String(), nullable=False),
@@ -4986,7 +5008,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('proxy_messages', 'communication'):
+    if force or not _has_table('proxy_messages', 'communication'):
         op.create_table('proxy_messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('session_id', sa.Integer(), nullable=False),
@@ -4999,7 +5021,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('proxy_sessions', 'communication'):
+    if force or not _has_table('proxy_sessions', 'communication'):
         op.create_table('proxy_sessions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -5011,7 +5033,7 @@ def upgrade() -> None:
             sa.Column('session_metadata', sa.JSON(), nullable=True), schema='communication',
     )
 
-    if not _has_table('purchase_order_lines', 'trading'):
+    if force or not _has_table('purchase_order_lines', 'trading'):
         op.create_table('purchase_order_lines',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('po_id', sa.Integer(), nullable=False),
@@ -5035,7 +5057,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='trading',
     )
 
-    if not _has_table('purchase_orders', 'trading'):
+    if force or not _has_table('purchase_orders', 'trading'):
         op.create_table('purchase_orders',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('po_number', sa.String(length=80), nullable=True, unique=True),
@@ -5064,7 +5086,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='trading',
     )
 
-    if not _has_table('push_notification_tokens', 'communication'):
+    if force or not _has_table('push_notification_tokens', 'communication'):
         op.create_table('push_notification_tokens',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -5077,7 +5099,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('recurring_templates', 'finance'):
+    if force or not _has_table('recurring_templates', 'finance'):
         op.create_table('recurring_templates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=200), nullable=False),
@@ -5095,7 +5117,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('referral_point_events', 'customer'):
+    if force or not _has_table('referral_point_events', 'customer'):
         op.create_table('referral_point_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -5109,7 +5131,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('referrals', 'customer'):
+    if force or not _has_table('referrals', 'customer'):
         op.create_table('referrals',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('referrer_id', sa.Integer(), nullable=False),
@@ -5124,7 +5146,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('refund_ledger', 'finance'):
+    if force or not _has_table('refund_ledger', 'finance'):
         op.create_table('refund_ledger',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_id', sa.Integer(), nullable=False),
@@ -5154,7 +5176,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('retention_job_runs', 'audit'):
+    if force or not _has_table('retention_job_runs', 'audit'):
         op.create_table('retention_job_runs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('job_type', sa.String(length=50), nullable=True),
@@ -5176,7 +5198,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='audit',
     )
 
-    if not _has_table('return_abuse_patterns', 'commerce'):
+    if force or not _has_table('return_abuse_patterns', 'commerce'):
         op.create_table('return_abuse_patterns',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -5187,7 +5209,7 @@ def upgrade() -> None:
             sa.Column('is_blocked', sa.Boolean(), nullable=True), schema='commerce',
     )
 
-    if not _has_table('return_requests', 'commerce'):
+    if force or not _has_table('return_requests', 'commerce'):
         op.create_table('return_requests',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_id', sa.Integer(), nullable=False),
@@ -5213,7 +5235,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('reviews', 'commerce'):
+    if force or not _has_table('reviews', 'commerce'):
         op.create_table('reviews',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=False),
@@ -5232,7 +5254,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='commerce',
     )
 
-    if not _has_table('revoked_tokens', 'security'):
+    if force or not _has_table('revoked_tokens', 'security'):
         op.create_table('revoked_tokens',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('jti', sa.String(length=64), nullable=False, unique=True),
@@ -5245,7 +5267,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('role_permission_assignments', 'security'):
+    if force or not _has_table('role_permission_assignments', 'security'):
         op.create_table('role_permission_assignments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('role_name', sa.String(length=80), nullable=False),
@@ -5259,7 +5281,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('role_permission_settings', 'security'):
+    if force or not _has_table('role_permission_settings', 'security'):
         op.create_table('role_permission_settings',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('role', sa.String(), nullable=False),
@@ -5271,7 +5293,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('sales_order_lines', 'trading'):
+    if force or not _has_table('sales_order_lines', 'trading'):
         op.create_table('sales_order_lines',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('so_id', sa.Integer(), nullable=False),
@@ -5295,7 +5317,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='trading',
     )
 
-    if not _has_table('sales_orders', 'trading'):
+    if force or not _has_table('sales_orders', 'trading'):
         op.create_table('sales_orders',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('so_number', sa.String(length=80), nullable=True, unique=True),
@@ -5324,7 +5346,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='trading',
     )
 
-    if not _has_table('scanned_expenses', 'finance'):
+    if force or not _has_table('scanned_expenses', 'finance'):
         op.create_table('scanned_expenses',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('employee_id', sa.Integer(), nullable=True),
@@ -5350,7 +5372,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('shift_handover_logs', 'hr'):
+    if force or not _has_table('shift_handover_logs', 'hr'):
         op.create_table('shift_handover_logs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -5365,7 +5387,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('shift_handover_sessions', 'customer'):
+    if force or not _has_table('shift_handover_sessions', 'customer'):
         op.create_table('shift_handover_sessions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('outgoing_employee_id', sa.Integer(), nullable=False),
@@ -5382,7 +5404,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('shift_handover_tasks', 'hr'):
+    if force or not _has_table('shift_handover_tasks', 'hr'):
         op.create_table('shift_handover_tasks',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('session_id', sa.Integer(), nullable=False),
@@ -5393,7 +5415,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='hr',
     )
 
-    if not _has_table('shipment_confirmations', 'logistics'):
+    if force or not _has_table('shipment_confirmations', 'logistics'):
         op.create_table('shipment_confirmations',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('shipment_id', sa.Integer(), nullable=False),
@@ -5424,7 +5446,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('shipment_events', 'logistics'):
+    if force or not _has_table('shipment_events', 'logistics'):
         op.create_table('shipment_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('shipment_id', sa.Integer(), nullable=False),
@@ -5447,7 +5469,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('shipments', 'logistics'):
+    if force or not _has_table('shipments', 'logistics'):
         op.create_table('shipments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('order_id', sa.Integer(), nullable=False),
@@ -5485,7 +5507,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('shipping_carriers', 'logistics'):
+    if force or not _has_table('shipping_carriers', 'logistics'):
         op.create_table('shipping_carriers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=True),
@@ -5498,7 +5520,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('shipping_rules', 'logistics'):
+    if force or not _has_table('shipping_rules', 'logistics'):
         op.create_table('shipping_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -5509,7 +5531,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='logistics',
     )
 
-    if not _has_table('shipping_zones', 'logistics'):
+    if force or not _has_table('shipping_zones', 'logistics'):
         op.create_table('shipping_zones',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=True),
@@ -5522,7 +5544,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('shop_warehouse_locations', 'hr'):
+    if force or not _has_table('shop_warehouse_locations', 'hr'):
         op.create_table('shop_warehouse_locations',
                     sa.Column('country_code', sa.String(length=3), nullable=True),
             sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
@@ -5535,7 +5557,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='hr',
     )
 
-    if not _has_table('stock_movements', 'logistics'):
+    if force or not _has_table('stock_movements', 'logistics'):
         op.create_table('stock_movements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('product_id', sa.Integer(), nullable=False),
@@ -5554,7 +5576,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('supplier_bank_accounts', 'supplier'):
+    if force or not _has_table('supplier_bank_accounts', 'supplier'):
         op.create_table('supplier_bank_accounts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -5582,7 +5604,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='supplier',
     )
 
-    if not _has_table('supplier_country_commissions', 'supplier'):
+    if force or not _has_table('supplier_country_commissions', 'supplier'):
         op.create_table('supplier_country_commissions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -5594,7 +5616,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='supplier',
     )
 
-    if not _has_table('supplier_disputes', 'supplier'):
+    if force or not _has_table('supplier_disputes', 'supplier'):
         op.create_table('supplier_disputes',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -5625,7 +5647,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='supplier',
     )
 
-    if not _has_table('supplier_documents', 'supplier'):
+    if force or not _has_table('supplier_documents', 'supplier'):
         op.create_table('supplier_documents',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -5644,7 +5666,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='supplier',
     )
 
-    if not _has_table('supplier_fraud_indicators', 'supplier'):
+    if force or not _has_table('supplier_fraud_indicators', 'supplier'):
         op.create_table('supplier_fraud_indicators',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -5656,7 +5678,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='supplier',
     )
 
-    if not _has_table('supplier_kyc_requirements', 'country'):
+    if force or not _has_table('supplier_kyc_requirements', 'country'):
         op.create_table('supplier_kyc_requirements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False, unique=True),
@@ -5668,7 +5690,7 @@ def upgrade() -> None:
             sa.Column('updated_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('supplier_notification_preferences', 'supplier'):
+    if force or not _has_table('supplier_notification_preferences', 'supplier'):
         op.create_table('supplier_notification_preferences',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -5690,7 +5712,7 @@ def upgrade() -> None:
     )
 
     op.execute('DROP TABLE IF EXISTS "hr"."supplier_onboarding_syncs"')
-    if not _has_table('supplier_onboarding_sync', 'hr'):
+    if force or not _has_table('supplier_onboarding_sync', 'hr'):
         op.create_table('supplier_onboarding_sync',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=10), nullable=False),
@@ -5707,7 +5729,7 @@ def upgrade() -> None:
         op.create_index('ix_sos_status', 'supplier_onboarding_sync', ['status'], schema='hr')
         op.create_unique_constraint('uq_sos_country_supplier', 'supplier_onboarding_sync', ['country_code', 'supplier_id'], schema='hr')
 
-    if not _has_table('supplier_profiles', 'supplier'):
+    if force or not _has_table('supplier_profiles', 'supplier'):
         op.create_table('supplier_profiles',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -5749,7 +5771,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='supplier',
     )
 
-    if not _has_table('supplier_settlements', 'finance'):
+    if force or not _has_table('supplier_settlements', 'finance'):
         op.create_table('supplier_settlements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -5778,7 +5800,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('support_ticket_replies', 'communication'):
+    if force or not _has_table('support_ticket_replies', 'communication'):
         op.create_table('support_ticket_replies',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('ticket_id', sa.Integer(), nullable=False),
@@ -5791,7 +5813,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('support_tickets', 'communication'):
+    if force or not _has_table('support_tickets', 'communication'):
         op.create_table('support_tickets',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -5806,7 +5828,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('system_alerts', 'configuration'):
+    if force or not _has_table('system_alerts', 'configuration'):
         op.create_table('system_alerts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('alert_type', sa.String(), nullable=False),
@@ -5823,7 +5845,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='configuration',
     )
 
-    if not _has_table('system_health_events', 'customer'):
+    if force or not _has_table('system_health_events', 'customer'):
         op.create_table('system_health_events',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('service', sa.String(length=100), nullable=True),
@@ -5834,7 +5856,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='customer',
     )
 
-    if not _has_table('system_settings', 'configuration'):
+    if force or not _has_table('system_settings', 'configuration'):
         op.create_table('system_settings',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('key', sa.String(), nullable=False, unique=True),
@@ -5849,7 +5871,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='configuration',
     )
 
-    if not _has_table('tax_rules', 'country'):
+    if force or not _has_table('tax_rules', 'country'):
         op.create_table('tax_rules',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
@@ -5859,7 +5881,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='country',
     )
 
-    if not _has_table('ticket_attachments', 'communication'):
+    if force or not _has_table('ticket_attachments', 'communication'):
         op.create_table('ticket_attachments',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('ticket_reply_id', sa.Integer(), nullable=True),
@@ -5872,7 +5894,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('ticket_messages', 'communication'):
+    if force or not _has_table('ticket_messages', 'communication'):
         op.create_table('ticket_messages',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('ticket_id', sa.Integer(), nullable=False),
@@ -5886,7 +5908,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('ticket_replies', 'communication'):
+    if force or not _has_table('ticket_replies', 'communication'):
         op.create_table('ticket_replies',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('ticket_id', sa.Integer(), nullable=False),
@@ -5899,7 +5921,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='communication',
     )
 
-    if not _has_table('trade_deal_items', 'finance'):
+    if force or not _has_table('trade_deal_items', 'finance'):
         op.create_table('trade_deal_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('deal_id', sa.Integer(), nullable=False),
@@ -5913,7 +5935,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('trade_deals', 'finance'):
+    if force or not _has_table('trade_deals', 'finance'):
         op.create_table('trade_deals',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('deal_number', sa.String(length=80), nullable=True, unique=True),
@@ -5937,7 +5959,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('trade_settlements', 'finance'):
+    if force or not _has_table('trade_settlements', 'finance'):
         op.create_table('trade_settlements',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('deal_id', sa.Integer(), nullable=False),
@@ -5956,7 +5978,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('trading_configs', 'finance'):
+    if force or not _has_table('trading_configs', 'finance'):
         op.create_table('trading_configs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('config_key', sa.String(length=100), nullable=False),
@@ -5971,7 +5993,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('training_modules', 'hr'):
+    if force or not _has_table('training_modules', 'hr'):
         op.create_table('training_modules',
                     sa.Column('module_id', sa.String(length=100), primary_key=True, nullable=False),
             sa.Column('title', sa.String(length=200), nullable=False),
@@ -5984,7 +6006,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='hr',
     )
 
-    if not _has_table('transaction_ledgers', 'finance'):
+    if force or not _has_table('transaction_ledgers', 'finance'):
         op.create_table('transaction_ledgers',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=True),
@@ -6021,7 +6043,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('treasury_accounts', 'treasury'):
+    if force or not _has_table('treasury_accounts', 'treasury'):
         op.create_table('treasury_accounts',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('slug', sa.String(), nullable=False, unique=True),
@@ -6039,7 +6061,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('treasury_transactions', 'treasury'):
+    if force or not _has_table('treasury_transactions', 'treasury'):
         op.create_table('treasury_transactions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('from_account_id', sa.Integer(), nullable=True),
@@ -6057,7 +6079,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='treasury',
     )
 
-    if not _has_table('upload_jobs', 'ai'):
+    if force or not _has_table('upload_jobs', 'ai'):
         op.create_table('upload_jobs',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('supplier_id', sa.Integer(), nullable=False),
@@ -6092,7 +6114,7 @@ def upgrade() -> None:
             sa.Column('delete_reason', sa.Text(), nullable=True), schema='ai',
     )
 
-    if not _has_table('user_browsing_history', 'security'):
+    if force or not _has_table('user_browsing_history', 'security'):
         op.create_table('user_browsing_history',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -6100,7 +6122,7 @@ def upgrade() -> None:
             sa.Column('viewed_at', sa.DateTime(), nullable=True), schema='security',
     )
 
-    if not _has_table('user_devices', 'security'):
+    if force or not _has_table('user_devices', 'security'):
         op.create_table('user_devices',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -6116,7 +6138,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('user_login_history', 'security'):
+    if force or not _has_table('user_login_history', 'security'):
         op.create_table('user_login_history',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -6130,7 +6152,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('user_permission_overrides', 'security'):
+    if force or not _has_table('user_permission_overrides', 'security'):
         op.create_table('user_permission_overrides',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -6144,7 +6166,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('user_sessions', 'security'):
+    if force or not _has_table('user_sessions', 'security'):
         op.create_table('user_sessions',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -6158,7 +6180,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('users', 'security'):
+    if force or not _has_table('users', 'security'):
         op.create_table('users',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('email', sa.String(), nullable=True, unique=True),
@@ -6198,14 +6220,14 @@ def upgrade() -> None:
             sa.Column('totp_secret', sa.String(), nullable=True),
             sa.Column('last_seen_at', sa.DateTime(), nullable=True),
             sa.Column('is_current', sa.Boolean(), nullable=True),
-            sa.Column('address_book', infrastructure.utils.encryption.EncryptedString(), nullable=True),
+            sa.Column('address_book', EncryptedString(), nullable=True),
             sa.Column('uuid', sa.String(length=36), nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
             sa.Column('is_active', sa.Boolean(), nullable=False),
             sa.Column('version', sa.Integer(), nullable=False), schema='security',
     )
 
-    if not _has_table('vat_remittances', 'finance'):
+    if force or not _has_table('vat_remittances', 'finance'):
         op.create_table('vat_remittances',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('period_start_at', sa.DateTime(), nullable=False),
@@ -6228,7 +6250,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('vendors', 'finance'):
+    if force or not _has_table('vendors', 'finance'):
         op.create_table('vendors',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=200), nullable=False),
@@ -6244,7 +6266,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='finance',
     )
 
-    if not _has_table('video_analytics', 'media'):
+    if force or not _has_table('video_analytics', 'media'):
         op.create_table('video_analytics',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('video_id', sa.Integer(), nullable=False),
@@ -6259,7 +6281,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='media',
     )
 
-    if not _has_table('video_room_participants', 'customer'):
+    if force or not _has_table('video_room_participants', 'customer'):
         op.create_table('video_room_participants',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.Integer(), nullable=False),
@@ -6269,7 +6291,7 @@ def upgrade() -> None:
             sa.Column('left_at', sa.DateTime(), nullable=True), schema='customer',
     )
 
-    if not _has_table('video_room_recordings', 'media'):
+    if force or not _has_table('video_room_recordings', 'media'):
         op.create_table('video_room_recordings',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.Integer(), nullable=False),
@@ -6281,7 +6303,7 @@ def upgrade() -> None:
             sa.Column('ended_at', sa.DateTime(), nullable=True), schema='media',
     )
 
-    if not _has_table('video_rooms', 'customer'):
+    if force or not _has_table('video_rooms', 'customer'):
         op.create_table('video_rooms',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('room_id', sa.String(length=64), nullable=False, unique=True),
@@ -6304,7 +6326,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('war_room_templates', 'communication'):
+    if force or not _has_table('war_room_templates', 'communication'):
         op.create_table('war_room_templates',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=100), nullable=False),
@@ -6314,7 +6336,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=True), schema='communication',
     )
 
-    if not _has_table('warehouses', 'logistics'):
+    if force or not _has_table('warehouses', 'logistics'):
         op.create_table('warehouses',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('name', sa.String(length=255), nullable=False),
@@ -6328,7 +6350,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='logistics',
     )
 
-    if not _has_table('wishlist_items', 'customer'):
+    if force or not _has_table('wishlist_items', 'customer'):
         op.create_table('wishlist_items',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -6340,7 +6362,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('wishlists', 'customer'):
+    if force or not _has_table('wishlists', 'customer'):
         op.create_table('wishlists',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
@@ -6352,7 +6374,7 @@ def upgrade() -> None:
             sa.Column('version', sa.Integer(), nullable=False), schema='customer',
     )
 
-    if not _has_table('worm_audit', 'audit'):
+    if force or not _has_table('worm_audit', 'audit'):
         op.create_table('worm_audit',
                     sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
             sa.Column('entity_type', sa.String(length=100), nullable=False),
@@ -6373,7 +6395,8 @@ def upgrade() -> None:
     )
 
 def downgrade() -> None:
-    if op.get_bind().dialect.name == "sqlite":
+    bind = op.get_bind()
+    if not _is_offline(bind) and bind.dialect.name == "sqlite":
         return
 
     op.execute('DROP TABLE IF EXISTS "audit"."worm_audit"')

@@ -37,6 +37,8 @@ Create Date: 2026-07-29 20:30:00.000000+05:00
 """
 from __future__ import annotations
 
+import re
+
 import sqlalchemy as sa
 from datetime import date
 from typing import Sequence, Union
@@ -47,6 +49,15 @@ from sqlalchemy.sql import quoted_name
 
 def sql_identifier(name: str):
     return quoted_name(name, False)
+
+
+_IDENTIFIER_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+
+def _validate_identifier(name: str) -> str:
+    if not _IDENTIFIER_RE.match(name):
+        raise ValueError(f"Invalid SQL identifier: {name!r}")
+    return name
 
 revision: str = "20260729_2030"
 down_revision: Union[str, None] = "20260729_1914"
@@ -321,13 +332,14 @@ def downgrade() -> None:
         )
 
         # ── 3. Reassemble data into the flat table ─────────────────────────
+        validated = [_validate_identifier(p) for p in partitions]
         selects = [
-            f"SELECT * FROM public.{p_id}" for p_id in map(sql_identifier, partitions)
+            "SELECT * FROM :schema.:" + sql_identifier(p) for p in validated
         ]
         if selects:
             union_all = " UNION ALL ".join(selects)
             op.execute(
-                sa.text(f"INSERT INTO :schema.:flat_name {union_all}"),
+                sa.text("INSERT INTO :schema.:flat_name " + union_all),
                 {"schema": SCHEMA_PUBLIC, "flat_name": flat_name},
             )
 

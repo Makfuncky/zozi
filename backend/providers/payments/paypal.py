@@ -34,6 +34,12 @@ except ImportError:
     httpx = None  # type: ignore[assignment]
     HAS_PAYPAL = False
 
+try:
+    import requests as _req_lib
+    requests = _req_lib
+except ImportError:
+    requests = None  # type: ignore[assignment]
+
 # Legacy SDK handle retained for backward-compatible introspection; the
 # provider no longer imports any PayPal SDK (direct REST via httpx).
 _paypal_sdk = None
@@ -444,22 +450,52 @@ def get_order(order_id: str) -> dict[str, Any]:
         raise PayPalError(
             f"PayPal get_order returned status {status_code}"
         )
-    amount_value = ""
-    amount_currency = ""
-    for pu in data.get("purchase_units") or []:
-        if isinstance(pu, dict):
-            pu_amount = pu.get("amount")
-            if pu_amount:
-                amount_value = str(pu_amount.get("value"))
-                amount_currency = str(pu_amount.get("currency_code"))
-        break
     return {
         "id": data.get("id"),
         "status": str(data.get("status")),
-        "amount": amount_value,
-        "currency": amount_currency,
+        "amount": str((data.get("purchase_units") or [{}])[0].get("amount", {})),
         "raw": data,
     }
+
+
+def capture_order(order_id: str, data: Optional[dict] = None) -> dict[str, Any]:
+    """Capture a PayPal order by ID.
+
+    Thin wrapper around :func:`capture_payment` for API compatibility with
+    callers that pass a data dict rather than named keyword arguments.
+
+    Args:
+        order_id: The PayPal order ID to capture.
+        data: Optional dict with ``amount`` and ``currency`` keys.
+
+    Returns:
+        dict with 'id', 'status', and 'capture_amount' keys.
+
+    Raises:
+        PayPalCaptureError: If the capture operation fails.
+        PayPalError: On transport or mapping failures.
+    """
+    amount = None
+    currency = None
+    if data:
+        amount = data.get("amount")
+        currency = data.get("currency")
+    try:
+        return capture_payment(
+            order_id,
+            amount=Decimal(str(amount)) if amount is not None else None,
+            currency=currency or "",
+        )
+    except PayPalCaptureError:
+        raise
+    except PayPalOrderNotFoundError:
+        raise
+    except PayPalError:
+        raise
+    except Exception as exc:
+        raise PayPalError(
+            f"PayPal capture_order failed for {order_id}: {exc}"
+        ) from exc
 
 
 def void_payment(order_id: str) -> dict[str, Any]:

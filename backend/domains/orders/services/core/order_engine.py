@@ -724,7 +724,17 @@ def _calculate_order_amounts(
 
 
 def create_order(order: OrderCreate, current_user: dict, db: Session, request: Any = None) -> Order:
-    with request_context(user_id=str(current_user.get("id"))):
+    # Law 93: the inbound request id is already in `request_id_ctx`, set by
+    # middleware/request_id_middleware.py. It MUST be read BEFORE entering
+    # `request_context`, because `request_context()` with no correlation_id mints
+    # a fresh uuid4 and overwrites the contextvar -- which is what used to
+    # happen here, leaving every log line below correlated to an id that appears
+    # in no HTTP request log. Passing it through keeps the order traceable to the
+    # request that created it. `or None` preserves the previous generate-a-new-id
+    # behaviour for non-HTTP callers (Celery, CLI, tests). The value is a
+    # correlation id only and carries no PII (Law 282).
+    inbound_request_id = get_correlation_id() or None
+    with request_context(correlation_id=inbound_request_id, user_id=str(current_user.get("id"))):
         order_id: int | None = None
         order_number: str | None = None
         logger.info(
@@ -754,7 +764,13 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
                         ip_address=get_request_ip(request),
                         device_hash=device_hash,
                         event_type="checkout",
-                        amount=float(total_amount),
+                        # Law 19: the order total is money, so it stays Decimal
+                        # all the way into the fraud decision. The engine only
+                        # tests truthiness and `amount > 500`, both of which are
+                        # exact for Decimal, so the thresholds are unchanged --
+                        # but the comparison can no longer be decided by a
+                        # rounded binary value.
+                        amount=total_amount,
                         additional_signals={
                             "is_cod": payment_method == "cod",
                             "is_new_account": current_user.get("created_at", "").startswith("2025") or current_user.get("created_at", "").startswith("2026"),
@@ -773,6 +789,10 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
                         error=str(e),
                         user_id=current_user.get("id"),
                         correlation_id=get_correlation_id(),
+                        # Law 93: name the request explicitly so a fraud-scoring
+                        # failure is correlatable without guessing from the
+                        # uuid the service context happens to be holding.
+                        request_id=inbound_request_id,
                     )
 
             payment_snapshot = build_order_payment_snapshot(payment_method, total_amount, db, country_code)
@@ -903,9 +923,14 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
         order_id=db_order.id,
         order_number=db_order.order_number,
         user_id=current_user.get("id"),
-        total=float(total_amount),
+        # Law 19: an exact decimal string, not a float. This log line runs
+        # AFTER db.commit(), so the order is already durable; stringifying keeps
+        # the value exact and keeps a serialisation failure from turning a
+        # successful order creation into a 500.
+        total=str(total_amount),
         payment_method=payment_method,
         correlation_id=get_correlation_id(),
+        request_id=inbound_request_id,
     )
     try:
         from domains.comms.services.transactional_email_service import enqueue_order_created_email
@@ -1017,8 +1042,10 @@ def get_orders(current_user: dict, db: Session, *, skip: int = 0, limit: int = 5
         shipments = shipments_by_order.get(cast(int, order.id), [])
         events = _events_for_order(shipments, events_by_shipment)
         reconciled_status = reconcile_order_status(order, shipments)
-        if order.status != reconciled_status:
-            order.status = reconciled_status
+        # The column is `status_code` (chk_orders_status_valid); `status` does not
+        # exist on the model.
+        if order.status_code != reconciled_status:
+            order.status_code = reconciled_status
             updated = True
         setattr(order, "status_label", order_status_label(reconciled_status, shipments, events))
     if updated:
@@ -1217,7 +1244,10 @@ def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
     items_payload = []
     for item in order.items:
         supplier_user = supplier_map.get(item.product.supplier_id) if item.product else None
-        unit_price = float(to_decimal(item.price))
+        # Law 19: money stays Decimal. The payload already carried `total` as a
+        # Decimal two lines below, so unit_price was the odd one out -- one
+        # payload mixing float and Decimal for the same money.
+        unit_price = to_decimal(item.price)
         qty = int(item.quantity or 0)
         items_payload.append(
             {

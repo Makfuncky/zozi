@@ -12,8 +12,9 @@ from __future__ import annotations
 import asyncio
 import ipaddress
 import json
-import sys
 import os
+import sys
+import urllib.error
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock, Mock, patch, mock_open
@@ -655,11 +656,11 @@ class TestCountryDetectionProvider:
             assert source == "default"
 
     def test_lookup_geoip2_no_db(self):
-        with patch("geoip2.database.Reader", side_effect=Exception("no db")):
-            result = self.provider._lookup_geoip2("8.8.8.8")
-            assert result is None
+        result = self.provider._lookup_geoip2("8.8.8.8")
+        assert result is None
 
     def test_lookup_geoip2_success(self):
+        pytest.importorskip("geoip2")
         mock_reader = MagicMock()
         mock_response = MagicMock()
         mock_response.country.iso_code = "DE"
@@ -817,22 +818,22 @@ class TestResolveIpLocation:
     def test_resolve_ip_location_from_headers(self):
         from providers.geography.geo import resolve_ip_location
 
-        with patch("providers.geography.geo.requests.get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {
-                "ip": "1.2.3.4",
-                "success": True,
-                "country": "Germany",
-                "countryCode": "DE",
-                "region": "Berlin",
-                "city": "Berlin",
-                "latitude": 52.52,
-                "longitude": 13.405,
-                "connection": {"isp": "ISP"},
-            }
-            mock_get.return_value = mock_resp
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({
+            "ip": "1.2.3.4",
+            "success": True,
+            "country": "Germany",
+            "countryCode": "DE",
+            "region": "Berlin",
+            "city": "Berlin",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "connection": {"isp": "ISP"},
+        }).encode()
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=None)
 
+        with patch("providers.geography.geo.urllib.request.urlopen", return_value=mock_resp):
             result = resolve_ip_location(
                 client_host="127.0.0.1",
                 forwarded_for="1.2.3.4",
@@ -841,44 +842,42 @@ class TestResolveIpLocation:
             assert result.source == "ipwho.is"
 
     def test_resolve_ip_location_all_providers_fail(self):
-        import requests as req_lib
         from providers.geography.geo import resolve_ip_location
 
-        with patch("providers.geography.geo.requests.get", side_effect=req_lib.RequestException("network down")):
+        with patch("providers.geography.geo.urllib.request.urlopen", side_effect=urllib.error.URLError("network down")):
             with pytest.raises(RuntimeError, match="All location providers failed"):
                 resolve_ip_location(ip="1.2.3.4")
 
     def test_resolve_ip_location_caching(self):
-        import requests as req_lib
         from providers.geography.geo import resolve_ip_location
 
-        with patch("providers.geography.geo.requests.get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {
-                "ip": "1.2.3.4",
-                "success": True,
-                "country": "Germany",
-                "countryCode": "DE",
-                "latitude": 52.52,
-                "longitude": 13.405,
-            }
-            mock_get.return_value = mock_resp
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({
+            "ip": "1.2.3.4",
+            "success": True,
+            "country": "Germany",
+            "countryCode": "DE",
+            "latitude": 52.52,
+            "longitude": 13.405,
+        }).encode()
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=None)
 
+        with patch("providers.geography.geo.urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
             result1 = resolve_ip_location(ip="1.2.3.4")
             result2 = resolve_ip_location(ip="1.2.3.4")
             assert result1 == result2
-            assert mock_get.call_count == 1
+            assert mock_urlopen.call_count == 1
 
     def test_resolve_ip_location_bad_json(self):
         from providers.geography.geo import resolve_ip_location
 
-        with patch("providers.geography.geo.requests.get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.side_effect = json.JSONDecodeError("err", "", 0)
-            mock_get.return_value = mock_resp
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = b"not valid json"
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=None)
 
+        with patch("providers.geography.geo.urllib.request.urlopen", return_value=mock_resp):
             with pytest.raises(RuntimeError, match="All location providers failed"):
                 resolve_ip_location(ip="1.2.3.4")
 
@@ -894,15 +893,16 @@ class TestReverseGeocode:
     def test_reverse_geocode_success(self):
         from providers.geography.geo import reverse_geocode
 
-        with patch("providers.geography.geo.requests.get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {
-                "display_name": "Berlin, Germany",
-                "address": {"city": "Berlin", "country": "Germany"},
-            }
-            mock_get.return_value = mock_resp
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({
+            "display_name": "Berlin, Germany",
+            "address": {"city": "Berlin", "country": "Germany"},
+        }).encode()
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=None)
 
+        with patch("providers.geography.geo.urllib.request.urlopen", return_value=mock_resp):
             result = reverse_geocode(52.52, 13.405)
             assert result.display_name == "Berlin, Germany"
             assert result.source == "nominatim.openstreetmap.org"
@@ -910,21 +910,21 @@ class TestReverseGeocode:
     def test_reverse_geocode_non_200_raises(self):
         from providers.geography.geo import reverse_geocode
 
-        with patch("providers.geography.geo.requests.get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 503
-            mock_get.return_value = mock_resp
+        mock_resp = MagicMock()
+        mock_resp.status = 503
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=None)
 
+        with patch("providers.geography.geo.urllib.request.urlopen", return_value=mock_resp):
             with pytest.raises(RuntimeError, match="Reverse geocode HTTP 503"):
                 reverse_geocode(52.52, 13.405)
 
     def test_reverse_geocode_network_error_raises(self):
-        import requests as req_lib
         from providers.geography.geo import reverse_geocode
 
         with patch(
-            "providers.geography.geo.requests.get",
-            side_effect=req_lib.RequestException("connection refused"),
+            "providers.geography.geo.urllib.request.urlopen",
+            side_effect=urllib.error.URLError("connection refused"),
         ):
             with pytest.raises(RuntimeError, match="Reverse geocode failed"):
                 reverse_geocode(52.52, 13.405)
@@ -932,16 +932,17 @@ class TestReverseGeocode:
     def test_reverse_geocode_caching(self):
         from providers.geography.geo import reverse_geocode
 
-        with patch("providers.geography.geo.requests.get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"display_name": "Test"}
-            mock_get.return_value = mock_resp
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({"display_name": "Test"}).encode()
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=None)
 
+        with patch("providers.geography.geo.urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
             result1 = reverse_geocode(52.52, 13.405)
             result2 = reverse_geocode(52.52, 13.405)
             assert result1 == result2
-            assert mock_get.call_count == 1
+            assert mock_urlopen.call_count == 1
 
 
 class TestParseHelpers:
@@ -1264,11 +1265,13 @@ class TestIpProvider:
     def test_detect_country_from_ip_exception_fallback(self):
         from providers.geography.ip import detect_country_from_ip
 
+        import httpx
+
         mock_response_fallback = MagicMock()
         mock_response_fallback.status_code = 200
         mock_response_fallback.json.return_value = {"country_code": "JP"}
 
-        with patch("providers.geography.ip.httpx.get", side_effect=[Exception("timeout"), mock_response_fallback]):
+        with patch("providers.geography.ip.httpx.get", side_effect=[httpx.HTTPError("timeout"), mock_response_fallback]):
             result = detect_country_from_ip("1.2.3.4")
             assert result == "JP"
 
@@ -1292,7 +1295,9 @@ class TestIpProvider:
     def test_lookup_ipapi_co_failure(self):
         from providers.geography.ip import lookup_ipapi_co
 
-        with patch("providers.geography.ip.httpx.get", side_effect=Exception("timeout")):
+        import httpx
+
+        with patch("providers.geography.ip.httpx.get", side_effect=httpx.HTTPError("timeout")):
             result = lookup_ipapi_co("1.2.3.4")
             assert result is None
 
@@ -1314,7 +1319,9 @@ class TestIpProvider:
     def test_geocode_location_failure(self):
         from providers.geography.ip import geocode_location
 
-        with patch("providers.geography.ip.httpx.get", side_effect=Exception("timeout")):
+        import httpx
+
+        with patch("providers.geography.ip.httpx.get", side_effect=httpx.HTTPError("timeout")):
             result = geocode_location("Berlin")
             assert result is None
 

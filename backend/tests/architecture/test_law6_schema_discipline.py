@@ -63,15 +63,21 @@ class TestEveryModelHasSchema:
             )
 
     def test_models_have_tablename(self):
+        offenders: list[str] = []
+        found = False
         for path in _iter_model_files():
             source = path.read_text(encoding="utf-8")
             if "Column" not in source:
                 continue
             if "__tablename__" in source:
-                assert True
-                return
-        # If we get here, no models with tablename were found — that's fine
-        # (some model files may be mixins or abstract)
+                found = True
+            else:
+                offenders.append(path.name)
+        assert found, "no model files with __tablename__ were found"
+        assert not offenders, (
+            "Law 6 violation: model file(s) use Column but lack __tablename__:\n  "
+            + "\n  ".join(sorted(set(offenders))[:20])
+        )
 
 
 class TestNoForbiddenSchemas:

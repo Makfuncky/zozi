@@ -66,6 +66,7 @@ from middleware.authentication_middleware import AuthenticationMiddleware
 from middleware.device_binding_middleware import DeviceBindingMiddleware
 from middleware.webhook_verification import WebhookVerificationMiddleware
 from middleware.webhook_ip_whitelist import WebhookIPWhitelistMiddleware
+from middleware.admin_guard_middleware import AdminGuardMiddleware
 
 from infrastructure.utils.config import settings
 
@@ -77,6 +78,7 @@ logger = logging.getLogger(__name__)
 
 _FOUNDATION: list[type] = [
     GZipMiddleware,              # Original pos 1 — built-in gzip compression
+    CORSMiddleware,              # CORS headers for browser / web traffic
     IPExtractionMiddleware,      # Original pos 3 — extract & store client IP
     RequestIDMiddleware,         # Generates/preserves X-Request-ID for tracing
     ApiVersionMiddleware,         # Extracts API version from headers
@@ -92,6 +94,7 @@ _FOUNDATION: list[type] = [
 _AUTHENTICATION: list[type] = [
     AuthenticationMiddleware,  # Resolve user from JWT, populate request.state
     DeviceBindingMiddleware,   # Bind device fingerprint to request.state
+    AdminGuardMiddleware,      # Block non-admin access to admin namespace
 ]
 
 # ──────────────────────────────────────────────

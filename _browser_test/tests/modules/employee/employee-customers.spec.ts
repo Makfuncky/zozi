@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
   bootstrapEmployeeSession,
+  expectNavigation,
   openProtectedRoute,
   submitCredentialForm,
   waitForSessionFlag,

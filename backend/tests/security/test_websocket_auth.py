@@ -10,12 +10,15 @@ Verifies:
 
 from __future__ import annotations
 
+import asyncio
 import importlib
 import time
 import uuid
 
+import jwt
 import jwt as pyjwt
 import pytest
+from fastapi import HTTPException, WebSocketDisconnect
 
 
 _BACKEND_ROOT = importlib.import_module("pathlib").Path(__file__).resolve().parent.parent.parent
@@ -157,3 +160,179 @@ class TestWebSocketConnectionLimits:
         assert hasattr(mgr, "_rooms")
         assert hasattr(mgr, "get_room_size")
         assert hasattr(mgr, "get_user_status")
+
+
+class _FakeWebSocket:
+    """ASGI WebSocket double that records accept/close instead of doing I/O.
+
+    ``hold`` keeps the socket inside the receive loop so the manager state can
+    be inspected while the connection is live.
+    """
+
+    def __init__(self, script=None, *, hold=False, peer=("203.0.113.7", 51000),
+                 headers=None):
+        self.client = type("_Peer", (), {"host": peer[0], "port": peer[1]})()
+        self.headers = dict(headers or {})
+        self.query_params = {}
+        self.accepted = False
+        self.closed_with = None
+        self.sent = []
+        self._script = list(script or [])
+        self._hold = hold
+        self._disconnected = False
+
+    async def accept(self):
+        self.accepted = True
+
+    async def close(self, code=1000, reason=""):
+        self.closed_with = (code, reason)
+
+    async def receive_text(self):
+        if self._script:
+            return self._script.pop(0)
+        if not self._hold and not self._disconnected:
+            self._disconnected = True
+            raise WebSocketDisconnect(code=1000)
+        await asyncio.Event().wait()
+
+    async def send_text(self, text):
+        self.sent.append(text)
+
+
+@pytest.fixture
+def settings():
+    from infrastructure.utils.config import settings as _settings
+
+    return _settings
+
+
+@pytest.fixture
+def ws_env(monkeypatch):
+    """Isolate the handler: no Valkey, and a clean connection manager."""
+    import infrastructure.security.auth as auth_mod
+    import infrastructure.valkey.client as valkey_mod
+    from infrastructure.messaging.ws_manager import manager
+
+    monkeypatch.setattr(valkey_mod, "valkey_client", lambda: None)
+    manager.active_connections.clear()
+    manager.user_connections.clear()
+    yield manager
+    manager.active_connections.clear()
+    manager.user_connections.clear()
+    auth_mod._memory_blacklist.clear()
+
+
+class TestWebSocketUserHandlerDenial:
+    """Law 41 — drive the real ``websocket_user`` handler with a fake socket.
+
+    These three cases are the paired test named in contract section 20 and the
+    tests required by section 10.
+    """
+
+    @pytest.mark.asyncio
+    async def test_websocket_rejects_missing_token(self, ws_env):
+        """No ``?token=`` -> the socket is closed and NEVER accepted."""
+        from modules.admin.routers.comms import websocket_user
+
+        ws = _FakeWebSocket()
+        await websocket_user(ws, token=None)
+
+        assert ws.accepted is False, "an unauthenticated socket must never be accepted"
+        assert ws.closed_with is not None
+        assert ws.closed_with[0] == 4001
+        assert ws_env.active_connections == {}, "no socket may be registered"
+
+    @pytest.mark.asyncio
+    async def test_websocket_rejects_refresh_token(self, ws_env):
+        """A REFRESH token must be refused (Law 41 / Law 33 type claim)."""
+        from modules.admin.routers.comms import websocket_user
+
+        ws = _FakeWebSocket()
+        await websocket_user(ws, token=_make_refresh_token("user-refresh"))
+
+        assert ws.accepted is False, "a refresh token must not open the socket"
+        assert ws.closed_with is not None
+        assert ws.closed_with[0] == 4001
+        assert ws_env.active_connections == {}, "no socket may be registered"
+
+    @pytest.mark.asyncio
+    async def test_refresh_denial_is_not_caused_by_expiry(self, ws_env, settings):
+        """The refresh token must be refused because of its ``type`` claim,
+        not because it happens to be unparseable or expired."""
+        from infrastructure.utils.auth import decode_token
+        from modules.admin.routers.comms import websocket_user
+
+        refresh = _make_refresh_token("user-refresh-type")
+        # The token is otherwise perfectly valid: only the type differs.
+        assert jwt.decode(refresh, settings.secret_key, algorithms=[settings.algorithm])
+
+        ws = _FakeWebSocket()
+        await websocket_user(ws, token=refresh)
+        assert ws.accepted is False
+        assert ws.closed_with[0] == 4001
+
+        with pytest.raises(HTTPException) as exc:
+            decode_token(refresh, expected_type="access")
+        assert exc.value.status_code == 401
+        assert "expected access" in str(exc.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_rejection_is_logged_at_warning_with_peer_and_request_id(
+        self, ws_env, caplog
+    ):
+        """BOOT2-006 / Law 43 + Law 59: the denial path must log at WARNING+
+        with peer info and a request_id, and must NOT log the token (Law 282).
+
+        This is the case that fails against the DEBUG-level implementation.
+        """
+        import logging
+
+        from modules.admin.routers.comms import websocket_user
+
+        token = _make_refresh_token("user-logged")
+        ws = _FakeWebSocket(peer=("198.51.100.4", 44444))
+
+        caplog.set_level(logging.DEBUG, logger="modules.admin.routers.comms")
+        await websocket_user(ws, token=token)
+
+        records = [r for r in caplog.records if r.name == "modules.admin.routers.comms"]
+        assert records, "Law 59: the rejection path must emit a log record"
+
+        levels = {r.levelno for r in records}
+        assert logging.WARNING in levels, (
+            f"Law 43: a rejected credential is a security event and must be "
+            f"logged at WARNING+; saw levels={sorted(levels)}"
+        )
+
+        # Peer + request_id must be attached (Law 43, Law 93).
+        assert any("198.51.100.4" in str(r.msg) or
+                   "198.51.100.4" in str(getattr(r, "peer", "")) for r in records), (
+            "Law 43: the peer address must be present in the security log"
+        )
+        assert any(getattr(r, "request_id", "") for r in records), (
+            "Law 93: a request_id must be attached to the security log"
+        )
+
+        # Law 282: the credential itself must never reach the log.
+        blob = " ".join(
+            f"{r.msg} {r.args} {r.__dict__}" for r in records
+        )
+        assert token not in blob, "Law 282: the JWT must never be logged"
+
+    @pytest.mark.asyncio
+    async def test_websocket_accepts_valid_access_token(self, ws_env):
+        """A valid ACCESS token connects, echoes, and is cleaned up on exit."""
+        from modules.admin.routers.comms import USER_ROOM, websocket_user
+
+        ws = _FakeWebSocket(script=['{"ping":1}'])
+        await websocket_user(ws, token=_make_access_token("user-ok"))
+
+        assert ws.accepted is True, "a valid access token must still connect"
+        assert ws.closed_with is None
+        assert ws.sent == ['{"ping": 1}']
+
+        # Contract section 3: the finally-cleanup must not leak the socket.
+        room = f"{USER_ROOM}:user-ok"
+        assert ws_env.active_connections.get(room, []) == [], (
+            "the socket must be removed from the connection manager on exit"
+        )

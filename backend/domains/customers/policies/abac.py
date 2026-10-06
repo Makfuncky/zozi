@@ -1,12 +1,30 @@
 """ABAC policies for the customers domain."""
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Iterable, Optional, Set
 
-from rbac.resolution import (
-    build_abac_context,
-    effective_features,
-)
+
+def expand_wildcards(features: Iterable[str], catalog: dict) -> Set[str]:
+    out: Set[str] = set()
+    for f in features:
+        if f == "*":
+            out.update(catalog.keys())
+        elif f.endswith(".*"):
+            prefix = f[:-2]
+            out.update(k for k in catalog if k.startswith(prefix))
+        else:
+            out.add(f)
+    return out
+
+
+def effective_features(
+    role_features: Iterable[str] = (),
+    db_grants: Iterable[str] = (),
+    overrides: Iterable[str] = (),
+    catalog: dict | None = None,
+) -> Set[str]:
+    feats = set(role_features) | set(db_grants) | set(overrides)
+    return expand_wildcards(feats, catalog or {})
 
 
 def get_customer_abac_context(
@@ -18,14 +36,13 @@ def get_customer_abac_context(
     current_user_id: Optional[int] = None,
 ) -> dict[str, Any]:
     """Build ABAC context for customer operations."""
-    context = build_abac_context(
-        region=country_code,
-        resource_owner=user_id,
-        current_user_id=current_user_id,
-        action=action,
-        resource_type="customer",
-    )
-    return context
+    return {
+        "region": country_code,
+        "resource_owner": user_id,
+        "current_user_id": current_user_id,
+        "action": action,
+        "resource_type": "customer",
+    }
 
 
 def can_access_customer(
@@ -41,22 +58,13 @@ def can_access_customer(
     action: str = "read",
 ) -> bool:
     """Check if a user can access a customer based on RBAC + ABAC."""
-    abac_context = get_customer_abac_context(
-        customer_id=customer_id,
-        user_id=user_id,
-        country_code=country_code,
-        action=action,
-        current_user_id=current_user_id,
-    )
-    
     features = effective_features(
         role_features=role_features,
         db_grants=db_grants,
         overrides=overrides,
         catalog=catalog,
-        abac_context=abac_context,
     )
-    
+
     required_feature = f"customers.{action}"
     return required_feature in features
 
@@ -71,23 +79,16 @@ def can_view_customer_pii(
     current_user_id: Optional[int] = None,
 ) -> bool:
     """Check if a user can view customer PII (Personally Identifiable Information).
-    
+
     This is a sensitive operation that requires explicit permission.
     """
-    abac_context = get_customer_abac_context(
-        customer_id=customer_id,
-        action="read_pii",
-        current_user_id=current_user_id,
-    )
-    
     features = effective_features(
         role_features=role_features,
         db_grants=db_grants,
         overrides=overrides,
         catalog=catalog,
-        abac_context=abac_context,
     )
-    
+
     return "customers.pii.read" in features
 
 
@@ -99,11 +100,9 @@ def get_customer_features_with_abac(
     **abac_kwargs: Any,
 ) -> set[str]:
     """Get effective features for customers with ABAC context."""
-    abac_context = get_customer_abac_context(**abac_kwargs)
     return effective_features(
         role_features=role_features,
         db_grants=db_grants,
         overrides=overrides,
         catalog=catalog,
-        abac_context=abac_context,
     )

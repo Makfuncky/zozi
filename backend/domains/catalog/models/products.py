@@ -5,6 +5,14 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
+# Import CartItem so that the cross-domain string reference in
+# ``Product.cart_items`` can be resolved at mapper-configuration time
+# (SQLAlchemy needs the class object when it resolves back_populates).
+try:
+    from domains.accounts.models.core import CartItem  # noqa: F401
+except ImportError:  # pragma: no cover — accounts models may not be loaded yet
+    CartItem = None  # type: ignore[assignment,misc]
+
 # CountryConfig relationship resolved lazily via string reference in relationship()
 
 __all__ = ["Category", "Product", "ProductVariant", "Review", "WishlistItem", "Wishlist", "ProductVideo", "VideoAnalytics", "ProductFilterMetadata", "ProductFilterOption"]
@@ -55,6 +63,7 @@ class Product(Base):
     sku = Column(String(255), unique=True, nullable=True)
     barcode = Column(String(50), unique=True, nullable=True)
     price = Column(Numeric(10, 2), nullable=False)
+    currency = Column(String(3), nullable=False, default="USD")
     compare_price = Column(Numeric(10, 2), nullable=True)
     cost_price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)

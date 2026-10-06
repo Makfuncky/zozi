@@ -126,8 +126,13 @@ def render_headline(findings: list[Finding], facts: dict,
         ["HTTP responses probed", str(len(facts.get("http_checks", [])))],
         ["Recommendations (not blockers)", str(len(recommendations or []))],
         ["Estimated P0+P1 effort", f"~{total_hours:.0f}h (S=1h, M=2.5h, L=6h)"],
+        # The denominator is derived, not typed. It was the literal `/28` while
+        # `constants.DIMENSIONS` had grown to 30 (law coverage 29, declared laws
+        # 30), so a complete run printed `30/28` -- coverage above 100%, from a
+        # hardcoded number, in the headline table of an audit whose subject is
+        # exactly this class of drift.
         ["Coverage (dimensions with findings)",
-         f"{len({f.dimension for f in findings})}/28"],
+         f"{len({f.dimension for f in findings})}/{_dimension_total()}"],
     ]
     out = ["## 1 · Headline numbers", "", _table(["Metric", "Value"], rows)]
     verdict = "NOT PRODUCTION READY" if blockers["yes"] else (
@@ -489,6 +494,15 @@ def render_generic_facts(title: str, key: str, facts: dict,
 # Readiness / remediation
 # --------------------------------------------------------------------------- #
 
+def _dimension_total() -> int:
+    """How many dimensions exist, read from the one place that defines them."""
+    try:
+        from .constants import DIMENSIONS
+        return len(DIMENSIONS)
+    except Exception:
+        return 0
+
+
 def default_readiness(findings: list[Finding], facts: dict) -> list[dict]:
     """Fallback 18-condition gate when the blockers scanner did not supply one."""
     yes = [f for f in findings if f.completion_blocker == "yes"]
@@ -544,7 +558,13 @@ def render_readiness(facts: dict, findings: list[Finding]) -> str:
     counts = {"pass": 0, "fail": 0, "unverifiable": 0, "deferred": 0}
     for c in conditions:
         counts[c["status"]] = counts.get(c["status"], 0) + 1
-    out = ["## 7 · Production readiness — 18-condition gate", "",
+    # The heading counts what is actually rendered. The prompt fixes 18
+    # conditions; a scanner may supply its own list, and if that list is short the
+    # heading must say so rather than assert a number it did not check.
+    declared = 18
+    label = (f"{len(conditions)}-condition gate" if len(conditions) == declared
+             else f"{len(conditions)}-condition gate (expected {declared})")
+    out = [f"## 7 · Production readiness — {label}", "",
            f"**{counts['pass']} pass · {counts['fail']} fail · "
            f"{counts.get('partial', 0)} partial · "
            f"{counts['unverifiable']} unverifiable · {counts.get('deferred', 0)} deferred**",

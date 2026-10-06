@@ -10,6 +10,96 @@ from zz_core.util import ast_imports, parse_python, read_text
 
 ROUTER_METHODS = ("get", "post", "put", "patch", "delete", "websocket", "websocket_route")
 
+#: Callables that authenticate or authorise a request. This list was previously a
+#: single regex naming only `require_admin`/`require_feature`/`require_module`/
+#: `require_roles`/`get_current_user`. That made every route gated by
+#: `require_employee`, `require_logistics`, `require_supplier`,
+#: `require_super_admin`, `verify_captcha` or a security scheme look ungated:
+#: 27 of 47 findings in this cluster were false, 3 of them P0 blockers.
+#:
+#: The set is derived from what `backend/modules/**` actually injects, so a new
+#: gate in `rbac/dependencies.py` or `domains/accounts/.../security_dependencies.py`
+#: is picked up rather than silently reported as a vulnerability.
+AUTH_GATE_NAMES = frozenset({
+    "require_admin", "require_feature", "require_module", "require_roles",
+    "require_employee", "require_supplier", "require_logistics",
+    "require_super_admin", "require_customer", "require_permission",
+    "get_current_user", "get_current_active_user", "get_current_user_optional",
+    "get_optional_user", "get_current_employee", "get_current_supplier",
+    "rbac_get_current_user", "_require_admin",
+    "verify_token", "verify_captcha", "verify_api_key",
+    # security schemes: these authenticate the caller even though they are not
+    # RBAC gates
+    "HTTPBearer", "OAuth2", "APIKeyHeader", "HTTPAuthorizationCredentials",
+})
+
+#: `Annotated[dict, Depends(gate)]` aliases hide the gate from any scan of the
+#: handler signature itself. `backend/modules/employee/routers/comms.py` defines
+#: `AdminUser = Annotated[dict, Depends(require_roles("admin"))]` and uses it on
+#: 11 routes; all 11 were reported ungated.
+_ALIAS_RX = re.compile(r"^\s*(\w+)\s*=\s*Annotated\s*\[", re.M)
+
+
+def _gate_aliases(source: str) -> set[str]:
+    """Names bound to ``Annotated[..., Depends(<gate>)]`` anywhere in the file."""
+    out: set[str] = set()
+    if not source:
+        return out
+    for m in _ALIAS_RX.finditer(source):
+        tail = source[m.end():m.end() + 400]
+        close = tail.find("]")
+        if close == -1:
+            continue
+        segment = tail[:close]
+        if "Depends" not in segment:
+            continue
+        if not re.search(r"require_|current_user|verify_|HTTPBearer|OAuth2|APIKey", segment):
+            continue
+        out.add(m.group(1))
+    return out
+
+
+#: Endpoints whose whole purpose is to be reachable without a session. Law 88
+#: ("all non-public endpoints MUST use require_feature()") cannot be satisfied by
+#: `/health`, and login/register/oauth-start endpoints cannot require a prior
+#: session because obtaining the session is what they do. These are reported
+#: separately as an explicit inventory rather than as vulnerabilities.
+LIVENESS_RX = re.compile(r"(^|_)(health|healthz|readyz|ready|live|liveness|ping|status)$", re.I)
+AUTH_ENTRY_RX = re.compile(r"(^|_)(login|register|signup|logout|refresh|oauth|social|"
+                           r"captcha|callback|forgot|reset|verify|activate)(_|$)", re.I)
+
+
+def _handler_dependencies(node: ast.AST, aliases: set[str]) -> list[str]:
+    """Every callable the handler injects, including through Annotated aliases."""
+    names: list[str] = []
+
+    def _name(node) -> str:
+        if isinstance(node, ast.Name):
+            return node.id
+        if isinstance(node, ast.Attribute):
+            return node.attr
+        if isinstance(node, ast.Call):
+            return _name(node.func)
+        if isinstance(node, ast.Subscript):
+            return _name(node.value)
+        return ""
+
+    for d in list(node.args.defaults) + [x for x in node.args.kw_defaults if x]:
+        for sub in ast.walk(d):
+            if isinstance(sub, ast.Call):
+                fn = _name(sub.func)
+                if fn == "Depends" and sub.args:
+                    nm = _name(sub.args[0])
+                    if nm:
+                        names.append(nm)
+    for a in list(node.args.args) + list(node.args.kwonlyargs):
+        if a.annotation is None:
+            continue
+        for sub in ast.walk(a.annotation):
+            if isinstance(sub, ast.Name) and sub.id in aliases:
+                names.append(sub.id)
+    return names
+
 
 def _f(dimension, phase, file, line, current, target, fix, *, priority="P2",
        effort="M", laws=(), blocker="no", cluster="", truth="L0",
@@ -153,6 +243,8 @@ def wire_feature_gates(ctx: ScanContext) -> CheckResult:
         catalog.update(re.findall(r'"([a-z][a-z0-9_.]*\.[a-z0-9_.]+)"\s*:', text or ""))
     gate_literals: set[str] = set()
     unguarded: list[tuple[str, int, str]] = []
+    #: unauthenticated on purpose (liveness probe / auth entry point)
+    unguarded_by_design: list[tuple[str, int, str, str]] = []
     unknown_gates: list[tuple[str, int, str]] = []
     total_endpoints = 0
     for p in ctx.py_files:
@@ -164,21 +256,43 @@ def wire_feature_gates(ctx: ScanContext) -> CheckResult:
         parsed = parse_python(p)
         if parsed.error:
             continue
+        aliases = _gate_aliases(parsed.text or "")
         for name, node, start, end, _d in _iter_funcs(parsed.tree):
             dec_text = " ".join(ast.unparse(d) for d in node.decorator_list if hasattr(ast, "unparse"))
             if not any(f"router.{m}" in dec_text for m in ROUTER_METHODS):
                 continue
             total_endpoints += 1
-            body = "\n".join(parsed.text.splitlines()[start:end])
-            has_auth = bool(re.search(r"get_current_user|require_feature\(|require_module\(|require_admin|require_roles|get_current_active_user|Depends\(\w*auth", body + dec_text))
-            gates = re.findall(r'require_feature\(\s*["\']([^"\']+)["\']', body + dec_text)
-            gates += re.findall(r'require_module\(\s*["\']([^"\']+)["\']', body + dec_text)
+            # The signature may span several lines and the guard may sit on any of
+            # them, so search the decorator plus the whole `def` block rather than
+            # a fixed window.
+            block = "\n".join(parsed.text.splitlines()[max(0, start - 1):end])
+            scope = block + "\n" + dec_text
+            deps = _handler_dependencies(node, aliases)
+            gates = re.findall(r'require_feature\(\s*["\']([^"\']+)["\']', scope)
+            gates += re.findall(r'require_module\(\s*["\']([^"\']+)["\']', scope)
             gate_literals.update(gates)
-            if not has_auth:
-                unguarded.append((rel, start, name))
+            if any(d in AUTH_GATE_NAMES or d in aliases for d in deps) \
+                    or re.search(r"get_current_user|require_feature\(|require_module\("
+                                 r"|require_admin|require_roles|require_employee|"
+                                 r"require_logistics|require_supplier|require_super_admin|"
+                                 r"get_current_active_user|Depends\(\w*auth", scope):
+                continue
+            # Unauthenticated by design: record it as an inventory item, not a
+            # vulnerability. It still has to be a deliberate decision, so it is
+            # reported at P3 rather than dropped.
+            if LIVENESS_RX.search(name or "") or AUTH_ENTRY_RX.search(name or ""):
+                unguarded_by_design.append((rel, start, name,
+                                           "liveness probe" if LIVENESS_RX.search(name or "")
+                                           else "authentication entry point"))
+                continue
+            unguarded.append((rel, start, name))
             for g in gates:
                 if g not in catalog and not g.endswith(".*"):
                     unknown_gates.append((rel, start, g))
+        for g in (re.findall(r'require_feature\(\s*["\']([^"\']+)["\']', parsed.text or "")
+                  + re.findall(r'require_module\(\s*["\']([^"\']+)["\']', parsed.text or "")):
+            if g not in catalog and not g.endswith(".*"):
+                unknown_gates.append((rel, 0, g))
     if unguarded:
         by_file: dict[str, int] = {}
         for rel, _s, _n in unguarded:
@@ -204,6 +318,22 @@ def wire_feature_gates(ctx: ScanContext) -> CheckResult:
                 laws=(87, 88), cluster="CLUSTER-ungated-route",
                 truth="L0", claim="VERIFIED",
             ))
+    if unguarded_by_design:
+        by_reason: dict[str, int] = {}
+        for _r, _l, _n, why in unguarded_by_design:
+            by_reason[why] = by_reason.get(why, 0) + 1
+        res.findings.append(_f(
+            "05_wiring", "security", unguarded_by_design[0][0], unguarded_by_design[0][1],
+            f"{len(unguarded_by_design)} endpoint(s) are unauthenticated by design "
+            f"({', '.join(f'{n} {k}' for k, n in sorted(by_reason.items()))}); "
+            f"sample: {unguarded_by_design[0][0]}:{unguarded_by_design[0][1]} "
+            f"{unguarded_by_design[0][2]}",
+            "every intentionally-public endpoint is a recorded decision, not an omission",
+            "Record each in the module's `public_routers` list, or add an inline "
+            "`# public: <reason>` comment so the exemption is reviewable",
+            priority="P3", blocker="no", laws=(87, 88),
+            cluster="CLUSTER-public-by-design",
+        ))
     if unknown_gates:
         sample = ", ".join(sorted({g for _r, _l, g in unknown_gates})[:10])
         res.findings.append(_f(
@@ -217,6 +347,7 @@ def wire_feature_gates(ctx: ScanContext) -> CheckResult:
         ))
     res.facts["endpoints_total"] = total_endpoints
     res.facts["endpoints_unguarded"] = len(unguarded)
+    res.facts["endpoints_public_by_design"] = len(unguarded_by_design)
     res.facts["gate_literals"] = len(gate_literals)
     res.facts["catalog_atoms"] = len(catalog)
     return res

@@ -21,6 +21,7 @@ Event delivery contract
 """
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import json
 import logging
@@ -98,6 +99,19 @@ def _normalize_key(event_key: Any) -> str:
     if isinstance(event_key, str):
         return event_key
     return getattr(event_key, "__name__", repr(event_key))
+
+
+def _backoff_for(handler_attempts: int) -> float:
+    """Exponential backoff with jitter for attempt *handler_attempts* (1-based).
+
+    Factored out of ``publish`` so the sync and async delivery paths compute
+    byte-identical intervals and cannot drift apart.
+    """
+    return min(
+        _BACKOFF_BASE * (2 ** (handler_attempts - 1))
+        + (0.5 if handler_attempts > 1 else 0.0),
+        _BACKOFF_CAP,
+    )
 
 
 def _event_to_payload(event: Any) -> dict:
@@ -255,6 +269,64 @@ def publish(event_type: Any, payload: Any = None, propagate: bool = False) -> An
         governance *requested* intents that must surface failures to the
         caller).  The DLQ route still fires before the raise so the failure
         is never silently lost.
+
+    This is the SYNCHRONOUS entry point and it is the one every existing caller
+    uses; its behaviour is unchanged. It calls ``time.sleep`` between retries,
+    which is correct for sync callers (Celery tasks, CLI scripts, seeders) and
+    MUST NOT be used from inside a coroutine. Async callers use
+    :func:`publish_async`, which awaits ``asyncio.sleep`` instead and therefore
+    leaves the event loop free (Law 60).
+    """
+    (str_key, stream_payload, event_obj, entries, class_callbacks) = _resolve_publish(
+        event_type, payload
+    )
+    return _deliver_sync(str_key, stream_payload, event_obj, entries, class_callbacks, propagate)
+
+
+async def publish_async(event_type: Any, payload: Any = None, propagate: bool = False) -> Any:
+    """Async twin of :func:`publish` that never blocks the event loop.
+
+    Identical in every respect - same normalisation, same Valkey Stream append,
+    same retry count, same backoff intervals, same DLQ routing, same
+    ``propagate`` semantics, same return-value shape - except that the retry
+    backoff is awaited with ``asyncio.sleep`` instead of blocking the thread
+    with ``time.sleep``.
+
+    Why this exists (WIRE-004 / PERF2-015, Law 60 "no blocking in async"):
+    ``publish`` is synchronous, and real call chains reach it from ``async def``
+    code with no intervening executor offload. Proven path, for example:
+
+        async def handle_stripe_webhook(...)          gateway_stripe.py:652
+          -> _apply_successful_payment(...)            payment_engine.py:4590 (sync)
+            -> publish(PaymentConfirmedEvent, ...)     payment_engine.py:4642
+              -> time.sleep(backoff)                   event_bus.py:331
+
+    Measured before the fix: a handler that keeps raising starved a concurrent
+    heartbeat coroutine for the whole backoff window (0 ticks, versus 264 ticks
+    when the identical work was moved to an executor thread). Every other
+    in-flight request on that worker was frozen for up to ~15 s per failing
+    handler.
+
+    Sync callers stay on :func:`publish`; this function exists for coroutines.
+    """
+    (str_key, stream_payload, event_obj, entries, class_callbacks) = _resolve_publish(
+        event_type, payload
+    )
+    return await _deliver_async(
+        str_key, stream_payload, event_obj, entries, class_callbacks, propagate
+    )
+
+
+def _resolve_publish(
+    event_type: Any, payload: Any
+) -> Tuple[str, dict, Any, List[_SubEntry], List[Callable]]:
+    """Normalise the calling conventions and snapshot the subscriber lists.
+
+    Returns ``(str_key, stream_payload, event_obj, entries, class_callbacks)``.
+    Shared by :func:`publish` and :func:`publish_async` so the two paths cannot
+    diverge in how an event is addressed or who receives it. The Valkey Stream
+    append happens here too, so it still occurs on EVERY publish regardless of
+    whether any subscriber is registered (WIR-028).
     """
     # Normalise: support both publish(str, dict) and publish(class, instance).
     if isinstance(event_type, str):
@@ -288,6 +360,34 @@ def publish(event_type: Any, payload: Any = None, propagate: bool = False) -> An
     # Collect class-type callbacks (no retry — delegates to string-key path).
     class_callbacks = list(_event_callbacks.get(str_key, []))
 
+    return str_key, stream_payload, event_obj, entries, class_callbacks
+
+
+def _finish(results: List[Any], last_exc: Optional[BaseException], propagate: bool) -> Any:
+    """Shared tail: honour ``propagate``, then collapse the result shape."""
+    if last_exc is not None and propagate:
+        raise last_exc
+
+    if len(results) == 1:
+        return results[0]
+    if len(results) > 1:
+        return results
+    return None
+
+
+def _deliver_sync(
+    str_key: str,
+    stream_payload: dict,
+    event_obj: Any,
+    entries: List[_SubEntry],
+    class_callbacks: List[Callable],
+    propagate: bool,
+) -> Any:
+    """Synchronous delivery; blocks between retries with ``time.sleep``.
+
+    This is the original code path, unchanged apart from the backoff arithmetic
+    moving into :func:`_backoff_for` and the return tail into :func:`_finish`.
+    """
     if not entries and not class_callbacks:
         return None
 
@@ -315,11 +415,7 @@ def publish(event_type: Any, payload: Any = None, propagate: bool = False) -> An
                     _route_to_dlq(str_key, stream_payload, str(exc))
                     results.append(None)
                     break
-                backoff = min(
-                    _BACKOFF_BASE * (2 ** (handler_attempts - 1))
-                    + (0.5 if handler_attempts > 1 else 0.0),
-                    _BACKOFF_CAP,
-                )
+                backoff = _backoff_for(handler_attempts)
                 logger.debug(
                     "Handler %r for %s attempt %d/%d failed; retrying in %.1fs",
                     getattr(handler, "__name__", repr(handler)),
@@ -347,14 +443,78 @@ def publish(event_type: Any, payload: Any = None, propagate: bool = False) -> An
             results.append(None)
             last_exc = exc
 
-    if last_exc is not None and propagate:
-        raise last_exc
+    return _finish(results, last_exc, propagate)
 
-    if len(results) == 1:
-        return results[0]
-    if len(results) > 1:
-        return results
-    return None
+
+async def _deliver_async(
+    str_key: str,
+    stream_payload: dict,
+    event_obj: Any,
+    entries: List[_SubEntry],
+    class_callbacks: List[Callable],
+    propagate: bool,
+) -> Any:
+    """Async delivery; awaits ``asyncio.sleep`` between retries (Law 60).
+
+    Behaviourally identical to :func:`_deliver_sync`. The only difference is
+    that the retry backoff yields to the event loop instead of blocking it.
+    """
+    if not entries and not class_callbacks:
+        return None
+
+    results: List[Any] = []
+    last_exc: Optional[BaseException] = None
+
+    for handler, attempts, _next_attempt in entries:
+        handler_attempts = 0
+        while True:
+            try:
+                result = handler(stream_payload)
+                results.append(result)
+                break
+            except Exception as exc:  # noqa: BLE001
+                handler_attempts += 1
+                last_exc = exc
+                if handler_attempts >= _MAX_RETRIES:
+                    logger.warning(
+                        "Handler %r for %s failed after %d attempts; routing to DLQ",
+                        getattr(handler, "__name__", repr(handler)),
+                        str_key,
+                        handler_attempts,
+                        exc_info=True,
+                    )
+                    _route_to_dlq(str_key, stream_payload, str(exc))
+                    results.append(None)
+                    break
+                backoff = _backoff_for(handler_attempts)
+                logger.debug(
+                    "Handler %r for %s attempt %d/%d failed; retrying in %.1fs",
+                    getattr(handler, "__name__", repr(handler)),
+                    str_key,
+                    handler_attempts,
+                    _MAX_RETRIES,
+                    backoff,
+                )
+                await asyncio.sleep(backoff)
+
+    # Class-type callbacks receive the raw event object (EventPublisher contract).
+    for cb in class_callbacks:
+        try:
+            result = cb(event_obj)
+            results.append(result)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Class-type callback %r for %s failed: %s",
+                getattr(cb, "__name__", repr(cb)),
+                str_key,
+                exc,
+                exc_info=True,
+            )
+            _route_to_dlq(str_key, _event_to_payload(event_obj), str(exc))
+            results.append(None)
+            last_exc = exc
+
+    return _finish(results, last_exc, propagate)
 
 
 def shutdown() -> None:

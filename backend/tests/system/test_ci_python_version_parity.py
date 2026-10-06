@@ -232,9 +232,9 @@ class TestRepoLayoutIsAsExpected:
         )
 
     def test_laws_helper_root_agrees(self):
-        assert LAWS_HELPER_ROOT == _TESTS_ROOT, (
+        assert LAWS_HELPER_ROOT == BACKEND_ROOT, (
             f"tests._support.laws.BACKEND_ROOT is {LAWS_HELPER_ROOT}, "
-            f"expected {_TESTS_ROOT}"
+            f"expected {BACKEND_ROOT}"
         )
 
 

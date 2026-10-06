@@ -1,10 +1,21 @@
 from typing import List, Tuple, Optional, Dict, Any
+import io
+import logging
+import time
+import base64
+import threading
 # ========================== br_08: PRODUCTION PIPELINE CLASSES ==========================
 from PIL import Image
 
 import numpy as np
 
 from .configuration import ProcessingConfig
+from .__header__ import _HAS_CV2, cv2
+from .enums___constants import SubjectCategory
+from .memory_management__br_08_ import MemoryManager
+from .rembg_lazy_load import new_session
+
+logger = logging.getLogger(__name__)
 
 
 class ColorSpaceUtils:

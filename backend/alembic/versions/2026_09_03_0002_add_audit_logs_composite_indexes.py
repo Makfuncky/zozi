@@ -12,6 +12,8 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.exc import NoInspectionAvailable
 
 revision: str = "2026_09_03_0002"
 down_revision: Union[str, None] = "2026_09_03_0001"
@@ -19,9 +21,46 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _is_offline(conn) -> bool:
+    """Return True when running in alembic --sql offline mode."""
+    if conn is None:
+        return True
+    try:
+        sa_inspect(conn)
+        return False
+    except (NoInspectionAvailable, Exception):
+        return True
+
+
 def upgrade() -> None:
     bind = op.get_bind()
-    inspector = sa.inspect(bind)
+    offline = _is_offline(bind)
+    if offline:
+        indexes_to_create = [
+            ("ix_audit_logs_entity_time", ["entity_type", "entity_id", "created_at"]),
+            ("ix_audit_logs_country_time", ["country_code", "created_at"]),
+            ("ix_audit_logs_status_time", ["status", "created_at"]),
+            ("ix_audit_logs_ip", ["ip_address"]),
+            ("ix_audit_logs_resource", ["resource_type", "resource_id"]),
+        ]
+        for idx_name, columns in indexes_to_create:
+            op.create_index(
+                idx_name,
+                "audit_logs",
+                columns,
+                schema="audit",
+                if_not_exists=True,
+            )
+        op.create_index(
+            "ix_command_center_user_default",
+            "command_center_views",
+            ["user_id", "is_default"],
+            schema="audit",
+            if_not_exists=True,
+        )
+        return
+
+    inspector = sa_inspect(bind)
 
     if "audit_logs" in inspector.get_table_names(schema="audit"):
         indexes_to_create = [

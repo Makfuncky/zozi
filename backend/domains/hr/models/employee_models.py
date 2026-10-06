@@ -89,6 +89,8 @@ class EmployeeBiometric(Base):
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     
     employee = relationship("Employee", back_populates="biometrics")
 
@@ -105,6 +107,8 @@ class GeoFenceLog(Base):
     is_within_fence = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     country_code = Column(String(2), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     
     employee = relationship("Employee", back_populates="geo_fence_logs")
 
@@ -540,7 +544,7 @@ class PayrollRecord(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     __table_args__ = (
-        CheckConstraint("status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')", name="chk_payroll_records_status_valid"),)
+        CheckConstraint("status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')", name="chk_payroll_records_status_valid"), {"schema": "hr"})
 
 
 class TrainingModule(Base):
@@ -555,6 +559,7 @@ class TrainingModule(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class EmployeeTraining(Base):
@@ -568,9 +573,10 @@ class EmployeeTraining(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
     __table_args__ = (
-        CheckConstraint("status IN ('assigned', 'in_progress', 'completed', 'failed', 'expired')", name="chk_employee_trainings_status_valid"),)
+        CheckConstraint("status IN ('assigned', 'in_progress', 'completed', 'failed', 'expired')", name="chk_employee_trainings_status_valid"), {"schema": "hr"})
 
 
 class EmployeeActivityLog(Base):
@@ -634,6 +640,7 @@ class ShiftHandoverTask(Base):
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     session = relationship("ShiftHandoverSession", back_populates="tasks")
 
 

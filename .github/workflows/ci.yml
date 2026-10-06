@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_ENV: test
-      SECRET_KEY: ci-test-key-64chars-long-enough-for-validation-1234
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
       TEST_ADMIN_PASSWORD: admin123
       TEST_SUPPLIER_PASSWORD: supplier123
       TEST_CUSTOMER_PASSWORD: customer123
@@ -45,9 +45,7 @@ jobs:
       - name: Run architecture law gates
         working-directory: backend
         run: |
-          uv run --no-sync pytest tests/architecture/test_import_laws.py \
-                        tests/architecture/test_architecture_gates.py \
-                        tests/architecture/test_laws_complete.py \
+          uv run --no-sync pytest tests/architecture/ \
                         -v --timeout=60
 
       - name: Run critical path tests
