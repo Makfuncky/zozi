@@ -10,14 +10,24 @@ from infrastructure.database.schemas import (
     CashTransactionOut,
 )
 from domains.finance.models.finance import CashAccount
-
-# TODO: Module not yet created
-# from domains.comms.services.utility.misc_write_service import create_cash_account as create_cash_account_model
-# TODO: Module not yet created
-# from domains.comms.services.utility.misc_write_service import create_cash_transaction as create_cash_transaction_model
+from domains.finance.models.general_ledger import CashTransaction
 
 from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
+
+
+def create_cash_account_model(db: Session, **kwargs) -> CashAccount:
+    account = CashAccount(**kwargs)
+    db.add(account)
+    db.flush()
+    return account
+
+
+def create_cash_transaction_model(db: Session, **kwargs) -> CashTransaction:
+    transaction = CashTransaction(**kwargs)
+    db.add(transaction)
+    db.flush()
+    return transaction
 
 
 def list_accounts(country_code: str, db: Session) -> list[CashAccountOut]:

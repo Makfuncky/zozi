@@ -8,54 +8,21 @@ cross_domain_imports:
 
   # Cross-domain model imports for read-only query building (same session).
   # These will be routed through the owning domain's ports.py in a future migration.
-  - domains.finance.services.commission.commission_engine -> domains.comms.models.suppliers: SupplierProfile
+  - domains.finance.services.treasury.cash_management_service -> domains.comms.models.suppliers: SupplierProfile
     removal_date: "2026-10-20"
     migration_status: pending
-  - domains.finance.services.commission.commission_engine -> domains.governance.models.admin: CommissionBadgeTier, CommissionGlobalConfig
+  - domains.finance.services.treasury.cash_management_service -> domains.governance.models.admin: CommissionBadgeTier, CommissionGlobalConfig
     removal_date: "2026-10-21"
     migration_status: pending
-  - domains.finance.services.commission.commission_service -> domains.comms.models.suppliers: SupplierProfile
-    removal_date: "2026-10-22"
-    migration_status: pending
-  - domains.finance.services.commission.commission_service -> domains.governance.models.admin: CommissionBadgeTier, CommissionGlobalConfig
-    removal_date: "2026-10-23"
-    migration_status: pending
-  - domains.finance.services.commission.commission_service -> domains.catalog.ports: Product
-    removal_date: "2026-10-03"
-    migration_status: in_progress
-  - domains.finance.services.commission.commission_service -> domains.governance.ports: User
-    removal_date: "2026-10-04"
-    migration_status: in_progress
 
   # Controller logic in domain services (FastAPI HTTPException, auth checks).
   # These files contain business logic that should be extracted to pure domain services,
   # with auth/HTTP concerns handled in modules/.
-  - domains.finance.services.cash_management_service -> fastapi: HTTPException, Depends, Query
+  - domains.finance.services.treasury.cash_management_service -> fastapi: HTTPException, Depends, Query
     removal_date: "2026-10-05"
     migration_status: in_progress
-  - domains.finance.services.cash_management_service -> modules.admin.routers.auth: require_admin, require_permission
-    removal_date: "2026-10-06"
-    migration_status: in_progress
-  - domains.finance.services.commission.commission_service -> fastapi: HTTPException
-    removal_date: "2026-10-07"
-    migration_status: in_progress
-  - domains.finance.services.commission.commission_service -> modules.admin.routers.auth: require_admin
-    removal_date: "2026-10-08"
-    migration_status: in_progress
-  - domains.finance.services.commission.commission_controller -> domains.finance.services.commission.commission_service: _require_admin
-    removal_date: "2026-10-09"
-    migration_status: in_progress
-  - domains.finance.services.country.admin_payouts_service -> infrastructure.utils.dependencies: require_admin
-    removal_date: "2026-10-24"
-    migration_status: pending
-  - domains.finance.services.payments.public_treasury_payments_service -> infrastructure.utils.dependencies: require_admin
-    removal_date: "2026-10-10"
-    migration_status: in_progress
-  - domains.finance.services.treasury.cash_management_service -> fastapi: HTTPException, Depends, Query
-    removal_date: "2026-10-11"
-    migration_status: in_progress
   - domains.finance.services.treasury.cash_management_service -> modules.admin.routers.auth: require_admin, require_permission
-    removal_date: "2026-10-12"
+    removal_date: "2026-10-06"
     migration_status: in_progress
 
   # Unbounded .all() queries (should add pagination/limits).
@@ -67,9 +34,6 @@ cross_domain_imports:
   # OFFSET pagination (should use keyset/cursor).
   - domains.finance.services.commission.commission_geography_service -> OFFSET pagination:
     removal_date: "2026-10-26"
-    migration_status: pending
-  - domains.finance.services.payments.payout_approval_read_service -> OFFSET pagination:
-    removal_date: "2026-10-27"
     migration_status: pending
 
   # Cross-domain model re-exports (governance fraud models re-exported from security + comms)

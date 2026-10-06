@@ -132,7 +132,6 @@ _DOMAIN_SUBSCRIBER_MODULES: tuple[tuple[str, str], ...] = (
     ("domains.governance.subscribers", "register_governance_subscribers"),
     ("domains.logistics.subscribers", "register_logistics_subscribers"),
     ("domains.orders.subscribers", "register_orders_subscribers"),
-    ("domains.payments.subscribers", "register_payments_subscribers"),
     ("domains.promotions.subscribers", "register_promotions_subscribers"),
     ("domains.security.subscribers", "register_security_subscribers"),
     ("domains.suppliers.subscribers", "register_suppliers_subscribers"),

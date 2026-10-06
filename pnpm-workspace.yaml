@@ -1,0 +1,4 @@
+packages:
+  - "frontend/shared"
+  - "frontend/web_app"
+  - "frontend/mobile_app"

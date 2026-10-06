@@ -224,39 +224,38 @@ class SupplierBadgeBillingHistory(Base):
 
 
 def __getattr__(name: str):
-    """Lazy re-export of governance-owned models used by supplier routers.
+    """Lazy re-export of cross-domain models used by supplier routers.
 
     Law 3: cross-domain model references are brokered here rather than imported
     directly at module top-level (avoids import cycles while keeping the
     supplier package the single import site for callers).
     """
-    from domains.governance import models as _gov_models
-
-    _MAP = {
-        "SupplierBankAccount": "SupplierBankAccount",
-        "LogisticsPartnerBankAccount": "LogisticsPartnerBankAccount",
-        "SupplierDispute": "SupplierDispute",
-    }
-    if name in _MAP and hasattr(_gov_models, _MAP[name]):
-        return getattr(_gov_models, _MAP[name])
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Supplier/LP bank accounts now live in the accounts domain
-# (domains.accounts.models.banking). Re-export them here so the historical
-# ``from domains.suppliers.models.suppliers import SupplierBankAccount`` sites keep
-# working (Law 3 sanctioned broker).
-def __getattr__(name: str):
-    from domains.accounts.models.banking import (
-        LogisticsPartnerBankAccount,
-        SupplierBankAccount,
-    )
-
-    _ACCOUNTS = {
-        "SupplierBankAccount": SupplierBankAccount,
-        "LogisticsPartnerBankAccount": LogisticsPartnerBankAccount,
-    }
-    if name in _ACCOUNTS:
-        return _ACCOUNTS[name]
+    _ACCOUNTS = {}
+    _GOV = {}
+    try:
+        from domains.accounts.models.banking import (
+            LogisticsPartnerBankAccount,
+            SupplierBankAccount,
+        )
+        _ACCOUNTS = {
+            "SupplierBankAccount": SupplierBankAccount,
+            "LogisticsPartnerBankAccount": LogisticsPartnerBankAccount,
+        }
+    except ImportError:
+        pass
+    try:
+        from domains.governance import models as _gov_models
+        _GOV = {
+            "SupplierDispute": getattr(_gov_models, "SupplierDispute", None),
+            "LogisticsPartnerBankAccount": getattr(_gov_models, "LogisticsPartnerBankAccount", None),
+            "SupplierBankAccount": getattr(_gov_models, "SupplierBankAccount", None),
+        }
+        _GOV = {k: v for k, v in _GOV.items() if v is not None}
+    except ImportError:
+        pass
+    _MAP = {** _GOV, **_ACCOUNTS}
+    if name in _MAP:
+        return _MAP[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

@@ -69,7 +69,7 @@ def handle_order_created_for_payment(event: dict) -> None:
     country_code = event.get("country_code", "US")
     db = _get_db()
     try:
-        from domains.payments.services.payment_service import create_payment_intent
+        from domains.finance.services.payments.payments import create_payment_intent
         from decimal import Decimal
         create_payment_intent(
             order_id=order_id,

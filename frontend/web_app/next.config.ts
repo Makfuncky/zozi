@@ -3,6 +3,7 @@
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  transpilePackages: ["@zozi/shared"],
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -4,14 +4,13 @@ version = "0.1.0"
 description = "ZOZI Marketplace Backend"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "fastapi==0.115.2",
-    "uvicorn[standard]==0.51.0",
+    "fastapi==0.141.2",
+    "uvicorn[standard]==0.35.0",
     "gunicorn==26.0.0",
-    "starlette",
-    "sqlalchemy==2.0.51",
-    "alembic==1.18.5",
+    "starlette>=1.6.0,<1.7.0",
+    "sqlalchemy==2.0.52",
+    "alembic==1.19.1",
     "asyncpg==0.31.0",
-    "psycopg2-binary==2.9.12",
     "valkey==6.1.1",
     "pyjwt==2.13.0",
     "bcrypt==5.0.0",
@@ -21,19 +20,18 @@ dependencies = [
     "celery==5.4.0",
     "apscheduler==3.11.3",
     "httpx==0.28.1",
-    "requests==2.34.2",
     "pydantic==2.13.4",
     "pydantic-settings==2.7.1",
     "python-dotenv==1.2.2",
     "python-multipart==0.0.32",
     "aiofiles==25.1.0",
-    "python-magic==0.4.27",
+    "puremagic==2.2.0",
     "Pillow==12.2.0",
     "numpy==2.2.6",
     "structlog==26.1.0",
-    "sentry-sdk==2.66.1",
+    "sentry-sdk==2.68.1",
     "prometheus-client==0.26.0",
-    "prometheus-fastapi-instrumentator==7.1.0",
+    "prometheus-fastapi-instrumentator==8.1.0",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-instrumentation==0.65b0",
@@ -45,8 +43,7 @@ dependencies = [
     "limits==5.8.0",
     "cachetools==5.5.0",
     "python-slugify==8.0.4",
-    "pytz==2026.3.post1",
-    "tzlocal==5.4.4",
+    "tzdata==2025b",
     "babel==2.18.0",
     "phonenumbers==9.0.35",
     "faker==40.36.0",
@@ -56,15 +53,28 @@ dependencies = [
     "schedule==1.2.2",
     "text-unidecode==1.3",
     "stripe==15.3.1",
-    "websockets==16.1.1",
     "duckdb==1.5.5",
     "duckdb-engine==0.17.0",
+    "cryptography==50.0.1",
+    "fastapi-limiter-valkey>=0.2.0",
+]
+
+[project.optional-dependencies]
+test = [
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
+    "respx>=0.23.1",
+    "factory-boy>=3.3.3",
+    "testcontainers>=4.15.0",
+    "pytest-xdist>=3.6.1",
+    "pytest-cov>=6.0.0",
+    "websockets==16.1.1",
+    "import-linter>=2.14",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["backend/tests"]
+pythonpath = ["."]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::sqlalchemy.exc.SADeprecationWarning",
@@ -75,4 +85,3 @@ markers = [
     "integration: marks tests as integration tests",
     "postgres: marks tests that require PostgreSQL",
 ]
-

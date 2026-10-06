@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 from sqlalchemy.orm import Session
-from domains.media.models.media_asset import MediaAsset, UploadSession
+from providers.media.models.media_asset import MediaAsset, UploadSession
 
 MAX_BODY_BYTES = 10 * 1024 * 1024
 MAX_QUERY_ITEMS = 100

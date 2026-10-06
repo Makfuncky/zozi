@@ -1,5 +1,5 @@
+from prometheus_client import Gauge
 from prometheus_fastapi_instrumentator.metrics import Counter, Histogram
-from prometheus_fastapi_instrumentator.middleware import Gauge
 
 _metric_cache = {}
 

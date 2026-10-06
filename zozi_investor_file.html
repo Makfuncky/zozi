@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ZOZI — Investor Roadmap</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+.zz {
+  font-family: Inter, 'Segoe UI', Arial, sans-serif;
+  color: #1f2937;
+  max-width: 1280px;
+  margin: 0 auto;
+  background: #fff;
+  line-height: 1.65;
+  font-size: 15px;
+  padding: 0 16px;
+}
+.zz * { box-sizing: border-box; }
+
+/* ══════ HERO ══════ */
+.zz .hero {
+  background: linear-gradient(135deg, #0a3d22 0%, #14532d 50%, #1e8e4e 100%);
+  color: #fff;
+  padding: 60px 32px;
+  border-radius: 0 0 36px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.zz .hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(46,204,113,0.3), transparent 40%),
+              radial-gradient(circle at 80% 80%, rgba(212,175,55,0.2), transparent 40%);
+  pointer-events: none;
+}
+.zz .tag { letter-spacing: 8px; font-size: 12px; font-weight: 700; color: #d1fae5; }
+.zz .meta { margin-top: 16px; font-size: 12px; color: #a7f3d0; position: relative; }
+
+/* ══════ HEADINGS ══════ */
+.zz h2 {
+  font-family: Montserrat, Arial, sans-serif;
+  color: #0a3d22;
+  border-left: 6px solid #2ecc71;
+  padding: 4px 0 4px 16px;
+  margin: 56px 0 16px;
+  font-size: 26px;
+  font-weight: 800;
+}
+.zz h3 {
+  color: #1e8e4e;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 28px 0 12px;
+}
+.zz h4 {
+  color: #0a3d22;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ══════ TABLES ══════ */
+.zz .tw { overflow-x: auto; margin: 12px 0; }
+.zz table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.zz th {
+  background: linear-gradient(135deg, #14532d, #1e8e4e);
+  color: #fff;
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.zz td {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 11px 14px;
+  vertical-align: top;
+}
+.zz tr:nth-child(even) td { background: #f8fdf9; }
+.zz tr:hover td { background: #ecfdf5; }
+.zz tr.highlight td { background: #ecfdf5; font-weight: 700; }
+
+/* ══════ CALLOUTS ══════ */
+.zz .note {
+  background: linear-gradient(90deg, #f0fdf4, #fff);
+  border: 1px solid #bbf7d0;
+  border-left: 6px solid #2ecc71;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  font-size: 14px;
+  font-style: italic;
+}
+.zz .warn {
+  background: linear-gradient(90deg, #fffbeb, #fff);
+  border: 1px solid #fde68a;
+  border-left: 6px solid #d4af37;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+.zz .code {
+  background: #0f172a;
+  color: #d1fae5;
+  border-radius: 12px;
+  padding: 18px 22px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  margin: 14px 0;
+  line-height: 1.7;
+}
+
+/* ══════ GRIDS & CARDS ══════ */
+.zz .grid { display: grid; gap: 16px; margin: 16px 0; }
+.zz .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.zz .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.zz .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+.zz .card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.zz .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(20,83,45,0.08);
+}
+.zz .card-accent-green { border-top: 4px solid #2ecc71; }
+.zz .card-accent-gold { border-top: 4px solid #d4af37; }
+.zz .card-accent-teal { border-top: 4px solid #0891b2; }
+.zz .card-accent-coral { border-top: 4px solid #f97316; }
+
+/* ══════ KPI CARDS ══════ */
+.zz .kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 28px auto 0;
+  max-width: 960px;
+  position: relative;
+}
+.zz .kpi {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  padding: 14px 16px;
+  backdrop-filter: blur(10px);
+  text-align: left;
+}
+.zz .kpi b {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: #bef264;
+  margin-bottom: 2px;
+}
+.zz .kpi span { font-size: 11px; color: #d1fae5; letter-spacing: 0.5px; }
+
+/* ══════ BIGSTAT ══════ */
+.zz .bigstat {
+  text-align: center;
+  padding: 18px;
+  background: linear-gradient(135deg, #f0fdf4, #fff);
+  border-radius: 12px;
+  border: 1px solid #d1fae5;
+}
+.zz .bigstat b {
+  display: block;
+  font-size: 30px;
+  font-weight: 900;
+  color: #14532d;
+  font-family: Montserrat, Arial, sans-serif;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.zz .bigstat span {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+/* ══════ CHARTS ══════ */
+.zz .chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 220px;
+  padding: 0 8px 40px;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+}
+.zz .bar {
+  flex: 1;
+  background: linear-gradient(180deg, #bef264, #2ecc71 50%, #14532d);
+  height: var(--h, 20%);
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  min-height: 6px;
+  transition: height 0.8s ease;
+}
+.zz .bar i {
+  position: absolute;
+  bottom: -26px;
+  left: 0; right: 0;
+  text-align: center;
+  font-style: normal;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+.zz .bar .top {
+  position: absolute;
+  top: -24px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #14532d;
+}
+.zz .bar .sub {
+  position: absolute;
+  top: -40px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: #64748b;
+}
+.zz .bar.gold { background: linear-gradient(180deg, #fde68a, #d4af37 50%, #92400e); }
+.zz .bar.teal { background: linear-gradient(180deg, #a5f3fc, #0891b2 50%, #164e63); }
+.zz .bar.coral { background: linear-gradient(180deg, #fed7aa, #f97316 50%, #9a3412); }
+
+/* ══════ HORIZONTAL BARS ══════ */
+.zz .hrow { margin: 10px 0; font-size: 13px; font-weight: 600; }
+.zz .hrow .track {
+  background: #e2e8f0;
+  border-radius: 99px;
+  height: 16px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.zz .hrow .fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #2ecc71, #14532d);
+  transition: width 0.8s ease;
+}
+.zz .hrow .fill.gold { background: linear-gradient(90deg, #fde68a, #d4af37); }
+.zz .hrow .fill.teal { background: linear-gradient(90deg, #a5f3fc, #0891b2); }
+.zz .hrow .fill.coral { background: linear-gradient(90deg, #fed7aa, #f97316); }
+
+/* ══════ DONUT ══════ */
+.zz .donut {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  margin: 8px auto;
+  background: conic-gradient(
+    #2ecc71 0 30%,
+    #bef264 30% 55%,
+    #d4af37 55% 72%,
+    #0891b2 72% 88%,
+    #f97316 88% 100%
+  );
+  position: relative;
+}
+.zz .donut::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 30px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #14532d;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ══════ LEGEND ══════ */
+.zz .leg { font-size: 13px; margin-top: 16px; }
+.zz .leg div { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.zz .leg i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; flex-shrink: 0; }
+
+/* ══════ TIMELINE ══════ */
+.zz .timeline {
+  position: relative;
+  padding: 20px 0;
+  margin: 24px 0;
+}
+.zz .timeline::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #2ecc71, #d4af37, #0891b2, #f97316);
+  border-radius: 3px;
+}
+.zz .tl-item {
+  position: relative;
+  padding: 12px 20px 16px 56px;
+  margin-bottom: 8px;
+}
+.zz .tl-item::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #2ecc71;
+  box-shadow: 0 0 0 4px rgba(46,204,113,0.15);
+}
+.zz .tl-item.gold::before { border-color: #d4af37; box-shadow: 0 0 0 4px rgba(212,175,55,0.15); }
+.zz .tl-item.teal::before { border-color: #0891b2; box-shadow: 0 0 0 4px rgba(8,145,178,0.15); }
+.zz .tl-item.coral::before { border-color: #f97316; box-shadow: 0 0 0 4px rgba(249,115,22,0.15); }
+.zz .tl-item .tl-time {
+  font-size: 11px;
+  font-weight: 800;
+  color: #14532d;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.zz .tl-item .tl-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 4px 0;
+}
+.zz .tl-item .tl-desc {
+  font-size: 13px;
+  color: #475569;
+}
+
+/* ══════ FLOW DIAGRAM ══════ */
+.zz .flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin: 24px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0fdf4, #f8fafc);
+  border-radius: 16px;
+}
+.zz .flow-step {
+  background: #fff;
+  border: 2px solid #2ecc71;
+  border-radius: 12px;
+  padding: 14px 18px;
+  text-align: center;
+  min-width: 120px;
+  flex: 1;
+  max-width: 160px;
+}
+.zz .flow-step .icon { font-size: 28px; display: block; margin-bottom: 6px; }
+.zz .flow-step b { display: block; font-size: 13px; color: #14532d; font-weight: 700; }
+.zz .flow-step span { font-size: 11px; color: #64748b; }
+.zz .flow-arrow {
+  color: #2ecc71;
+  font-size: 24px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+/* ══════ EXPANSION MAP ══════ */
+.zz .map {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0fdf4, #fff);
+  border-radius: 16px;
+  margin: 16px 0;
+}
+.zz .map-country {
+  background: #fff;
+  border: 2px solid #14532d;
+  border-radius: 10px;
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 90px;
+}
+.zz .map-country b { display: block; font-size: 14px; color: #14532d; font-weight: 800; }
+.zz .map-country span { font-size: 10px; color: #64748b; }
+.zz .map-country.active { background: #14532d; border-color: #14532d; }
+.zz .map-country.active b { color: #fff; }
+.zz .map-country.active span { color: #bef264; }
+.zz .map-arrow { color: #2ecc71; font-weight: 900; }
+
+/* ══════ FOOTER ══════ */
+.zz .foot {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+  border-radius: 24px 24px 0 0;
+  padding: 40px 28px;
+  margin-top: 60px;
+  text-align: center;
+  font-size: 14px;
+}
+.zz .foot .logo-foot {
+  font-family: Montserrat, Arial, sans-serif;
+  font-size: 42px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #bef264, #2ecc71, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 6px;
+  margin-bottom: 4px;
+}
+.zz .foot .tag-foot {
+  letter-spacing: 8px;
+  font-size: 11px;
+  color: #a7f3d0;
+  margin-bottom: 20px;
+}
+.zz ul { padding-left: 22px; }
+.zz ul li { margin: 6px 0; }
+.zz .gold { color: #b8860b; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div class="zz">
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  HERO / COVER — Edit title & KPIs here                ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<div class="hero">
+  <div style="font-family:Montserrat,Arial;font-weight:900;font-size:72px;letter-spacing:8px;background:linear-gradient(90deg,#bef264,#2ecc71 50%,#d4af37);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;position:relative;">ZOZI</div>
+  <div class="tag">TRUST DELIVERED</div>
+  <h1 style="color:#fff;font-family:Montserrat,Arial;font-size:28px;margin:20px 0 8px;position:relative;">Investor Roadmap</h1>
+  <p style="color:#a7f3d0;margin:0;position:relative;font-size:15px;">Oman Launch → GCC Expansion → Pakistan Entry</p>
+  <div class="meta">Foundation Round • October 2026 • Confidential</div>
+
+  <div class="kpis">
+    <div class="kpi"><b>5,600 OMR</b><span>Total Foundation Raise</span></div>
+    <div class="kpi"><b>700 OMR</b><span>= 1% Equity (Foundation)</span></div>
+    <div class="kpi"><b>3,500 OMR</b><span>Still Open for Partners</span></div>
+    <div class="kpi"><b>80%</b><span>Codebase Complete</span></div>
+    <div class="kpi"><b>2,000 OMR</b><span>= 1% Seed (Post-Launch)</span></div>
+  </div>
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 1 : ZOZI AT A GLANCE                         ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>1️⃣ ZOZI at a Glance</h2>
+
+<div class="grid grid-2">
+  <div class="card card-accent-green">
+    <h4>🏢 Company Profile</h4>
+    <table style="width:100%;">
+      <tr><td style="font-weight:700;">What</td><td>B2B2C trust-first marketplace connecting verified local suppliers to customers with same/next-day delivery</td></tr>
+      <tr><td style="font-weight:700;">Where</td><td>Oman (launch) → UAE → KSA → Qatar → Bahrain → Pakistan (B2B)</td></tr>
+      <tr><td style="font-weight:700;">Sector</td><td>E-commerce marketplace + supplier SaaS + logistics tech</td></tr>
+      <tr><td style="font-weight:700;">Founder</td><td>Muhammad Ather (CEO / CTO)</td></tr>
+      <tr><td style="font-weight:700;">Stage</td><td>Registration & launch level (codebase ready)</td></tr>
+    </table>
+  </div>
+
+  <div class="card card-accent-gold">
+    <h4>📜 Legal & Registration</h4>
+    <table style="width:100%;">
+      <tr><td style="font-weight:700;">Entity</td><td><b>Independent LLC</b> in Sultanate of Oman</td></tr>
+      <tr><td style="font-weight:700;">Founder Role</td><td>Majority shareholder & manager</td></tr>
+      <tr><td style="font-weight:700;">Registration</td><td>October 2026 — clean, standalone entity</td></tr>
+      <tr><td style="font-weight:700;">IP Ownership</td><td>All code, brand, domains held by ZOZI LLC</td></tr>
+      <tr><td style="font-weight:700;">Bank-Ready</td><td>Designed for audit + institutional loan (Jan 2027)</td></tr>
+    </table>
+  </div>
+
+  <div class="card card-accent-teal">
+    <h4>⚙️ Technology (Already Built)</h4>
+    <table style="width:100%;">
+      <tr><td style="font-weight:700;">Completion</td><td>✅ 80% production-hardened</td></tr>
+      <tr><td style="font-weight:700;">Tests</td><td>1,410+ automated tests passing</td></tr>
+      <tr><td style="font-weight:700;">Panels</td><td>5 role panels (Customer, Supplier, Logistics, Employee, Admin)</td></tr>
+      <tr><td style="font-weight:700;">Features</td><td>Real-time logistics + finance ledger + AI uploads</td></tr>
+      <tr><td style="font-weight:700;">Sweat Equity</td><td>~12,000 OMR already invested by founder</td></tr>
+    </table>
+  </div>
+
+  <div class="card card-accent-coral">
+    <h4>🛒 Supply Ready (Pre-Launch)</h4>
+    <table style="width:100%;">
+      <tr><td style="font-weight:700;">Suppliers</td><td>✅ 24 shops committed in Muscat</td></tr>
+      <tr><td style="font-weight:700;">SKUs Mapped</td><td>4,000–4,500 (Ruwi, Ghala, China Market)</td></tr>
+      <tr><td style="font-weight:700;">Logistics</td><td>Partner alignment completed</td></tr>
+      <tr><td style="font-weight:700;">Feasibility</td><td>Business routes & validation done</td></tr>
+      <tr><td style="font-weight:700;">Break-Even</td><td>Month 5–6 (conservative ramp)</td></tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 2 : COMPANY VISION                           ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>2️⃣ The Company Vision</h2>
+
+<div class="note">
+  ZOZI is not another e-commerce platform. It is the <b>digital infrastructure layer for GCC local commerce</b> — a trust-first marketplace that empowers local suppliers with the tools they need to compete with global giants, while giving customers the speed, transparency, and reliability that cross-border platforms cannot provide.
+</div>
+
+<div class="grid grid-3">
+  <div class="bigstat"><b>33M+</b><span>GCC Addressable Consumers</span></div>
+  <div class="bigstat"><b>142K</b><span>Omani SMEs to Digitize</span></div>
+  <div class="bigstat"><b>$3.8B</b><span>GCC E-Commerce Market</span></div>
+</div>
+
+<h3>Our Three-Layer Vision</h3>
+<div class="timeline">
+  <div class="tl-item">
+    <div class="tl-time">Layer 1 · Local Trust</div>
+    <div class="tl-title">Digitize Oman's Offline Commerce</div>
+    <div class="tl-desc">Bring Ruwi, Ghala, and Muttrah wholesale markets online. Build the most trusted local marketplace in Oman by solving the "fake product + 14-day wait" problem of global apps.</div>
+  </div>
+  <div class="tl-item gold">
+    <div class="tl-time">Layer 2 · Regional Network</div>
+    <div class="tl-title">Become the GCC's Cross-Border Bridge</div>
+    <div class="tl-desc">Expand to UAE, KSA, Qatar, Bahrain. Connect suppliers across borders with unified logistics, multi-currency treasury, and GCC VAT automation. ZOZI becomes the operating system for regional trade.</div>
+  </div>
+  <div class="tl-item teal">
+    <div class="tl-time">Layer 3 · Global Supply Chain</div>
+    <div class="tl-title">Data-Driven Import & Private Label Engine</div>
+    <div class="tl-desc">Use demand data from GCC consumers to drive high-margin imports from Pakistan, India, and China. Launch ZOZI-branded private label products on proven demand — capturing 40–60% margins instead of 20% commission.</div>
+  </div>
+  <div class="tl-item coral">
+    <div class="tl-time">Layer 4 · B2B Wholesale</div>
+    <div class="tl-title">Pakistan B2B Entry (Different from Daraz)</div>
+    <div class="tl-desc">After M30, enter Pakistan as a B2B wholesale platform serving SMEs — a segment Daraz (B2C focused) does not serve. Hyperlocal + transparent payouts + Urdu-first UX.</div>
+  </div>
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 3 : VISION & CAPITAL STRATEGY                ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>3️⃣ Vision & Capital Strategy — Why the Share Capital System?</h2>
+
+<div class="warn">
+  <b>The Project Size Reality:</b> ZOZI is designed to become a multi-million-dollar GCC marketplace. To reach that scale, the company will need to raise <b>250,000–300,000 OMR</b> over the next 18 months through bank loans, regional investors, and venture capital. This is why we cannot treat this as a casual partnership — we must structure it as a proper, institutionally-fundable company from Day 1.
+</div>
+
+<h3>Why the Share Capital System is Mandatory</h3>
+
+<div class="grid grid-2">
+  <div class="card card-accent-green">
+    <h4>📐 Clean Cap Table</h4>
+    <p>Institutional investors and banks require a <b>transparent, standardized equity structure</b>. Our foundation round sets the baseline at <b>1% = 700 OMR</b>, creating a predictable, auditable cap table that future investors can easily evaluate.</p>
+  </div>
+  <div class="card card-accent-gold">
+    <h4>🛡️ Founder Control Preserved</h4>
+    <p>The founder retains majority ownership and management control. This ensures <b>decisive execution</b> during fast-moving growth phases and prevents deadlock situations that kill startups.</p>
+  </div>
+  <div class="card card-accent-teal">
+    <h4>📈 Valuation Protection</h4>
+    <p>Giving away large equity blocks at foundation would destroy future fundraising ability. A disciplined, small-ticket foundation round (<b>5,600 OMR = 8% total</b>) preserves valuation for larger, more strategic investors later.</p>
+  </div>
+  <div class="card card-accent-coral">
+    <h4>💰 Future Round Readiness</h4>
+    <p>Post-launch seed investors will enter at <b>1% = 2,000 OMR</b> (a 2.85x uplift from foundation). Foundation partners benefit from this uplift while the company maintains room for Series A, B, and beyond.</p>
+  </div>
+</div>
+
+<h3>📊 Foundation Round Structure</h3>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="donut" data-label="5,600 OMR Foundation (8%)"></div>
+    <div class="leg">
+      <div><i style="background:#2ecc71"></i><b>1% — Received (Sept)</b></div>
+      <div><i style="background:#bef264"></i><b>1% — Committed</b></div>
+      <div><i style="background:#d4af37"></i><b>1% — Probable (Dec)</b></div>
+      <div><i style="background:#94a3b8"></i><b>5% — Open for Partners</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Foundation Allocation</h4>
+    <table style="width:100%;">
+      <tr><td>Total Foundation Raise</td><td><b>5,600 OMR</b></td></tr>
+      <tr><td>Slots Available (1% each)</td><td><b>8 slots</b></td></tr>
+      <tr><td>Rate per 1% Equity</td><td><b>700 OMR</b></td></tr>
+      <tr><td>Received (September)</td><td style="color:#14532d;font-weight:700;">✓ 700 OMR (1 slot)</td></tr>
+      <tr><td>Committed</td><td style="color:#14532d;font-weight:700;">✓ 700 OMR (1 slot)</td></tr>
+      <tr><td>Probable (Dec, same partner)</td><td style="color:#d4af37;font-weight:700;">◐ 700 OMR (1 slot)</td></tr>
+      <tr><td><b>Still Open</b></td><td style="color:#c2410c;font-weight:700;"><b>3,500 OMR (5 slots)</b></td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="note">
+  <b>Why 8 slots only?</b> We deliberately limit the foundation to 8% total equity to protect future rounds. Once these 8 slots close, the valuation steps up — <b>early partners lock the lowest entry price the company will ever offer.</b>
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 4 : CORPORATE STRUCTURE & LOAN SYSTEM        ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>4️⃣ Corporate Structure — Why an Independent LLC + Loan System?</h2>
+
+<h3>Why ZOZI Must Be an Independent LLC</h3>
+
+<div class="grid grid-2">
+  <div class="card card-accent-green">
+    <h4>🏦 Bank & Grant Eligibility</h4>
+    <p>Banks, government grant committees (Riyada, Oman Technology Fund), and venture capitalists require a <b>standalone, audit-ready tech entity</b>. They reject companies mixed with unrelated businesses due to compliance risk.</p>
+  </div>
+  <div class="card card-accent-gold">
+    <h4>📊 Clean Balance Sheet</h4>
+    <p>An independent LLC ensures ZOZI's financials reflect pure e-commerce metrics. This <b>maximizes loan approval probability</b> and protects our premium valuation for all shareholders.</p>
+  </div>
+  <div class="card card-accent-teal">
+    <h4>🌍 Future Holding Structure</h4>
+    <p>Once Oman pilot is audited, we will establish a <b>Dubai holding company</b> to raise 250K+ OMR Series A. Foundation equity rolls over seamlessly into the holding — your ownership grows with regional expansion.</p>
+  </div>
+  <div class="card card-accent-coral">
+    <h4>🛡️ Investor Protection</h4>
+    <p>Independent LLC = clean IP ownership, transparent shareholder register, and predictable governance. Your investment is <b>legally protected</b>, not dependent on personal trust alone.</p>
+  </div>
+</div>
+
+<h3>🏦 Why the Loan System is Essential</h3>
+
+<div class="warn">
+  <b>The Truth About Startup Capital:</b> Equity is the most expensive form of capital. Every 1% you sell today costs 10x more than a bank loan at 7% interest. The smartest startups use <b>minimal equity to prove the model</b>, then use bank debt to fund growth — preserving equity for strategic partners who bring more than just money.
+</div>
+
+<div class="grid grid-3">
+  <div class="bigstat"><b>3 Mo</b><span>To Build Loan-Eligible Track Record</span></div>
+  <div class="bigstat"><b>30–40K OMR</b><span>Target Bank Loan (Jan 2027)</span></div>
+  <div class="bigstat"><b>7% avg</b><span>Loan Interest vs. 28x Equity ROI</span></div>
+</div>
+
+<h3>How the Loan System Works</h3>
+<div class="flow">
+  <div class="flow-step"><span class="icon">🏢</span><b>Oct: Register LLC</b><span>Legal foundation</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step"><span class="icon">📈</span><b>Nov–Dec: Revenue</b><span>Prove traction</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step"><span class="icon">📋</span><b>Jan: Audit</b><span>Verified financials</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step"><span class="icon">🏦</span><b>Feb: Loan</b><span>30–40K OMR unlocked</span></div>
+</div>
+
+<p style="text-align:center;color:#475569;font-size:13px;margin-top:16px;">
+  <b>Result:</b> Foundation partners own equity in a leveraged, growing company. The bank's money funds expansion while your equity appreciates 28x+.
+</p>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 5 : 4-MONTH EXECUTION ROADMAP                ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>5️⃣ The 4-Month Sprint (Oct 2026 → Jan 2027)</h2>
+
+<div class="timeline">
+  <div class="tl-item">
+    <div class="tl-time">October 2026 · Setup & Launch</div>
+    <div class="tl-title">Legal Registration + Platform Go-Live</div>
+    <div class="tl-desc">Complete independent LLC registration, secure e-commerce trade license, finalize legal documentation, and officially launch ZOZI. <b>Makes the company bank-eligible.</b></div>
+  </div>
+  <div class="tl-item gold">
+    <div class="tl-time">November 2026 · First Revenue</div>
+    <div class="tl-title">Activate 24 Suppliers + Initial Ads</div>
+    <div class="tl-desc">Bring the committed 24 suppliers online (4,500+ SKUs). Launch targeted marketing campaigns. Generate first documented B2C + B2B sales. <b>Builds proof-of-revenue for lenders.</b></div>
+  </div>
+  <div class="tl-item teal">
+    <div class="tl-time">December 2026 · Margin Expansion</div>
+    <div class="tl-title">Scale Volume + Pakistan Import Layer</div>
+    <div class="tl-desc">Increase order volume. Initiate high-margin Pakistan import strategy (credit-line goods sold to Omani suppliers + listed on ZOZI). <b>Strengthens P&L for year-end audit.</b></div>
+  </div>
+  <div class="tl-item coral">
+    <div class="tl-time">January 2027 · The Capital Unlock</div>
+    <div class="tl-title">Close Fiscal Year + Audit + Bank Loan Application</div>
+    <div class="tl-desc">Formal audit of 2026 financials. Apply for <b>30,000–40,000 OMR bank loan</b>. Deploy capital to build core team, scale advertising, and prepare for UAE/GCC expansion. <b>This is where the business truly scales.</b></div>
+  </div>
+</div>
+
+<div class="note">
+  <b>The Logic:</b> 3 months of auditable execution (Oct–Dec) unlocks 30–40K OMR in institutional capital (Feb). Every action is designed to satisfy strict bank underwriting criteria — not just "grow the app."
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 6 : REVENUE CHANNELS                         ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>6️⃣ Revenue Channels — 8 Streams, Not Just 1</h2>
+
+<div class="grid grid-3">
+  <div class="card card-accent-green">
+    <h4>🛒 Channel 1: Marketplace Commission</h4>
+    <p>15–35% per transaction on supplier sales. Primary revenue from Day 1 across 7 product categories.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 1</b></p>
+  </div>
+
+  <div class="card card-accent-gold">
+    <h4>🌐 Channel 2: Own Website Operations</h4>
+    <p>Direct sales through the ZOZI marketplace. Premium placement, featured listings, and promotional fees from suppliers seeking visibility.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 1</b></p>
+  </div>
+
+  <div class="card card-accent-teal">
+    <h4>📦 Channel 3: Wholesale Supply (B2B)</h4>
+    <p>Supply goods wholesale to local shops, baqalas, salons, garages. Lower margin (2–5%) but massive recurring volume from restocking.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 2</b></p>
+  </div>
+
+  <div class="card card-accent-coral">
+    <h4>🚢 Channel 4: Data-Driven Imports</h4>
+    <p>Import from Pakistan, India, China based on proven demand data. Sell to Omani suppliers + list on ZOZI. Captures 10–15% margin vs 20% commission.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 3 (Dec 2026)</b></p>
+  </div>
+
+  <div class="card" style="border-top:4px solid #7c3aed;">
+    <h4>🌍 Channel 5: Intra-GCC Trade</h4>
+    <p>Oman ↔ UAE ↔ Saudi import/export. Cross-border facilitation fees (5–10%) on international orders between GCC suppliers.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 24 (Series A)</b></p>
+  </div>
+
+  <div class="card" style="border-top:4px solid #0891b2;">
+    <h4>💎 Channel 6: Supplier SaaS</h4>
+    <p>Subscription tiers (Free / 15 / 45 OMR/month) for premium supplier tools — analytics, AI descriptions, priority support.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 9</b></p>
+  </div>
+
+  <div class="card" style="border-top:4px solid #d4af37;">
+    <h4>✨ Channel 7: Private Label (ZOZI Brand)</h4>
+    <p>Launch ZOZI-branded products on proven demand data. 40–60% margin vs 20% commission on third-party goods.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 15</b></p>
+  </div>
+
+  <div class="card" style="border-top:4px solid #1e8e4e;">
+    <h4>📊 Channel 8: Data & Insights</h4>
+    <p>Aggregated market intelligence reports for brands and suppliers. 500–5,000 OMR per report, 95% margin.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 30</b></p>
+  </div>
+
+  <div class="card" style="border-top:4px solid #f97316;">
+    <h4>💳 Channel 9: Fintech & BNPL</h4>
+    <p>Buy-Now-Pay-Later for customers. 1.8–3.5% fee, 70% margin. Requires 10K+ monthly orders as prerequisite.</p>
+    <p style="font-size:12px;color:#64748b;margin:0;"><b>Live: Month 18</b></p>
+  </div>
+</div>
+
+<div class="note">
+  <b>Why 9 channels matter:</b> Marketplace commission alone isn't enough. Diversification into imports, private label, and data ensures ZOZI captures margin at every layer of the value chain — not just the transaction.
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 7 : CATALOG & SUPPLY PIPELINE                ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>7️⃣ Catalog & Supply Pipeline</h2>
+
+<div class="card">
+  <h4>📦 SKU Growth Over 12 Months</h4>
+  <div class="chart" style="height:260px;">
+    <div class="bar" style="--h:6%">
+      <div class="sub">24 shops committed</div>
+      <div class="top">4.5K</div>
+      <i>Now (Launch)</i>
+    </div>
+    <div class="bar gold" style="--h:14%">
+      <div class="sub">Distributor CSV ingestion</div>
+      <div class="top">25K</div>
+      <i>Month 3</i>
+    </div>
+    <div class="bar teal" style="--h:50%">
+      <div class="sub">AI self-service + bulk upload</div>
+      <div class="top">100K</div>
+      <i>Month 6</i>
+    </div>
+    <div class="bar coral" style="--h:100%">
+      <div class="sub">Own brand + cross-border</div>
+      <div class="top">200K+</div>
+      <i>Month 12</i>
+    </div>
+  </div>
+</div>
+
+<h3>How Each Milestone is Achieved</h3>
+<div class="tw"><table>
+  <tr><th>Milestone</th><th>Method</th><th>SKUs Added</th></tr>
+  <tr><td><b>4.5K (Now)</b></td><td>24 committed Muscat suppliers, manually onboarded</td><td>Base</td></tr>
+  <tr><td><b>25K (M3)</b></td><td>Bulk CSV import from 5–7 Ghala/Ruwi master distributors</td><td>+20.5K</td></tr>
+  <tr><td><b>100K (M6)</b></td><td>AI self-service portal + Pakistan/China virtual dropship catalogs</td><td>+75K</td></tr>
+  <tr><td><b>200K+ (M12)</b></td><td>Official brand digital assets + own private label products</td><td>+100K</td></tr>
+</table></div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 8 : MONTHLY REVENUE GROWTH                   ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>8️⃣ Revenue Growth (Conservative Case, 70% of Model)</h2>
+
+<div class="card">
+  <h4>📈 Monthly Revenue (OMR) — Conservative Projection</h4>
+  <div class="chart">
+    <div class="bar" style="--h:3%"><div class="top">16K</div><i>M6</i></div>
+    <div class="bar gold" style="--h:5%"><div class="top">146K</div><i>M12</i></div>
+    <div class="bar teal" style="--h:12%"><div class="top">916K</div><i>M18</i></div>
+    <div class="bar" style="--h:24%"><div class="top">1.8M</div><i>M24</i></div>
+    <div class="bar gold" style="--h:56%"><div class="top">4.8M</div><i>M30</i></div>
+    <div class="bar coral" style="--h:100%"><div class="top">8.8M</div><i>M36</i></div>
+  </div>
+  <p style="font-size:12px;color:#64748b;margin-top:36px;">
+    <b>Break-even:</b> Month 5–6 &nbsp;•&nbsp;
+    <b>EBITDA margin:</b> 40% (M6) → 60% (M36) &nbsp;•&nbsp;
+    <b>Blended take-rate:</b> 21.5%
+  </p>
+</div>
+
+<div class="tw"><table>
+  <tr><th>Metric</th><th>M6</th><th>M12</th><th>M18</th><th>M24</th><th>M30</th><th>M36</th></tr>
+  <tr><td>Active Suppliers</td><td>85</td><td>630</td><td>2,400</td><td>4,250</td><td>8,750</td><td>13,300</td></tr>
+  <tr><td>Active Customers</td><td>1,700</td><td>12,600</td><td>71,400</td><td>127,200</td><td>315,000</td><td>532,500</td></tr>
+  <tr><td>Orders/Month</td><td>2,550</td><td>18,900</td><td>107,100</td><td>190,800</td><td>472,500</td><td>798,750</td></tr>
+  <tr><td>Revenue (OMR)</td><td>16,463</td><td>145,924</td><td>915,786</td><td>1,827,243</td><td>4,751,130</td><td>8,789,423</td></tr>
+  <tr class="highlight"><td>EBITDA Margin</td><td>40%</td><td>48%</td><td>52%</td><td>55%</td><td>58%</td><td>60%</td></tr>
+</table></div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 9 : EXPANSION MAP                            ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>9️⃣ Expansion Roadmap</h2>
+
+<div class="map">
+  <div class="map-country active"><b>🇴🇲 Oman</b><span>M1 · Launch</span></div>
+  <div class="map-arrow">→</div>
+  <div class="map-country"><b>🇦🇪 UAE</b><span>M13</span></div>
+  <div class="map-arrow">→</div>
+  <div class="map-country"><b>🇸🇦 KSA</b><span>M21</span></div>
+  <div class="map-arrow">→</div>
+  <div class="map-country"><b>🇶🇦 Qatar</b><span>M23</span></div>
+  <div class="map-arrow">→</div>
+  <div class="map-country"><b>🇧🇭 Bahrain</b><span>M25</span></div>
+  <div class="map-arrow">→</div>
+  <div class="map-country"><b>🇰🇼 Kuwait</b><span>M30+</span></div>
+  <div class="map-arrow">→</div>
+  <div class="map-country"><b>🇵🇰 Pakistan</b><span>M30+ · B2B</span></div>
+</div>
+
+<div class="tw"><table>
+  <tr><th>Country</th><th>Population</th><th>Addressable SMEs</th><th>Launch</th></tr>
+  <tr><td>🇴🇲 Oman (base)</td><td>4.6M</td><td>142,000</td><td>M1</td></tr>
+  <tr><td>🇦🇪 UAE</td><td>10.2M</td><td>380,000</td><td>M13</td></tr>
+  <tr><td>🇸🇦 Saudi Arabia</td><td>36.0M</td><td>1,100,000</td><td>M21</td></tr>
+  <tr><td>🇶🇦 Qatar</td><td>2.9M</td><td>95,000</td><td>M23</td></tr>
+  <tr><td>🇧🇭 Bahrain</td><td>1.7M</td><td>52,000</td><td>M25</td></tr>
+  <tr><td>🇰🇼 Kuwait</td><td>4.3M</td><td>145,000</td><td>M30+</td></tr>
+</table></div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 10 : INVESTMENT TERMS                        ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>🔟 Investment Terms at a Glance</h2>
+
+<div class="grid grid-2">
+  <div class="card card-accent-green">
+    <h4>Foundation Round (Now Open)</h4>
+    <table style="width:100%;">
+      <tr><td>Rate</td><td><b>1% equity = 700 OMR</b></td></tr>
+      <tr><td>Total Raise</td><td>5,600 OMR (8% of company)</td></tr>
+      <tr><td>Still Available</td><td><b>3,500 OMR (5 slots of 700)</b></td></tr>
+      <tr><td>Instrument</td><td>Direct equity or SAFE / convertible note</td></tr>
+      <tr><td>Tranches</td><td>Milestone-based release for investor safety</td></tr>
+      <tr><td>Information Rights</td><td>Monthly KPI report + quarterly financials</td></tr>
+    </table>
+  </div>
+
+  <div class="card card-accent-gold">
+    <h4>Post-Launch Seed Round (Future)</h4>
+    <table style="width:100%;">
+      <tr><td>Rate</td><td><b>1% equity = 2,000 OMR</b></td></tr>
+      <tr><td>Multiple vs Foundation</td><td>2.85x uplift</td></tr>
+      <tr><td>Trigger</td><td>Post-launch traction + unit economics validation</td></tr>
+      <tr><td>Target</td><td>50,000 OMR for 25% equity</td></tr>
+    </table>
+    <div class="note" style="margin-top:12px;padding:12px;font-size:12px;">
+      Foundation partners lock the <b>lowest entry price the company will ever offer</b>. Post-launch investors pay nearly 3x more per 1% equity.
+    </div>
+  </div>
+</div>
+
+<div class="warn">
+  <b>Investor Protection Built-In:</b>
+  <ul style="margin:8px 0 0 0;">
+    <li>Milestone-based tranches (you only pay when we deliver)</li>
+    <li>Monthly KPI dashboard access from Day 1</li>
+    <li>Standard SAFE or direct equity — your choice</li>
+    <li>Pro-rata dilution (same as founder) on future rounds</li>
+  </ul>
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 11 : WHY NOW                                 ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>🔥 Why Now — 4 Compelling Reasons</h2>
+
+<div class="grid grid-2">
+  <div class="card card-accent-green">
+    <h4>1. 🏦 3-Month Path to Bank Loan</h4>
+    <p>This is the <b>biggest reason</b>. We can close our annual financials in just 3 months (Oct–Dec), pass a formal audit, and immediately apply for a <b>30–40K OMR bank loan</b> in January 2027. Your foundation investment is leveraged 5–7x by institutional capital within 90 days.</p>
+  </div>
+
+  <div class="card card-accent-gold">
+    <h4>2. ⚙️ The Tech is Already Built</h4>
+    <p>Investors fund execution, not ideas. ZOZI's execution risk is largely removed: <b>80% complete, 1,410+ tests passing</b>, 5 operational panels, real-time logistics, and finance ledger — all production-hardened.</p>
+  </div>
+
+  <div class="card card-accent-teal">
+    <h4>3. 🛒 The Supply is Already Committed</h4>
+    <p><b>24 suppliers and 4,500+ SKUs are waiting</b> — no cold-start problem. The moment registration completes and capital arrives, we activate revenue. No waiting for product-market fit.</p>
+  </div>
+
+  <div class="card card-accent-coral">
+    <h4>4. 🌍 The Market Window is Open</h4>
+    <p>98% internet penetration in Oman, 142,000+ offline SMEs, and <b>no trust-first local marketplace exists yet</b>. First-mover advantage in this category is real — and fleeting.</p>
+  </div>
+</div>
+
+<div class="note">
+  <b>The Bottom Line:</b> You're not betting on an idea. You're funding the final 20% of a proven, production-ready platform — and watching it unlock 30–40K OMR in institutional capital within 90 days.
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  SECTION 12 : NEXT STEPS                              ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<h2>🚀 Next Steps for a Foundation Partner</h2>
+
+<div class="timeline">
+  <div class="tl-item">
+    <div class="tl-time">Step 1</div>
+    <div class="tl-title">Review & Demo</div>
+    <div class="tl-desc">Review this roadmap + live platform demo (30 minutes). See the working tech, not just slides.</div>
+  </div>
+  <div class="tl-item gold">
+    <div class="tl-time">Step 2</div>
+    <div class="tl-title">Confirm Participation</div>
+    <div class="tl-desc">Confirm participation amount (any multiple of 700 OMR). Foundation slots are limited to 8 total.</div>
+  </div>
+  <div class="tl-item teal">
+    <div class="tl-time">Step 3</div>
+    <div class="tl-title">Sign MoU</div>
+    <div class="tl-desc">Sign short MoU with milestone-based tranche release. Funds deployed against Oct–Jan milestones.</div>
+  </div>
+  <div class="tl-item coral">
+    <div class="tl-time">Step 4</div>
+    <div class="tl-title">Monthly Reporting</div>
+    <div class="tl-desc">Receive monthly KPI report from launch day. Full transparency on revenue, suppliers, and customers.</div>
+  </div>
+</div>
+
+
+<!-- ╔═══════════════════════════════════════════════════════╗
+     ║  FOOTER                                               ║
+     ╚═══════════════════════════════════════════════════════╝ -->
+
+<div class="foot">
+  <div class="logo-foot">ZOZI</div>
+  <div class="tag-foot">TRUST DELIVERED</div>
+  <p style="max-width:700px;margin:0 auto 20px;font-style:italic;color:#cbd5e1;">
+    "ZOZI isn't asking you to bet on an idea. It's asking you to fund the final 20% of a proven, production-ready platform — then watch it unlock 30–40K OMR in institutional capital within 90 days. The technology is built. The suppliers are committed. The market is ready."
+  </p>
+  <p><b class="gold" style="font-size:16px;">Founder: Muhammad Ather</b></p>
+  <p style="margin-top:8px;">
+    📧 muhammad.ather.1991@gmail.com &nbsp;•&nbsp;
+    📱 +968 9420 5704 &nbsp;•&nbsp;
+    📱 +92 341 2382 573
+  </p>
+  <p style="font-size:12px;color:#64748b;margin-top:20px;">Confidential — prepared October 2026 for accredited investors.</p>
+</div>
+
+</div>
+
+</body>
+</html>

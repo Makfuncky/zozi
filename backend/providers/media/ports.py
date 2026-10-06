@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 from sqlalchemy.orm import Session
-from domains.media.models.media_asset import MediaAsset
+from providers.media.models.media_asset import MediaAsset
 
 
 def get_media_asset_by_id(db: Session, id_: int) -> Optional[MediaAsset]:

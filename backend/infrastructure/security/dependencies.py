@@ -13,8 +13,6 @@ import importlib as _importlib
 from contextvars import ContextVar
 from typing import Optional
 
-from fastapi import HTTPException, Request, status
-
 _SOURCE = "domains.accounts.services.auth.security_dependencies"
 
 _current_user_ctx: ContextVar = ContextVar("_current_user_ctx", default=None)
@@ -32,6 +30,8 @@ def verify_captcha(request: Request) -> None:
     development and test workflows. In production, a missing or invalid token
     results in ``HTTP 400``.
     """
+    from fastapi import HTTPException, status
+
     import os
 
     secret_key = os.getenv("TURNSTILE_SECRET_KEY", "").strip()
